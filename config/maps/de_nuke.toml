@@ -13,5 +13,45 @@ scale = 7.0
 lower_level_max_z = -495.0
 
 [regions]
+T_SPAWN = "T_SPAWN"
+A_APPROACH = "A"
+A_SITE = "A"
+MID = "MID"
+B_APPROACH = "B"
+B_SITE = "B"
+CT_SPAWN = "CT_SPAWN"
+LOWER = "B"  # 下层：B 点在 A 点正下方，下层通道与 B 点周边统一归 B 线
 
 [callouts]
+TSpawn = "T_SPAWN"
+# A side：T 家外的 Outside 进楼后经 Lobby / Squeaky / Hut 上 A，CT 则占 Hut roof、Admin、Heaven、Hell、Rafters
+Lobby = "A_APPROACH"
+Squeaky = "A_APPROACH"
+Hut = "A_APPROACH"
+Roof = "A_APPROACH"
+BombsiteA = "A_SITE"
+HutRoof = "A_SITE"
+Admin = "A_SITE"
+Heaven = "A_SITE"
+Hell = "A_SITE"
+Catwalk = "A_SITE"
+Rafters = "A_SITE"
+LockerRoom = "A_SITE"
+# Outside / T 家外公共区域：Nuke 没有传统中路，Outside 是 A/B 分兵前的集结点
+Outside = "MID"
+Silo = "MID"
+Garage = "MID"
+Mini = "MID"  # ? 145 个样本、t_a=9/t_b=1，坐标在 A 点南墙外的下层入口一带
+# B side upper：Radio(Vending) -> Trophy -> Control -> Ramp 下到 B
+Vending = "B_APPROACH"  # ? t_b=92 / t_a=38；官方 Radio 在 Lobby 与 Trophy 之间，是通往 Ramp 的链
+Trophy = "B_APPROACH"  # ? t_a=19 / t_b=20 几乎相等，按与 Control / Ramp 同一条链归 B
+Control = "B_APPROACH"
+Ramp = "B_APPROACH"  # 官方 Ramp 是下到 B 点的斜坡，CT 开局常占（ct_first_20s=235）
+BombsiteB = "B_SITE"
+# Lower level
+Secret = "LOWER"
+Tunnels = "LOWER"
+Decon = "LOWER"
+Vents = "LOWER"
+Observation = "LOWER"
+CTSpawn = "CT_SPAWN"

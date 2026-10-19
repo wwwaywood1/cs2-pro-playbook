@@ -18,7 +18,7 @@ Claude 负责主线：架构、解析、语义、战术识别，以及审核和�
 | [DS-03](DS-03_i18n_labels.md) | DeepSeek | 网站中英文文案和点位译名 | 无 | 中 | 完成 |
 | [DS-04](DS-04_frontend.md) | DeepSeek | 前端 v1，分 A/B/C 三阶段 | DS-03 | 中 | 完成 |
 | [GPT-01](GPT-01_robustness_review.md) | GPT (Codex) | 解析层边界情况审查和修复 | 仓库已推到 GitHub | 中：批量解析前做最好 | 完成 |
-| [DS-05](DS-05_map_configs.md) | DeepSeek | 其余 5 张图（Nuke、Dust2、Ancient、Anubis、Overpass）的点位映射 + 中英文译名 | 无（任务书已生成） | 高 | 已发 |
+| [DS-05](DS-05_map_configs.md) | DeepSeek | 其余 5 张图（Nuke、Dust2、Ancient、Anubis、Overpass）的点位映射 + 中英文译名 | 无（任务书已生成） | 高 | 完成 |
 
 ## 审核记录（Claude）
 
@@ -27,19 +27,11 @@ Claude 负责主线：架构、解析、语义、战术识别，以及审核和�
 - **DS-02**：原样采用（101 条别名）。多出的 `confidence` 列不影响加载。
 - **DS-03**：改了 2 处：Mirage `Catwalk` 由"A 小道"改为"中路短"（该点在中路、通往 B 一侧）；英文 `times_thrown` 改为 "in {m} matches"。新增 `ui.no_plant`。`SnipersNest` 保留 DeepSeek 的"VIP 狙位"（用户确认的叫法）。
 - **DS-04**：干净环境 `npm ci && npm run build` 通过，types.ts 哈希未变，依赖在约束内。新增 `web/e2e/smoke.py`（headless Chromium，24 项检查）全部通过。修了一处：队伍页"下包点分布"里"未下包"一类原来显示为"—"。
+- **DS-05**：5 张图的映射和 123 条译名基本采用，`check_map_config.py --all` 七张图全部 OK。按点位表逐个复核了"所在路线与 T 方下包数据相反"的点位，只改 1 处映射：Anubis `Canal` 由 A_APPROACH 改为 MID（下 A 838 次、下 B 537 次，是两边共用的中路水渠，归 A 会把 B 分兵误算成 A 线）。其余存疑点保留 DeepSeek 的判断并留注释：Anubis `PalaceInterior`（以 CT 站位为主，T 方样本少）、Dust2 `MidDoors`（中路转 B 是正常打法）、Overpass `Playground`（位置在 A 侧，只有 246 个样本）、Overpass `Walkway`（CT 轮转通道）。Overpass 数据里没有 CTSpawn 点位，不影响。改了 Dust2 的 5 个中文译名，换成国内常用叫法：Catwalk→A 小道、Hole→B 窗、UpperTunnel→B 洞、LowerTunnel→下水道、OutsideTunnel→B 洞外。前端构建和 24 项冒烟测试通过。
 
 ## 待办（下一轮可发）
 
-**DS-05：其余 5 张图（Nuke、Dust2、Ancient、Anubis、Overpass）的点位映射 + 中英文译名**，合并了原来的"DS-01 继续"和"DS-03 补充"。现役图池共 7 张，Train 和 Vertigo 不在其中，不做。
-
-任务书 `delegation/DS-05_map_configs.md` 由脚本根据真实 demo 生成，每张图都附点位表（坐标、雷达像素、T 方下 A/下 B 时经过的次数、CT 开局站位）和要改的确切文件路径。生成步骤：
-
-1. 下载第一批 demo，里面包含这 5 张图各 1 场：`python3 scripts/download_batch1.py`
-2. 生成点位表和任务书：`python scripts/make_map_briefs.py data/raw --brief`。输出到 `delegation/inputs/<map>_callouts.csv` 和 `delegation/DS-05_map_configs.md`
-3. 把 `delegation/DS-05_map_configs.md` 从分割线开始发给 DeepSeek
-4. DeepSeek 改完后，自检命令 `python3 scripts/check_map_config.py de_nuke de_dust2 de_ancient de_anubis de_overpass` 必须全部输出 OK；Claude 再按点位表数据复核
-
-模板在 `delegation/templates/DS-05_header.md`。Mirage 和 Inferno 的点位表已生成，`python3 scripts/check_map_config.py --all` 对这两张图都通过。
+暂无。现役图池 7 张图的点位映射和译名都已完成。新图进图池时，用 `python scripts/make_map_briefs.py data/raw --brief` 重新生成任务书，流程同 DS-05（模板在 `delegation/templates/DS-05_header.md`）。
 
 ## 为什么这样分
 

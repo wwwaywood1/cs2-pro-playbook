@@ -11,5 +11,44 @@ pos_y = 3328.0
 scale = 5.22
 
 [regions]
+T_SPAWN = "T_SPAWN"
+A_APPROACH = "A"
+A_SITE = "A"
+MID = "MID"
+B_APPROACH = "B"
+B_SITE = "B"
+CT_SPAWN = "CT_SPAWN"
 
 [callouts]
+TSpawn = "T_SPAWN"
+# A side：T 家向东经 Street -> T Stairs -> Canal，再走 Main / Fountain 进 A
+Street = "A_APPROACH"
+TStairs = "A_APPROACH"
+TSideUpper = "A_APPROACH"
+Main = "A_APPROACH"
+Fountain = "A_APPROACH"
+Canal = "MID"  # 审核改：t_a=838 / t_b=537 两边都很大，是 A/B 共用的中路水渠；归 MID 才不会把 B 的分兵算成 A 线
+BombsiteA = "A_SITE"
+Walkway = "A_SITE"  # A 点上方的走道，ct_first_20s=287
+Heaven = "A_SITE"
+Tunnel = "A_SITE"  # ? 官方 Tunnel 是 CT 家通往 A Heaven 的窄道，ct_first_20s=0，仅按位置归 A
+TunnelStairs = "A_SITE"  # ? 61 个样本、t_a=9/t_b=0，与 Tunnel 同属 A Heaven 一侧
+# Mid
+Middle = "MID"
+MidDoors = "MID"
+Bridge = "MID"
+PalaceInterior = "MID"  # ? 官方 Palace 是连通 B、中路与 T 家的 CT 轮转路线，ct_first_20s=155、T 侧≈0
+# B side：T 家向西经 Ruins -> Outside Long 进 B
+Ruins = "B_APPROACH"
+OutsideLong = "B_APPROACH"
+Connector = "B_APPROACH"
+BombsiteB = "B_SITE"
+BackofB = "B_SITE"
+Bricks = "B_SITE"  # ? 63 个样本、t_a=1/t_b=8，仅凭坐标（B 点北侧）归类
+SnipersNest = "B_SITE"
+LowerTunnel = "B_SITE"
+Alley = "B_SITE"  # ? 坐标在 B 点北侧、CT 家一侧（ct_first_20s=152），常见攻略却把 Alley 写作靠近 T 家
+# CT
+CTSpawn = "CT_SPAWN"
+CTSideUpper = "CT_SPAWN"
+Water = "CT_SPAWN"  # ? 只有 8 个样本，坐标在 CT 家后方的水域

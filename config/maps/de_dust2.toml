@@ -11,5 +11,39 @@ pos_y = 3239.0
 scale = 4.4
 
 [regions]
+T_SPAWN = "T_SPAWN"
+A_APPROACH = "A"
+A_SITE = "A"
+MID = "MID"
+B_APPROACH = "B"
+B_SITE = "B"
+CT_SPAWN = "CT_SPAWN"
 
 [callouts]
+TSpawn = "T_SPAWN"
+TRamp = "B_APPROACH"  # ? 官方 T Ramp 是 T 家下到 B 外隧道的斜坡；只有 21 个样本、无下包数据，按通往 B 的路线归 B
+# B side：Outside Tunnels -> Upper / Lower Tunnels -> B
+OutsideTunnel = "B_APPROACH"
+UpperTunnel = "B_APPROACH"
+TunnelStairs = "B_APPROACH"
+LowerTunnel = "B_APPROACH"
+BombsiteB = "B_SITE"
+BDoors = "B_SITE"  # CT Mid 进 B 的双门，ct_first_20s=103
+Hole = "B_SITE"  # B 点砖墙缺口（B Window）
+# Mid
+TopofMid = "MID"
+Middle = "MID"
+MidDoors = "MID"  # CT 侧的双中门，ct_first_20s=467
+# A side：Outside Long -> Long Doors -> A Long / Pit -> A
+OutsideLong = "A_APPROACH"
+LongDoors = "A_APPROACH"
+LongA = "A_APPROACH"
+Pit = "A_APPROACH"
+Catwalk = "A_APPROACH"
+ShortStairs = "A_APPROACH"
+Side = "A_APPROACH"  # ? 只有 41 个样本，坐标在 A Long 东侧边缘，按 A 侧处理
+BombsiteA = "A_SITE"
+ARamp = "A_SITE"
+ExtendedA = "A_SITE"
+UnderA = "A_SITE"  # CT 在 A 点下方的防守位，ct_first_20s=344
+CTSpawn = "CT_SPAWN"

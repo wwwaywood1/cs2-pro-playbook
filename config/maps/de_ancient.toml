@@ -11,5 +11,33 @@ pos_y = 2164.0
 scale = 5.0
 
 [regions]
+T_SPAWN = "T_SPAWN"
+A_APPROACH = "A"
+A_SITE = "A"
+MID = "MID"
+B_APPROACH = "B"
+B_SITE = "B"
+CT_SPAWN = "CT_SPAWN"
 
 [callouts]
+TSpawn = "T_SPAWN"
+# A side：从 T 家沿地图西侧的 Outside 北上，经 Main Hall / Side Hall 进 A
+Outside = "A_APPROACH"
+MainHall = "A_APPROACH"
+SideHall = "A_APPROACH"
+BombsiteA = "A_SITE"
+# Mid，含 CT 家与 Top Mid 之间的 House
+Middle = "MID"
+TopofMid = "MID"
+House = "MID"  # ? 官方 House 是 CT 家下方、Top Mid 上方的建筑；ct_first_20s=399 而两边下包数据≈0，属 CT 中路站位
+# B side：Tunnel -> Water -> Ruins -> T Side Lower / Ramp，或由 Side Entrance 进 B
+Tunnel = "B_APPROACH"
+Water = "B_APPROACH"
+Ruins = "B_APPROACH"
+TSideLower = "B_APPROACH"
+Ramp = "B_APPROACH"
+TSideUpper = "B_APPROACH"  # ? t_b=250 / t_a=151，坐标在 Middle 与 Side Entrance 之间，暂按通往 B 的上层通道处理
+SideEntrance = "B_APPROACH"
+BombsiteB = "B_SITE"
+Alley = "B_SITE"  # 官方 Alley 是 CT 家通往 B 后厅的走廊，ct_first_20s=418
+CTSpawn = "CT_SPAWN"

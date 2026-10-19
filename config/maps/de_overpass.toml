@@ -11,5 +11,40 @@ pos_y = 1781.0
 scale = 5.2
 
 [regions]
+T_SPAWN = "T_SPAWN"
+A_APPROACH = "A"
+A_SITE = "A"
+MID = "MID"
+B_APPROACH = "B"
+B_SITE = "B"
+CT_SPAWN = "CT_SPAWN"
 
 [callouts]
+TSpawn = "T_SPAWN"
+# A side：T 家经 Tunnels / Fountain 到公园，再过 Restroom 或 A Long 上 A
+Fountain = "A_APPROACH"
+Playground = "A_APPROACH"  # ? t_b=73 > t_a=22，但坐标在 A 侧公园南端，按位置归 A
+UpperPark = "A_APPROACH"
+LowerPark = "A_APPROACH"
+Restroom = "A_APPROACH"
+BombsiteA = "A_SITE"
+BackofA = "A_SITE"
+UnderA = "A_SITE"
+SnipersNest = "A_SITE"
+Stairs = "A_SITE"
+Lobby = "A_SITE"  # A 点后方 Bank / CT 一侧的房间
+StorageRoom = "A_SITE"
+# Mid / connector
+Tunnels = "MID"  # 1501 个样本、t_a=323 / t_b=311，是 A/B 共用的地下通道
+Connector = "MID"
+Walkway = "MID"  # ? t_a=0 / t_b=56，但官方定义为 A/B 之间的公共走道，ct_first_20s=287
+# B side：T 家经 Alley -> Canal / Water -> Construction / Pipe 进 B
+Alley = "B_APPROACH"
+TStairs = "B_APPROACH"
+Canal = "B_APPROACH"
+Water = "B_APPROACH"
+Construction = "B_APPROACH"
+Pipe = "B_APPROACH"
+SideAlley = "B_APPROACH"  # ? 只有 4 个样本，官方定义为水渠旁通往 B 的备用路线
+BombsiteB = "B_SITE"
+Bridge = "B_SITE"
