@@ -1,0 +1,15 @@
+# Map metadata for de_overpass. Format: see de_mirage.toml.
+# TODO(DeepSeek DS-01): fill [regions] and [callouts] from `python -m playbook callouts <demo>`.
+
+map = "de_overpass"
+display_name = "Overpass"
+
+# From awpy-data release 2000933 (map_data.json)
+[radar]
+pos_x = -4831.0
+pos_y = 1781.0
+scale = 5.2
+
+[regions]
+
+[callouts]

@@ -1,0 +1,15 @@
+# Map metadata for de_anubis. Format: see de_mirage.toml.
+# TODO(DeepSeek DS-01): fill [regions] and [callouts] from `python -m playbook callouts <demo>`.
+
+map = "de_anubis"
+display_name = "Anubis"
+
+# From awpy-data release 2000933 (map_data.json)
+[radar]
+pos_x = -2796.0
+pos_y = 3328.0
+scale = 5.22
+
+[regions]
+
+[callouts]

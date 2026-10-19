@@ -1,0 +1,19 @@
+{
+ "schema_version": 1,
+ "generated_at": "2026-10-19T02:35:08+00:00",
+ "min_matches_reliable": 5,
+ "data_source": "Professional CS2 match demos (provenance per demo in matches; see DESIGN.md, Data sources)",
+ "maps": [
+  {
+   "map": "de_mirage",
+   "display_name": "Mirage",
+   "n_matches": 1,
+   "teams": [
+    "b8",
+    "vitality"
+   ],
+   "n_players": 10,
+   "n_lineups": 229
+  }
+ ]
+}

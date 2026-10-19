@@ -1,0 +1,17 @@
+# Map metadata for de_train. Format: see de_mirage.toml.
+# TODO(DeepSeek DS-01): fill [regions] and [callouts] from `python -m playbook callouts <demo>`.
+# Two levels: points with z below lower_level_max_z belong on the lower radar image.
+
+map = "de_train"
+display_name = "Train"
+
+# From awpy-data release 2000933 (map_data.json)
+[radar]
+pos_x = -2308.0
+pos_y = 2078.0
+scale = 4.082077
+lower_level_max_z = -50.0
+
+[regions]
+
+[callouts]

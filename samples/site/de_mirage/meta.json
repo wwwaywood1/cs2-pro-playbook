@@ -1,0 +1,44 @@
+{
+ "map": "de_mirage",
+ "display_name": "Mirage",
+ "radar": {
+  "pos_x": -3230.0,
+  "pos_y": 1713.0,
+  "scale": 5.0
+ },
+ "radar_image": "https://github.com/pnxenopoulos/awpy-data/releases (radars/de_mirage.png)",
+ "regions": {
+  "T_SPAWN": "T_SPAWN",
+  "A_APPROACH": "A",
+  "A_SITE": "A",
+  "MID": "MID",
+  "B_APPROACH": "B",
+  "B_SITE": "B",
+  "CT_SPAWN": "CT_SPAWN"
+ },
+ "callouts": {
+  "TSpawn": "T_SPAWN",
+  "PalaceAlley": "A_APPROACH",
+  "PalaceInterior": "A_APPROACH",
+  "Scaffolding": "A_APPROACH",
+  "TRamp": "A_APPROACH",
+  "BombsiteA": "A_SITE",
+  "Stairs": "A_SITE",
+  "Jungle": "A_SITE",
+  "Connector": "A_SITE",
+  "TopofMid": "MID",
+  "Middle": "MID",
+  "Catwalk": "MID",
+  "Ladder": "MID",
+  "SnipersNest": "MID",
+  "Underpass": "MID",
+  "SideAlley": "B_APPROACH",
+  "House": "B_APPROACH",
+  "BackAlley": "B_APPROACH",
+  "Apartments": "B_APPROACH",
+  "BombsiteB": "B_SITE",
+  "Shop": "B_SITE",
+  "Truck": "B_SITE",
+  "CTSpawn": "CT_SPAWN"
+ }
+}

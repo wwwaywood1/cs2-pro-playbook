@@ -1,0 +1,56 @@
+# Map metadata for de_mirage.
+#
+# callouts: the in-game place name (m_szLastPlaceName, read from the demo) -> region
+# regions:  region -> lane. Lanes are the coarse level used for "shape" fingerprints
+#           (e.g. T side at 30s = "A2 M2 B1"); regions are the finer level.
+#
+# Every active-duty map needs one of these files. Callout names come straight from
+# the demo, so list them with:  python -m playbook callouts path/to/demo.dem
+
+map = "de_mirage"
+display_name = "Mirage"
+
+# World -> radar pixel transform (1024x1024 radar), from awpy-data release 2000933
+# (map_data.json). radar_x = (x - pos_x) / scale ; radar_y = (pos_y - y) / scale
+[radar]
+pos_x = -3230.0
+pos_y = 1713.0
+scale = 5.0
+
+[regions]
+T_SPAWN = "T_SPAWN"
+A_APPROACH = "A"
+A_SITE = "A"
+MID = "MID"
+B_APPROACH = "B"
+B_SITE = "B"
+CT_SPAWN = "CT_SPAWN"
+
+[callouts]
+TSpawn = "T_SPAWN"
+# A side
+PalaceAlley = "A_APPROACH"
+PalaceInterior = "A_APPROACH"
+Scaffolding = "A_APPROACH"
+TRamp = "A_APPROACH"
+BombsiteA = "A_SITE"
+Stairs = "A_SITE"
+Jungle = "A_SITE"
+Connector = "A_SITE"
+# Mid
+TopofMid = "MID"
+Middle = "MID"
+Catwalk = "MID"
+Ladder = "MID"
+SnipersNest = "MID"
+Underpass = "MID"
+# B side
+SideAlley = "B_APPROACH"
+House = "B_APPROACH"
+BackAlley = "B_APPROACH"
+Apartments = "B_APPROACH"
+BombsiteB = "B_SITE"
+Shop = "B_SITE"
+Truck = "B_SITE"
+# CT
+CTSpawn = "CT_SPAWN"

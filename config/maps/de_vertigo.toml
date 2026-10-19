@@ -1,0 +1,17 @@
+# Map metadata for de_vertigo. Format: see de_mirage.toml.
+# TODO(DeepSeek DS-01): fill [regions] and [callouts] from `python -m playbook callouts <demo>`.
+# Two levels: points with z below lower_level_max_z belong on the lower radar image.
+
+map = "de_vertigo"
+display_name = "Vertigo"
+
+# From awpy-data release 2000933 (map_data.json)
+[radar]
+pos_x = -3168.0
+pos_y = 1762.0
+scale = 4.0
+lower_level_max_z = 11700.0
+
+[regions]
+
+[callouts]

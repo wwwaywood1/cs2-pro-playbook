@@ -1,0 +1,17 @@
+# Map metadata for de_nuke. Format: see de_mirage.toml.
+# TODO(DeepSeek DS-01): fill [regions] and [callouts] from `python -m playbook callouts <demo>`.
+# Two levels: points with z below lower_level_max_z belong on the lower radar image.
+
+map = "de_nuke"
+display_name = "Nuke"
+
+# From awpy-data release 2000933 (map_data.json)
+[radar]
+pos_x = -3453.0
+pos_y = 2887.0
+scale = 7.0
+lower_level_max_z = -495.0
+
+[regions]
+
+[callouts]

@@ -1,0 +1,31 @@
+[project]
+name = "cs2-pro-playbook"
+version = "0.1.0"
+description = "Turn professional CS2 demos into team tactics, player profiles and a lineup library that regular players can use."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Zhiheng Cui" }]
+requires-python = ">=3.11"
+dependencies = [
+    "awpy>=3.1,<4",
+    "polars>=1.30",
+    "pyarrow>=15",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+fetch = ["huggingface_hub>=0.24"]
+dev = ["pytest>=8"]
+
+[project.scripts]
+playbook = "playbook.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["playbook"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,18 @@
+[
+ {
+  "team": "B8",
+  "slug": "b8",
+  "n_matches": 1,
+  "low_sample": true,
+  "win_rate_T": 0.167,
+  "win_rate_CT": 0.5
+ },
+ {
+  "team": "Vitality",
+  "slug": "vitality",
+  "n_matches": 1,
+  "low_sample": true,
+  "win_rate_T": 0.5,
+  "win_rate_CT": 0.833
+ }
+]

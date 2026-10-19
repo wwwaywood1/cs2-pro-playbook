@@ -1,0 +1,938 @@
+[
+ {
+  "steamid": "76561198304115519",
+  "name": "alex666",
+  "team": "B8",
+  "n_matches": 1,
+  "rounds": {
+   "total": 18,
+   "T": 12,
+   "CT": 6
+  },
+  "kpr": 0.056,
+  "dpr": 0.889,
+  "hs_pct": 0.0,
+  "opening_kills_pr": 0.0,
+  "opening_deaths_pr": 0.278,
+  "opening_success": 0.0,
+  "traded_death_rate": 0.188,
+  "awp_share": 0.0,
+  "util_pr": 1.944,
+  "T": {
+   "avg_dist_to_team_30s": 1094.0,
+   "first_into_site_rate": 1.0,
+   "lanes_15s": [
+    {
+     "value": "B",
+     "share": 0.5
+    },
+    {
+     "value": "MID",
+     "share": 0.333
+    },
+    {
+     "value": "A",
+     "share": 0.167
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "TopofMid",
+     "share": 0.636
+    },
+    {
+     "value": "SideAlley",
+     "share": 0.091
+    },
+    {
+     "value": "House",
+     "share": 0.091
+    },
+    {
+     "value": "BackAlley",
+     "share": 0.091
+    }
+   ]
+  },
+  "CT": {
+   "lanes_15s": [
+    {
+     "value": "A",
+     "share": 1.0
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "BombsiteA",
+     "share": 0.6
+    },
+    {
+     "value": "CTSpawn",
+     "share": 0.2
+    },
+    {
+     "value": "Connector",
+     "share": 0.2
+    }
+   ]
+  },
+  "role_hints": [
+   {
+    "role": "a_anchor",
+    "metric": "ct_lane_15s_share",
+    "value": 1.0
+   },
+   {
+    "role": "entry",
+    "metric": "t_first_into_site_rate",
+    "value": 1.0
+   },
+   {
+    "role": "support",
+    "metric": "util_pr",
+    "value": 1.944
+   }
+  ]
+ },
+ {
+  "steamid": "76561199149812353",
+  "name": "esenthial",
+  "team": "B8",
+  "n_matches": 1,
+  "rounds": {
+   "total": 18,
+   "T": 12,
+   "CT": 6
+  },
+  "kpr": 0.444,
+  "dpr": 0.833,
+  "hs_pct": 0.875,
+  "opening_kills_pr": 0.0,
+  "opening_deaths_pr": 0.056,
+  "opening_success": 0.0,
+  "traded_death_rate": 0.133,
+  "awp_share": 0.0,
+  "util_pr": 0.944,
+  "T": {
+   "avg_dist_to_team_30s": 933.0,
+   "first_into_site_rate": 0.333,
+   "lanes_15s": [
+    {
+     "value": "A",
+     "share": 0.333
+    },
+    {
+     "value": "B",
+     "share": 0.333
+    },
+    {
+     "value": "T_SPAWN",
+     "share": 0.167
+    },
+    {
+     "value": "MID",
+     "share": 0.167
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "TRamp",
+     "share": 0.273
+    },
+    {
+     "value": "TopofMid",
+     "share": 0.182
+    },
+    {
+     "value": "Apartments",
+     "share": 0.182
+    },
+    {
+     "value": "Middle",
+     "share": 0.182
+    }
+   ]
+  },
+  "CT": {
+   "lanes_15s": [
+    {
+     "value": "B",
+     "share": 0.833
+    },
+    {
+     "value": "A",
+     "share": 0.167
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "BombsiteB",
+     "share": 0.4
+    },
+    {
+     "value": "Truck",
+     "share": 0.2
+    },
+    {
+     "value": "Apartments",
+     "share": 0.2
+    },
+    {
+     "value": "BombsiteA",
+     "share": 0.2
+    }
+   ]
+  },
+  "role_hints": [
+   {
+    "role": "b_anchor",
+    "metric": "ct_lane_15s_share",
+    "value": 0.833
+   }
+  ]
+ },
+ {
+  "steamid": "76561198382173659",
+  "name": "kensizor",
+  "team": "B8",
+  "n_matches": 1,
+  "rounds": {
+   "total": 18,
+   "T": 12,
+   "CT": 6
+  },
+  "kpr": 0.444,
+  "dpr": 0.944,
+  "hs_pct": 1.0,
+  "opening_kills_pr": 0.056,
+  "opening_deaths_pr": 0.222,
+  "opening_success": 0.2,
+  "traded_death_rate": 0.353,
+  "awp_share": 0.0,
+  "util_pr": 1.0,
+  "T": {
+   "avg_dist_to_team_30s": 1009.0,
+   "first_into_site_rate": 0.0,
+   "lanes_15s": [
+    {
+     "value": "MID",
+     "share": 0.417
+    },
+    {
+     "value": "B",
+     "share": 0.333
+    },
+    {
+     "value": "A",
+     "share": 0.167
+    },
+    {
+     "value": "T_SPAWN",
+     "share": 0.083
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "Apartments",
+     "share": 0.273
+    },
+    {
+     "value": "Underpass",
+     "share": 0.182
+    },
+    {
+     "value": "SideAlley",
+     "share": 0.091
+    },
+    {
+     "value": "TopofMid",
+     "share": 0.091
+    }
+   ]
+  },
+  "CT": {
+   "lanes_15s": [
+    {
+     "value": "MID",
+     "share": 0.5
+    },
+    {
+     "value": "CT_SPAWN",
+     "share": 0.333
+    },
+    {
+     "value": "B",
+     "share": 0.167
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "CTSpawn",
+     "share": 0.4
+    },
+    {
+     "value": "Apartments",
+     "share": 0.2
+    },
+    {
+     "value": "Catwalk",
+     "share": 0.2
+    },
+    {
+     "value": "Ladder",
+     "share": 0.2
+    }
+   ]
+  },
+  "role_hints": []
+ },
+ {
+  "steamid": "76561198305036904",
+  "name": "npl",
+  "team": "B8",
+  "n_matches": 1,
+  "rounds": {
+   "total": 18,
+   "T": 12,
+   "CT": 6
+  },
+  "kpr": 0.5,
+  "dpr": 0.944,
+  "hs_pct": 0.667,
+  "opening_kills_pr": 0.0,
+  "opening_deaths_pr": 0.056,
+  "opening_success": 0.0,
+  "traded_death_rate": 0.235,
+  "awp_share": 0.0,
+  "util_pr": 1.444,
+  "T": {
+   "avg_dist_to_team_30s": 1111.0,
+   "first_into_site_rate": 0.6,
+   "lanes_15s": [
+    {
+     "value": "MID",
+     "share": 0.583
+    },
+    {
+     "value": "B",
+     "share": 0.25
+    },
+    {
+     "value": "A",
+     "share": 0.167
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "Underpass",
+     "share": 0.364
+    },
+    {
+     "value": "CTSpawn",
+     "share": 0.091
+    },
+    {
+     "value": "BackAlley",
+     "share": 0.091
+    },
+    {
+     "value": "TopofMid",
+     "share": 0.091
+    }
+   ]
+  },
+  "CT": {
+   "lanes_15s": [
+    {
+     "value": "MID",
+     "share": 0.5
+    },
+    {
+     "value": "CT_SPAWN",
+     "share": 0.167
+    },
+    {
+     "value": "A",
+     "share": 0.167
+    },
+    {
+     "value": "B",
+     "share": 0.167
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "Shop",
+     "share": 0.2
+    },
+    {
+     "value": "CTSpawn",
+     "share": 0.2
+    },
+    {
+     "value": "Ladder",
+     "share": 0.2
+    },
+    {
+     "value": "BombsiteA",
+     "share": 0.2
+    }
+   ]
+  },
+  "role_hints": []
+ },
+ {
+  "steamid": "76561199001538362",
+  "name": "s1zzi",
+  "team": "B8",
+  "n_matches": 1,
+  "rounds": {
+   "total": 18,
+   "T": 12,
+   "CT": 6
+  },
+  "kpr": 1.167,
+  "dpr": 0.611,
+  "hs_pct": 0.238,
+  "opening_kills_pr": 0.222,
+  "opening_deaths_pr": 0.111,
+  "opening_success": 0.667,
+  "traded_death_rate": 0.091,
+  "awp_share": 0.389,
+  "util_pr": 0.833,
+  "T": {
+   "avg_dist_to_team_30s": 1068.0,
+   "first_into_site_rate": 0.5,
+   "lanes_15s": [
+    {
+     "value": "A",
+     "share": 0.333
+    },
+    {
+     "value": "B",
+     "share": 0.333
+    },
+    {
+     "value": "MID",
+     "share": 0.333
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "Middle",
+     "share": 0.273
+    },
+    {
+     "value": "TopofMid",
+     "share": 0.182
+    },
+    {
+     "value": "SideAlley",
+     "share": 0.182
+    },
+    {
+     "value": "PalaceAlley",
+     "share": 0.091
+    }
+   ]
+  },
+  "CT": {
+   "lanes_15s": [
+    {
+     "value": "A",
+     "share": 0.5
+    },
+    {
+     "value": "MID",
+     "share": 0.333
+    },
+    {
+     "value": "B",
+     "share": 0.167
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "CTSpawn",
+     "share": 0.6
+    },
+    {
+     "value": "BombsiteA",
+     "share": 0.2
+    },
+    {
+     "value": "Shop",
+     "share": 0.2
+    }
+   ]
+  },
+  "role_hints": []
+ },
+ {
+  "steamid": "76561198113666193",
+  "name": "ZywOo",
+  "team": "Vitality",
+  "n_matches": 1,
+  "rounds": {
+   "total": 18,
+   "T": 6,
+   "CT": 12
+  },
+  "kpr": 1.056,
+  "dpr": 0.5,
+  "hs_pct": 0.421,
+  "opening_kills_pr": 0.278,
+  "opening_deaths_pr": 0.056,
+  "opening_success": 0.833,
+  "traded_death_rate": 0.222,
+  "awp_share": 0.556,
+  "util_pr": 1.889,
+  "T": {
+   "avg_dist_to_team_30s": 1039.0,
+   "first_into_site_rate": 0.5,
+   "lanes_15s": [
+    {
+     "value": "B",
+     "share": 0.667
+    },
+    {
+     "value": "MID",
+     "share": 0.333
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "TopofMid",
+     "share": 0.4
+    },
+    {
+     "value": "BombsiteB",
+     "share": 0.2
+    },
+    {
+     "value": "SideAlley",
+     "share": 0.2
+    },
+    {
+     "value": "BackAlley",
+     "share": 0.2
+    }
+   ]
+  },
+  "CT": {
+   "lanes_15s": [
+    {
+     "value": "A",
+     "share": 0.583
+    },
+    {
+     "value": "MID",
+     "share": 0.25
+    },
+    {
+     "value": "CT_SPAWN",
+     "share": 0.083
+    },
+    {
+     "value": "B",
+     "share": 0.083
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "BombsiteA",
+     "share": 0.273
+    },
+    {
+     "value": "Connector",
+     "share": 0.182
+    },
+    {
+     "value": "Jungle",
+     "share": 0.091
+    },
+    {
+     "value": "SnipersNest",
+     "share": 0.091
+    }
+   ]
+  },
+  "role_hints": [
+   {
+    "role": "awper",
+    "metric": "awp_share",
+    "value": 0.556
+   }
+  ]
+ },
+ {
+  "steamid": "76561197989744167",
+  "name": "apEX",
+  "team": "Vitality",
+  "n_matches": 1,
+  "rounds": {
+   "total": 18,
+   "T": 6,
+   "CT": 12
+  },
+  "kpr": 0.889,
+  "dpr": 0.444,
+  "hs_pct": 0.5,
+  "opening_kills_pr": 0.056,
+  "opening_deaths_pr": 0.0,
+  "opening_success": 1.0,
+  "traded_death_rate": 0.5,
+  "awp_share": 0.0,
+  "util_pr": 2.444,
+  "T": {
+   "avg_dist_to_team_30s": 1204.0,
+   "first_into_site_rate": 0.2,
+   "lanes_15s": [
+    {
+     "value": "B",
+     "share": 0.5
+    },
+    {
+     "value": "MID",
+     "share": 0.5
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "Underpass",
+     "share": 0.4
+    },
+    {
+     "value": "BombsiteB",
+     "share": 0.2
+    },
+    {
+     "value": "Connector",
+     "share": 0.2
+    },
+    {
+     "value": "BackAlley",
+     "share": 0.2
+    }
+   ]
+  },
+  "CT": {
+   "lanes_15s": [
+    {
+     "value": "A",
+     "share": 0.5
+    },
+    {
+     "value": "CT_SPAWN",
+     "share": 0.417
+    },
+    {
+     "value": "MID",
+     "share": 0.083
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "Jungle",
+     "share": 0.364
+    },
+    {
+     "value": "CTSpawn",
+     "share": 0.364
+    },
+    {
+     "value": "SnipersNest",
+     "share": 0.091
+    },
+    {
+     "value": "BombsiteB",
+     "share": 0.091
+    }
+   ]
+  },
+  "role_hints": []
+ },
+ {
+  "steamid": "76561197978835160",
+  "name": "flameZ",
+  "team": "Vitality",
+  "n_matches": 1,
+  "rounds": {
+   "total": 18,
+   "T": 6,
+   "CT": 12
+  },
+  "kpr": 0.944,
+  "dpr": 0.611,
+  "hs_pct": 0.588,
+  "opening_kills_pr": 0.167,
+  "opening_deaths_pr": 0.111,
+  "opening_success": 0.6,
+  "traded_death_rate": 0.273,
+  "awp_share": 0.0,
+  "util_pr": 3.111,
+  "T": {
+   "avg_dist_to_team_30s": 990.0,
+   "first_into_site_rate": 0.5,
+   "lanes_15s": [
+    {
+     "value": "B",
+     "share": 0.667
+    },
+    {
+     "value": "MID",
+     "share": 0.333
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "BombsiteB",
+     "share": 0.2
+    },
+    {
+     "value": "Middle",
+     "share": 0.2
+    },
+    {
+     "value": "TopofMid",
+     "share": 0.2
+    },
+    {
+     "value": "House",
+     "share": 0.2
+    }
+   ]
+  },
+  "CT": {
+   "lanes_15s": [
+    {
+     "value": "A",
+     "share": 1.0
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "BombsiteA",
+     "share": 0.727
+    },
+    {
+     "value": "Connector",
+     "share": 0.091
+    },
+    {
+     "value": "Scaffolding",
+     "share": 0.091
+    },
+    {
+     "value": "CTSpawn",
+     "share": 0.091
+    }
+   ]
+  },
+  "role_hints": [
+   {
+    "role": "a_anchor",
+    "metric": "ct_lane_15s_share",
+    "value": 1.0
+   },
+   {
+    "role": "entry",
+    "metric": "t_first_into_site_rate",
+    "value": 0.5
+   },
+   {
+    "role": "support",
+    "metric": "util_pr",
+    "value": 3.111
+   }
+  ]
+ },
+ {
+  "steamid": "76561197973140692",
+  "name": "mezii",
+  "team": "Vitality",
+  "n_matches": 1,
+  "rounds": {
+   "total": 18,
+   "T": 6,
+   "CT": 12
+  },
+  "kpr": 0.667,
+  "dpr": 0.5,
+  "hs_pct": 0.75,
+  "opening_kills_pr": 0.111,
+  "opening_deaths_pr": 0.056,
+  "opening_success": 0.667,
+  "traded_death_rate": 0.222,
+  "awp_share": 0.0,
+  "util_pr": 2.444,
+  "T": {
+   "avg_dist_to_team_30s": 999.0,
+   "first_into_site_rate": 0.0,
+   "lanes_15s": [
+    {
+     "value": "B",
+     "share": 0.667
+    },
+    {
+     "value": "MID",
+     "share": 0.333
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "BombsiteB",
+     "share": 0.2
+    },
+    {
+     "value": "TopofMid",
+     "share": 0.2
+    },
+    {
+     "value": "Middle",
+     "share": 0.2
+    },
+    {
+     "value": "Underpass",
+     "share": 0.2
+    }
+   ]
+  },
+  "CT": {
+   "lanes_15s": [
+    {
+     "value": "B",
+     "share": 1.0
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "Truck",
+     "share": 0.455
+    },
+    {
+     "value": "BombsiteB",
+     "share": 0.273
+    },
+    {
+     "value": "Apartments",
+     "share": 0.182
+    },
+    {
+     "value": "Underpass",
+     "share": 0.091
+    }
+   ]
+  },
+  "role_hints": [
+   {
+    "role": "b_anchor",
+    "metric": "ct_lane_15s_share",
+    "value": 1.0
+   }
+  ]
+ },
+ {
+  "steamid": "76561197991272318",
+  "name": "ropz",
+  "team": "Vitality",
+  "n_matches": 1,
+  "rounds": {
+   "total": 18,
+   "T": 6,
+   "CT": 12
+  },
+  "kpr": 0.667,
+  "dpr": 0.556,
+  "hs_pct": 0.5,
+  "opening_kills_pr": 0.111,
+  "opening_deaths_pr": 0.056,
+  "opening_success": 0.667,
+  "traded_death_rate": 0.5,
+  "awp_share": 0.056,
+  "util_pr": 1.389,
+  "T": {
+   "avg_dist_to_team_30s": 1432.0,
+   "first_into_site_rate": 0.0,
+   "lanes_15s": [
+    {
+     "value": "A",
+     "share": 0.5
+    },
+    {
+     "value": "B",
+     "share": 0.333
+    },
+    {
+     "value": "T_SPAWN",
+     "share": 0.167
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "PalaceInterior",
+     "share": 0.4
+    },
+    {
+     "value": "BombsiteB",
+     "share": 0.2
+    },
+    {
+     "value": "TRamp",
+     "share": 0.2
+    },
+    {
+     "value": "Apartments",
+     "share": 0.2
+    }
+   ]
+  },
+  "CT": {
+   "lanes_15s": [
+    {
+     "value": "MID",
+     "share": 0.667
+    },
+    {
+     "value": "B",
+     "share": 0.25
+    },
+    {
+     "value": "A",
+     "share": 0.083
+    }
+   ],
+   "places_30s": [
+    {
+     "value": "Catwalk",
+     "share": 0.455
+    },
+    {
+     "value": "BombsiteB",
+     "share": 0.182
+    },
+    {
+     "value": "Underpass",
+     "share": 0.091
+    },
+    {
+     "value": "Ladder",
+     "share": 0.091
+    }
+   ]
+  },
+  "role_hints": [
+   {
+    "role": "mid_ct",
+    "metric": "ct_lane_15s_share",
+    "value": 0.667
+   },
+   {
+    "role": "lurker",
+    "metric": "t_avg_dist_to_team_30s",
+    "value": 1432.0,
+    "team_median": 1039.0
+   }
+  ]
+ }
+]

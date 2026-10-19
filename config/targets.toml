@@ -1,0 +1,30 @@
+# What the pipeline should collect. Used by `python -m playbook fetch`.
+#
+# Demos come from the CounterQuant CS2 Demos dataset on Hugging Face (CC BY 4.0),
+# laid out as data/{year}/{tier}/{hltv_match_id}/{team1}-vs-{team2}-{map}.dem
+# Team names here are matched against the slugs in those file names.
+
+years = [2026]
+tiers = ["tier1"]
+
+# MVP scope: 2 maps, ~10 teams. Widen once the analysis layer is validated.
+maps = ["mirage", "inferno"]
+
+teams = [
+    "vitality",
+    "mouz",
+    "spirit",
+    "falcons",
+    "furia",
+    "the-mongolz",
+    "aurora",
+    "natus-vincere",
+    "faze",
+    "g2",
+]
+
+# Only keep a demo if at least one side is in `teams` (true) or both sides (false).
+require_both_teams = false
+
+# Hard cap so a first run doesn't pull hundreds of GB.
+max_demos = 60

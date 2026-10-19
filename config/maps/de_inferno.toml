@@ -1,0 +1,15 @@
+# Map metadata for de_inferno. Format: see de_mirage.toml.
+# TODO(DeepSeek DS-01): fill [regions] and [callouts] from `python -m playbook callouts <demo>`.
+
+map = "de_inferno"
+display_name = "Inferno"
+
+# From awpy-data release 2000933 (map_data.json)
+[radar]
+pos_x = -2087.0
+pos_y = 3870.0
+scale = 4.9
+
+[regions]
+
+[callouts]

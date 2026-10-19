@@ -1,0 +1,328 @@
+{
+ "team": "Vitality",
+ "slug": "vitality",
+ "map": "de_mirage",
+ "n_matches": 1,
+ "low_sample": true,
+ "matches": [
+  {
+   "demo_id": "hltv-de_mirage-2394170",
+   "hltv_match_id": null,
+   "opponent": "B8",
+   "score_for": 13,
+   "score_against": 5
+  }
+ ],
+ "sides": {
+  "T": {
+   "rounds": 6,
+   "won": 3,
+   "win_rate": 0.5,
+   "gun_rounds": 4,
+   "opening_win_rate": 0.667,
+   "avg_first_kill_s": 33.3,
+   "avg_util_per_round": 9.17,
+   "avg_early_util": 3.0,
+   "setups_15s": [
+    {
+     "value": "A1 B4",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A1 M2 B2",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A1 M3",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 0,
+     "win_rate": 0.0
+    },
+    {
+     "value": "M1 B4",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    }
+   ],
+   "setups_30s": [
+    {
+     "value": "A1 M2 B2",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A1 M4",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A2 M2",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 0,
+     "win_rate": 0.0
+    },
+    {
+     "value": "B5",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    }
+   ],
+   "plant_sites": [
+    {
+     "value": "A",
+     "rounds": 3,
+     "share": 0.5,
+     "won": 2,
+     "win_rate": 0.667
+    },
+    {
+     "value": "none",
+     "rounds": 2,
+     "share": 0.333,
+     "won": 0,
+     "win_rate": 0.0
+    },
+    {
+     "value": "B",
+     "rounds": 1,
+     "share": 0.167,
+     "won": 1,
+     "win_rate": 1.0
+    }
+   ],
+   "avg_plant_t_s": 73.3,
+   "execute_timing": [
+    {
+     "value": "default_then_execute",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "fast",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 0,
+     "win_rate": 0.0
+    },
+    {
+     "value": "late",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "no_clear_execute",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    }
+   ],
+   "execute_lane": [
+    {
+     "value": "A",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "B",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "MID",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 0,
+     "win_rate": 0.0
+    }
+   ],
+   "avg_execute_start_s": 52.0
+  },
+  "CT": {
+   "rounds": 12,
+   "won": 10,
+   "win_rate": 0.833,
+   "gun_rounds": 11,
+   "opening_win_rate": 0.75,
+   "avg_first_kill_s": 37.9,
+   "avg_util_per_round": 12.25,
+   "avg_early_util": 3.73,
+   "setups_15s": [
+    {
+     "value": "A2 M2 B1",
+     "rounds": 3,
+     "share": 0.273,
+     "won": 3,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A2 B2 C1",
+     "rounds": 2,
+     "share": 0.182,
+     "won": 2,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A2 M1 B1 C1",
+     "rounds": 2,
+     "share": 0.182,
+     "won": 1,
+     "win_rate": 0.5
+    },
+    {
+     "value": "A3 M1 B1",
+     "rounds": 2,
+     "share": 0.182,
+     "won": 2,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A1 M2 B1 C1",
+     "rounds": 1,
+     "share": 0.091,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A3 B2",
+     "rounds": 1,
+     "share": 0.091,
+     "won": 0,
+     "win_rate": 0.0
+    }
+   ],
+   "setups_30s": [
+    {
+     "value": "A2 M2 B1",
+     "rounds": 3,
+     "share": 0.273,
+     "won": 3,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A3 M1 B1",
+     "rounds": 2,
+     "share": 0.182,
+     "won": 2,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A1 B1 C2",
+     "rounds": 1,
+     "share": 0.091,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A1 M1 B3",
+     "rounds": 1,
+     "share": 0.091,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A2 B1 C1",
+     "rounds": 1,
+     "share": 0.091,
+     "won": 0,
+     "win_rate": 0.0
+    },
+    {
+     "value": "A2 B2 C1",
+     "rounds": 1,
+     "share": 0.091,
+     "won": 1,
+     "win_rate": 1.0
+    }
+   ],
+   "plants_against": 3,
+   "retakes_won": 1,
+   "retake_win_rate": 0.333,
+   "plants_against_by_site": [
+    {
+     "value": "B",
+     "rounds": 2,
+     "share": 0.667,
+     "won": 1,
+     "win_rate": 0.5
+    },
+    {
+     "value": "A",
+     "rounds": 1,
+     "share": 0.333,
+     "won": 0,
+     "win_rate": 0.0
+    }
+   ],
+   "stack_rate_15s": 0.273
+  }
+ },
+ "economy": [
+  {
+   "side": "CT",
+   "buy_type": "full",
+   "rounds": 11,
+   "won": 9,
+   "win_rate": 0.818
+  },
+  {
+   "side": "CT",
+   "buy_type": "pistol",
+   "rounds": 1,
+   "won": 1,
+   "win_rate": 1.0
+  },
+  {
+   "side": "T",
+   "buy_type": "eco",
+   "rounds": 1,
+   "won": 0,
+   "win_rate": 0.0
+  },
+  {
+   "side": "T",
+   "buy_type": "force",
+   "rounds": 1,
+   "won": 1,
+   "win_rate": 1.0
+  },
+  {
+   "side": "T",
+   "buy_type": "full",
+   "rounds": 3,
+   "won": 2,
+   "win_rate": 0.667
+  },
+  {
+   "side": "T",
+   "buy_type": "pistol",
+   "rounds": 1,
+   "won": 0,
+   "win_rate": 0.0
+  }
+ ]
+}
