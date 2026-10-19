@@ -28,7 +28,7 @@
     "round_win_rate": "回合胜率",
     "language": "语言",
     "generated_at": "数据生成时间",
-    "data_source_note": "数据来源：职业比赛 demo（HLTV / CounterQuant）。",
+    "data_source_note": "数据来源：职业比赛 demo（IEM Cologne Major 2026 等，经 Hugging Face cs2povarchive 公开）。",
     "no_plant": "未下包"
   },
   "side": {
@@ -163,7 +163,7 @@
       "Middle": "中路",
       "Catwalk": "中路短",
       "Ladder": "梯子",
-      "SnipersNest": "窗口",
+      "SnipersNest": "VIP 狙位",
       "Underpass": "地道",
       "SideAlley": "B 小巷",
       "House": "B 房子",

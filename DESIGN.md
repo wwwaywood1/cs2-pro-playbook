@@ -16,7 +16,7 @@ nothing to host.
 ## Architecture
 
 ```
-CounterQuant (HF) ──fetch──> data/raw/*.dem
+cs2povarchive (HF) ──fetch──> data/raw/**/*.dem
                               │ parse.py      (awpy 3.1: one demo -> normalized tables)
                               │ semantics.py  (team_rounds, player_rounds)
                               ▼
@@ -31,7 +31,7 @@ on stored output: `export` never touches demos, and `parse` skips demos already 
 
 | Module | Role |
 |---|---|
-| `playbook/fetch.py` | Lists and downloads demos from CounterQuant matching `config/targets.toml` |
+| `playbook/fetch.py` | Lists and downloads demos from Hugging Face matching `config/targets.toml` (standalone copy: `scripts/download_batch1.py`) |
 | `playbook/parse.py` | One demo to tables; teams, sides, rounds, positions, kills, plants, grenades |
 | `playbook/utility.py` | Grenade thrower recovery; callout lookup for arbitrary points |
 | `playbook/semantics.py` | Round semantics (labels per round x team, and per round x player) |
@@ -42,12 +42,16 @@ on stored output: `export` never touches demos, and `parse` skips demos already 
 
 ## Data sources
 
-- **CounterQuant CS2 Demos** (huggingface.co/datasets/KEDevO/CounterQuant-CS2-Demos),
-  CC BY 4.0, raw `.dem` files collected from HLTV.org, Tier 1/2, 2024 onward, updated
-  within 24 to 48h of matches. Layout `data/{year}/{tier}/{hltv_match_id}/{team1}-vs-{team2}-{map}.dem`.
-  Caveat: it is maintained by one person, and the original demos come from HLTV, so the
-  CC BY license on the collection may not settle the rights of the underlying files.
-  Fine for research and a non-commercial site; revisit before any monetisation.
+- **cs2povarchive/cs2-demos** (huggingface.co/datasets/cs2povarchive/cs2-demos), Apache-2.0:
+  GOTV demos of IEM Cologne Major 2026 (219 files) and CAC 2026 (64 files), about 120 GB,
+  262 games over the 7-map pool (Ancient, Anubis, Dust2, Inferno, Mirage, Nuke, Overpass).
+  Layout `<event>/<hltv_match_id>-<slug>/<team1>-vs-<team2>[-mN]-<map>[-pK].dem`; 19 games
+  are split into parts (`-p1`, `-p2`) and are skipped until multipart parsing is added.
+  It replaced CounterQuant CS2 Demos, which was taken down in October 2026: a reminder that
+  single-maintainer sources disappear. Keep the raw demos you download, and keep the GRID
+  Open Access application as the long-term option.
+- Hugging Face is not on the network allowlist of the development sandboxes, so downloads
+  run on the user's machine (`scripts/download_batch1.py`, needs only `huggingface_hub`).
 - **awpy test fixtures** (github.com/pnxenopoulos/awpy-fixtures): used for tests
   (B8 vs Vitality on Mirage, 9z vs PARIVISION on Inferno).
 - **awpy-data** releases: radar images and world-to-radar transforms (release 2000933).
@@ -177,7 +181,7 @@ index.json                      { schema_version, generated_at, min_matches_reli
   clustering is the M2 work.
 - Role thresholds are untuned; they need a labelled set (pro roles are public knowledge
   for top teams, so labels are cheap to collect).
-- Multipart demos (one map split over several files) are not handled; awpy supports them.
+- Multipart demos (one map split over several files, 19 of 262 games in the current source) are skipped; awpy supports them via `Demo([part1, part2])`, but ticks restart per part, so parse.py needs per-part round bounds.
 - Parsing is strict (GPT-01): demos with restored or non-consecutive rounds, a bot playing
   inside a live round, or players whose team cannot be resolved are rejected, not repaired.
   A real backup-restore demo and a late-joined GOTV demo still need to be collected to see
@@ -189,7 +193,7 @@ index.json                      { schema_version, generated_at, min_matches_reli
 | Milestone | Content | Status |
 |---|---|---|
 | M0 | Pipeline: fetch, parse, semantics, export, tests | done |
-| M1 | Map configs (Mirage, Inferno done), team aliases (done), first 60 demos for Mirage + Inferno | next: fetch |
+| M1 | Map configs (Mirage, Inferno done; 5 more via DS-05), team aliases (done), first 60 demos (Cologne Major Mirage + Inferno) | next: download |
 | M2 | Tactic identification: trajectory clustering of T executes and CT setups, labelled validation set, tuned role thresholds | after M1 |
 | M3 | Website v1: lineup library, team and player pages, bilingual (zh/en) | done on sample data; GitHub Pages deploy pending |
 | M4 | Natural-language summaries generated from the computed numbers (the LLM rewrites, never invents) | after M2 |

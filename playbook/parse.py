@@ -38,10 +38,22 @@ SAMPLE_SECONDS = 1
 
 
 def demo_identity(path: Path) -> dict:
-    """``<hltv_match_id>_<team1>-vs-<team2>-<map>.dem`` (fetch.py naming) -> ids."""
+    """Demo id and HLTV match id from the file location.
+
+    - dataset tree: ``.../<hltv_match_id>-<slug>/<team1>-vs-<team2>[-mN]-<map>.dem``
+      -> demo_id ``<hltv_match_id>_<file stem>``
+    - flat file:    ``<hltv_match_id>_<team1>-vs-<team2>-<map>.dem`` -> its stem
+    - anything else keeps its stem and has no match id.
+    """
+    path = Path(path)
     stem = path.stem
     m = re.match(r"^(\d+)_(.+)$", stem)
-    return {"demo_id": stem, "hltv_match_id": int(m[1]) if m else None}
+    if m:
+        return {"demo_id": stem, "hltv_match_id": int(m[1])}
+    parent = re.match(r"^(\d+)-", path.parent.name)
+    if parent:
+        return {"demo_id": f"{parent[1]}_{stem}", "hltv_match_id": int(parent[1])}
+    return {"demo_id": stem, "hltv_match_id": None}
 
 
 def half_of(round_num: int, max_rounds: int = 24, ot_max_rounds: int = 6) -> int:

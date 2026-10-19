@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 import traceback
 from pathlib import Path
@@ -18,14 +19,22 @@ from pathlib import Path
 from playbook.config import PARSED_DIR, RAW_DIR, SITE_DIR
 
 
+MULTIPART_RE = re.compile(r"-p\d+(\(\d+\))?$|\(\d+\)$")
+
+
 def _demo_paths(inputs: list[Path]) -> list[Path]:
+    """All .dem files under the inputs (recursively). Multipart pieces (-p1, -p2) and
+    duplicate uploads ("(1)") are skipped: one game per file is assumed."""
     out: list[Path] = []
     for p in inputs:
         if p.is_dir():
-            out.extend(sorted(p.glob("*.dem")))
+            out.extend(sorted(p.rglob("*.dem")))
         elif p.suffix == ".dem":
             out.append(p)
-    return out
+    skipped = [p for p in out if MULTIPART_RE.search(p.stem)]
+    if skipped:
+        print(f"skipping {len(skipped)} multipart/duplicate file(s), e.g. {skipped[0].name}")
+    return [p for p in out if not MULTIPART_RE.search(p.stem)]
 
 
 def cmd_parse(inputs: list[Path], out: Path, force: bool) -> int:

@@ -28,7 +28,7 @@
     "round_win_rate": "Round win rate",
     "language": "Language",
     "generated_at": "Data generated",
-    "data_source_note": "Data source: professional match demos (HLTV / CounterQuant).",
+    "data_source_note": "Data source: professional match demos (IEM Cologne Major 2026 and more, via the cs2povarchive dataset on Hugging Face).",
     "no_plant": "No plant"
   },
   "side": {

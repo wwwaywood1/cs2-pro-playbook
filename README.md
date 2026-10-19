@@ -22,7 +22,9 @@ grenades pros actually throw, each with a one-line practice command.
 pip install -e ".[fetch,dev]"          # Python 3.11+
 
 python -m playbook fetch --dry-run     # list demos matching config/targets.toml
-python -m playbook fetch               # download them into data/raw/
+python -m playbook fetch               # download them into data/raw/cs2povarchive/
+# no Hugging Face access where the pipeline runs? on any machine that has it:
+#   python3 -m pip install -U huggingface_hub && python3 scripts/download_batch1.py
 python -m playbook run                 # parse + export -> data/site/*.json
 pytest -q                              # tests (end-to-end ones need the test demo, see below)
 ```
@@ -79,7 +81,7 @@ lineup library). A real one-match example is in [`samples/site/`](samples/site/)
 
 ## Data and credits
 
-- Demos: [CounterQuant CS2 Demos](https://huggingface.co/datasets/KEDevO/CounterQuant-CS2-Demos) (CC BY 4.0), originally from HLTV.org.
+- Demos: [cs2povarchive/cs2-demos](https://huggingface.co/datasets/cs2povarchive/cs2-demos) on Hugging Face (Apache-2.0): IEM Cologne Major 2026 and CAC 2026 GOTV demos.
 - Parsing: [awpy](https://github.com/pnxenopoulos/awpy) (MIT). Radar images and transforms: awpy-data.
 - Method inspiration: Xenopoulos et al., *ggViz* (2022), *Valuing Player Actions in CSGO* (2020), *ESTA* (2022).
 

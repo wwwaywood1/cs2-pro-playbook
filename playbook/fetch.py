@@ -1,125 +1,148 @@
-"""Select and download professional demos from the CounterQuant dataset on Hugging Face.
+"""Select and download professional demos from Hugging Face.
 
-Dataset: https://huggingface.co/datasets/KEDevO/CounterQuant-CS2-Demos (CC BY 4.0)
-Layout:  data/{year}/{tier}/{hltv_match_id}/{team1}-vs-{team2}-{map}.dem
+Source: https://huggingface.co/datasets/cs2povarchive/cs2-demos (Apache-2.0)
+Layout: <event>/<hltv_match_id>-<slug>/<team1>-vs-<team2>[-m<N>]-<map>[-p<K>].dem
+        e.g. iem_cologne_major_2026/2394983-vitality-vs-mouz-iem-cologne-major/vitality-vs-mouz-m1-mirage.dem
 
-Only the files that match ``config/targets.toml`` are downloaded, one by one, so a
-first run stays small. Requires ``pip install huggingface_hub``.
+One map of one match is a "game". A game recorded in several files has -p1, -p2, ...
+parts; those are skipped for now (the parser reads one file per game). A trailing
+"(1)" marks a duplicate upload and is ignored.
 
-Demos you download by hand (e.g. from HLTV, which ships .rar archives) can skip this
-step: extract the .dem files into ``data/raw/`` and run ``parse`` directly.
+(The CounterQuant dataset used before was taken down in October 2026.)
+
+Downloads keep the dataset's own tree under data/raw/<source>/, so the parser finds
+the match id in the folder name. Demos you get elsewhere (HLTV .rar archives) can go
+straight into data/raw/ as <hltv_match_id>_<team1>-vs-<team2>-<map>.dem.
+
+Requires `pip install huggingface_hub`. If Hugging Face is not reachable from the
+machine running the pipeline, use scripts/download_batch1.py on any machine that can
+reach it (it needs only huggingface_hub) and copy data/raw over.
 """
 
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from playbook.config import RAW_DIR, load_targets
 
-REPO_ID = "KEDevO/CounterQuant-CS2-Demos"
+SOURCES = {
+    "cs2povarchive": "cs2povarchive/cs2-demos",
+}
+KNOWN_MAPS = ("mirage", "inferno", "nuke", "dust2", "ancient", "anubis", "overpass", "train", "vertigo")
 PATH_RE = re.compile(
-    r"^data/(?P<year>\d{4})/(?P<tier>[^/]+)/(?P<match_id>[^/]+)/(?P<stem>.+)\.dem$",
-    re.IGNORECASE,
+    r"^(?P<event>[^/]+)/(?P<match_id>\d+)-[^/]+/"
+    r"(?P<team1>.+?)-vs-(?P<team2>.+?)(?:-m(?P<map_no>\d+))?-(?P<map>" + "|".join(KNOWN_MAPS) + r")"
+    r"(?:-p(?P<part>\d+))?(?P<dup>\(\d+\))?\.dem$"
 )
 
 
 @dataclass
-class RemoteDemo:
-    path: str
-    year: int
-    tier: str
-    match_id: str
+class Game:
+    event: str
+    match_id: int
     team1: str
     team2: str
+    map_no: int
     map: str
+    parts: list[str] = field(default_factory=list)
+    bytes: int = 0
 
     @property
-    def local_name(self) -> str:
-        return f"{self.match_id}_{Path(self.path).stem}.dem"
+    def key(self) -> str:
+        return f"{self.match_id}-m{self.map_no}-{self.map}"
+
+    @property
+    def multipart(self) -> bool:
+        return len(self.parts) > 1
 
 
-def parse_remote_path(path: str, known_maps: list[str]) -> RemoteDemo | None:
-    """Split a dataset path into its parts. Returns None for anything that isn't a demo."""
-    m = PATH_RE.match(path)
-    if not m:
-        return None
-    stem = m["stem"].lower()
-    # The map is the last dash-separated token(s); match against known map names so
-    # multi-word maps (none today, but e.g. "dust2") are handled.
-    map_name = next((mp for mp in sorted(known_maps, key=len, reverse=True) if stem.endswith("-" + mp)), None)
-    if map_name is None:
-        map_name = stem.rsplit("-", 1)[-1]
-    teams = stem[: -(len(map_name) + 1)]
-    if "-vs-" not in teams:
-        return None
-    team1, team2 = teams.split("-vs-", 1)
-    return RemoteDemo(path, int(m["year"]), m["tier"], m["match_id"], team1, team2, map_name)
+def group_games(files: list[tuple[str, int]]) -> tuple[list[Game], list[str]]:
+    """Group dataset files into games. Returns (games, paths that did not match the layout)."""
+    games: dict[str, Game] = {}
+    unmatched: list[str] = []
+    for path, size in files:
+        m = PATH_RE.match(path)
+        if not m:
+            if path.endswith(".dem"):
+                unmatched.append(path)
+            continue
+        if m["dup"]:
+            continue
+        g = Game(m["event"], int(m["match_id"]), m["team1"], m["team2"], int(m["map_no"] or 1), m["map"])
+        g = games.setdefault(g.key, g)
+        g.parts.append(path)
+        g.bytes += size or 0
+    for g in games.values():
+        g.parts.sort()
+    return list(games.values()), unmatched
 
 
-def select(remote: list[RemoteDemo], targets: dict) -> list[RemoteDemo]:
-    years = set(targets.get("years", []))
-    tiers = set(targets.get("tiers", []))
-    maps = set(targets.get("maps", []))
+def select(games: list[Game], targets: dict) -> tuple[list[Game], list[Game]]:
+    """(main batch, extra one-per-map games) according to targets.toml."""
+    events = set(targets.get("events", []))
+    maps = list(targets.get("maps", []))
     teams = {t.lower() for t in targets.get("teams", [])}
     both = targets.get("require_both_teams", False)
-    out = []
-    for d in remote:
-        if years and d.year not in years:
-            continue
-        if tiers and d.tier not in tiers:
-            continue
-        if maps and d.map not in maps:
-            continue
+
+    def ok(g: Game) -> bool:
+        if g.multipart or (events and g.event not in events):
+            return False
         if teams:
-            hits = (d.team1 in teams) + (d.team2 in teams)
+            hits = (g.team1 in teams) + (g.team2 in teams)
             if hits < (2 if both else 1):
-                continue
-        out.append(d)
-    out.sort(key=lambda d: (d.year, d.match_id), reverse=True)  # newest first
-    return out[: targets.get("max_demos", len(out))]
+                return False
+        return True
+
+    newest = lambda g: (-g.match_id, g.map_no)  # noqa: E731
+    pool = sorted((g for g in games if ok(g)), key=newest)
+    main = [g for g in pool if not maps or g.map in maps][: targets.get("max_demos", len(pool))]
+    extra = []
+    for mp in targets.get("extra_one_per_map", []):
+        cand = [g for g in pool if g.map == mp]
+        if cand:
+            extra.append(cand[0])
+    return main, extra
 
 
-def list_remote(years: list[int] | None = None) -> list[str]:
+def list_remote(repo_id: str) -> list[tuple[str, int]]:
     from huggingface_hub import HfApi
 
     api = HfApi()
-    if not years:
-        return api.list_repo_files(REPO_ID, repo_type="dataset")
-    files: list[str] = []
-    for year in years:
-        for entry in api.list_repo_tree(REPO_ID, repo_type="dataset", path_in_repo=f"data/{year}", recursive=True):
-            if getattr(entry, "path", "").endswith(".dem"):
-                files.append(entry.path)
-    return files
+    return [
+        (e.path, getattr(e, "size", 0) or 0)
+        for e in api.list_repo_tree(repo_id, repo_type="dataset", recursive=True)
+        if getattr(e, "path", "").endswith(".dem")
+    ]
 
 
 def fetch(dry_run: bool = False, out_dir: Path = RAW_DIR, targets_path: Path | None = None) -> list[Path]:
     targets = load_targets(targets_path)
-    known_maps = targets.get("maps", []) + ["mirage", "inferno", "nuke", "ancient", "anubis", "dust2", "train", "overpass", "vertigo"]
-    remote = [d for p in list_remote(targets.get("years")) if (d := parse_remote_path(p, known_maps))]
-    chosen = select(remote, targets)
-    print(f"{len(remote)} demos in the dataset for the selected years; {len(chosen)} match targets.toml")
-    for d in chosen:
-        print(f"  {d.year} {d.tier} {d.match_id:>9}  {d.team1} vs {d.team2}  [{d.map}]")
+    source = targets.get("source", "cs2povarchive")
+    repo_id = SOURCES[source]
+    games, unmatched = group_games(list_remote(repo_id))
+    main, extra = select(games, targets)
+    n_multi = sum(g.multipart for g in games)
+    print(f"{repo_id}: {len(games)} games ({n_multi} multipart, skipped), {len(unmatched)} unrecognised files")
+    for label, batch in (("batch", main), ("one per extra map", extra)):
+        gb = sum(g.bytes for g in batch) / 1e9
+        print(f"{label}: {len(batch)} games, {gb:.1f} GB")
+        for g in batch:
+            print(f"  {g.match_id} m{g.map_no} {g.map:<8} {g.team1} vs {g.team2}  [{g.event}]")
     if dry_run:
         return []
 
     from huggingface_hub import hf_hub_download
 
-    out_dir.mkdir(parents=True, exist_ok=True)
-    staging = out_dir / ".hf_staging"
+    dest_root = out_dir / source
     done: list[Path] = []
-    for i, d in enumerate(chosen, 1):
-        dest = out_dir / d.local_name
+    todo = [p for g in main + extra for p in g.parts]
+    for i, path in enumerate(todo, 1):
+        dest = dest_root / path
         if dest.exists():
             done.append(dest)
             continue
-        print(f"[{i}/{len(chosen)}] downloading {d.path}")
-        # Download into a staging dir (no second copy in the global HF cache), then
-        # move it to a flat, self-describing name: <match_id>_<team1>-vs-<team2>-<map>.dem
-        got = Path(hf_hub_download(REPO_ID, d.path, repo_type="dataset", local_dir=staging))
-        got.replace(dest)
-        done.append(dest)
+        print(f"[{i}/{len(todo)}] {path}")
+        done.append(Path(hf_hub_download(repo_id, path, repo_type="dataset", local_dir=dest_root)))
     return done
