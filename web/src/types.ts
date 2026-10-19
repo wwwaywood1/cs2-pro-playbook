@@ -30,6 +30,8 @@ export interface SiteIndex {
     teams: string[]; // team slugs
     n_players: number;
     n_lineups: number;
+    /** true when <map>/heatmaps/ exists */
+    heatmaps?: boolean;
   }[];
 }
 
@@ -152,4 +154,53 @@ export interface Lineup {
   /** paste into the CS2 console on a practice server (sv_cheats 1) */
   practice_cmd: string;
   example: { demo_id: string; round_num: number; throw_tick: number };
+}
+
+// ---------------------------------------------------------------------------- heatmaps
+// <map>/heatmaps/baseline.json, players/<steamid>.json, teams/<slug>.json (playbook/heatmap.py)
+
+export type HeatLayer = "presence" | "holding" | "shots" | "util_throw" | "util_land" | "kills" | "deaths";
+export type HeatPhase = "early" | "mid" | "post";
+
+/**
+ * Sparse grid: [cell, value, cell, value, ...].
+ * cell = level * grid * grid + row * grid + col (row 0 = top of the radar image).
+ * value = per round played on that side: seconds (presence, holding) or counts.
+ */
+export type SparseGrid = number[];
+
+export interface HeatData {
+  rounds: { T: number; CT: number };
+  /** totals per round, by side and phase ("all" = sum of phases) */
+  per_round: Partial<Record<Side, Partial<Record<HeatPhase | "all", Partial<Record<HeatLayer, number>>>>>>;
+  data: Partial<Record<Side, Partial<Record<HeatPhase, Partial<Record<HeatLayer, SparseGrid>>>>>>;
+}
+
+/** Grid metadata plus the map-wide baseline (all teams, per team-round). */
+export interface HeatmapBaseline extends HeatData {
+  map: string;
+  grid: number; // cells per side (64)
+  cell_px: number; // radar pixels per cell (16)
+  levels: 1 | 2; // 2 on maps with a lower floor (Nuke): level 1 = lower radar image
+  layers: HeatLayer[];
+  phases: HeatPhase[];
+  sides: Side[];
+  early_s: number;
+  hold_speed: number;
+  value: string;
+  cell_index: string;
+  default_weights: Partial<Record<HeatLayer, number>>;
+}
+
+export interface PlayerHeatmap extends HeatData {
+  steamid: string;
+  name: string;
+  team: string;
+  n_matches: number;
+}
+
+export interface TeamHeatmap extends HeatData {
+  team: string;
+  slug: string;
+  n_matches: number;
 }

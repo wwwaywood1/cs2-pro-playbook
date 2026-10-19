@@ -28,7 +28,7 @@ from collections import Counter
 
 import polars as pl
 
-from playbook.config import LANE_ORDER, LANE_SHORT
+from playbook.config import LANE_ORDER, LANE_SHORT, MapMeta, load_map
 
 EXEC_TYPES = ("smoke", "flashbang", "molotov")
 EXEC_WINDOW_S = 10.0
@@ -230,6 +230,34 @@ def build_player_rounds(t: dict[str, pl.DataFrame], team_rounds: pl.DataFrame) -
         )
     )
     return out.sort(*KEYS, "team", "steamid")
+
+
+def _region(col: str, mm: MapMeta) -> pl.Expr:
+    return pl.col(col).replace_strict(mm.callout_region, default="OTHER", return_dtype=pl.Utf8)
+
+
+def _lane(region_col: str, mm: MapMeta) -> pl.Expr:
+    return pl.col(region_col).replace_strict(mm.region_lane, default="OTHER", return_dtype=pl.Utf8)
+
+
+def relabel(tables: dict[str, pl.DataFrame], mm: MapMeta | None = None) -> dict[str, pl.DataFrame]:
+    """Recompute every region/lane column (and plant sites) from the stored callouts with the
+    current map config. Run after editing config/maps/*.toml; the demo is not needed."""
+    mm = mm or load_map(tables["matches"]["map"][0])
+    out = dict(tables)
+    out["positions"] = tables["positions"].with_columns(region=_region("place", mm)).with_columns(lane=_lane("region", mm))
+    out["kills"] = tables["kills"].with_columns(
+        attacker_region=_region("attacker_place", mm), victim_region=_region("victim_place", mm)
+    )
+    out["utility"] = tables["utility"].with_columns(land_region=_region("land_place", mm)).with_columns(
+        land_lane=_lane("land_region", mm)
+    )
+    site_of = {c: mm.region_lane[r] for c, r in mm.callout_region.items() if mm.region_lane.get(r) in ("A", "B")}
+    site_of.update({"BombsiteA": "A", "BombsiteB": "B"})
+    out["plants"] = tables["plants"].with_columns(
+        site=pl.col("place").replace_strict(site_of, default=None, return_dtype=pl.Utf8)
+    )
+    return out
 
 
 def add_semantics(tables: dict[str, pl.DataFrame]) -> dict[str, pl.DataFrame]:

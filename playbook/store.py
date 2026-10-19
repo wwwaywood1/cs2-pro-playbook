@@ -14,7 +14,7 @@ from playbook.config import PARSED_DIR
 
 TABLES = [
     "matches", "players", "rounds", "economy", "loadouts", "positions",
-    "kills", "plants", "utility", "team_rounds", "player_rounds",
+    "kills", "plants", "utility", "shots", "team_rounds", "player_rounds",
 ]
 
 

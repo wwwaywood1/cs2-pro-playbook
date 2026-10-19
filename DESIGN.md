@@ -21,13 +21,16 @@ cs2povarchive (HF) ──fetch──> data/raw/**/*.dem
                               │ semantics.py  (team_rounds, player_rounds)
                               ▼
                        data/parsed/<table>/<demo_id>.parquet
-                              │ export.py     (aggregate across demos, per map)
+                              │ export.py     (aggregate across demos, per map;
+                              │                heatmap.py, tactics.py)
                               ▼
                        data/site/**.json  ──copy──> web/public/data  ──> static site (GitHub Pages)
 ```
 
 All analysis is precomputed offline; the website only reads JSON. Each stage is rerunnable
 on stored output: `export` never touches demos, and `parse` skips demos already parsed.
+After editing `config/maps/*.toml`, `python -m playbook relabel [maps]` re-applies the
+callout mapping to the stored tables and rebuilds the semantic tables (no demo needed).
 
 | Module | Role |
 |---|---|
@@ -35,7 +38,9 @@ on stored output: `export` never touches demos, and `parse` skips demos already 
 | `playbook/parse.py` | One demo to tables; teams, sides, rounds, positions, kills, plants, grenades |
 | `playbook/utility.py` | Grenade thrower recovery; callout lookup for arbitrary points |
 | `playbook/semantics.py` | Round semantics (labels per round x team, and per round x player) |
-| `playbook/export.py` | Site JSON: team profiles, player profiles, lineup library |
+| `playbook/export.py` | Site JSON: team profiles, player profiles, lineup library, heatmaps |
+| `playbook/heatmap.py` | Player and team heatmaps: presence, holding, shots, utility, kills, deaths |
+| `playbook/tactics.py` | M2, in progress: landing spots, T plans (commit, tempo, split, lurk, fake), execute recipes, CT setups |
 | `playbook/store.py` | Parquet storage, one file per demo per table |
 | `config/maps/*.toml` | Callout to region to lane mapping, radar transform, per map |
 | `config/team_aliases.csv` | In-game clan names to canonical team names |
@@ -73,6 +78,7 @@ Sides are `T` / `CT`. `t_s` is seconds since freeze end of that round.
 | kills | kill | t_s, is_opening, is_post_round, attacker/victim team, side, place, region, xyz, weapon, headshot, is_trade |
 | plants | plant | t_s, site (A/B), place, planter |
 | utility | grenade | type, throw/pop tick and t_s, thrower, throw xyz + place + pitch/yaw, movement at release, land xyz + place/region/lane, matched |
+| shots | gun fire event | t_s, is_post_round, shooter steamid/team/side, xyz, pitch/yaw, weapon, scoped (knives, grenades, C4, zeus excluded) |
 | team_rounds | round x team | see Round semantics |
 | player_rounds | round x player | see Round semantics |
 
@@ -128,6 +134,27 @@ closest to the centre; its position and angles produce
 `setpos x y z;setang pitch yaw 0`. Technique is jump, run (speed at least 100), crouch,
 walk or stand, taken at the release tick.
 
+### Heatmaps
+
+Counted on a 64 x 64 grid over the 1024 px radar (16 px per cell; Nuke has a second
+level for z below `lower_level_max_z`), per side and phase, divided by the rounds played
+on that side, so every value is "per round".
+
+| Layer | Counts |
+|---|---|
+| presence | living seconds (positions are sampled once per second) |
+| holding | living seconds moving less than 40 units in that second (holding an angle; about 30% of samples) |
+| shots | gun fire events at the shooter's position |
+| util_throw / util_land | grenades at the release / landing position |
+| kills / deaths | at the attacker / victim position |
+
+Phases: `post` (after the plant; retake for CT) takes precedence, then `early` (first
+20 s), then `mid`. The site combines layers as a weighted sum of shares (each layer divided
+by its own total), default presence:shots:util_throw = 1:1:1, because seconds, shots and
+grenades are not comparable units. `baseline.json` is the same grid for all teams on the
+map (per team-round), so a team or player can be drawn as "share minus map average".
+`web/src/heatmap.ts` mirrors the Python combine step (checked to agree on real data).
+
 ## Site data contract (data/site, schema_version 1)
 
 ```
@@ -136,6 +163,9 @@ index.json                      { schema_version, generated_at, min_matches_reli
 <map>/teams.json                [{ team, slug, n_matches, low_sample, win_rate_T, win_rate_CT }]
 <map>/teams/<slug>.json         { team, slug, map, n_matches, low_sample, matches[], sides{T,CT}, economy[] }
 <map>/players.json              [{ steamid, name, team, rounds{total,T,CT}, kpr, dpr, hs_pct, opening_*, awp_share, util_pr, T{...}, CT{...}, role_hints[] }]
+<map>/heatmaps/baseline.json    { map, grid, cell_px, levels, layers[], phases[], sides[], early_s, hold_speed, default_weights, rounds{T,CT}, per_round{side:{phase|all:{layer}}}, data{side:{phase:{layer:[cell,value,...]}}} }
+<map>/heatmaps/teams/<slug>.json     { team, slug, n_matches, rounds, per_round, data }
+<map>/heatmaps/players/<steamid>.json { steamid, name, team, n_matches, rounds, per_round, data }
 <map>/lineups.json              [{ id, side, type, throw_place, land_place, land_region, land_lane, n_throws, n_matches, teams[], throwers[], round_win_rate, median_pop_t_s, technique, jump_share, throw{x,y,z,pitch,yaw,radar_x,radar_y}, land{x,y,z,radar_x,radar_y}, practice_cmd, example{demo_id,round_num,throw_tick} }]
 ```
 
@@ -189,15 +219,21 @@ index.json                      { schema_version, generated_at, min_matches_reli
   inside a live round, or players whose team cannot be resolved are rejected, not repaired.
   A real backup-restore demo and a late-joined GOTV demo still need to be collected to see
   how often this triggers on Tier 1/2 data.
-- Two-level maps (Nuke, Train, Vertigo) need the lower radar when z < `lower_level_max_z`.
+- Two-level maps (Nuke, Train, Vertigo) need the lower radar when z < `lower_level_max_z`
+  (heatmaps already split levels; the lineup radar does not yet).
+- Tactic labels (playbook/tactics.py) only name a target once two T players reach the bomb
+  site core or the bomb is planted. Failed executes that never reach the site are `no_hit`
+  for now; attributing them from the execute utility is next.
+- `shots` counts weapon_fire events; awpy reports roughly 11 per player-round, so treat
+  the layer as "where they fight", not as an exact bullet count.
 
 ## Roadmap
 
 | Milestone | Content | Status |
 |---|---|---|
 | M0 | Pipeline: fetch, parse, semantics, export, tests | done |
-| M1 | Map configs (Mirage, Inferno done; 5 more via DS-05), team aliases (done), first 60 demos (Cologne Major Mirage + Inferno) | next: download |
-| M2 | Tactic identification: trajectory clustering of T executes and CT setups, labelled validation set, tuned role thresholds | after M1 |
+| M1 | Map configs (all 7 active-duty maps), team aliases, first 65 demos (Cologne Major: 28 Mirage, 32 Inferno, 1 each of the other five) | done |
+| M2 | Heatmaps (done; page via DS-06). Tactic identification: landing spots, T plans, execute recipes, CT setups (first version in tactics.py, not exported yet); blind-labelled validation set (20 rounds so far); tuned role thresholds | in progress |
 | M3 | Website v1: lineup library, team and player pages, bilingual (zh/en) | done on sample data; GitHub Pages deploy pending |
 | M4 | Natural-language summaries generated from the computed numbers (the LLM rewrites, never invents) | after M2 |
 | M5 | Full map pool, weekly incremental update | later |

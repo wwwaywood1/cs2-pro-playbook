@@ -8,6 +8,7 @@ Output layout (schema documented in DESIGN.md, section "Site data contract"):
     data/site/<map>/teams/<team-slug>.json    full team profile
     data/site/<map>/players.json              player profiles with role hints
     data/site/<map>/lineups.json              lineup library (clustered grenades)
+    data/site/<map>/heatmaps/                 baseline.json, players/<steamid>.json, teams/<slug>.json
 
 Everything is computed from data, not written by hand. Numbers carry their sample
 size; anything from fewer than MIN_MATCHES_RELIABLE matches is flagged low_sample.
@@ -24,6 +25,7 @@ from pathlib import Path
 import polars as pl
 
 from playbook.config import PARSED_DIR, SITE_DIR, MapMeta, load_map, team_slug
+from playbook.heatmap import build_heatmaps
 from playbook.store import read_all
 
 SCHEMA_VERSION = 1
@@ -66,6 +68,12 @@ def _top_counts(df: pl.DataFrame, col: str, k: int = 6) -> list[dict]:
 def _write(path: Path, obj) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def _write_compact(path: Path, obj) -> None:
+    """Large numeric files (heatmaps): no indentation."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
 
 # --------------------------------------------------------------------------- teams
@@ -259,7 +267,8 @@ def _technique(jump, crouch, walk, speed) -> str:
     return "stand"
 
 
-def build_lineups(sub: dict[str, pl.DataFrame], mm: MapMeta) -> list[dict]:
+def build_lineups(sub: dict[str, pl.DataFrame], mm: MapMeta) -> tuple[list[dict], pl.DataFrame]:
+    """(lineups, nade_lineup). nade_lineup maps (demo_id, nade_id) -> lineup_id."""
     u = sub["utility"].filter(
         pl.col("matched") & ~pl.col("is_post_round") & pl.col("thrower_side").is_not_null()
         & pl.col("type").is_in(LINEUP_TYPES)
@@ -324,11 +333,15 @@ def build_lineups(sub: dict[str, pl.DataFrame], mm: MapMeta) -> list[dict]:
             "practice_cmd": f"setpos {rep['throw_x']:.2f} {rep['throw_y']:.2f} {rep['throw_z']:.2f};"
                             f"setang {rep['pitch']:.2f} {rep['yaw']:.2f} 0",
             "example": {"demo_id": rep["demo_id"], "round_num": rep["round_num"], "throw_tick": rep["throw_tick"]},
+            "_members": [(m["demo_id"], m["nade_id"]) for m in ms],
         })
     out.sort(key=lambda l: (-l["n_throws"], -(l["n_matches"]), l["side"], l["type"]))
+    pairs = []
     for i, l in enumerate(out):
         l["id"] = f"{mm.name}-{l['side'].lower()}-{l['type']}-{i:04d}"
-    return out
+        pairs.extend((d, n, l["id"]) for d, n in l.pop("_members"))
+    nade_lineup = pl.DataFrame(pairs, schema={"demo_id": pl.Utf8, "nade_id": pl.UInt32, "lineup_id": pl.Utf8}, orient="row")
+    return out, nade_lineup
 
 
 # --------------------------------------------------------------------------- driver
@@ -350,7 +363,7 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         sub = {k: v.filter(pl.col("demo_id").is_in(ids)) for k, v in t.items() if "demo_id" in v.columns}
         teams = team_profiles(sub, mm)
         players = player_profiles(sub)
-        lineups = build_lineups(sub, mm)
+        lineups, nade_lineup = build_lineups(sub, mm)
         mdir = out_dir / map_name
         _write(mdir / "meta.json", {
             "map": map_name, "display_name": mm.display_name, "radar": mm.radar,
@@ -366,9 +379,16 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         ])
         _write(mdir / "players.json", players)
         _write(mdir / "lineups.json", lineups)
+        hm = build_heatmaps(sub, mm)
+        _write_compact(mdir / "heatmaps" / "baseline.json", hm["baseline"])
+        for sid, entry in hm["players"].items():
+            _write_compact(mdir / "heatmaps" / "players" / f"{sid}.json", entry)
+        for slug, entry in hm["teams"].items():
+            _write_compact(mdir / "heatmaps" / "teams" / f"{slug}.json", entry)
         index["maps"].append({
             "map": map_name, "display_name": mm.display_name, "n_matches": len(ids),
             "teams": [p["slug"] for p in teams], "n_players": len(players), "n_lineups": len(lineups),
+            "heatmaps": True,
         })
         print(f"  {map_name}: {len(ids)} matches, {len(teams)} teams, {len(players)} players, {len(lineups)} lineups")
     _write(out_dir / "index.json", index)

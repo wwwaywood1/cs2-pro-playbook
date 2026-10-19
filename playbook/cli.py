@@ -3,6 +3,7 @@
     python -m playbook fetch --dry-run         # list demos matching config/targets.toml
     python -m playbook fetch                   # download them into data/raw/
     python -m playbook parse data/raw          # demos -> data/parsed/<table>/*.parquet
+    python -m playbook relabel                 # re-apply config/maps/*.toml to parsed tables
     python -m playbook export                  # parsed tables -> data/site/*.json
     python -m playbook run                     # parse data/raw + export
     python -m playbook callouts some.dem       # list callout names (to write config/maps/*.toml)
@@ -65,6 +66,28 @@ def cmd_parse(inputs: list[Path], out: Path, force: bool) -> int:
     return 1 if failed else 0
 
 
+def cmd_relabel(parsed: Path, maps: list[str]) -> int:
+    """Re-apply the current map configs and rebuild the semantic tables, demo by demo."""
+    import polars as pl
+
+    from playbook.semantics import add_semantics, relabel
+    from playbook.store import TABLES, write_tables
+
+    files = sorted((parsed / "matches").glob("*.parquet"))
+    n = 0
+    for f in files:
+        demo_id = f.stem
+        m = pl.read_parquet(f)
+        if maps and m["map"][0] not in maps:
+            continue
+        raw = {name: pl.read_parquet(parsed / name / f"{demo_id}.parquet")
+               for name in TABLES if name not in ("team_rounds", "player_rounds")}
+        write_tables(add_semantics(relabel(raw)), demo_id, parsed)
+        n += 1
+    print(f"relabelled {n} demo(s) in {parsed}")
+    return 0
+
+
 def cmd_export(parsed: Path, out: Path) -> int:
     from playbook.export import export_site
 
@@ -85,6 +108,10 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--out", type=Path, default=PARSED_DIR)
     p.add_argument("--force", action="store_true", help="re-parse demos that already have output")
 
+    rl = sub.add_parser("relabel", help="re-apply config/maps/*.toml to parsed tables (no demo needed)")
+    rl.add_argument("maps", nargs="*", help="only these maps, e.g. de_nuke (default: all)")
+    rl.add_argument("--parsed", type=Path, default=PARSED_DIR)
+
     e = sub.add_parser("export", help="aggregate parsed tables into site JSON")
     e.add_argument("--parsed", type=Path, default=PARSED_DIR)
     e.add_argument("--out", type=Path, default=SITE_DIR)
@@ -104,6 +131,8 @@ def main(argv: list[str] | None = None) -> None:
         code = 0
     elif args.cmd == "parse":
         code = cmd_parse(args.inputs, args.out, args.force)
+    elif args.cmd == "relabel":
+        code = cmd_relabel(args.parsed, args.maps)
     elif args.cmd == "export":
         code = cmd_export(args.parsed, args.out)
     elif args.cmd == "run":

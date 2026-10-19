@@ -19,6 +19,7 @@ Claude 负责主线：架构、解析、语义、战术识别，以及审核和�
 | [DS-04](DS-04_frontend.md) | DeepSeek | 前端 v1，分 A/B/C 三阶段 | DS-03 | 中 | 完成 |
 | [GPT-01](GPT-01_robustness_review.md) | GPT (Codex) | 解析层边界情况审查和修复 | 仓库已推到 GitHub | 中：批量解析前做最好 | 完成 |
 | [DS-05](DS-05_map_configs.md) | DeepSeek | 其余 5 张图（Nuke、Dust2、Ancient、Anubis、Overpass）的点位映射 + 中英文译名 | 无（任务书已生成） | 高 | 完成 |
+| [DS-06](DS-06_heatmaps.md) | DeepSeek | 热力图页面：图层权重滑块、阶段/阵营切换、与全部队伍对比、并排对比 | 无（数据、类型、计算函数已就绪） | 高 | 待发 |
 
 ## 审核记录（Claude）
 
@@ -31,7 +32,9 @@ Claude 负责主线：架构、解析、语义、战术识别，以及审核和�
 
 ## 待办（下一轮可发）
 
-暂无。现役图池 7 张图的点位映射和译名都已完成。新图进图池时，用 `python scripts/make_map_briefs.py data/raw --brief` 重新生成任务书，流程同 DS-05（模板在 `delegation/templates/DS-05_header.md`）。
+**DS-06 热力图页面**：把 `delegation/DS-06_heatmaps.md` 从分割线开始发给 DeepSeek，同时上传任务书开头列出的 8 个附件。数据（`samples/site/de_mirage/heatmaps/`）、类型（`web/src/types.ts` 末尾）、计算函数（`web/src/heatmap.ts`）都已就绪，DeepSeek 只做界面。
+
+现役图池 7 张图的点位映射和译名都已完成。新图进图池时，用 `python scripts/make_map_briefs.py data/raw --brief` 重新生成任务书，流程同 DS-05（模板在 `delegation/templates/DS-05_header.md`）。
 
 ## 为什么这样分
 

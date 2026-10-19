@@ -442,7 +442,38 @@ def parse_demo(path: Path, aliases: dict[str, str] | None = None, verbose: bool 
         "kills": kills,
         "plants": plants,
         "utility": util,
+        "shots": shots_table(demo.shots, rounds_out, loadouts, demo_id, rate),
     }
+
+
+NOT_GUNS = ("knife", "bayonet", "grenade", "flashbang", "molotov", "incgrenade", "decoy", "c4", "taser", "healthshot")
+
+
+def shots_table(raw: pl.DataFrame, rounds: pl.DataFrame, loadouts: pl.DataFrame, demo_id: str,
+                tick_rate: float) -> pl.DataFrame:
+    """Gun fire events (no knives, grenades, bomb or zeus) inside live rounds, with round
+    number, round time, team and side. One row per weapon_fire event."""
+    shots = raw.with_columns(weapon=pl.col("weapon").str.replace("^weapon_", "")).filter(
+        ~pl.col("weapon").str.contains("|".join(NOT_GUNS))
+    )
+    r = rounds.select(
+        "round_num", pl.col("freeze_end_tick").cast(pl.Int64), "end_tick", "official_end_tick"
+    ).sort("freeze_end_tick")
+    s = shots.with_columns(pl.col("tick").cast(pl.Int64)).sort("tick").join_asof(
+        r, left_on="tick", right_on="freeze_end_tick", strategy="backward"
+    )
+    s = s.filter(pl.col("round_num").is_not_null() & (pl.col("tick") <= pl.coalesce("official_end_tick", "end_tick")))
+    lo = loadouts.select("round_num", "steamid", "team", pl.col("side").alias("round_side"))
+    s = s.join(lo, on=["round_num", "steamid"], how="inner")
+    return s.select(
+        pl.lit(demo_id).alias("demo_id"),
+        pl.col("round_num").cast(pl.Int32),
+        "tick",
+        t_s=((pl.col("tick") - pl.col("freeze_end_tick")) / tick_rate).round(2),
+        is_post_round=pl.col("tick") > pl.col("end_tick"),
+        steamid="steamid", name="name", team="team", side="round_side",
+        x="x", y="y", z="z", pitch="pitch", yaw="yaw", weapon="weapon", scoped="scoped",
+    ).sort("round_num", "tick")
 
 
 def list_callouts(path: Path) -> pl.DataFrame:
