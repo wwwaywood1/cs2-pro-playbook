@@ -48,6 +48,83 @@ Populate the sample data (Mirage, one match) before the first run:
 python scripts/sync_web_data.py --samples
 ```
 
+Radars are included in CI and Pages builds. The sync script uses awpy to download
+`images.zip` from the pinned awpy-data release `2000933` on the first run, then
+copies the needed images from `~/.awpy/`. Both workflows cache that directory;
+no demos, navigation meshes, or geometry downloads are needed for the web build.
+
+### CI and browser smoke tests
+
+[`ci.yml`](.github/workflows/ci.yml) runs on pushes and pull requests. Its Python
+and web jobs run in parallel with pip and npm caches and six-minute timeouts.
+Python uses 3.11, `pip install -e ".[dev]"` and `pytest -q`; tests requiring the
+uncommitted demo skip when it is absent. The web job syncs `samples/site`, runs
+`npm ci` and `npm run build`, then serves `web/dist` to Playwright's Chromium
+headless shell. Failure screenshots and the static server log are uploaded as
+the `smoke-screenshots` artifact (retained for seven days).
+
+To run the browser checks locally, from the repository root:
+
+```bash
+python -m pip install -r web/e2e/requirements.txt
+python -m playwright install --with-deps --only-shell chromium
+python scripts/sync_web_data.py --samples
+(cd web && npm ci && npm run build)
+python3 -m http.server 4173 --bind 127.0.0.1 --directory web/dist
+# In a second terminal:
+python3 web/e2e/smoke.py http://127.0.0.1:4173 --shots work/smoke-shots
+```
+
+Add a route to [`web/e2e/smoke.py`](web/e2e/smoke.py) by writing one function
+decorated with `@route("#/path", "ready-selector")`, taking `(smoke, page)` and
+using `smoke.check(condition, description)` for assertions. The runner navigates
+to it, waits for its ready selector, runs its desktop checks, checks for horizontal
+overflow at 375px, and collects browser errors and screenshots in both viewports.
+The DS-06 heatmap route can use the same registration once it is available.
+
+### Manual GitHub Pages deployment
+
+In repository **Settings → Pages**, select **GitHub Actions** as the build source.
+Then run **Actions → Deploy Pages → Run workflow** on the desired branch.
+[`pages.yml`](.github/workflows/pages.yml) is `workflow_dispatch` only: it builds
+the committed one-match `samples/site` export plus radars, uploads `web/dist`, and
+deploys with `actions/deploy-pages`. The deploy job uses the `github-pages`
+environment and is the only job granted `pages: write` and `id-token: write`.
+Private repositories need a GitHub plan that supports Pages, or must become public.
+Vite's relative base and the HashRouter support the repository subpath without
+server rewrites.
+
+To deploy real data later, produce an export locally and package the **contents**
+of `data/site` (including `index.json`, map directories and heatmap JSON):
+
+```bash
+python -m playbook run
+tar -czf site-data.tar.gz -C data/site .
+```
+
+Publish that archive as a release asset, or upload the same directory as a workflow
+artifact named `site-data` through a separate data-producing workflow. In the
+Pages build, add a download step **before** the sync step, placing the complete
+export at `data/site/`, and change the sync command to
+`python scripts/sync_web_data.py` (remove `--samples`). Keep CI on sample data.
+For a release asset, pin its tag and download/extract it, for example:
+
+```yaml
+- name: Download real site export
+  env:
+    GH_TOKEN: ${{ github.token }}
+  run: |
+    gh release download site-data-2026-10-19 --pattern site-data.tar.gz --dir "$RUNNER_TEMP"
+    mkdir -p data/site
+    tar -xzf "$RUNNER_TEMP/site-data.tar.gz" -C data/site
+```
+
+For a workflow artifact, use `actions/download-artifact@v4` with `name: site-data`,
+`path: data/site`, the producer's `run-id`, and `github-token: ${{ github.token }}`;
+add `actions: read` to the build job's permissions alongside `contents: read` for
+cross-run downloads. Keep the producer run ID or release tag explicit so deployments
+are reproducible. Demos and intermediate parsed tables stay outside the deployment.
+
 The pages are the map index, the lineup library (radar plus copyable practice commands),
 team profiles (T/CT setups, executes, economy) and player profiles (roles, lanes). Chinese
 is the default language; the top-bar button switches to English and remembers the choice in
@@ -86,3 +163,4 @@ lineup library). A real one-match example is in [`samples/site/`](samples/site/)
 - Method inspiration: Xenopoulos et al., *ggViz* (2022), *Valuing Player Actions in CSGO* (2020), *ESTA* (2022).
 
 Not affiliated with Valve, HLTV, or any team. MIT licensed.
+

@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e ".[dev]"
+      - run: pytest -q
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            web/e2e/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install asset and browser tooling
+        run: pip install "awpy>=3.1,<4" -r web/e2e/requirements.txt
+      - name: Cache pinned radar assets
+        uses: actions/cache@v4
+        with:
+          path: ~/.awpy
+          key: awpy-radars-${{ runner.os }}-${{ hashFiles('scripts/sync_web_data.py') }}
+      - name: Sync committed sample data and radars
+        run: python scripts/sync_web_data.py --samples
+      - run: npm ci
+        working-directory: web
+      - run: npm run build
+        working-directory: web
+      - name: Install Chromium headless shell
+        run: python -m playwright install --with-deps --only-shell chromium
+      - name: Browser smoke test against built files
+        run: |
+          mkdir -p smoke-shots
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory web/dist > smoke-shots/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          python3 - <<'PY'
+          import time
+          import urllib.request
+          for attempt in range(50):
+              try:
+                  urllib.request.urlopen('http://127.0.0.1:4173', timeout=1).close()
+                  break
+              except OSError:
+                  time.sleep(0.1)
+          else:
+              raise SystemExit('Static server did not start')
+          PY
+          python3 web/e2e/smoke.py http://127.0.0.1:4173 --shots smoke-shots
+      - name: Upload smoke screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-screenshots
+          path: smoke-shots/
+          if-no-files-found: ignore
+          retention-days: 7
