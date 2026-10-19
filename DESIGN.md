@@ -53,7 +53,8 @@ callout mapping to the stored tables and rebuilds the semantic tables (no demo n
   GOTV demos of IEM Cologne Major 2026 (219 files) and CAC 2026 (64 files), about 120 GB,
   262 games over the 7-map pool (Ancient, Anubis, Dust2, Inferno, Mirage, Nuke, Overpass).
   Layout `<event>/<hltv_match_id>-<slug>/<team1>-vs-<team2>[-mN]-<map>[-pK].dem`; 19 games
-  are split into parts (`-p1`, `-p2`) and are skipped until multipart parsing is added.
+  are split into parts (`-p1`, `-p2`); fetch downloads every part and parse groups them
+  into one game (see Multipart recordings below).
   It replaced CounterQuant CS2 Demos, which was taken down in October 2026: a reminder that
   single-maintainer sources disappear. Keep the raw demos you download, and keep the GRID
   Open Access application as the long-term option.
@@ -120,13 +121,18 @@ Relative to teammates on the same map. Each hint carries the metric and value be
 
 | Role | Rule |
 |---|---|
-| awper | AWP at freeze end in at least 40% of rounds |
+| awper | AWP at freeze end in at least 40% of rounds, or the team's top AWP user from 15% |
 | a_anchor / b_anchor / mid_ct | same CT lane at 15s in at least 60% of CT rounds |
 | lurker | highest T-side dist_to_team_30s on the team and at least 1.25x the team median |
 | entry | highest T-side first-into-site rate on the team, at least 0.25 |
 | support | most utility thrown per round on the team |
 
-These thresholds are placeholders until a labelled validation set exists (Roadmap M2).
+Checked against `validation/pro_roles.csv` (GPT-05: 155 players, roles at the Cologne Major
+with sources), per player and map on Mirage and Inferno: **awper** 49/50 found, no false
+positives (the old 40% rule found 29). **lurker** (distance rule) is precise but misses most:
+21 found, 2 false, 54 missed, because the table counts secondary lurk roles and many lurkers
+stay near the team at 30 s; the per-round `T.lurk_share` did not do better (best 22 found /
+18 false). Entry, anchor and support hints are not yet checked (the table has 2 entries).
 
 ### Lineup clustering
 
@@ -254,14 +260,40 @@ heatmap_teams.json              [{ team, slug, n_matches, maps: [{ map, display_
   on team 3, which linked both rosters; entities never alive in a live round are now
   dropped (`_playing` in parse.py, regression test in test_robustness.py).
 
+## Multipart recordings (GPT-03, playbook/multipart.py)
+
+awpy 3.1.0 accepts `Demo([part1, part2, ...])` but its own validation rejects overlapping
+rounds and live-round splits, so each file is opened separately, round ownership is chosen,
+and the inputs are adapted to the existing parser before teams are resolved.
+
+- Files must share a directory and stem after stripping `-pK`, with consecutive part numbers
+  from 1; a supplied part discovers its siblings in the CLI; `(1)` duplicates are ignored.
+  Map, build, tick rate, regulation and overtime length must agree across parts.
+- Recorded round numbers are kept. A later complete overlap (backup restore) replaces the
+  earlier suffix with all its events, economy and snapshots. A boundary fragment is usable
+  only if a complete copy of that round survives elsewhere; fragments are never merged.
+  Missing rounds, incomplete interior rounds and restores within one file reject the game.
+- Retained events and ticks are restricted to their own part's round bounds, then offset
+  onto one synthetic tick timeline (next offset = previous offset + last official-end tick
+  + 1). Round-relative seconds are unchanged. Grenade attribution runs per part (entity
+  handles repeat), then `nade_id` is made unique.
+- `_validate_rounds` runs per part and on the stitched history; scores are rebuilt from
+  retained winners and must sum to `round_num - 1`. Economy pistols are regulation rounds 1
+  and `mp_maxrounds/2 + 1` (awpy would label the first round of every file a pistol).
+- Teams are resolved once over all parts by Steam ID. `demo_id` drops `-pK`;
+  `matches.demo_file` lists the parts joined with `+`. No table or JSON field changes.
+
+Verified by GPT-03 on MOUZ vs Legacy Nuke (2394905: 13-6, 19 rounds); B8 vs TYLOO Mirage
+(2394773) is rejected because awpy emits no rounds for part 1. Tests: `tests/test_multipart.py`
+(synthetic) and the optional `tests/test_multipart_pipeline.py`.
+
 ## Known limitations and open questions
 
 - Lane shapes are coarse. Two different executes can share a shape; trajectory-level
   clustering is the M2 work.
 - Role thresholds are untuned; they need a labelled set (pro roles are public knowledge
   for top teams, so labels are cheap to collect).
-- Multipart demos (one map split over several files, 19 of 262 games in the current source) are skipped; awpy supports them via `Demo([part1, part2])`, but ticks restart per part, so parse.py needs per-part round bounds.
-- Parsing is strict (GPT-01): demos with restored or non-consecutive rounds, a bot playing
+- Parsing is strict (GPT-01): demos with restores within one recording or non-consecutive rounds, a bot playing
   inside a live round, or players whose team cannot be resolved are rejected, not repaired.
   A real backup-restore demo and a late-joined GOTV demo still need to be collected to see
   how often this triggers on Tier 1/2 data.

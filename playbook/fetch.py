@@ -5,7 +5,7 @@ Layout: <event>/<hltv_match_id>-<slug>/<team1>-vs-<team2>[-m<N>]-<map>[-p<K>].de
         e.g. iem_cologne_major_2026/2394983-vitality-vs-mouz-iem-cologne-major/vitality-vs-mouz-m1-mirage.dem
 
 One map of one match is a "game". A game recorded in several files has -p1, -p2, ...
-parts; those are skipped for now (the parser reads one file per game). A trailing
+parts; all parts are downloaded and parsed together. A trailing
 "(1)" marks a duplicate upload and is ignored.
 
 (The CounterQuant dataset used before was taken down in October 2026.)
@@ -26,6 +26,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from playbook.config import RAW_DIR, load_targets
+from playbook.multipart import PART_RE, ordered_paths
 
 SOURCES = {
     "cs2povarchive": "cs2povarchive/cs2-demos",
@@ -55,7 +56,7 @@ class Game:
 
     @property
     def multipart(self) -> bool:
-        return len(self.parts) > 1
+        return any(PART_RE.search(Path(p).stem) for p in self.parts)
 
 
 def group_games(files: list[tuple[str, int]]) -> tuple[list[Game], list[str]]:
@@ -75,7 +76,7 @@ def group_games(files: list[tuple[str, int]]) -> tuple[list[Game], list[str]]:
         g.parts.append(path)
         g.bytes += size or 0
     for g in games.values():
-        g.parts.sort()
+        g.parts = [str(p) for p in ordered_paths([Path(p) for p in g.parts])]
     return list(games.values()), unmatched
 
 
@@ -87,7 +88,7 @@ def select(games: list[Game], targets: dict) -> tuple[list[Game], list[Game]]:
     both = targets.get("require_both_teams", False)
 
     def ok(g: Game) -> bool:
-        if g.multipart or (events and g.event not in events):
+        if events and g.event not in events:
             return False
         if teams:
             hits = (g.team1 in teams) + (g.team2 in teams)
@@ -124,7 +125,7 @@ def fetch(dry_run: bool = False, out_dir: Path = RAW_DIR, targets_path: Path | N
     games, unmatched = group_games(list_remote(repo_id))
     main, extra = select(games, targets)
     n_multi = sum(g.multipart for g in games)
-    print(f"{repo_id}: {len(games)} games ({n_multi} multipart, skipped), {len(unmatched)} unrecognised files")
+    print(f"{repo_id}: {len(games)} games ({n_multi} multipart), {len(unmatched)} unrecognised files")
     for label, batch in (("batch", main), ("one per extra map", extra)):
         gb = sum(g.bytes for g in batch) / 1e9
         print(f"{label}: {len(batch)} games, {gb:.1f} GB")
@@ -137,7 +138,7 @@ def fetch(dry_run: bool = False, out_dir: Path = RAW_DIR, targets_path: Path | N
 
     dest_root = out_dir / source
     done: list[Path] = []
-    todo = [p for g in main + extra for p in g.parts]
+    todo = list(dict.fromkeys(p for g in main + extra for p in g.parts))
     for i, path in enumerate(todo, 1):
         dest = dest_root / path
         if dest.exists():

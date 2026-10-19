@@ -39,6 +39,8 @@ LINEUP_TYPES = ("smoke", "flashbang", "molotov", "he")
 LINEUP_THROW_RADIUS = 48.0  # same lineup if thrown within this distance ...
 LINEUP_LAND_RADIUS = 120.0  # ... and landing within this distance
 MOVING_SPEED = 100.0
+AWP_ANY = 0.4        # role hint thresholds, see _add_role_hints and DESIGN.md › Role hints
+AWP_TEAM_TOP = 0.15
 
 
 def _r(x, nd: int = 3):
@@ -231,8 +233,12 @@ def _add_role_hints(players: list[dict]) -> None:
         return max(vals, key=lambda x: x[0])[1] if vals else None
 
     for team in by_team.values():
+        top_awp = max((p["awp_share"] or 0) for p in team) if team else 0
         for p in team:
-            if (p["awp_share"] or 0) >= 0.4:
+            a = p["awp_share"] or 0
+            # Tuned on the GPT-05 role table (validation/pro_roles.csv): the team's main AWP
+            # user from 15% of rounds, or anyone from 40%: 49/50 AWPers, no false positives.
+            if a >= AWP_ANY or (a == top_awp and a >= AWP_TEAM_TOP):
                 p["role_hints"].append({"role": "awper", "metric": "awp_share", "value": p["awp_share"]})
             ct_lanes = p["CT"]["lanes_15s"]
             if ct_lanes and (ct_lanes[0]["share"] or 0) >= 0.6:
@@ -416,6 +422,9 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         _write(mdir / "lineups.json", lineups)
         res = analyse_map(sub, mm, nade_lineup)
         spot_names = name_spots(res["spots"], load_spot_names(map_name))
+        for r in res["recipes"]:
+            for c in r["core"] + r["options"]:
+                c["name"] = spot_names.get(c["spot_id"])
         names = {sid: n for sid, n in sub["player_rounds"].group_by("steamid").agg(pl.col("name").mode().first()).iter_rows()}
         _write(mdir / "tactics.json", {
             "map": map_name, "definitions": DEFINITIONS,

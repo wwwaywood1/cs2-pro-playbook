@@ -55,7 +55,7 @@ def test_select_batch_and_extras():
                "extra_one_per_map": ["dust2", "overpass"]}
     main, extra = select(games, targets)
     assert [g.key for g in main] == ["2394983-m1-mirage", "2394983-m3-inferno"]  # newest first, cap 2
-    assert [g.key for g in extra] == ["2394998-m1-overpass"]  # multipart dust2 skipped
+    assert [g.key for g in extra] == ["2394983-m2-dust2", "2394998-m1-overpass"]
     teams_only = select(games, {**targets, "max_demos": 10, "teams": ["the-mongolz"]})[0]
     assert [g.key for g in teams_only] == ["2394904-m2-mirage"]
 
@@ -67,14 +67,17 @@ def test_demo_identity_from_dataset_tree_and_flat_names():
     assert demo_identity(Path("hltv-de_mirage-2394170.dem")) == {"demo_id": "hltv-de_mirage-2394170", "hltv_match_id": None}
 
 
-def test_cli_skips_multipart_files(tmp_path):
+def test_cli_groups_multipart_files(tmp_path):
     from playbook.cli import _demo_paths
 
     d = tmp_path / "ev" / "1-a-vs-b"
     d.mkdir(parents=True)
     for name in ["a-vs-b-m1-mirage.dem", "a-vs-b-m2-nuke-p1.dem", "a-vs-b-m2-nuke-p2.dem", "a-vs-b-m3-dust2(1).dem"]:
         (d / name).write_bytes(b"")
-    assert [p.name for p in _demo_paths([tmp_path])] == ["a-vs-b-m1-mirage.dem"]
+    assert [[p.name for p in game] for game in _demo_paths([tmp_path, d])] == [
+        ["a-vs-b-m1-mirage.dem"], ["a-vs-b-m2-nuke-p1.dem", "a-vs-b-m2-nuke-p2.dem"]]
+    assert [[p.name for p in game] for game in _demo_paths([d / "a-vs-b-m2-nuke-p2.dem"])] == [
+        ["a-vs-b-m2-nuke-p1.dem", "a-vs-b-m2-nuke-p2.dem"]]
 
 
 def test_mirage_map_config():
@@ -88,3 +91,58 @@ def test_mirage_map_config():
 def test_team_slug():
     assert team_slug("Team Vitality") == "team-vitality"
     assert team_slug("The MongolZ") == "the-mongolz"
+
+
+def test_multipart_identity_and_numeric_order(tmp_path):
+    from playbook.cli import _demo_paths
+    from playbook.multipart import ordered_paths
+
+    d = tmp_path / "2394983-vitality-vs-mouz-iem-cologne-major"
+    d.mkdir()
+    for n in range(1, 11):
+        (d / f"vitality-vs-mouz-m2-dust2-p{n}.dem").touch()
+    (d / "vitality-vs-mouz-m2-dust2-p1(1).dem").touch()
+    paths = _demo_paths([tmp_path])[0]
+    assert [p.name for p in paths] == [f"vitality-vs-mouz-m2-dust2-p{n}.dem" for n in range(1, 11)]
+    assert ordered_paths(list(reversed(paths))) == paths
+    assert {demo_identity(p)["demo_id"] for p in paths} == {"2394983_vitality-vs-mouz-m2-dust2"}
+    assert demo_identity(Path("2394983_vitality-vs-mouz-m2-dust2-p2.dem"))["demo_id"] == "2394983_vitality-vs-mouz-m2-dust2"
+
+
+def test_fetch_downloads_every_part_once(tmp_path, monkeypatch):
+    import sys
+    from types import SimpleNamespace
+
+    from playbook.fetch import fetch
+
+    monkeypatch.setattr("playbook.fetch.list_remote", lambda repo: FILES)
+    monkeypatch.setattr("playbook.fetch.load_targets", lambda path: {
+        "maps": ["dust2"], "extra_one_per_map": ["dust2"], "max_demos": 1})
+    calls = []
+
+    def download(repo_id, path, **kwargs):
+        calls.append(path)
+        return str(tmp_path / path)
+    monkeypatch.setitem(sys.modules, "huggingface_hub", SimpleNamespace(hf_hub_download=download))
+    result = fetch(out_dir=tmp_path)
+    assert [p.name for p in result] == ["vitality-vs-mouz-m2-dust2-p1.dem", "vitality-vs-mouz-m2-dust2-p2.dem"]
+    assert len(calls) == 2
+
+
+def test_cli_rejects_one_incomplete_game_and_continues(tmp_path, monkeypatch):
+    from playbook.cli import cmd_parse
+    from playbook.multipart import ordered_paths
+
+    for name in ["bad-p1.dem", "bad-p3.dem", "good.dem"]:
+        (tmp_path / name).touch()
+    written = []
+
+    def parse(paths, aliases):
+        ordered_paths(paths)
+        return {}
+    monkeypatch.setattr("playbook.parse.parse_demo", parse)
+    monkeypatch.setattr("playbook.semantics.add_semantics", lambda tables: tables)
+    monkeypatch.setattr("playbook.store.is_parsed", lambda *args: False)
+    monkeypatch.setattr("playbook.store.write_tables", lambda tables, demo_id, out: written.append(demo_id))
+    assert cmd_parse([tmp_path], tmp_path / "out", False) == 1
+    assert written == ["good"]

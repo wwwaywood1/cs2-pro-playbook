@@ -476,7 +476,13 @@
    ],
    "forward_share": 0.0
   },
-  "role_hints": []
+  "role_hints": [
+   {
+    "role": "awper",
+    "metric": "awp_share",
+    "value": 0.389
+   }
+  ]
  },
  {
   "steamid": "76561198113666193",

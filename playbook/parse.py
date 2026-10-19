@@ -1,4 +1,4 @@
-"""Step 2: one .dem file -> normalized tables (polars DataFrames).
+"""Step 2: one game (one or more .dem files) -> normalized tables (polars DataFrames).
 
 Every table carries ``demo_id`` and ``round_num`` so many demos can be stacked.
 Knife rounds are dropped. Teams are identified by canonical clan name (see
@@ -31,6 +31,7 @@ from awpy import Demo
 
 from playbook.config import MapMeta, canonical_team, load_map, load_team_aliases
 from playbook.utility import PlaceIndex, attribute_grenades
+from playbook.multipart import GameDemo, game_stem, ordered_paths
 
 SIDE = {"terrorist": "T", "counter-terrorist": "CT"}
 TEAM_NUM_SIDE = {2: "T", 3: "CT"}
@@ -46,7 +47,7 @@ def demo_identity(path: Path) -> dict:
     - anything else keeps its stem and has no match id.
     """
     path = Path(path)
-    stem = path.stem
+    stem = game_stem(path)
     m = re.match(r"^(\d+)_(.+)$", stem)
     if m:
         return {"demo_id": stem, "hltv_match_id": int(m[1])}
@@ -96,13 +97,13 @@ def _playing(tk: pl.DataFrame, bounds: pl.DataFrame) -> pl.DataFrame:
     return tk.filter(pl.col("steamid").is_in(players.implode()))
 
 
-def _validate_rounds(rounds: pl.DataFrame) -> None:
+def _validate_rounds(rounds: pl.DataFrame, *, first_round: int = 1) -> None:
     """Reject ambiguous histories rather than inventing scores or replay ownership."""
     if not rounds.height:
         raise ValueError("No complete competitive rounds")
     rows = list(rounds.sort("start_tick").iter_rows(named=True))
-    if [r["round_num"] for r in rows] != list(range(1, len(rows) + 1)):
-        raise ValueError("Incomplete or restored round history: need consecutive rounds starting at 1")
+    if [r["round_num"] for r in rows] != list(range(first_round, first_round + len(rows))):
+        raise ValueError(f"Incomplete or restored round history: need consecutive rounds starting at {first_round}")
     previous_end = -1
     for r in rows:
         ticks = [r[c] for c in ("start_tick", "freeze_end_tick", "end_tick", "official_end_tick")]
@@ -184,14 +185,16 @@ def _site_from_place(place: str | None, mm: MapMeta) -> str | None:
     return lane if lane in ("A", "B") else None
 
 
-def parse_demo(path: Path, aliases: dict[str, str] | None = None, verbose: bool = True) -> dict[str, pl.DataFrame]:
+def parse_demo(path: Path | list[Path] | tuple[Path, ...], aliases: dict[str, str] | None = None,
+               verbose: bool = True) -> dict[str, pl.DataFrame]:
     t_start = time.time()
-    path = Path(path)
+    paths = ordered_paths(list(path) if isinstance(path, (list, tuple)) else [Path(path)])
+    path = paths[0]
     aliases = load_team_aliases() if aliases is None else aliases
     ident = demo_identity(path)
     demo_id = ident["demo_id"]
 
-    demo = Demo(path)
+    demo = GameDemo(paths) if len(paths) > 1 else Demo(path)
     demo.load("rounds", "kills", "bomb", "grenades", "smokes", "players", "round_economy", "shots")
     header = demo.header
     map_name = header["map_name"]
@@ -275,6 +278,8 @@ def parse_demo(path: Path, aliases: dict[str, str] | None = None, verbose: bool 
         t_before.append(score.get(r["t_team"], 0))
         if r["winner_team"]:
             score[r["winner_team"]] = score.get(r["winner_team"], 0) + 1
+    if any(ct + t != r - 1 for ct, t, r in zip(ct_before, t_before, rounds_out["round_num"])):
+        raise ValueError("Inconsistent score before round in stitched history")
     rounds_out = rounds_out.with_columns(
         score_ct_before=pl.Series(ct_before, dtype=pl.Int32), score_t_before=pl.Series(t_before, dtype=pl.Int32)
     ).select(
@@ -356,7 +361,8 @@ def parse_demo(path: Path, aliases: dict[str, str] | None = None, verbose: bool 
     ).select(pl.lit(demo_id).alias("demo_id"), "round_num", "tick", "t_s", "steamid", "name", "team", "site", "place", "x", "y", "z")
 
     # ---- utility ------------------------------------------------------------------------
-    util = _assign_round(attribute_grenades(demo.grenades, demo.shots, demo.smokes, tick_rate=rate), "throw_tick", bounds)
+    util = _assign_round((demo.attributed_grenades() if isinstance(demo, GameDemo) else
+                          attribute_grenades(demo.grenades, demo.shots, demo.smokes, tick_rate=rate)), "throw_tick", bounds)
     if util.height:
         throw_place = pidx.query(util["throw_x"], util["throw_y"], util["throw_z"])
         land_place = pidx.query(util["land_x"], util["land_y"], util["land_z"])
@@ -415,7 +421,7 @@ def parse_demo(path: Path, aliases: dict[str, str] | None = None, verbose: bool 
             "tick_rate": rate,
             "build_num": header.get("build_num"),
             "server_name": header.get("server_name"),
-            "demo_file": path.name,
+            "demo_file": "+".join(p.name for p in paths),
             "awpy_version": getattr(awpy, "__version__", None),
             "parsed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         }]

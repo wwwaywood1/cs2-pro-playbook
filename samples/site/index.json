@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "generated_at": "2026-10-19T17:38:41+00:00",
+ "generated_at": "2026-10-19T18:05:22+00:00",
  "min_matches_reliable": 5,
  "data_source": "Professional CS2 match demos (provenance per demo in matches; see DESIGN.md, Data sources)",
  "maps": [

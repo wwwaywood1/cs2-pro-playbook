@@ -1,0 +1,553 @@
+# Human names for landing spots on de_inferno, matched to computed spots by side, type and
+# position (within radius). Names: GPT-06 (2026-10-19), coordinates from
+# delegation/inputs/spots/spots_to_name.csv. confidence = low means a location description.
+
+[[spot]]
+id = "de_inferno-ct-molotov-s035"
+side = "CT"
+type = "molotov"
+x = 302.4
+y = 1719.1
+radius = 150
+en = "Banana molotov (middle)"
+zh = "香蕉道火（中段）"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-ct-molotov-s036"
+side = "CT"
+type = "molotov"
+x = -25.0
+y = 1391.6
+radius = 150
+en = "Logs molotov"
+zh = "树位火"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-ct-molotov-s037"
+side = "CT"
+type = "molotov"
+x = 1146.0
+y = 510.7
+radius = 150
+en = "Mid molotov"
+zh = "中路火"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-ct-molotov-s038"
+side = "CT"
+type = "molotov"
+x = 535.1
+y = 2002.9
+radius = 150
+en = "Car molotov"
+zh = "香蕉道木桶火"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-ct-molotov-s039"
+side = "CT"
+type = "molotov"
+x = 1004.4
+y = -116.1
+radius = 150
+en = "Apartments stairs molotov"
+zh = "A二楼梯火"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-ct-molotov-s040"
+side = "CT"
+type = "molotov"
+x = 1377.8
+y = 208.8
+radius = 150
+en = "Short molotov"
+zh = "A1火"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-ct-molotov-s041"
+side = "CT"
+type = "molotov"
+x = 255.1
+y = 1299.4
+radius = 150
+en = "Banana molotov (lower)"
+zh = "香蕉道火（下段）"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-ct-molotov-s042"
+side = "CT"
+type = "molotov"
+x = 1223.2
+y = -347.1
+radius = 150
+en = "Apartments molotov (stairs end)"
+zh = "A二楼火（楼梯端）"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-ct-molotov-s043"
+side = "CT"
+type = "molotov"
+x = 1819.6
+y = -297.7
+radius = 150
+en = "Apartments molotov (balcony exit)"
+zh = "A二楼火（阳台出口）"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-ct-molotov-s044"
+side = "CT"
+type = "molotov"
+x = 771.2
+y = 2628.6
+radius = 150
+en = "Banana molotov (B entrance, site side)"
+zh = "香蕉道火（B入口内侧）"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-ct-molotov-s045"
+side = "CT"
+type = "molotov"
+x = 1431.5
+y = 977.4
+radius = 150
+en = "Long molotov (mid entrance)"
+zh = "链接火（中路口）"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-ct-molotov-s046"
+side = "CT"
+type = "molotov"
+x = 1837.3
+y = 30.1
+radius = 150
+en = "Molotov between A site and Short"
+zh = "A包点与A1之间的火"
+confidence = "low"
+
+[[spot]]
+id = "de_inferno-ct-smoke-s000"
+side = "CT"
+type = "smoke"
+x = 1859.7
+y = -257.8
+radius = 200
+en = "Apartments smoke (balcony exit)"
+zh = "A二楼烟（阳台出口）"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-ct-smoke-s001"
+side = "CT"
+type = "smoke"
+x = 135.3
+y = 1023.2
+radius = 200
+en = "Bottom banana smoke"
+zh = "香蕉道匪口烟"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-ct-smoke-s002"
+side = "CT"
+type = "smoke"
+x = 785.7
+y = 2313.2
+radius = 200
+en = "Banana smoke (B entrance)"
+zh = "香蕉道烟（B入口）"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-ct-smoke-s003"
+side = "CT"
+type = "smoke"
+x = 335.6
+y = 1782.6
+radius = 200
+en = "Banana smoke (middle)"
+zh = "香蕉道烟（中段）"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-ct-smoke-s004"
+side = "CT"
+type = "smoke"
+x = 1170.4
+y = 505.5
+radius = 200
+en = "Mid smoke"
+zh = "中路烟"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-ct-smoke-s005"
+side = "CT"
+type = "smoke"
+x = 152.2
+y = 1457.0
+radius = 200
+en = "Banana smoke (by Logs)"
+zh = "香蕉道烟（树位旁）"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-ct-smoke-s006"
+side = "CT"
+type = "smoke"
+x = 545.0
+y = 1973.5
+radius = 200
+en = "Car smoke"
+zh = "香蕉道木桶烟"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-ct-smoke-s007"
+side = "CT"
+type = "smoke"
+x = 409.2
+y = 590.7
+radius = 200
+en = "Bottom mid smoke"
+zh = "中路匪口烟"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-ct-smoke-s008"
+side = "CT"
+type = "smoke"
+x = 157.6
+y = 1558.7
+radius = 200
+en = "Banana smoke (above Logs)"
+zh = "香蕉道烟（树位前方）"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-ct-smoke-s009"
+side = "CT"
+type = "smoke"
+x = 1174.7
+y = -340.1
+radius = 200
+en = "Apartments smoke (stairs end)"
+zh = "A二楼烟（楼梯端）"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-ct-smoke-s010"
+side = "CT"
+type = "smoke"
+x = 1214.6
+y = 248.8
+radius = 200
+en = "Boiler smoke"
+zh = "锅炉房烟"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-ct-smoke-s011"
+side = "CT"
+type = "smoke"
+x = 770.0
+y = 2524.0
+radius = 200
+en = "Banana smoke (B entrance, site side)"
+zh = "香蕉道烟（B入口内侧）"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-t-molotov-s190"
+side = "T"
+type = "molotov"
+x = 454.9
+y = 1988.7
+radius = 150
+en = "Car molotov"
+zh = "香蕉道木桶火"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-molotov-s191"
+side = "T"
+type = "molotov"
+x = 1196.2
+y = 13.3
+radius = 150
+en = "Molotov in Apartments above Boiler"
+zh = "锅炉房上方A二楼的火"
+confidence = "low"
+
+[[spot]]
+id = "de_inferno-t-molotov-s192"
+side = "T"
+type = "molotov"
+x = 813.7
+y = 2273.5
+radius = 150
+en = "Banana molotov (B entrance)"
+zh = "香蕉道火（B入口）"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-molotov-s193"
+side = "T"
+type = "molotov"
+x = 1465.7
+y = 45.3
+radius = 150
+en = "Patio molotov (underneath)"
+zh = "马棚下火"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-molotov-s194"
+side = "T"
+type = "molotov"
+x = 2539.0
+y = -112.9
+radius = 150
+en = "Pit molotov"
+zh = "大坑火"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-molotov-s195"
+side = "T"
+type = "molotov"
+x = 808.0
+y = 1896.2
+radius = 150
+en = "Sandbags molotov"
+zh = "沙袋火"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-molotov-s196"
+side = "T"
+type = "molotov"
+x = 110.9
+y = 2564.1
+radius = 150
+en = "New box molotov"
+zh = "B包三箱火"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-t-molotov-s197"
+side = "T"
+type = "molotov"
+x = 1375.0
+y = 409.5
+radius = 150
+en = "Top-mid molotov (Short side)"
+zh = "中路近点火（A1侧）"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-t-molotov-s198"
+side = "T"
+type = "molotov"
+x = 861.7
+y = 1876.4
+radius = 150
+en = "Sandbags molotov (deep)"
+zh = "沙袋火（深点）"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-molotov-s199"
+side = "T"
+type = "molotov"
+x = 510.7
+y = 3469.8
+radius = 150
+en = "Dark molotov"
+zh = "B包死点火"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-molotov-s200"
+side = "T"
+type = "molotov"
+x = 1408.1
+y = 1166.1
+radius = 150
+en = "Long corner molotov"
+zh = "链接凹槽火"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-molotov-s201"
+side = "T"
+type = "molotov"
+x = 420.9
+y = 2533.1
+radius = 150
+en = "First oranges molotov (top)"
+zh = "B包一箱火（箱上）"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-t-molotov-s205"
+side = "T"
+type = "molotov"
+x = 1917.6
+y = 441.9
+radius = 150
+en = "A default molotov"
+zh = "A默认包点火"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-t-smoke-s157"
+side = "T"
+type = "smoke"
+x = 1007.1
+y = 2694.4
+radius = 200
+en = "CT smoke (B)"
+zh = "B区警家烟"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-smoke-s158"
+side = "T"
+type = "smoke"
+x = 1429.7
+y = 1020.2
+radius = 200
+en = "Long smoke (mid entrance)"
+zh = "链接烟（中路口）"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-smoke-s159"
+side = "T"
+type = "smoke"
+x = 2291.0
+y = 853.4
+radius = 200
+en = "Moto smoke"
+zh = "摩托烟"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-t-smoke-s160"
+side = "T"
+type = "smoke"
+x = 481.1
+y = 3198.4
+radius = 200
+en = "Coffins smoke"
+zh = "棺材烟"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-smoke-s161"
+side = "T"
+type = "smoke"
+x = 1385.1
+y = 558.4
+radius = 200
+en = "Top-mid smoke"
+zh = "中路近点烟"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-smoke-s162"
+side = "T"
+type = "smoke"
+x = 185.4
+y = 1705.1
+radius = 200
+en = "Banana smoke (middle)"
+zh = "香蕉道烟（中段）"
+confidence = "medium"
+
+[[spot]]
+id = "de_inferno-t-smoke-s163"
+side = "T"
+type = "smoke"
+x = 96.4
+y = 1247.0
+radius = 200
+en = "Bottom banana smoke"
+zh = "香蕉道匪口烟"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-smoke-s164"
+side = "T"
+type = "smoke"
+x = 2623.6
+y = 1119.8
+radius = 200
+en = "Library smoke"
+zh = "图书馆烟"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-smoke-s165"
+side = "T"
+type = "smoke"
+x = 1828.4
+y = 1378.3
+radius = 200
+en = "Arch smoke"
+zh = "拱门烟"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-smoke-s166"
+side = "T"
+type = "smoke"
+x = 421.2
+y = 1991.6
+radius = 200
+en = "Car smoke"
+zh = "香蕉道木桶烟"
+confidence = "high"
+
+[[spot]]
+id = "de_inferno-t-smoke-s167"
+side = "T"
+type = "smoke"
+x = 2209.7
+y = 1088.7
+radius = 200
+en = "Smoke on Long, by Library"
+zh = "链接靠图书馆一侧的烟"
+confidence = "low"
+
+[[spot]]
+id = "de_inferno-t-smoke-s168"
+side = "T"
+type = "smoke"
+x = 2051.7
+y = 1103.2
+radius = 200
+en = "Smoke on Long, towards Arch"
+zh = "链接靠拱门一侧的烟"
+confidence = "low"
+
+[[spot]]
+id = "de_inferno-t-smoke-s169"
+side = "T"
+type = "smoke"
+x = 801.5
+y = 2302.5
+radius = 200
+en = "Banana smoke (B entrance)"
+zh = "香蕉道烟（B入口）"
+confidence = "high"

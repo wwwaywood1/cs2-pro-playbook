@@ -346,6 +346,7 @@ export interface SpotRef {
   spot_id: string;
   type: "smoke" | "molotov";
   label: string; // fallback name: callout (+ "#n")
+  name: { en: string | null; zh: string | null } | null; // config/spots/<map>.toml
   place: string | null;
   share: number; // share of the recipe's rounds using this spot
   lineups: { lineup_id: string; n_throws: number }[]; // throw positions, ids in lineups.json

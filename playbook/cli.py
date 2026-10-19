@@ -12,7 +12,6 @@
 from __future__ import annotations
 
 import argparse
-import re
 import sys
 import traceback
 from pathlib import Path
@@ -20,22 +19,35 @@ from pathlib import Path
 from playbook.config import PARSED_DIR, RAW_DIR, SITE_DIR
 
 
-MULTIPART_RE = re.compile(r"-p\d+(\(\d+\))?$|\(\d+\)$")
+def _demo_paths(inputs: list[Path]) -> list[list[Path]]:
+    """Group one game's parts in numeric order; ignore duplicate uploads.
 
+    Explicit part paths select that game and discover its sibling parts too.
+    Overlapping input directories/files do not duplicate a parse.
+    """
+    from playbook.multipart import DUPLICATE_RE, PART_RE, game_stem
 
-def _demo_paths(inputs: list[Path]) -> list[Path]:
-    """All .dem files under the inputs (recursively). Multipart pieces (-p1, -p2) and
-    duplicate uploads ("(1)") are skipped: one game per file is assumed."""
-    out: list[Path] = []
+    found = set()
     for p in inputs:
         if p.is_dir():
-            out.extend(sorted(p.rglob("*.dem")))
-        elif p.suffix == ".dem":
-            out.append(p)
-    skipped = [p for p in out if MULTIPART_RE.search(p.stem)]
-    if skipped:
-        print(f"skipping {len(skipped)} multipart/duplicate file(s), e.g. {skipped[0].name}")
-    return [p for p in out if not MULTIPART_RE.search(p.stem)]
+            found.update(p.rglob("*.dem"))
+        elif p.suffix == ".dem" and not DUPLICATE_RE.search(p.stem):
+            found.add(p)
+            if PART_RE.search(p.stem):
+                found.update(q for q in p.parent.glob("*.dem") if game_stem(q) == game_stem(p))
+    groups = {}
+    for p in sorted(found):
+        if not DUPLICATE_RE.search(p.stem):
+            p = p.resolve()
+            groups.setdefault((p.parent, game_stem(p)), set()).add(p)
+
+    # Validation belongs inside cmd_parse's per-game try block, so a missing
+    # part rejects its game without preventing unrelated games from parsing.
+    def number(p):
+        match = PART_RE.search(p.stem)
+        return int(match[1]) if match else 0
+
+    return [sorted(paths, key=number) for paths in groups.values()]
 
 
 def cmd_parse(inputs: list[Path], out: Path, force: bool) -> int:
@@ -50,14 +62,14 @@ def cmd_parse(inputs: list[Path], out: Path, force: bool) -> int:
         return 1
     aliases = load_team_aliases()
     failed = 0
-    for i, path in enumerate(demos, 1):
-        demo_id = demo_identity(path)["demo_id"]
+    for i, paths in enumerate(demos, 1):
+        demo_id = demo_identity(paths[0])["demo_id"]
         if not force and is_parsed(demo_id, out):
             print(f"[{i}/{len(demos)}] {demo_id}: already parsed, skipping")
             continue
-        print(f"[{i}/{len(demos)}] {path.name}")
+        print(f"[{i}/{len(demos)}] {'+'.join(p.name for p in paths)}")
         try:
-            tables = add_semantics(parse_demo(path, aliases))
+            tables = add_semantics(parse_demo(paths, aliases))
             write_tables(tables, demo_id, out)
         except Exception:  # keep going: one bad demo shouldn't stop a batch
             failed += 1
