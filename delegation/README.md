@@ -18,7 +18,7 @@ Claude 负责主线：架构、解析、语义、战术识别，以及审核和�
 | [DS-03](DS-03_i18n_labels.md) | DeepSeek | 网站中英文文案和点位译名 | 无 | 中 | 完成 |
 | [DS-04](DS-04_frontend.md) | DeepSeek | 前端 v1，分 A/B/C 三阶段 | DS-03 | 中 | 完成 |
 | [GPT-01](GPT-01_robustness_review.md) | GPT (Codex) | 解析层边界情况审查和修复 | 仓库已推到 GitHub | 中：批量解析前做最好 | 完成 |
-| DS-05（待生成） | DeepSeek | 其余 5 张图的点位映射 + 译名 | 第一批 demo 下载完 | 高 | 等 demo |
+| [DS-05](DS-05_map_configs.md) | DeepSeek | 其余 5 张图（Nuke、Dust2、Ancient、Anubis、Overpass）的点位映射 + 中英文译名 | 无（任务书已生成） | 高 | 已发 |
 
 ## 审核记录（Claude）
 
