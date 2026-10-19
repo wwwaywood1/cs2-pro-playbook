@@ -1,0 +1,2 @@
+# Test tooling only; no frontend or pipeline runtime dependency.
+playwright==1.64.0
