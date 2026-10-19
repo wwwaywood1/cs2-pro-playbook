@@ -5,7 +5,7 @@ machine that can reach huggingface.co.
 
     python3 -m pip install -U huggingface_hub
     python3 scripts/download_batch.py --dry-run                       # list, sizes per map
-    python3 scripts/download_batch.py --maps nuke dust2 ancient anubis overpass --max-gb 40
+    python3 scripts/download_batch.py --maps nuke dust2 ancient anubis cache --max-gb 40
     python3 scripts/download_batch.py --events iem_cologne_major_2026 cac_2026 --max-gb 60
 
 Selection: games of the chosen events and maps, all parts of multipart games (the parser
@@ -21,8 +21,8 @@ import sys
 from pathlib import Path
 
 REPO_ID = "cs2povarchive/cs2-demos"
-KNOWN_MAPS = ("mirage", "inferno", "nuke", "dust2", "ancient", "anubis", "overpass", "train", "vertigo")
-POOL = ["mirage", "inferno", "nuke", "dust2", "ancient", "anubis", "overpass"]
+KNOWN_MAPS = ("mirage", "inferno", "nuke", "dust2", "ancient", "anubis", "overpass", "cache", "train", "vertigo")
+POOL = ["mirage", "inferno", "nuke", "dust2", "ancient", "anubis", "cache"]  # Overpass left the pool, Cache is in
 PATH_RE = re.compile(
     r"^(?P<event>[^/]+)/(?P<match_id>\d+)-[^/]+/"
     r"(?P<team1>.+?)-vs-(?P<team2>.+?)(?:-m(?P<map_no>\d+))?-(?P<map>" + "|".join(KNOWN_MAPS) + r")"

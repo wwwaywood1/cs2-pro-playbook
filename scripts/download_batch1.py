@@ -26,7 +26,7 @@ MAPS = {"mirage", "inferno"}
 MAX_GAMES = 60
 EXTRA_ONE_PER_MAP = ["nuke", "dust2", "ancient", "anubis", "overpass"]
 
-KNOWN_MAPS = ("mirage", "inferno", "nuke", "dust2", "ancient", "anubis", "overpass", "train", "vertigo")
+KNOWN_MAPS = ("mirage", "inferno", "nuke", "dust2", "ancient", "anubis", "overpass", "cache", "train", "vertigo")
 PATH_RE = re.compile(
     r"^(?P<event>[^/]+)/(?P<match_id>\d+)-[^/]+/"
     r"(?P<team1>.+?)-vs-(?P<team2>.+?)(?:-m(?P<map_no>\d+))?-(?P<map>" + "|".join(KNOWN_MAPS) + r")"

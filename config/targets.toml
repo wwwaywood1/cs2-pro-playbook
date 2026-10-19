@@ -17,4 +17,4 @@ require_both_teams = false
 max_demos = 60
 
 # One extra game per map, used to list each map's callouts for config/maps/<map>.toml.
-extra_one_per_map = ["nuke", "dust2", "ancient", "anubis", "overpass"]
+extra_one_per_map = ["nuke", "dust2", "ancient", "anubis", "cache"]  # Overpass left the pool
