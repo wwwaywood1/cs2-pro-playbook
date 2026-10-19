@@ -4,8 +4,9 @@ Open-source analysis of professional CS2 demos, turned into something regular pl
 how pro teams set up and attack each map, what role each player plays, and a library of the
 grenades pros actually throw, each with a one-line practice command.
 
-> Status: data pipeline working and tested (M0). Website and tactic clustering in progress.
-> See [DESIGN.md](DESIGN.md) for the architecture, data contract and roadmap.
+> Status: data pipeline working and tested (M0). Website v1 in [`web/`](web/) (M3);
+> tactic clustering in progress. See [DESIGN.md](DESIGN.md) for the architecture,
+> data contract and roadmap.
 
 ## 中文简介
 
@@ -25,6 +26,30 @@ python -m playbook fetch               # download them into data/raw/
 python -m playbook run                 # parse + export -> data/site/*.json
 pytest -q                              # tests (end-to-end ones need the test demo, see below)
 ```
+
+## Website
+
+The v1 frontend lives in [`web/`](web/): Vite + React + TypeScript with a `HashRouter`, no
+backend. It reads precomputed JSON from `web/public/data/` and radar images from
+`web/public/radars/`; both directories are generated and gitignored.
+
+```bash
+cd web
+npm install
+npm run dev       # local dev server
+npm run build     # tsc -b && vite build -> web/dist
+```
+
+Populate the sample data (Mirage, one match) before the first run:
+
+```bash
+python scripts/sync_web_data.py --samples
+```
+
+The pages are the map index, the lineup library (radar plus copyable practice commands),
+team profiles (T/CT setups, executes, economy) and player profiles (roles, lanes). Chinese
+is the default language; the top-bar button switches to English and remembers the choice in
+`localStorage`.
 
 Demos you download yourself (for example from HLTV) can go straight into `data/raw/`.
 

@@ -3,7 +3,7 @@
 GOTV demos often omit the grenade thrower (awpy returns ``thrower_steamid = null``
 for every trajectory in the test demo). We recover it by matching each trajectory's
 first sample to the ``weapon_fire`` event that threw it: same grenade class, fired
-0-32 ticks before the projectile appears, nearest in 2D. The matched throw also gives
+up to 0.5 seconds before the projectile appears, nearest in 2D. The matched throw also gives
 the thrower's feet position and view angles at release, which is exactly what a
 lineup library needs.
 """
@@ -22,7 +22,7 @@ WEAPON_TYPE = {
     "weapon_decoy": "decoy",
 }
 
-MATCH_WINDOW_TICKS = 32  # projectile appears within ~0.5s of the throw
+MATCH_WINDOW_TICKS = 32  # 64-tick baseline; scaled to 0.5s at the demo tick rate
 MATCH_MAX_DIST = 250.0  # Hammer units between thrower feet and first projectile sample
 
 
@@ -48,9 +48,11 @@ def trajectory_summary(grenades: pl.DataFrame) -> pl.DataFrame:
 
 
 def attribute_grenades(
-    grenades: pl.DataFrame, shots: pl.DataFrame, smokes: pl.DataFrame
+    grenades: pl.DataFrame, shots: pl.DataFrame, smokes: pl.DataFrame, tick_rate: float = 64
 ) -> pl.DataFrame:
     """Every grenade with its thrower, release position/angles and landing point."""
+    if not np.isfinite(tick_rate) or tick_rate <= 0:
+        raise ValueError("tick_rate must be positive and finite")
     traj = trajectory_summary(grenades)
     throws = (
         shots.filter(pl.col("weapon").is_in(list(WEAPON_TYPE)))
@@ -60,9 +62,10 @@ def attribute_grenades(
     )
 
     cand = (
-        traj.select("nade_id", "type", "t0", "x0", "y0")
+        traj.select("nade_id", "type", "t0", "x0", "y0", "awpy_thrower")
         .join(throws, on="type", how="inner")
-        .filter((pl.col("tick") <= pl.col("t0")) & (pl.col("tick") >= pl.col("t0") - MATCH_WINDOW_TICKS))
+        .filter((pl.col("tick") <= pl.col("t0")) & (pl.col("tick") >= pl.col("t0").cast(pl.Int64) - round(tick_rate * MATCH_WINDOW_TICKS / 64)))
+        .filter(pl.col("awpy_thrower").is_null() | (pl.col("awpy_thrower") == pl.col("steamid")))
         .with_columns(dist=((pl.col("x") - pl.col("x0")) ** 2 + (pl.col("y") - pl.col("y0")) ** 2).sqrt())
         .filter(pl.col("dist") <= MATCH_MAX_DIST)
         .sort("dist")
@@ -125,7 +128,7 @@ class PlaceIndex:
     """
 
     def __init__(self, x: np.ndarray, y: np.ndarray, z: np.ndarray, places: list[str], z_weight: float = 2.0):
-        keep = np.array([bool(p) for p in places])
+        keep = np.array([bool(p) for p in places], dtype=bool)
         pts = np.stack([x, y, z * z_weight], axis=1)[keep]
         labels = np.array(places, dtype=object)[keep]
         # Thin to a 16-unit grid; plenty of resolution for callouts.
@@ -161,6 +164,8 @@ class PlaceIndex:
         x, y, z = (np.asarray(v, float) for v in (x, y, z))
         if len(x) == 0:
             return []
+        if not len(self.pts):
+            return [None] * len(x)
         out = self._nearest(np.stack([x, y, z * self.z_weight], axis=1), self.pts, max_dist)
         missing = [i for i, v in enumerate(out) if v is None]
         if missing and fallback_2d > 0:

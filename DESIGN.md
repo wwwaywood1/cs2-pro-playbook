@@ -158,7 +158,15 @@ index.json                      { schema_version, generated_at, min_matches_reli
   top AWP user and ropz as the most distant T-side player (both known roles).
 - Manual: the frequent lineups plotted on the Mirage radar land in the expected places
   (T-spawn window and top-mid smokes, CT run-throw molotov to T ramp, B-site molotov to apartments).
-- Inferno (9z vs PARIVISION 13-10) parses end to end; region mapping is pending (DS-01).
+- Inferno (9z vs PARIVISION 13-10) parses end to end with its region mapping (DS-01),
+  and a FACEIT Mirage demo (16-14, with warmup) parses too.
+- `tests/test_robustness.py` (GPT-01, see REVIEW.md): synthetic regressions for restored or
+  incomplete round histories, substitutions, bots, missing clan names, same-tick opening
+  kills, tick rate, and warmup-only players. Malformed demos are rejected with a
+  `ValueError` rather than producing a wrong score.
+- `web/e2e/smoke.py`: headless-browser check of every route on the sample data (filters,
+  radar/card selection, copy button, low-sample banner, language switch, 375px layout,
+  console errors).
 - `fetch.py` is written against the documented dataset layout but has not been run
   against Hugging Face yet (blocked in the development sandbox). First real run:
   `python -m playbook fetch --dry-run`.
@@ -170,8 +178,10 @@ index.json                      { schema_version, generated_at, min_matches_reli
 - Role thresholds are untuned; they need a labelled set (pro roles are public knowledge
   for top teams, so labels are cheap to collect).
 - Multipart demos (one map split over several files) are not handled; awpy supports them.
-- Possible edge cases to verify (GPT-01): technical pauses with backup restore, mid-match
-  substitutions, overtime, demos with bots, demos missing clan names.
+- Parsing is strict (GPT-01): demos with restored or non-consecutive rounds, a bot playing
+  inside a live round, or players whose team cannot be resolved are rejected, not repaired.
+  A real backup-restore demo and a late-joined GOTV demo still need to be collected to see
+  how often this triggers on Tier 1/2 data.
 - Two-level maps (Nuke, Train, Vertigo) need the lower radar when z < `lower_level_max_z`.
 
 ## Roadmap
@@ -179,9 +189,9 @@ index.json                      { schema_version, generated_at, min_matches_reli
 | Milestone | Content | Status |
 |---|---|---|
 | M0 | Pipeline: fetch, parse, semantics, export, tests | done |
-| M1 | Map configs (Mirage done, Inferno next), team aliases, first 60 demos for Mirage + Inferno | next |
+| M1 | Map configs (Mirage, Inferno done), team aliases (done), first 60 demos for Mirage + Inferno | next: fetch |
 | M2 | Tactic identification: trajectory clustering of T executes and CT setups, labelled validation set, tuned role thresholds | after M1 |
-| M3 | Website v1: lineup library and team pages, bilingual (zh/en), GitHub Pages | parallel with M1-M2 |
+| M3 | Website v1: lineup library, team and player pages, bilingual (zh/en) | done on sample data; GitHub Pages deploy pending |
 | M4 | Natural-language summaries generated from the computed numbers (the LLM rewrites, never invents) | after M2 |
 | M5 | Full map pool, weekly incremental update | later |
 

@@ -55,10 +55,101 @@ def _assign_round(df: pl.DataFrame, tick_col: str, bounds: pl.DataFrame) -> pl.D
     """Attach round_num / freeze_end / end ticks to rows by tick (rows outside any round are dropped)."""
     return (
         df.with_columns(pl.col(tick_col).cast(pl.Int64))
-        .sort(tick_col)
+        .sort(tick_col, maintain_order=True)
         .join_asof(bounds, left_on=tick_col, right_on="start_tick", strategy="backward")
         .filter(pl.col("round_num").is_not_null() & (pl.col(tick_col) <= pl.col("official_end_tick")))
     )
+
+
+def _live_ticks(tk: pl.DataFrame, bounds: pl.DataFrame) -> pl.DataFrame:
+    """Rows of `tk` whose tick falls inside a competitive round (warmup/knife/breaks dropped)."""
+    return (
+        tk.sort("tick")
+        .join_asof(bounds.select("start_tick", "official_end_tick").sort("start_tick"),
+                   left_on="tick", right_on="start_tick", strategy="backward")
+        .filter(pl.col("start_tick").is_not_null() & (pl.col("tick") <= pl.col("official_end_tick")))
+        .drop("start_tick", "official_end_tick")
+    )
+
+
+def _validate_rounds(rounds: pl.DataFrame) -> None:
+    """Reject ambiguous histories rather than inventing scores or replay ownership."""
+    if not rounds.height:
+        raise ValueError("No complete competitive rounds")
+    rows = list(rounds.sort("start_tick").iter_rows(named=True))
+    if [r["round_num"] for r in rows] != list(range(1, len(rows) + 1)):
+        raise ValueError("Incomplete or restored round history: need consecutive rounds starting at 1")
+    previous_end = -1
+    for r in rows:
+        ticks = [r[c] for c in ("start_tick", "freeze_end_tick", "end_tick", "official_end_tick")]
+        if any(t is None for t in ticks) or ticks != sorted(ticks) or ticks[0] < previous_end:
+            raise ValueError("Invalid or overlapping round bounds; possible backup restore")
+        if r["winner_side"] not in SIDE:
+            raise ValueError("Round has no recognized winner; cannot reconstruct score")
+        previous_end = ticks[-1]
+
+
+def _resolve_teams(roster: pl.DataFrame, tk: pl.DataFrame, rounds: pl.DataFrame,
+                   aliases: dict[str, str]) -> tuple[dict, dict]:
+    """Connect teammates observed at freeze end, including substitutes/reconnects."""
+    if tk.filter(pl.col("steamid").is_null() | (pl.col("steamid") == 0)).height:
+        raise ValueError("Bots or missing Steam IDs cannot be represented by the player table key")
+    fe = tk.join(rounds.select("round_num", pl.col("freeze_end_tick").alias("tick")), on="tick")
+    parent = {}
+
+    def root(sid):
+        parent.setdefault(sid, sid)
+        while parent[sid] != sid:
+            parent[sid] = parent[parent[sid]]
+            sid = parent[sid]
+        return sid
+
+    groups = list(fe.group_by("round_num", "team_num").agg(pl.col("steamid").unique()).iter_rows(named=True))
+    for g in groups:
+        ids = g["steamid"]
+        for sid in ids:
+            parent[root(sid)] = root(ids[0])
+    if len({root(sid) for sid in parent}) != 2:
+        raise ValueError("Cannot resolve exactly two teams from freeze-end observations")
+    for rnd in rounds["round_num"]:
+        sides = [g for g in groups if g["round_num"] == rnd]
+        if {g["team_num"] for g in sides} != {2, 3} or len({root(g["steamid"][0]) for g in sides}) != 2:
+            raise ValueError("Missing or conflicting team sides at freeze end")
+    names = dict(roster.select("steamid", "name").iter_rows())
+    clans = {}
+    for sid, clan in roster.select("steamid", "team_clan_name").iter_rows():
+        team = canonical_team(clan, aliases)
+        if sid in parent and team:
+            clans.setdefault(root(sid), set()).add(team)
+    labels = {}
+    for g in sorted(groups, key=lambda g: g["round_num"]):
+        key = root(g["steamid"][0])
+        if len(clans.get(key, set())) > 1:
+            raise ValueError("Conflicting clan names within a team")
+        labels.setdefault(key, next(iter(clans.get(key, set())), f"{TEAM_NUM_SIDE[g['team_num']]}-start team"))
+    if len(set(labels.values())) != 2:
+        raise ValueError("Both teams resolve to the same label")
+    if set(tk["steamid"].unique()) - set(parent):
+        raise ValueError("Player never observed at freeze end; team membership is unknown")
+    return {sid: labels[root(sid)] for sid in parent}, names
+
+
+def _flag_opening(kills: pl.DataFrame) -> pl.DataFrame:
+    # Input order breaks same-tick ties; exactly one opening event per round.
+    duel = (pl.col("attacker_team").is_not_null() & pl.col("victim_team").is_not_null()
+            & ~pl.col("is_teamkill").fill_null(True) & ~pl.col("is_post_round")
+            & (pl.col("t_s") >= 0))
+    ordered = kills.sort("tick", maintain_order=True).with_row_index("_event")
+    return ordered.with_columns(
+        is_opening=(duel & (pl.col("_event") == pl.col("_event").filter(duel).min().over("round_num"))).fill_null(False)
+    ).drop("_event")
+
+
+def _match_winner(score: dict[str, int]) -> str | None:
+    if not score:
+        return None
+    leaders = [team for team, wins in score.items() if wins == max(score.values())]
+    return leaders[0] if len(leaders) == 1 else None
 
 
 def _site_from_place(place: str | None, mm: MapMeta) -> str | None:
@@ -92,6 +183,7 @@ def parse_demo(path: Path, aliases: dict[str, str] | None = None, verbose: bool 
         .sort("round_num")
         .with_columns(pl.col(c).cast(pl.Int64) for c in ("start_tick", "freeze_end_tick", "end_tick", "official_end_tick"))
     )
+    _validate_rounds(rounds)
     bounds = rounds.select("round_num", "start_tick", "freeze_end_tick", "end_tick", "official_end_tick").sort("start_tick")
 
     # ---- every tick: position + callout (fast; parallel pawn decode) -------------
@@ -104,20 +196,10 @@ def parse_demo(path: Path, aliases: dict[str, str] | None = None, verbose: bool 
     pidx = PlaceIndex.from_frame(tk.filter(pl.col("place") != ""))
 
     # ---- teams --------------------------------------------------------------------
-    roster = demo.players.filter(pl.col("side").is_in(list(SIDE)))
-    names = dict(roster.select("steamid", "name").iter_rows())
-    team_of: dict[int, str] = {}
-    for sid, clan in roster.select("steamid", "team_clan_name").iter_rows():
-        team = canonical_team(clan, aliases)
-        if team:
-            team_of[sid] = team
-    # Fallback for demos without clan names: label by the side a player starts on.
-    first_fe = rounds["freeze_end_tick"][0]
-    start_side = dict(tk.filter(pl.col("tick") == first_fe).select("steamid", "team_num").iter_rows())
-    for sid, num in start_side.items():
-        if sid not in team_of:
-            team_of[sid] = f"{TEAM_NUM_SIDE.get(num, '?')}-start team"
-            names.setdefault(sid, str(sid))
+    # Only ticks inside competitive rounds count: warmup bots or people who join and
+    # leave before the match must not make the whole demo unparseable.
+    roster = demo.players
+    team_of, names = _resolve_teams(roster, _live_ticks(tk, bounds), rounds, aliases)
 
     # ---- positions sampled once per second of live round time -------------------
     samples = [
@@ -229,10 +311,7 @@ def parse_demo(path: Path, aliases: dict[str, str] | None = None, verbose: bool 
             victim_region=pl.col("victim_place").replace_strict(mm.callout_region, default="OTHER", return_dtype=pl.Utf8),
         )
     )
-    duel = pl.col("attacker_team").is_not_null() & ~pl.col("is_teamkill").fill_null(True) & ~pl.col("is_post_round")
-    kills = kills.with_columns(
-        is_opening=duel & (pl.col("tick") == pl.col("tick").filter(duel).min().over("round_num"))
-    ).select(
+    kills = _flag_opening(kills).select(
         pl.lit(demo_id).alias("demo_id"), "round_num", "tick", "t_s", "is_post_round", "is_opening",
         "attacker_steamid", "attacker_name", "attacker_team", "attacker_side", "attacker_place", "attacker_region",
         "attacker_x", "attacker_y", "attacker_z",
@@ -251,7 +330,7 @@ def parse_demo(path: Path, aliases: dict[str, str] | None = None, verbose: bool 
     ).select(pl.lit(demo_id).alias("demo_id"), "round_num", "tick", "t_s", "steamid", "name", "team", "site", "place", "x", "y", "z")
 
     # ---- utility ------------------------------------------------------------------------
-    util = _assign_round(attribute_grenades(demo.grenades, demo.shots, demo.smokes), "throw_tick", bounds)
+    util = _assign_round(attribute_grenades(demo.grenades, demo.shots, demo.smokes, tick_rate=rate), "throw_tick", bounds)
     if util.height:
         throw_place = pidx.query(util["throw_x"], util["throw_y"], util["throw_z"])
         land_place = pidx.query(util["land_x"], util["land_y"], util["land_z"])
@@ -305,7 +384,7 @@ def parse_demo(path: Path, aliases: dict[str, str] | None = None, verbose: bool 
             "team_b": team_b,
             "score_a": final.get(team_a, 0),
             "score_b": final.get(team_b, 0),
-            "winner": max(final, key=final.get) if final else None,
+            "winner": _match_winner(final),
             "n_rounds": rounds_out.height,
             "tick_rate": rate,
             "build_num": header.get("build_num"),

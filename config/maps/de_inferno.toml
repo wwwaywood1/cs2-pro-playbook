@@ -1,15 +1,50 @@
 # Map metadata for de_inferno. Format: see de_mirage.toml.
-# TODO(DeepSeek DS-01): fill [regions] and [callouts] from `python -m playbook callouts <demo>`.
+# Callout grouping by DeepSeek (DS-01), checked by Claude against T/CT movement in
+# 9z vs PARIVISION (T ramp is B-heavy; Ruins and Arch are CT setup spots).
 
 map = "de_inferno"
 display_name = "Inferno"
 
-# From awpy-data release 2000933 (map_data.json)
 [radar]
 pos_x = -2087.0
 pos_y = 3870.0
 scale = 4.9
 
 [regions]
+T_SPAWN = "T_SPAWN"
+A_APPROACH = "A"
+A_SITE = "A"
+MID = "MID"
+B_APPROACH = "B"
+B_SITE = "B"
+CT_SPAWN = "CT_SPAWN"
 
 [callouts]
+TSpawn = "T_SPAWN"
+# B side: T ramp -> banana -> B site; Ruins is the CT-side/back part of B
+TRamp = "B_APPROACH"
+Banana = "B_APPROACH"
+BombsiteB = "B_SITE"
+Ruins = "B_SITE"
+# mid, including alt middle (SecondMid) and the Underpass that links them
+LowerMid = "MID"
+Underpass = "MID"
+Middle = "MID"
+SecondMid = "MID"
+TopofMid = "MID"
+# A side, T approach: T apps upstairs (kitchen / living room / deck / bridge),
+# back alley, and the patio by the A short entrance
+Kitchen = "A_APPROACH"  # ? 本图坐标在 T 家一侧；旧指南把 Kitchen 放在 Library/CT 家旁
+Upstairs = "A_APPROACH"
+Deck = "A_APPROACH"
+Bridge = "A_APPROACH"
+BackAlley = "A_APPROACH"
+Quad = "A_APPROACH"  # ? 旧指南把 Quad 写成 B 包点箱堆，本图坐标在 Top Mid / A 前场
+Apartments = "A_APPROACH"  # ? 可能指 CT Apps（CT 防守位，应归 A_SITE）；按 T 进攻通道暂归 A_APPROACH
+# A site and the CT holds around it (arch, library, balcony above pit)
+BombsiteA = "A_SITE"
+Arch = "A_SITE"
+Library = "A_SITE"
+Pit = "A_SITE"
+Balcony = "A_SITE"
+CTSpawn = "CT_SPAWN"

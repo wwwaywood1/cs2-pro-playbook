@@ -1,5 +1,102 @@
-alias,canonical
-Team Vitality,Vitality
-vitality,Vitality
-B8 Esports,B8
-b8,B8
+alias,canonical,confidence
+Vitality,Vitality,high
+Team Vitality,Vitality,high
+team-vitality,Vitality,high
+MOUZ,MOUZ,high
+mousesports,MOUZ,high
+Spirit,Spirit,high
+Team Spirit,Spirit,high
+team-spirit,Spirit,high
+FURIA,FURIA,high
+FURIA Esports,FURIA,high
+furia-esports,FURIA,high
+Aurora,Aurora,high
+Aurora Gaming,Aurora,high
+aurora-gaming,Aurora,high
+Falcons,Falcons,high
+Team Falcons,Falcons,high
+team-falcons,Falcons,high
+G2,G2,high
+G2 Esports,G2,high
+g2-esports,G2,high
+BETBOOM,BETBOOM,high
+BetBoom Team,BETBOOM,high
+betboom-team,BETBOOM,high
+Legacy,Legacy,high
+MIBR,MIBR,high
+9z,9z,high
+9z Team,9z,high
+9z-team,9z,high
+M80,M80,high
+Liquid,Liquid,high
+Team Liquid,Liquid,high
+team-liquid,Liquid,high
+BC.Game,BC.Game,high
+BCGame,BC.Game,high
+bc-game,BC.Game,high
+FlyQuest,FlyQuest,high
+TYLOO,TYLOO,high
+Chinggis Warriors,Chinggis Warriors,high
+chinggis-warriors,Chinggis Warriors,high
+The MongolZ,The MongolZ,high
+MongolZ,The MongolZ,high
+the-mongolz,The MongolZ,high
+5star,5star,high
+NEXVOID,NEXVOID,high
+DENDELE,DENDELE,high
+Natus Vincere,Natus Vincere,high
+NaVi,Natus Vincere,high
+natus-vincere,Natus Vincere,high
+FaZe,FaZe,high
+FaZe Clan,FaZe,high
+faze-clan,FaZe,high
+B8,B8,high
+B8 Esports,B8,high
+b8-esports,B8,high
+PARIVISION,PARIVISION,high
+PV,PARIVISION,high
+Astralis,Astralis,high
+Virtus.pro,Virtus.pro,high
+Virtus Pro,Virtus.pro,high
+VP,Virtus.pro,high
+virtus-pro,Virtus.pro,high
+Heroic,Heroic,high
+Ninjas in Pyjamas,Ninjas in Pyjamas,high
+NIP,Ninjas in Pyjamas,high
+ninjas-in-pyjamas,Ninjas in Pyjamas,high
+paiN Gaming,paiN,high
+paiN,paiN,high
+pain-gaming,paiN,high
+Complexity,Complexity,high
+Complexity Gaming,Complexity,high
+complexity-gaming,Complexity,high
+coL,Complexity,low
+Imperial,Imperial,high
+Imperial Esports,Imperial,high
+imperial-esports,Imperial,high
+Fluxo,Fluxo,high
+Sharks,Sharks,high
+Sharks Esports,Sharks,high
+sharks-esports,Sharks,high
+Wildcard,Wildcard,high
+Wildcard Gaming,Wildcard,high
+wildcard-gaming,Wildcard,high
+NRG,NRG,high
+NRG Esports,NRG,high
+nrg-esports,NRG,high
+Passion UA,Passion UA,high
+passion-ua,Passion UA,high
+GamerLegion,GamerLegion,high
+gamer-legion,GamerLegion,high
+BIG,BIG,high
+Berlin International Gaming,BIG,high
+berlin-international-gaming,BIG,high
+SAW,SAW,high
+Nemiga,Nemiga,high
+Nemiga Gaming,Nemiga,high
+nemiga-gaming,Nemiga,high
+fnatic,fnatic,high
+3DMAX,3DMAX,high
+Eternal Fire,Eternal Fire,low
+eternal-fire,Eternal Fire,low
+EF,Eternal Fire,low

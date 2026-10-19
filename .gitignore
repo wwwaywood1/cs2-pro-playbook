@@ -15,5 +15,6 @@ web/node_modules/
 web/dist/
 web/public/data/
 web/public/radars/
+*.tsbuildinfo
 
 .DS_Store
