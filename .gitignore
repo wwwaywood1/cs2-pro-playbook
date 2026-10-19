@@ -1,5 +1,5 @@
 # demos and generated data (large; regenerate with `python -m playbook run`)
-data/
+/data/
 *.dem
 *.dem.zst
 
