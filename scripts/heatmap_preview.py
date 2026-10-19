@@ -1,17 +1,16 @@
-"""Render heatmap panels for a player or team as a PNG (to check the data by eye).
+"""Render the team heatmap view as a PNG (a mock of the site page, for checking by eye).
 
-    python scripts/heatmap_preview.py de_mirage --player donk [--phase early] [--out DIR]
-    python scripts/heatmap_preview.py de_mirage --team spirit [--vs-baseline]
+    python scripts/heatmap_preview.py de_mirage spirit --side CT [--phase early] [--out DIR]
 
-Rows: T side, CT side. Columns: presence, holding, shots, utility thrown, and the
-combined view the site shows by default (presence + shots + utility, 1:1:1 on shares).
---vs-baseline draws the team's combined share minus the map average (red = more than
-other teams, blue = less).
+Draws one panel per view (presence, holding, fights, utility landing) with the team's
+players overlaid in their colours (red, blue, purple, green, orange; light = little,
+deep = a lot), plus a "who owns this area" panel. Reads data/site/<map>/heatmaps.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -20,96 +19,110 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
-import polars as pl  # noqa: E402
+from matplotlib.patches import Patch  # noqa: E402
 from scipy.ndimage import gaussian_filter  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from playbook.config import load_map  # noqa: E402
-from playbook.heatmap import GRID, PHASES, build_heatmaps, combine, to_array  # noqa: E402
-from playbook.store import read_all  # noqa: E402
+from playbook.heatmap import PHASES, combine, merge_phases  # noqa: E402
 
 RADARS = ROOT / "web" / "public" / "radars"
-COLUMNS = [("presence", {"presence": 1}), ("holding", {"holding": 1}), ("shots", {"shots": 1}),
-           ("util_throw", {"util_throw": 1}), ("combined 1:1:1", {"presence": 1, "shots": 1, "util_throw": 1})]
+# light -> deep for each player colour (same values as web/src/heatmap.ts)
+PALETTE = [
+    ("#fecaca", "#b91c1c"),  # red
+    ("#bfdbfe", "#1d4ed8"),  # blue
+    ("#e9d5ff", "#7e22ce"),  # purple
+    ("#bbf7d0", "#15803d"),  # green
+    ("#fed7aa", "#c2410c"),  # orange
+    ("#e5e7eb", "#4b5563"),  # extra players: grey
+]
+GAMMA = 0.6        # lift faint areas so all five players stay visible
+ALPHA_FLOOR = 0.12  # below this share of the player's peak: transparent
+VIEWS = [
+    ("站位 presence", {"presence": 1}),
+    ("驻守 holding", {"holding": 1}),
+    ("交火 shots+kills+deaths", {"shots": 1, "kills": 1, "deaths": 1}),
+    ("道具落点 smoke+flash+molotov+HE", {"smoke": 1, "flash": 1, "molotov": 1, "he": 1}),
+]
 
 
-def merged_layers(entry: dict, side: str, phases: list[str]) -> dict[str, list]:
-    """Sum the chosen phases into one sparse list per layer."""
-    acc: dict[str, dict[int, float]] = {}
-    for ph in phases:
-        for layer, flat in entry["data"].get(side, {}).get(ph, {}).items():
-            d = acc.setdefault(layer, {})
-            for i in range(0, len(flat), 2):
-                d[flat[i]] = d.get(flat[i], 0.0) + flat[i + 1]
-    return {k: [x for c in sorted(v) for x in (c, v[c])] for k, v in acc.items()}
+def hex_rgb(h: str) -> np.ndarray:
+    return np.array([int(h[i : i + 2], 16) for i in (1, 3, 5)]) / 255.0
 
 
-def draw_panel(ax, radar, grid: np.ndarray, title: str, diverging: bool = False) -> None:
-    ax.imshow(radar, extent=(0, 1024, 1024, 0))
-    g = gaussian_filter(grid, 1.2)
-    if diverging:
-        lim = np.abs(g).max() or 1
-        rgba = plt.get_cmap("coolwarm")((g / lim + 1) / 2)
-        rgba[..., 3] = np.clip(np.abs(g) / lim * 1.8, 0, 0.9)
-        ax.imshow(rgba, extent=(0, 1024, 1024, 0), interpolation="bilinear")
-    else:
-        g = g / (g.max() or 1)
-        rgba = plt.get_cmap("inferno")(g)
-        rgba[..., 3] = np.clip(g * 1.6, 0, 0.9)
-        ax.imshow(rgba, extent=(0, 1024, 1024, 0), interpolation="bilinear")
-    ax.set_title(title, fontsize=9)
-    ax.axis("off")
+def player_rgba(grid: np.ndarray, color: int) -> np.ndarray:
+    """Light-to-deep shade of the player's colour; alpha grows with intensity."""
+    light, deep = (hex_rgb(c) for c in PALETTE[min(color, len(PALETTE) - 1)])
+    v = np.clip(grid / (grid.max() or 1), 0, 1) ** GAMMA
+    rgb = light[None, None, :] * (1 - v[..., None]) + deep[None, None, :] * v[..., None]
+    alpha = np.clip((v - ALPHA_FLOOR) * 1.6, 0, 0.9)
+    return np.dstack([rgb, alpha])
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("map")
-    ap.add_argument("--player")
-    ap.add_argument("--team")
+    ap.add_argument("team")
+    ap.add_argument("--side", choices=["T", "CT"], default="CT")
     ap.add_argument("--phase", choices=PHASES)
-    ap.add_argument("--vs-baseline", action="store_true")
+    ap.add_argument("--sigma", type=float, default=1.0)
     ap.add_argument("--out", type=Path, default=ROOT / "data" / "heatmap_previews")
     a = ap.parse_args()
 
-    t = read_all()
-    ids = t["matches"].filter(pl.col("map") == a.map)["demo_id"].to_list()
-    sub = {k: v.filter(pl.col("demo_id").is_in(ids)) for k, v in t.items() if "demo_id" in v.columns}
-    mm = load_map(a.map)
-    hm = build_heatmaps(sub, mm)
-    if a.player:
-        entry = next(p for p in hm["players"].values() if (p["name"] or "").lower() == a.player.lower())
-        label = f"{entry['name']} ({entry['team']})"
-    else:
-        entry = hm["teams"][a.team.lower()]
-        label = entry["team"]
+    entry = json.loads((ROOT / "data" / "site" / a.map / "heatmaps" / "teams" / f"{a.team}.json").read_text())
     phases = [a.phase] if a.phase else list(PHASES)
     radar = plt.imread(RADARS / f"{a.map}.png")
+    roster = [r for r in entry["roster"] if r["rounds"][a.side]]
+    plt.rcParams["font.sans-serif"] = ["Noto Sans CJK SC", "WenQuanYi Zen Hei", "DejaVu Sans"]
 
-    cols = COLUMNS + ([("vs other teams", None)] if a.vs_baseline else [])
-    fig, axes = plt.subplots(2, len(cols), figsize=(4 * len(cols), 8.4), dpi=80)
-    for r, side in enumerate(("T", "CT")):
-        layers = merged_layers(entry, side, phases)
-        for c, (name, weights) in enumerate(cols):
-            ax = axes[r, c]
-            if weights is None:
-                base = merged_layers(hm["baseline"], side, phases)
-                w = {"presence": 1, "shots": 1, "util_throw": 1}
-                diff = combine(layers, w)[0] - combine(base, w)[0]
-                draw_panel(ax, radar, diff, f"{side} · {name}", diverging=True)
-                continue
-            grid = combine(layers, weights)[0] if len(weights) > 1 else to_array(layers.get(name, []))[0]
-            per_round = entry["per_round"].get(side, {}).get(a.phase or "all", {}).get(name)
-            sub_title = f" · {per_round}/round" if per_round is not None else ""
-            draw_panel(ax, radar, grid, f"{side} · {name}{sub_title}")
-    n = entry["rounds"]
-    fig.suptitle(f"{a.map} · {label} · {entry['n_matches']} matches · T {n['T']} / CT {n['CT']} rounds"
-                 f" · phase: {a.phase or 'all'}", fontsize=12)
+    fig, grid_axes = plt.subplots(2, 3, figsize=(19, 13.6), dpi=80)
+    axes = list(grid_axes.ravel())
+    legend_ax = axes.pop(2)  # top-right slot holds the legend
+    legend_ax.axis("off")
+    for ax, (title, weights) in zip(axes, VIEWS):
+        ax.imshow(radar, extent=(0, 1024, 1024, 0))
+        for r in reversed(roster):  # first colour on top
+            layers = merge_phases(entry["players"][r["steamid"]], a.side, phases)
+            g = gaussian_filter(combine(layers, weights)[0], a.sigma)
+            ax.imshow(player_rgba(g, r["color"]), extent=(0, 1024, 1024, 0), interpolation="bilinear")
+        ax.set_title(title, fontsize=14)
+        ax.axis("off")
+
+    # who owns each area: the player with the largest share of presence there
+    ax = axes[-1]
+    ax.imshow(radar, extent=(0, 1024, 1024, 0))
+    stack = np.stack([gaussian_filter(combine(merge_phases(entry["players"][r["steamid"]], a.side, phases),
+                                              {"presence": 1})[0], a.sigma) for r in roster])
+    owner = stack.argmax(0)
+    top = stack.max(0)
+    v = np.clip(top / (top.max() or 1), 0, 1) ** GAMMA
+    rgba = np.zeros((*owner.shape, 4))
+    for i, r in enumerate(roster):
+        light, deep = (hex_rgb(c) for c in PALETTE[min(r["color"], len(PALETTE) - 1)])
+        m = owner == i
+        rgba[m, :3] = light * (1 - v[m, None]) + deep * v[m, None]
+    rgba[..., 3] = np.clip((v - ALPHA_FLOOR) * 1.6, 0, 0.85)
+    ax.imshow(rgba, extent=(0, 1024, 1024, 0), interpolation="nearest")
+    ax.set_title("区域归属（站位最多的选手）", fontsize=14)
+    ax.axis("off")
+
+    handles = []
+    for r in roster:
+        s = entry["summary"].get(r["steamid"], {}).get(a.side, {})
+        lane = s.get("main_lane", {}).get(a.phase or "early", {})
+        hold = (s.get("holds") or [{}])[0]
+        txt = f"{r['name']}  ({r['rounds'][a.side]} 回合)\n开局主要在 {lane.get('lane', '—')}"
+        if hold:
+            txt += f"\n最常驻守 {hold.get('place')}：{hold.get('seconds_per_round')} 秒/回合"
+        handles.append(Patch(facecolor=PALETTE[min(r["color"], 5)][1], label=txt))
+    legend_ax.legend(handles=handles, loc="center left", fontsize=13, frameon=False, labelspacing=1.4,
+                     handlelength=2.2, handleheight=1.6)
+    fig.suptitle(f"{entry['team']} · {a.map} · {a.side} 方 · {entry['n_matches']} 场 {entry['rounds'][a.side]} 个枪局"
+                 f" · 阶段：{a.phase or '全部'}", fontsize=16)
+    fig.tight_layout(rect=(0, 0, 1, 0.96))
     a.out.mkdir(parents=True, exist_ok=True)
-    name = (a.player or a.team).lower().replace(" ", "-")
-    path = a.out / f"{a.map}_{name}_{a.phase or 'all'}{'_vs' if a.vs_baseline else ''}.png"
-    fig.tight_layout()
+    path = a.out / f"{a.map}_{a.team}_{a.side}_{a.phase or 'all'}.png"
     fig.savefig(path, bbox_inches="tight")
     print(path)
 

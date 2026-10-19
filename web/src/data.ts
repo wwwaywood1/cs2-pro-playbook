@@ -1,9 +1,9 @@
 import { useEffect, useState, type DependencyList } from "react";
 import type {
   HeatmapBaseline,
+  HeatmapTeamIndexEntry,
   Lineup,
   MapMeta,
-  PlayerHeatmap,
   PlayerProfile,
   SiteIndex,
   TeamHeatmap,
@@ -69,15 +69,13 @@ export function getLineups(map: string): Promise<Lineup[]> {
   );
 }
 
+export function getHeatmapTeams(): Promise<HeatmapTeamIndexEntry[]> {
+  return cached("hm-teams", () => fetchJson<HeatmapTeamIndexEntry[]>("data/heatmap_teams.json"));
+}
+
 export function getHeatmapBaseline(map: string): Promise<HeatmapBaseline> {
   return cached(`hm-base:${map}`, () =>
     fetchJson<HeatmapBaseline>(`data/${segment(map)}/heatmaps/baseline.json`),
-  );
-}
-
-export function getPlayerHeatmap(map: string, steamid: string): Promise<PlayerHeatmap> {
-  return cached(`hm-player:${map}:${steamid}`, () =>
-    fetchJson<PlayerHeatmap>(`data/${segment(map)}/heatmaps/players/${segment(steamid)}.json`),
   );
 }
 

@@ -1,22 +1,58 @@
-// Heatmap math for the site. Pure functions except toDataUrl (needs a DOM canvas).
-// Mirrors playbook/heatmap.py: each layer is turned into a share of its own total
-// before weighting, because seconds, shots and grenades are not comparable units.
+// Heatmap math for the team view. Pure functions except toDataUrl (needs a DOM canvas).
+// Mirrors playbook/heatmap.py and scripts/heatmap_preview.py: layers are combined as
+// shares of their own totals (seconds, shots and grenades are different units), each
+// player is drawn in his colour from light (little) to deep (a lot).
 
-import type { HeatData, HeatLayer, HeatPhase, Side } from "./types";
+import type { HeatGrid, HeatLayer, HeatPhase, Side } from "./types";
 
 export const HEAT_LAYERS: HeatLayer[] = [
   "presence",
   "holding",
   "shots",
-  "util_throw",
-  "util_land",
   "kills",
   "deaths",
+  "smoke",
+  "flash",
+  "molotov",
+  "he",
 ];
 export const HEAT_PHASES: HeatPhase[] = ["early", "mid", "post"];
+export const UTILITY_LAYERS: HeatLayer[] = ["smoke", "flash", "molotov", "he"];
 
 export type Weights = Partial<Record<HeatLayer, number>>;
-export const DEFAULT_WEIGHTS: Weights = { presence: 1, shots: 1, util_throw: 1 };
+export type HeatView = "presence" | "holding" | "fights" | "utility";
+
+/** The four views of the page. "utility" can be narrowed to one grenade type. */
+export const VIEW_WEIGHTS: Record<HeatView, Weights> = {
+  presence: { presence: 1 },
+  holding: { holding: 1 },
+  fights: { shots: 1, kills: 1, deaths: 1 },
+  utility: { smoke: 1, flash: 1, molotov: 1, he: 1 },
+};
+
+export interface PlayerColor {
+  key: string; // i18n key suffix: heatmap.color.<key>
+  light: string;
+  deep: string;
+}
+
+/** Index = RosterEntry.color. 0 red, 1 blue, 2 purple, 3 green, 4 orange, then grey. */
+export const PLAYER_COLORS: PlayerColor[] = [
+  { key: "red", light: "#fecaca", deep: "#b91c1c" },
+  { key: "blue", light: "#bfdbfe", deep: "#1d4ed8" },
+  { key: "purple", light: "#e9d5ff", deep: "#7e22ce" },
+  { key: "green", light: "#bbf7d0", deep: "#15803d" },
+  { key: "orange", light: "#fed7aa", deep: "#c2410c" },
+  { key: "grey", light: "#e5e7eb", deep: "#4b5563" },
+];
+
+export function playerColor(index: number): PlayerColor {
+  return PLAYER_COLORS[Math.min(Math.max(0, index), PLAYER_COLORS.length - 1)];
+}
+
+const GAMMA = 0.6; // lift faint areas so all five players stay visible
+const ALPHA_FLOOR = 0.12; // below this share of the player's peak: transparent
+const ALPHA_MAX = 0.9;
 
 export interface GridShape {
   grid: number; // cells per side
@@ -31,7 +67,7 @@ function size(shape: GridShape): number {
 
 /** Sum the chosen phases of one side into one dense grid per layer. */
 export function denseLayers(
-  data: HeatData,
+  data: HeatGrid,
   side: Side,
   phases: HeatPhase[],
   shape: GridShape,
@@ -72,25 +108,6 @@ export function combine(
     const k = w / total;
     for (let i = 0; i < values.length; i++) out[i] += values[i] * k;
   }
-  return out;
-}
-
-/** Normalise so the weights sum to 1 (keeps "subject minus baseline" comparable). */
-export function normalisedWeights(weights: Weights): Weights {
-  let sum = 0;
-  for (const layer of HEAT_LAYERS) sum += Math.max(0, weights[layer] ?? 0);
-  if (sum <= 0) return {};
-  const out: Weights = {};
-  for (const layer of HEAT_LAYERS) {
-    const w = Math.max(0, weights[layer] ?? 0);
-    if (w) out[layer] = w / sum;
-  }
-  return out;
-}
-
-export function difference(a: Dense, b: Dense): Dense {
-  const out = new Float32Array(a.length);
-  for (let i = 0; i < a.length; i++) out[i] = a[i] - b[i];
   return out;
 }
 
@@ -136,89 +153,104 @@ export function blur(values: Dense, shape: GridShape, sigma: number): Dense {
   return out;
 }
 
-export type ColorMode = "sequential" | "diverging";
+function hexRgb(hex: string): [number, number, number] {
+  return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+}
 
-// Sequential: transparent -> purple -> orange -> pale yellow ("inferno"-like).
-const SEQ: [number, number, number][] = [
-  [40, 11, 84],
-  [120, 28, 109],
-  [187, 55, 84],
-  [237, 105, 37],
-  [251, 180, 26],
-  [252, 255, 164],
-];
-const NEG: [number, number, number] = [59, 130, 246]; // less than baseline
-const POS: [number, number, number] = [239, 68, 68]; // more than baseline
+function shade(color: PlayerColor, v: number): [number, number, number] {
+  const a = hexRgb(color.light);
+  const b = hexRgb(color.deep);
+  return [a[0] + (b[0] - a[0]) * v, a[1] + (b[1] - a[1]) * v, a[2] + (b[2] - a[2]) * v];
+}
 
-function ramp(t: number): [number, number, number] {
-  const x = Math.min(1, Math.max(0, t)) * (SEQ.length - 1);
-  const i = Math.min(SEQ.length - 2, Math.floor(x));
-  const f = x - i;
-  const a = SEQ[i];
-  const b = SEQ[i + 1];
-  return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+function levelMax(values: Dense, off: number, n: number): number {
+  let m = 0;
+  for (let i = 0; i < n; i++) if (values[off + i] > m) m = values[off + i];
+  return m;
 }
 
 /**
- * RGBA bytes (grid x grid) for one level. Sequential scales to the level's maximum;
- * diverging scales to the largest absolute value. Alpha grows with intensity so the
- * radar stays visible where nothing happens.
+ * RGBA bytes (grid x grid) of one player on one level: his colour from light to deep,
+ * scaled to his own peak (so a player who plays one spot and one who roams both show).
  */
-export function toRgba(values: Dense, shape: GridShape, level: number, mode: ColorMode): Uint8ClampedArray {
-  const { grid } = shape;
-  const off = level * grid * grid;
-  const n = grid * grid;
-  let lim = 0;
-  for (let i = 0; i < n; i++) {
-    const v = mode === "diverging" ? Math.abs(values[off + i]) : values[off + i];
-    if (v > lim) lim = v;
-  }
+export function playerRgba(values: Dense, shape: GridShape, level: number, color: PlayerColor): Uint8ClampedArray {
+  const n = shape.grid * shape.grid;
+  const off = level * n;
   const px = new Uint8ClampedArray(n * 4);
-  if (!(lim > 0)) return px;
+  const max = levelMax(values, off, n);
+  if (!(max > 0)) return px;
   for (let i = 0; i < n; i++) {
-    const v = values[off + i] / lim;
-    let rgb: [number, number, number];
-    let alpha: number;
-    if (mode === "diverging") {
-      rgb = v >= 0 ? POS : NEG;
-      alpha = Math.min(0.85, Math.abs(v) * 1.6);
-    } else {
-      rgb = ramp(v);
-      alpha = Math.min(0.85, Math.max(0, v) * 1.6);
-    }
-    px[i * 4] = rgb[0];
-    px[i * 4 + 1] = rgb[1];
-    px[i * 4 + 2] = rgb[2];
-    px[i * 4 + 3] = Math.round(alpha * 255);
+    const v = Math.pow(Math.min(1, Math.max(0, values[off + i] / max)), GAMMA);
+    const [r, g, b] = shade(color, v);
+    px[i * 4] = r;
+    px[i * 4 + 1] = g;
+    px[i * 4 + 2] = b;
+    px[i * 4 + 3] = Math.round(Math.min(ALPHA_MAX, Math.max(0, (v - ALPHA_FLOOR) * 1.6)) * 255);
   }
   return px;
 }
 
-/** PNG data URL (grid x grid pixels); draw it stretched over the 1024x1024 radar. */
-export function toDataUrl(values: Dense, shape: GridShape, level: number, mode: ColorMode): string {
+/**
+ * "Who owns this area": every cell takes the colour of the player with the largest
+ * value there (each player first scaled to his own peak), shaded by that value.
+ */
+export function ownerRgba(
+  players: { values: Dense; color: PlayerColor }[],
+  shape: GridShape,
+  level: number,
+): Uint8ClampedArray {
+  const n = shape.grid * shape.grid;
+  const off = level * n;
+  const px = new Uint8ClampedArray(n * 4);
+  const maxes = players.map((p) => levelMax(p.values, off, n));
+  for (let i = 0; i < n; i++) {
+    let best = -1;
+    let bestV = 0;
+    players.forEach((p, k) => {
+      const v = maxes[k] > 0 ? p.values[off + i] / maxes[k] : 0;
+      if (v > bestV) {
+        bestV = v;
+        best = k;
+      }
+    });
+    if (best < 0) continue;
+    const v = Math.pow(Math.min(1, bestV), GAMMA);
+    const [r, g, b] = shade(players[best].color, v);
+    px[i * 4] = r;
+    px[i * 4 + 1] = g;
+    px[i * 4 + 2] = b;
+    px[i * 4 + 3] = Math.round(Math.min(0.85, Math.max(0, (v - ALPHA_FLOOR) * 1.6)) * 255);
+  }
+  return px;
+}
+
+/** PNG data URL of grid x grid RGBA bytes; draw it stretched over the 1024x1024 radar. */
+export function toDataUrl(rgba: Uint8ClampedArray, grid: number): string {
   const canvas = document.createElement("canvas");
-  canvas.width = shape.grid;
-  canvas.height = shape.grid;
+  canvas.width = grid;
+  canvas.height = grid;
   const ctx = canvas.getContext("2d");
   if (!ctx) return "";
-  const image = ctx.createImageData(shape.grid, shape.grid);
-  image.data.set(toRgba(values, shape, level, mode));
+  const image = ctx.createImageData(grid, grid);
+  image.data.set(rgba);
   ctx.putImageData(image, 0, 0);
   return canvas.toDataURL("image/png");
 }
 
-/** Per-round total of one layer for the chosen phases (for captions like "11.2 shots / round"). */
-export function perRound(data: HeatData, side: Side, phases: HeatPhase[], layer: HeatLayer): number | null {
+/** Per-round total of some layers for the chosen phases (captions: "72 s / round"). */
+export function perRound(data: HeatGrid, side: Side, phases: HeatPhase[], layers: HeatLayer[]): number | null {
   const bySide = data.per_round[side];
   if (!bySide) return null;
-  if (phases.length === HEAT_PHASES.length) return bySide.all?.[layer] ?? null;
   let total = 0;
   let any = false;
-  for (const phase of phases) {
-    const v = bySide[phase]?.[layer];
-    if (v !== undefined) {
-      total += v;
-      any = true;
+  const sources = phases.length === HEAT_PHASES.length ? (["all"] as const) : phases;
+  for (const phase of sources) {
+    for (const layer of layers) {
+      const v = bySide[phase]?.[layer];
+      if (v !== undefined) {
+        total += v;
+        any = true;
+      }
     }
   }
   return any ? total : null;

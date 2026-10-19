@@ -8,7 +8,8 @@ Output layout (schema documented in DESIGN.md, section "Site data contract"):
     data/site/<map>/teams/<team-slug>.json    full team profile
     data/site/<map>/players.json              player profiles with role hints
     data/site/<map>/lineups.json              lineup library (clustered grenades)
-    data/site/<map>/heatmaps/                 baseline.json, players/<steamid>.json, teams/<slug>.json
+    data/site/heatmap_teams.json              heatmap entry: team -> maps, fixed player colours
+    data/site/<map>/heatmaps/                 baseline.json, teams/<slug>.json (players, grids, summaries)
 
 Everything is computed from data, not written by hand. Numbers carry their sample
 size; anything from fewer than MIN_MATCHES_RELIABLE matches is flagged low_sample.
@@ -25,7 +26,9 @@ from pathlib import Path
 import polars as pl
 
 from playbook.config import PARSED_DIR, SITE_DIR, MapMeta, load_map, team_slug
-from playbook.heatmap import build_heatmaps
+from playbook.heatmap import build_heatmaps, roster_order
+from playbook.tactics import landing_spots
+from playbook.zones import make_summarizer, team_setup
 from playbook.store import read_all
 
 SCHEMA_VERSION = 1
@@ -205,6 +208,7 @@ def player_profiles(sub: dict[str, pl.DataFrame]) -> list[dict]:
                 "places_30s": _lane_dist(ct["place_30s"].to_list()),
             },
         })
+    out.sort(key=lambda p: p["steamid"])  # deterministic tie-breaks in the role hints
     _add_role_hints(out)
     return sorted(out, key=lambda p: (p["team"] or "", p["name"] or ""))
 
@@ -357,6 +361,8 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         "data_source": "Professional CS2 match demos (provenance per demo in matches; see DESIGN.md, Data sources)",
         "maps": [],
     }
+    order = roster_order(t["player_rounds"])  # stable player colours across maps
+    team_maps: dict[str, list[dict]] = {}
     for map_name in sorted(matches["map"].unique().to_list()):
         mm = load_map(map_name)
         ids = matches.filter(pl.col("map") == map_name)["demo_id"].to_list()
@@ -379,12 +385,16 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         ])
         _write(mdir / "players.json", players)
         _write(mdir / "lineups.json", lineups)
-        hm = build_heatmaps(sub, mm)
+        spots, spot_assign = landing_spots(sub["utility"], mm)
+        hm = build_heatmaps(sub, mm, order, make_summarizer(mm, spots, spot_assign, nade_lineup))
         _write_compact(mdir / "heatmaps" / "baseline.json", hm["baseline"])
-        for sid, entry in hm["players"].items():
-            _write_compact(mdir / "heatmaps" / "players" / f"{sid}.json", entry)
         for slug, entry in hm["teams"].items():
+            entry["setup"] = team_setup(entry)
             _write_compact(mdir / "heatmaps" / "teams" / f"{slug}.json", entry)
+            team_maps.setdefault(entry["team"], []).append({
+                "map": map_name, "display_name": mm.display_name, "n_matches": entry["n_matches"],
+                "rounds": entry["rounds"], "players": [r["steamid"] for r in entry["roster"]],
+            })
         index["maps"].append({
             "map": map_name, "display_name": mm.display_name, "n_matches": len(ids),
             "teams": [p["slug"] for p in teams], "n_players": len(players), "n_lineups": len(lineups),
@@ -392,4 +402,24 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         })
         print(f"  {map_name}: {len(ids)} matches, {len(teams)} teams, {len(players)} players, {len(lineups)} lineups")
     _write(out_dir / "index.json", index)
+    _write(out_dir / "heatmap_teams.json", heatmap_team_index(t["player_rounds"], order, team_maps))
     print(f"site data -> {out_dir}")
+
+
+def heatmap_team_index(player_rounds: pl.DataFrame, order: dict[str, list[str]],
+                       team_maps: dict[str, list[dict]]) -> list[dict]:
+    """Entry point of the heatmap pages: team -> maps (arrow order: most played first) and
+    the team's players with their fixed colours (0 red, 1 blue, 2 purple, 3 green, 4 orange)."""
+    names = (
+        player_rounds.filter(pl.col("steamid").is_not_null() & pl.col("team").is_not_null())
+        .group_by("team", "steamid").agg(name=pl.col("name").mode().first(), rounds=pl.len())
+    )
+    out = []
+    for team, maps in team_maps.items():
+        info = {str(sid): (n, r) for sid, n, r in names.filter(pl.col("team") == team).select("steamid", "name", "rounds").iter_rows()}
+        roster = [{"steamid": sid, "name": info.get(sid, (None, 0))[0], "color": i, "rounds": info.get(sid, (None, 0))[1]}
+                  for i, sid in enumerate(order.get(team, []))]
+        maps = sorted(maps, key=lambda m: (-m["n_matches"], m["map"]))
+        out.append({"team": team, "slug": team_slug(team), "n_matches": sum(m["n_matches"] for m in maps),
+                    "maps": maps, "roster": roster})
+    return sorted(out, key=lambda e: (-e["n_matches"], e["team"].lower()))

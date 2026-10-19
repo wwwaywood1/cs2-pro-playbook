@@ -157,9 +157,19 @@ export interface Lineup {
 }
 
 // ---------------------------------------------------------------------------- heatmaps
-// <map>/heatmaps/baseline.json, players/<steamid>.json, teams/<slug>.json (playbook/heatmap.py)
+// <map>/heatmaps/baseline.json and <map>/heatmaps/teams/<slug>.json (playbook/heatmap.py, playbook/zones.py)
+// Cleaned data: gun rounds of the team only, living time only, first 5 s and post-round excluded.
 
-export type HeatLayer = "presence" | "holding" | "shots" | "util_throw" | "util_land" | "kills" | "deaths";
+export type HeatLayer =
+  | "presence" // living seconds
+  | "holding" // living seconds moving < 40 units/s
+  | "shots"
+  | "kills" // at the attacker
+  | "deaths" // at the victim
+  | "smoke" // grenade LANDING points by type
+  | "flash"
+  | "molotov"
+  | "he";
 export type HeatPhase = "early" | "mid" | "post";
 
 /**
@@ -169,38 +179,117 @@ export type HeatPhase = "early" | "mid" | "post";
  */
 export type SparseGrid = number[];
 
-export interface HeatData {
-  rounds: { T: number; CT: number };
+export interface HeatGrid {
   /** totals per round, by side and phase ("all" = sum of phases) */
   per_round: Partial<Record<Side, Partial<Record<HeatPhase | "all", Partial<Record<HeatLayer, number>>>>>>;
   data: Partial<Record<Side, Partial<Record<HeatPhase, Partial<Record<HeatLayer, SparseGrid>>>>>>;
 }
 
-/** Grid metadata plus the map-wide baseline (all teams, per team-round). */
-export interface HeatmapBaseline extends HeatData {
+/** Grid metadata plus all teams on the map together (per team gun round). */
+export interface HeatmapBaseline extends HeatGrid {
   map: string;
   grid: number; // cells per side (64)
   cell_px: number; // radar pixels per cell (16)
-  levels: 1 | 2; // 2 on maps with a lower floor (Nuke): level 1 = lower radar image
+  levels: 1 | 2; // 2 on maps with a lower floor (Nuke): level 1 = radars/<map>_lower.png
   layers: HeatLayer[];
   phases: HeatPhase[];
   sides: Side[];
+  n_colors: number; // 5: red, blue, purple, green, orange
   early_s: number;
+  spawn_skip_s: number;
   hold_speed: number;
+  gun_rounds_only: boolean;
+  min_reliable_rounds: number;
   value: string;
   cell_index: string;
-  default_weights: Partial<Record<HeatLayer, number>>;
+  rounds: { T: number; CT: number };
 }
 
-export interface PlayerHeatmap extends HeatData {
-  steamid: string;
-  name: string;
-  team: string;
-  n_matches: number;
-}
-
-export interface TeamHeatmap extends HeatData {
+/** data/heatmap_teams.json: entry point of the heatmap pages (team first, then map). */
+export interface HeatmapTeamIndexEntry {
   team: string;
   slug: string;
+  n_matches: number; // all maps
+  /** maps with heatmap data for this team, most played first (the arrow order) */
+  maps: { map: string; display_name: string; n_matches: number; rounds: { T: number; CT: number }; players: string[] }[];
+  /** fixed colours on every map: 0 red, 1 blue, 2 purple, 3 green, 4 orange, >= 5 grey */
+  roster: { steamid: string; name: string; color: number; rounds: number }[];
+}
+
+export interface RosterEntry {
+  steamid: string;
+  name: string;
+  /** 0 red, 1 blue, 2 purple, 3 green, 4 orange, >= 5 grey (substitutes); same on every map */
+  color: number;
+  rounds: { T: number; CT: number }; // gun rounds for this team on this map
+  low_sample: { T: boolean; CT: boolean }; // rounds < min_reliable_rounds
+}
+
+export interface ZoneShare {
+  place: string;
+  region: string;
+  lane: Lane;
+  share: number | null;
+}
+
+export interface HoldSpot {
+  place: string;
+  lane: Lane;
+  x: number;
+  y: number;
+  z: number;
+  radar_x: number;
+  radar_y: number;
+  level: number;
+  seconds_per_round: number | null;
+  share_of_holding: number | null;
+  rounds_held: number; // rounds with >= 2 s held there
+  median_t_s: number | null;
+  phases: Record<HeatPhase, number | null>; // share of that hold's seconds in each phase
+}
+
+export interface UtilitySpot {
+  spot_id: string;
+  type: GrenadeType;
+  place: string | null;
+  label: string | null;
+  radar_x: number | null;
+  radar_y: number | null;
+  n: number;
+  per_round: number | null;
+  median_t_s: number | null; // throw time
+  lineups: { lineup_id: string; n: number }[]; // ids in <map>/lineups.json
+}
+
+export interface PlayerSideSummary {
+  rounds: number;
+  zones: Partial<Record<HeatPhase, ZoneShare[]>>;
+  main_lane: Partial<Record<HeatPhase, { lane: Lane; share: number | null }>>;
+  holds: HoldSpot[];
+  fights: {
+    kills_pr: number | null;
+    deaths_pr: number | null;
+    opening_kills: number;
+    opening_deaths: number;
+    places: { place: string; kills: number; deaths: number }[];
+  };
+  utility: {
+    per_round: { smoke: number | null; flash: number | null; molotov: number | null; he: number | null };
+    spots: UtilitySpot[];
+    unclustered?: number;
+  };
+}
+
+export interface TeamHeatmap {
+  team: string;
+  slug: string;
+  map: string;
   n_matches: number;
+  rounds: { T: number; CT: number }; // team gun rounds
+  roster: RosterEntry[]; // sorted by colour
+  team_grid: HeatGrid; // whole team, per team round
+  players: Record<string, HeatGrid>; // by steamid, per player round
+  summary: Record<string, Partial<Record<Side, PlayerSideSummary>>>;
+  /** which players are mainly on which lane, per side and phase */
+  setup: Partial<Record<Side, Partial<Record<HeatPhase, Partial<Record<Lane, string[]>>>>>>;
 }

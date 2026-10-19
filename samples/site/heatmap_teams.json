@@ -1,0 +1,112 @@
+[
+ {
+  "team": "B8",
+  "slug": "b8",
+  "n_matches": 1,
+  "maps": [
+   {
+    "map": "de_mirage",
+    "display_name": "Mirage",
+    "n_matches": 1,
+    "rounds": {
+     "T": 10,
+     "CT": 5
+    },
+    "players": [
+     "76561198304115519",
+     "76561199149812353",
+     "76561198382173659",
+     "76561198305036904",
+     "76561199001538362"
+    ]
+   }
+  ],
+  "roster": [
+   {
+    "steamid": "76561198304115519",
+    "name": "alex666",
+    "color": 0,
+    "rounds": 18
+   },
+   {
+    "steamid": "76561199149812353",
+    "name": "esenthial",
+    "color": 1,
+    "rounds": 18
+   },
+   {
+    "steamid": "76561198382173659",
+    "name": "kensizor",
+    "color": 2,
+    "rounds": 18
+   },
+   {
+    "steamid": "76561198305036904",
+    "name": "npl",
+    "color": 3,
+    "rounds": 18
+   },
+   {
+    "steamid": "76561199001538362",
+    "name": "s1zzi",
+    "color": 4,
+    "rounds": 18
+   }
+  ]
+ },
+ {
+  "team": "Vitality",
+  "slug": "vitality",
+  "n_matches": 1,
+  "maps": [
+   {
+    "map": "de_mirage",
+    "display_name": "Mirage",
+    "n_matches": 1,
+    "rounds": {
+     "T": 4,
+     "CT": 11
+    },
+    "players": [
+     "76561197989744167",
+     "76561197978835160",
+     "76561197973140692",
+     "76561197991272318",
+     "76561198113666193"
+    ]
+   }
+  ],
+  "roster": [
+   {
+    "steamid": "76561197989744167",
+    "name": "apEX",
+    "color": 0,
+    "rounds": 18
+   },
+   {
+    "steamid": "76561197978835160",
+    "name": "flameZ",
+    "color": 1,
+    "rounds": 18
+   },
+   {
+    "steamid": "76561197973140692",
+    "name": "mezii",
+    "color": 2,
+    "rounds": 18
+   },
+   {
+    "steamid": "76561197991272318",
+    "name": "ropz",
+    "color": 3,
+    "rounds": 18
+   },
+   {
+    "steamid": "76561198113666193",
+    "name": "ZywOo",
+    "color": 4,
+    "rounds": 18
+   }
+  ]
+ }
+]

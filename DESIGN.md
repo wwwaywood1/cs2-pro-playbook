@@ -39,7 +39,8 @@ callout mapping to the stored tables and rebuilds the semantic tables (no demo n
 | `playbook/utility.py` | Grenade thrower recovery; callout lookup for arbitrary points |
 | `playbook/semantics.py` | Round semantics (labels per round x team, and per round x player) |
 | `playbook/export.py` | Site JSON: team profiles, player profiles, lineup library, heatmaps |
-| `playbook/heatmap.py` | Player and team heatmaps: presence, holding, shots, utility, kills, deaths |
+| `playbook/heatmap.py` | Team heatmaps per player: presence, holding, shots, kills, deaths, utility landing by type (cleaned frames) |
+| `playbook/zones.py` | Per-player summaries on the cleaned frames: zones, holding spots, fights, utility spots; team setup |
 | `playbook/tactics.py` | M2, in progress: landing spots, T plans (commit, tempo, split, lurk, fake), execute recipes, CT setups |
 | `playbook/store.py` | Parquet storage, one file per demo per table |
 | `config/maps/*.toml` | Callout to region to lane mapping, radar transform, per map |
@@ -134,26 +135,39 @@ closest to the centre; its position and angles produce
 `setpos x y z;setang pitch yaw 0`. Technique is jump, run (speed at least 100), crouch,
 walk or stand, taken at the release tick.
 
-### Heatmaps
+### Heatmaps and player summaries (playbook/heatmap.py, playbook/zones.py)
 
-Counted on a 64 x 64 grid over the 1024 px radar (16 px per cell; Nuke has a second
-level for z below `lower_level_max_z`), per side and phase, divided by the rounds played
-on that side, so every value is "per round".
+Purpose: a site feature (team -> map -> T/CT -> players, each player in a fixed colour)
+and the cleaned base that tactic analysis and teaching material are built on.
+
+Cleaning: gun rounds of the player's team only (full/force buys), living time only,
+live round time only (no freeze time, no post-round), and presence/holding skip the first
+5 s (walking out of spawn). Values are per round played on that side.
+
+Grid: 64 x 64 over the 1024 px radar (16 px per cell); Nuke-style maps put z below
+`lower_level_max_z` on a second level. Phases: `post` (after the plant; retake for CT)
+takes precedence, then `early` (first 20 s), then `mid`.
 
 | Layer | Counts |
 |---|---|
 | presence | living seconds (positions are sampled once per second) |
-| holding | living seconds moving less than 40 units in that second (holding an angle; about 30% of samples) |
-| shots | gun fire events at the shooter's position |
-| util_throw / util_land | grenades at the release / landing position |
-| kills / deaths | at the attacker / victim position |
+| holding | living seconds moving less than 40 units in that second (holding an angle) |
+| shots | gun fire events at the shooter |
+| kills / deaths | at the attacker / victim |
+| smoke / flash / molotov / he | grenades at their landing point (throw spots belong to the lineup library) |
 
-Phases: `post` (after the plant; retake for CT) takes precedence, then `early` (first
-20 s), then `mid`. The site combines layers as a weighted sum of shares (each layer divided
-by its own total), default presence:shots:util_throw = 1:1:1, because seconds, shots and
-grenades are not comparable units. `baseline.json` is the same grid for all teams on the
-map (per team-round), so a team or player can be drawn as "share minus map average".
-`web/src/heatmap.ts` mirrors the Python combine step (checked to agree on real data).
+Colours: per team, players are ordered by rounds played over all maps, then name; the
+first five get red, blue, purple, green, orange, so a player keeps his colour on every
+map and side. Each player is shaded light to deep relative to his own peak; the
+"owner" mode colours each cell by the player with the highest relative value.
+`web/src/heatmap.ts` reproduces `scripts/heatmap_preview.py` (checked: same visible
+cells, alpha within 1/255).
+
+Summaries per player and side (zones.py): callout shares per phase and main lane;
+holding spots (clusters of held seconds within 150 units: seconds per round, rounds held,
+typical time); fights by callout (kills, deaths, openings); utility per round by type and
+the landing spots he uses most, linked to the lineups he throws them from. Per team and
+side, `setup` lists which players are mainly on which lane in each phase.
 
 ## Site data contract (data/site, schema_version 1)
 
@@ -163,9 +177,9 @@ index.json                      { schema_version, generated_at, min_matches_reli
 <map>/teams.json                [{ team, slug, n_matches, low_sample, win_rate_T, win_rate_CT }]
 <map>/teams/<slug>.json         { team, slug, map, n_matches, low_sample, matches[], sides{T,CT}, economy[] }
 <map>/players.json              [{ steamid, name, team, rounds{total,T,CT}, kpr, dpr, hs_pct, opening_*, awp_share, util_pr, T{...}, CT{...}, role_hints[] }]
-<map>/heatmaps/baseline.json    { map, grid, cell_px, levels, layers[], phases[], sides[], early_s, hold_speed, default_weights, rounds{T,CT}, per_round{side:{phase|all:{layer}}}, data{side:{phase:{layer:[cell,value,...]}}} }
-<map>/heatmaps/teams/<slug>.json     { team, slug, n_matches, rounds, per_round, data }
-<map>/heatmaps/players/<steamid>.json { steamid, name, team, n_matches, rounds, per_round, data }
+heatmap_teams.json              [{ team, slug, n_matches, maps: [{ map, display_name, n_matches, rounds{T,CT}, players[] }] (most played first), roster: [{ steamid, name, color, rounds }] }]
+<map>/heatmaps/baseline.json    { map, grid, cell_px, levels, layers[], phases[], sides[], n_colors, early_s, spawn_skip_s, hold_speed, min_reliable_rounds, rounds{T,CT}, per_round, data }
+<map>/heatmaps/teams/<slug>.json { team, slug, map, n_matches, rounds{T,CT}, roster: [{ steamid, name, color, rounds, low_sample }], team_grid, players{steamid: { per_round, data }}, summary{steamid: {side: { zones, main_lane, holds, fights, utility }}}, setup{side: {phase: {lane: [names]}}} }
 <map>/lineups.json              [{ id, side, type, throw_place, land_place, land_region, land_lane, n_throws, n_matches, teams[], throwers[], round_win_rate, median_pop_t_s, technique, jump_share, throw{x,y,z,pitch,yaw,radar_x,radar_y}, land{x,y,z,radar_x,radar_y}, practice_cmd, example{demo_id,round_num,throw_tick} }]
 ```
 
@@ -220,7 +234,7 @@ index.json                      { schema_version, generated_at, min_matches_reli
   A real backup-restore demo and a late-joined GOTV demo still need to be collected to see
   how often this triggers on Tier 1/2 data.
 - Two-level maps (Nuke, Train, Vertigo) need the lower radar when z < `lower_level_max_z`
-  (heatmaps already split levels; the lineup radar does not yet).
+  (heatmaps and holding spots already split levels; the lineup radar does not yet).
 - Tactic labels (playbook/tactics.py) only name a target once two T players reach the bomb
   site core or the bomb is planted. Failed executes that never reach the site are `no_hit`
   for now; attributing them from the execute utility is next.
@@ -233,7 +247,7 @@ index.json                      { schema_version, generated_at, min_matches_reli
 |---|---|---|
 | M0 | Pipeline: fetch, parse, semantics, export, tests | done |
 | M1 | Map configs (all 7 active-duty maps), team aliases, first 65 demos (Cologne Major: 28 Mirage, 32 Inferno, 1 each of the other five) | done |
-| M2 | Heatmaps (done; page via DS-06). Tactic identification: landing spots, T plans, execute recipes, CT setups (first version in tactics.py, not exported yet); blind-labelled validation set (20 rounds so far); tuned role thresholds | in progress |
+| M2 | Team heatmaps and player summaries (done; page via DS-06). Tactic identification: landing spots, T plans, execute recipes, CT setups (first version in tactics.py, not exported yet); blind-labelled validation set (20 rounds so far); tuned role thresholds | in progress |
 | M3 | Website v1: lineup library, team and player pages, bilingual (zh/en) | done on sample data; GitHub Pages deploy pending |
 | M4 | Natural-language summaries generated from the computed numbers (the LLM rewrites, never invents) | after M2 |
 | M5 | Full map pool, weekly incremental update | later |
