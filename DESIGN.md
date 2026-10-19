@@ -171,9 +171,12 @@ index.json                      { schema_version, generated_at, min_matches_reli
 - `web/e2e/smoke.py`: headless-browser check of every route on the sample data (filters,
   radar/card selection, copy button, low-sample banner, language switch, 375px layout,
   console errors).
-- `fetch.py` is written against the documented dataset layout but has not been run
-  against Hugging Face yet (blocked in the development sandbox). First real run:
-  `python -m playbook fetch --dry-run`.
+- Batch 1 (Oct 2026): 65 Cologne Major demos (28 Mirage, 32 Inferno, 1 each of the other
+  five maps) downloaded with `scripts/download_batch1.py` and parsed: 65/65 after one fix.
+  1,400 rounds, 1.3M position samples, 31k grenades, 31 teams, exactly 10 players per demo.
+  The fix: Legacy vs TYLOO had a non-playing slot (coach/admin, 0 HP at CT spawn all match)
+  on team 3, which linked both rosters; entities never alive in a live round are now
+  dropped (`_playing` in parse.py, regression test in test_robustness.py).
 
 ## Known limitations and open questions
 

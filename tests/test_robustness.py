@@ -83,6 +83,24 @@ def test_warmup_bots_and_visitors_are_ignored_but_live_bots_are_not():
         _resolve_teams(roster, _live_ticks(pl.concat([tk, in_round]), bounds), r, {})
 
 
+def test_non_playing_team_slot_is_ignored():
+    # A coach/admin slot on team 3 at every freeze end, never alive (Legacy vs TYLOO, Cologne 2026).
+    # Without filtering it links both rosters across the side switch.
+    from playbook.parse import _live_ticks, _playing
+
+    roster, tk, r = team_frames()
+    bounds = r.select("round_num", start_tick=pl.col("freeze_end_tick") - 5,
+                      official_end_tick=pl.col("freeze_end_tick") + 4)
+    tk = tk.with_columns(health=pl.lit(100))
+    ghost = pl.DataFrame({"tick": r["freeze_end_tick"].to_list(), "steamid": [66] * r.height,
+                          "team_num": [3] * r.height, "health": [0] * r.height})
+    both = pl.concat([tk, ghost], how="diagonal_relaxed")
+    with pytest.raises(ValueError, match="two teams"):
+        _resolve_teams(roster, _live_ticks(both, bounds), r, {})
+    teams, _ = _resolve_teams(roster, _live_ticks(_playing(both, bounds), bounds), r, {})
+    assert 66 not in teams and teams[1] != teams[3]
+
+
 def test_missing_freeze_end_side_is_explicit_error():
     roster, tk, r = team_frames()
     tk = tk.filter(~((pl.col("tick") == 20) & (pl.col("team_num") == 2)))

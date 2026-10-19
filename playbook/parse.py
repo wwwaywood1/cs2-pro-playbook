@@ -84,6 +84,18 @@ def _live_ticks(tk: pl.DataFrame, bounds: pl.DataFrame) -> pl.DataFrame:
     )
 
 
+def _playing(tk: pl.DataFrame, bounds: pl.DataFrame) -> pl.DataFrame:
+    """Drop entities that sit on a team but never play: never alive during a live round.
+
+    Seen in Legacy vs TYLOO (Cologne Major 2026): a coach/admin slot stays on team 3 with
+    0 HP at CT spawn all match. Real players spawn with 100 HP every round, so any entity
+    that is never alive inside a competitive round is not a player.
+    """
+    live = _live_ticks(tk, bounds)
+    players = live.group_by("steamid").agg(pl.col("health").max()).filter(pl.col("health") > 0)["steamid"]
+    return tk.filter(pl.col("steamid").is_in(players.implode()))
+
+
 def _validate_rounds(rounds: pl.DataFrame) -> None:
     """Reject ambiguous histories rather than inventing scores or replay ownership."""
     if not rounds.height:
@@ -205,6 +217,7 @@ def parse_demo(path: Path, aliases: dict[str, str] | None = None, verbose: bool 
         .filter(pl.col("team_num").is_in([2, 3]))
         .with_columns(pl.col("tick").cast(pl.Int64))
     )
+    tk = _playing(tk, bounds)
     pidx = PlaceIndex.from_frame(tk.filter(pl.col("place") != ""))
 
     # ---- teams --------------------------------------------------------------------
