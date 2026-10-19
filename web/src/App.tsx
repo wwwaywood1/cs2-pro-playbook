@@ -5,6 +5,8 @@ import Lineups from "./pages/Lineups";
 import Players from "./pages/Players";
 import Team from "./pages/Team";
 import Teams from "./pages/Teams";
+import HeatmapTeams from "./pages/HeatmapTeams";
+import TeamHeatmap from "./pages/TeamHeatmap";
 import { useLang } from "./i18n";
 
 export default function App() {
@@ -18,6 +20,8 @@ export default function App() {
         <Route path=":map/teams" element={<Teams />} />
         <Route path=":map/teams/:slug" element={<Team />} />
         <Route path=":map/players" element={<Players />} />
+        <Route path="heatmaps" element={<HeatmapTeams />} />
+        <Route path="heatmaps/:slug" element={<TeamHeatmap />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

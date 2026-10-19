@@ -1,0 +1,309 @@
+import { Fragment, useCallback, useEffect, useMemo } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import HeatmapCanvas from "../components/HeatmapCanvas";
+import MapSwitcher from "../components/MapSwitcher";
+import PlayerChips from "../components/PlayerChips";
+import { ErrorNotice, Loading } from "../components/Status";
+import { getHeatmapBaseline, getHeatmapTeams, getTeamHeatmap, useData } from "../data";
+import { fmtInt, fmtNum, fmtPct } from "../format";
+import {
+  blur, combine, denseLayers, HEAT_PHASES, ownerRgba, perRound,
+  playerColor, playerRgba, toDataUrl, UTILITY_LAYERS, VIEW_WEIGHTS,
+} from "../heatmap";
+import type { HeatView, Weights } from "../heatmap";
+import { calloutLabel, t, useLang } from "../i18n";
+import type {
+  HeatLayer, HeatmapBaseline, HeatmapTeamIndexEntry, HeatPhase, Lane,
+  PlayerSideSummary, RosterEntry, Side, TeamHeatmap as TeamHeatmapData,
+} from "../types";
+import "../heatmap.css";
+
+const VIEWS: HeatView[] = ["presence", "holding", "fights", "utility"];
+const UTILS = ["all", "smoke", "flash", "molotov", "he"] as const;
+const LANES: Lane[] = ["A", "MID", "B", "T_SPAWN", "CT_SPAWN", "OTHER"];
+
+function choice<T extends string>(raw: string | null, options: readonly T[], fallback: T): T {
+  return options.find((option) => option === raw) ?? fallback;
+}
+
+function PlayerCard({
+  player, summary, map, phases, showHolds, onShowHolds,
+}: {
+  player: RosterEntry;
+  summary: PlayerSideSummary | undefined;
+  map: string;
+  phases: HeatPhase[];
+  showHolds: boolean;
+  onShowHolds: (checked: boolean) => void;
+}) {
+  const color = playerColor(player.color).deep;
+  return (
+    <article className="hm-player-card" style={{ borderColor: color }}>
+      <h2><span className="hm-swatch" style={{ backgroundColor: color }} aria-hidden="true" />{player.name}</h2>
+      {!summary ? <p>{t("heatmap.no_data")}</p> : (
+        <>
+          <h3>{t("heatmap.zones")}</h3>
+          {phases.map((phase) => (
+            <div key={phase}>
+              <h4>{t(`heatmap.phase.${phase}`)}</h4>
+              {summary.zones[phase]?.length ? (
+                <ul>{summary.zones[phase]?.slice(0, 3).map((zone, index) => (
+                  <li key={`${zone.place}:${index}`}>{calloutLabel(map, zone.place)} · {fmtPct(zone.share)}</li>
+                ))}</ul>
+              ) : <p>{t("heatmap.no_data")}</p>}
+            </div>
+          ))}
+          <h3>{t("heatmap.holds")}</h3>
+          <label className="hm-check">
+            <input type="checkbox" checked={showHolds} onChange={(event) => onShowHolds(event.target.checked)} />
+            {t("heatmap.show_holds")}
+          </label>
+          {summary.holds.length ? (
+            <ul>{summary.holds.slice(0, 3).map((hold, index) => (
+              <li key={`${hold.place}:${index}`}>{t("heatmap.hold_line", {
+                place: calloutLabel(map, hold.place), sec: fmtNum(hold.seconds_per_round, 1), rounds: fmtInt(hold.rounds_held),
+              })}</li>
+            ))}</ul>
+          ) : <p>{t("heatmap.no_data")}</p>}
+          <h3>{t("heatmap.fights")}</h3>
+          <dl className="hm-metrics">
+            <div><dt>{t("heatmap.kpr")}</dt><dd>{fmtNum(summary.fights.kills_pr, 2)}</dd></div>
+            <div><dt>{t("heatmap.dpr")}</dt><dd>{fmtNum(summary.fights.deaths_pr, 2)}</dd></div>
+            <div><dt>{t("heatmap.openings")}</dt><dd>{fmtInt(summary.fights.opening_kills)} / {fmtInt(summary.fights.opening_deaths)}</dd></div>
+          </dl>
+          {summary.fights.places.length ? (
+            <ul>{summary.fights.places.slice(0, 3).map((place, index) => (
+              <li key={`${place.place}:${index}`}>{calloutLabel(map, place.place)} · {fmtInt(place.kills)} / {fmtInt(place.deaths)}</li>
+            ))}</ul>
+          ) : <p>{t("heatmap.no_data")}</p>}
+          <h3>{t("heatmap.utility")}</h3>
+          <dl className="hm-metrics">
+            {UTILITY_LAYERS.map((layer) => (
+              <div key={layer}>
+                <dt>{t(`heatmap.util.${layer}`)} · {t("heatmap.unit.count")} / {t("heatmap.per_round")}</dt>
+                <dd>{fmtNum(summary.utility.per_round[layer as keyof typeof summary.utility.per_round], 2)}</dd>
+              </div>
+            ))}
+          </dl>
+          <h4>{t("heatmap.util_spots")}</h4>
+          {summary.utility.spots.length ? (
+            <ul>{summary.utility.spots.slice(0, 5).map((spot) => (
+              <li key={spot.spot_id}>
+                {t(`heatmap.util.${spot.type === "flashbang" ? "flash" : spot.type}`)} · {calloutLabel(map, spot.place)} · {fmtInt(spot.n)}
+                {spot.lineups.length > 0 && (
+                  <Link className="hm-lineup-link" to={`/${encodeURIComponent(map)}/lineups?${new URLSearchParams({ id: spot.lineups[0].lineup_id })}`}>
+                    {t("heatmap.to_lineup")}
+                  </Link>
+                )}
+              </li>
+            ))}</ul>
+          ) : <p>{t("heatmap.no_data")}</p>}
+        </>
+      )}
+    </article>
+  );
+}
+
+function HeatmapView({ entry, team, baseline }: {
+  entry: HeatmapTeamIndexEntry;
+  team: TeamHeatmapData;
+  baseline: HeatmapBaseline;
+}) {
+  const [params, setParams] = useSearchParams();
+  const side = choice<Side>(params.get("side"), ["T", "CT"], "CT");
+  const view = choice(params.get("view"), VIEWS, "presence");
+  const util = view === "utility" ? choice(params.get("util"), UTILS, "all") : "all";
+  const mode = choice(params.get("mode"), ["stack", "owner"], "stack");
+  const rawSigma = params.get("sigma");
+  const parsedSigma = rawSigma?.trim() ? Number(rawSigma) : NaN;
+  const sigma = Number.isFinite(parsedSigma) && parsedSigma >= 0 && parsedSigma <= 2.5
+    ? Math.round(parsedSigma * 10) / 10 : 1;
+  const level = baseline.levels === 2 && params.get("level") === "1" ? 1 : 0;
+  const phasesRaw = params.get("phases");
+  const phases = useMemo(() => {
+    const requested = phasesRaw?.split(",") ?? [];
+    return requested.length && requested.every((phase) => HEAT_PHASES.some((value) => value === phase))
+      ? HEAT_PHASES.filter((phase) => requested.includes(phase)) : [...HEAT_PHASES];
+  }, [phasesRaw]);
+  const playersRaw = params.get("players");
+  const selectedIds = useMemo(() => {
+    const available = team.roster.filter((player) => player.rounds[side] > 0);
+    if (playersRaw === "") return [];
+    const requested = playersRaw?.split(",");
+    if (!requested || !requested.every((id) => available.some((player) => player.steamid === id))) {
+      return available.filter((player) => player.color < 5).map((player) => player.steamid);
+    }
+    return available.filter((player) => requested.includes(player.steamid)).map((player) => player.steamid);
+  }, [playersRaw, team, side]);
+  const holdsRaw = params.get("holds") ?? "";
+  const holdsIds = useMemo(() => team.roster.filter((player) => holdsRaw.split(",").includes(player.steamid)).map((player) => player.steamid), [team, holdsRaw]);
+
+  // Store defaults as well, so a shared URL has an explicit, reproducible state.
+  const canonical = new URLSearchParams(params);
+  Object.entries({
+    map: team.map, side, players: selectedIds.join(","), view, util,
+    phases: phases.join(","), mode, sigma: sigma.toFixed(1), level: String(level),
+  }).forEach(([key, value]) => canonical.set(key, value));
+  if (holdsIds.length) canonical.set("holds", holdsIds.join(","));
+  else canonical.delete("holds");
+  const canonicalQuery = canonical.toString();
+  const currentQuery = params.toString();
+  useEffect(() => {
+    if (canonicalQuery !== currentQuery) setParams(canonicalQuery, { replace: true });
+  }, [canonicalQuery, currentQuery, setParams]);
+
+  const update = useCallback((patch: Record<string, string | null>) => {
+    setParams((current) => {
+      const next = new URLSearchParams(current);
+      Object.entries(patch).forEach(([key, value]) => {
+        if (value === null) next.delete(key);
+        else next.set(key, value);
+      });
+      return next;
+    });
+  }, [setParams]);
+  const changeMap = useCallback((map: string) => update({ map, players: null, level: "0" }), [update]);
+  const shape = useMemo(() => ({ grid: baseline.grid, levels: baseline.levels }), [baseline.grid, baseline.levels]);
+  const weights = useMemo<Weights>(() => view === "utility" && util !== "all" ? { [util]: 1 } : VIEW_WEIGHTS[view], [view, util]);
+  const layers = useMemo(() => Object.keys(weights) as HeatLayer[], [weights]);
+
+  // Selection is deliberately absent: toggling a chip reuses every player's grid and PNG.
+  const computed = useMemo(() => team.roster.filter((player) => player.rounds[side] > 0).map((player) => {
+    const data = team.players[player.steamid];
+    return {
+      ...player, values: data ? blur(combine(denseLayers(data, side, phases, shape), weights, shape), shape, sigma) : null,
+    };
+  }), [team, side, phases, shape, weights, sigma]);
+  const images = useMemo(() => computed.map((player) => ({
+    key: player.steamid, color: player.color,
+    url: player.values ? toDataUrl(playerRgba(player.values, shape, level, playerColor(player.color)), shape.grid) : "",
+  })), [computed, shape, level]);
+  const selected = useMemo(() => computed.filter((player) => selectedIds.includes(player.steamid)), [computed, selectedIds]);
+  const overlays = useMemo(() => {
+    if (mode === "stack") return images.filter((image) => selectedIds.includes(image.key) && image.url)
+      .sort((a, b) => b.color - a.color).map(({ key, url }) => ({ key, url }));
+    const owners = selected.flatMap((player) => player.values ? [{ values: player.values, color: playerColor(player.color) }] : []);
+    return owners.length ? [{ key: "owner", url: toDataUrl(ownerRgba(owners, shape, level), shape.grid) }] : [];
+  }, [mode, images, selectedIds, selected, shape, level]);
+  const markers = selected.flatMap((player) => holdsIds.includes(player.steamid)
+    ? (team.summary[player.steamid]?.[side]?.holds ?? []).slice(0, 3)
+      .filter((hold) => hold.level === level && Number.isFinite(hold.radar_x) && Number.isFinite(hold.radar_y))
+      .map((hold) => ({ x: hold.radar_x, y: hold.radar_y, color: playerColor(player.color).deep, title: `${player.name} · ${calloutLabel(team.map, hold.place)}` }))
+    : []);
+  const setup = team.setup[side]?.early;
+  const setupLanes = LANES.filter((lane) => setup?.[lane]?.length);
+  const captionLabel = view === "utility" && util !== "all" ? t(`heatmap.util.${util}`) : t(`heatmap.view.${view}`);
+
+  return (
+    <div className="hm-page">
+      <header className="page-head">
+        <h1>{entry.team} · {t("heatmap.title")}</h1>
+        <Link to="/heatmaps" className="button button-ghost">{t("heatmap.back")}</Link>
+      </header>
+      <MapSwitcher maps={entry.maps} map={team.map} onChange={changeMap} />
+      <div className="hm-workspace">
+        <div className="hm-controls">
+          <fieldset className="hm-field">
+            <legend>{t("heatmap.side")}</legend>
+            <div className="hm-buttons">{(["T", "CT"] as const).map((value) => (
+              <button key={value} type="button" aria-pressed={side === value} onClick={() => update({ side: value, players: null })}>{value}</button>
+            ))}</div>
+          </fieldset>
+          <PlayerChips roster={team.roster} side={side} selected={selectedIds} onChange={(ids) => update({ players: ids.join(",") })} />
+          <div className="hm-buttons" role="group" aria-label={t("heatmap.title")}>
+            {VIEWS.map((value) => (
+              <button key={value} type="button" aria-pressed={view === value} onClick={() => update({ view: value })}>{t(`heatmap.view.${value}`)}</button>
+            ))}
+          </div>
+          {view === "utility" && <div className="hm-buttons" role="group" aria-label={t("heatmap.utility")}>
+            {UTILS.map((value) => (
+              <button key={value} type="button" aria-pressed={util === value} onClick={() => update({ util: value })}>{t(`heatmap.util.${value}`)}</button>
+            ))}
+          </div>}
+          <fieldset className="hm-field">
+            <legend>{t("heatmap.phases")}</legend>
+            <div className="hm-checks">{HEAT_PHASES.map((phase) => (
+              <label key={phase} className="hm-check">
+                <input type="checkbox" checked={phases.includes(phase)} disabled={phases.length === 1 && phases.includes(phase)} onChange={(event) => {
+                  const next = event.target.checked ? [...phases, phase] : phases.filter((value) => value !== phase);
+                  if (next.length) update({ phases: HEAT_PHASES.filter((value) => next.includes(value)).join(",") });
+                }} />
+                {t(`heatmap.phase.${phase}`)}
+              </label>
+            ))}</div>
+          </fieldset>
+          <div className="hm-buttons" role="group" aria-label={t("heatmap.mode.owner")}>
+            {(["stack", "owner"] as const).map((value) => (
+              <button key={value} type="button" aria-pressed={mode === value} onClick={() => update({ mode: value })}>{t(`heatmap.mode.${value}`)}</button>
+            ))}
+          </div>
+          <label className="hm-slider">
+            <span>{t("heatmap.sigma")} · {sigma.toFixed(1)}</span>
+            <input type="range" min="0" max="2.5" step="0.1" value={sigma} onChange={(event) => update({ sigma: event.target.value })} />
+          </label>
+          {baseline.levels === 2 && <div className="hm-buttons" role="group" aria-label={t("heatmap.level.upper")}>
+            {([0, 1] as const).map((value) => (
+              <button key={value} type="button" aria-pressed={level === value} onClick={() => update({ level: String(value) })}>{t(`heatmap.level.${value === 0 ? "upper" : "lower"}`)}</button>
+            ))}
+          </div>}
+          <p className="hm-help">{t("heatmap.help")}</p>
+        </div>
+        <figure className="hm-figure">
+          <HeatmapCanvas map={team.map} level={level} overlays={overlays} markers={markers} />
+          <figcaption>
+            {selected.length ? selected.map((player) => (
+              <div key={player.steamid} className="hm-caption">
+                <span className="hm-swatch" style={{ backgroundColor: playerColor(player.color).deep }} aria-hidden="true" />
+                <span>{player.name} · {captionLabel} {fmtNum(team.players[player.steamid] ? perRound(team.players[player.steamid], side, phases, layers) : null, 1)} {t(view === "presence" || view === "holding" ? "heatmap.unit.seconds" : "heatmap.unit.count")} / {t("heatmap.per_round")}</span>
+              </div>
+            )) : <p>{t("heatmap.no_data")}</p>}
+          </figcaption>
+        </figure>
+      </div>
+      <section className="hm-setup">
+        <h2>{t("heatmap.setup")}</h2>
+        {setupLanes.length ? setupLanes.map((lane, index) => (
+          <Fragment key={lane}>
+            {index > 0 && " ｜ "}<span>{t(`lane.${lane}`)}: </span>
+            {setup?.[lane]?.map((nameOrId, playerIndex) => {
+              const player = team.roster.find((item) => item.steamid === nameOrId)
+                ?? team.roster.find((item) => item.name === nameOrId);
+              return <Fragment key={`${nameOrId}:${playerIndex}`}>{playerIndex > 0 && ", "}<span style={player ? { color: playerColor(player.color).deep } : undefined}>{player?.name ?? nameOrId}</span></Fragment>;
+            })}
+          </Fragment>
+        )) : <p>{t("heatmap.no_data")}</p>}
+      </section>
+      <div className="hm-player-grid">
+        {selected.map((player) => (
+          <PlayerCard key={player.steamid} player={player} summary={team.summary[player.steamid]?.[side]} map={team.map} phases={phases}
+            showHolds={holdsIds.includes(player.steamid)} onShowHolds={(checked) => update({ holds: (checked ? [...holdsIds, player.steamid] : holdsIds.filter((id) => id !== player.steamid)).join(",") })} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MapData({ entry, map }: { entry: HeatmapTeamIndexEntry; map: string }) {
+  const { data, loading, error } = useData(async () => {
+    const [team, baseline] = await Promise.all([getTeamHeatmap(map, entry.slug), getHeatmapBaseline(map)]);
+    return { team, baseline };
+  }, [map, entry.slug]);
+  if (loading) return <Loading />;
+  if (error || !data) return <div className="hm-page"><Link to="/heatmaps">{t("heatmap.back")}</Link><ErrorNotice error={error ?? new Error(t("heatmap.no_data"))} /></div>;
+  return <HeatmapView entry={entry} team={data.team} baseline={data.baseline} />;
+}
+
+export default function TeamHeatmap() {
+  useLang();
+  const { slug = "" } = useParams<{ slug: string }>();
+  const [params] = useSearchParams();
+  const { data: teams, loading, error } = useData(getHeatmapTeams, []);
+  if (loading) return <Loading />;
+  if (error) return <ErrorNotice error={error} />;
+  const entry = teams?.find((team) => team.slug === slug);
+  if (!entry || !entry.maps.length) return (
+    <div className="hm-page"><p>{t(entry ? "heatmap.no_data" : "heatmap.team_not_found")}</p><Link to="/heatmaps">{t("heatmap.back")}</Link></div>
+  );
+  const map = entry.maps.find((item) => item.map === params.get("map"))?.map ?? entry.maps[0].map;
+  return <MapData key={`${slug}:${map}`} entry={entry} map={map} />;
+}

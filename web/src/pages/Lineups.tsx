@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import Radar from "../components/Radar";
 import { ErrorNotice, Loading } from "../components/Status";
 import { getLineups, getMeta, useData } from "../data";
@@ -56,8 +56,14 @@ async function copyText(text: string, fallback: HTMLElement | null): Promise<boo
 export default function Lineups() {
   useLang();
   const { map = "" } = useParams<{ map: string }>();
+  const [searchParams] = useSearchParams();
+  const requestedId = searchParams.get("id");
+  const requestKey = `${map}:${requestedId ?? ""}`;
   const { data: meta } = useData(() => getMeta(map), [map]);
-  const { data: lineups, error, loading } = useData(() => getLineups(map), [map]);
+  const { data: lineupData, error, loading } = useData(
+    async () => ({ map, rows: await getLineups(map) }), [map],
+  );
+  const lineups = lineupData?.map === map ? lineupData.rows : null;
 
   const [side, setSide] = useState<Side | "ALL">("ALL");
   const [types, setTypes] = useState<GrenadeType[]>(ALL_TYPES);
@@ -69,6 +75,8 @@ export default function Lineups() {
 
   const cardRefs = useRef(new Map<string, HTMLElement>());
   const copyTimer = useRef<number | null>(null);
+  const appliedRequest = useRef<string | null>(null);
+  const scrolledRequest = useRef<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -91,6 +99,23 @@ export default function Lineups() {
   }, [lineups, side, types, lane, minThrows, technique]);
 
   useEffect(() => {
+    if (!lineups) return;
+    if (appliedRequest.current !== requestKey) {
+      appliedRequest.current = requestKey;
+      scrolledRequest.current = null;
+      const target = lineups.find((lineup) => lineup.id === requestedId);
+      if (target) {
+        if (!filtered.some((lineup) => lineup.id === target.id)) {
+          setSide("ALL");
+          setTypes(ALL_TYPES);
+          setMinThrows(1);
+          setLane("ALL");
+          setTechnique("ALL");
+        }
+        setSelectedId(target.id);
+        return;
+      }
+    }
     if (filtered.length === 0) {
       if (selectedId !== null) setSelectedId(null);
       return;
@@ -98,7 +123,19 @@ export default function Lineups() {
     if (!selectedId || !filtered.some((lineup) => lineup.id === selectedId)) {
       setSelectedId(filtered[0].id);
     }
-  }, [filtered, selectedId]);
+  }, [lineups, requestKey, requestedId, filtered, selectedId]);
+
+  useEffect(() => {
+    if (!requestedId || selectedId !== requestedId ||
+        scrolledRequest.current === requestKey) return;
+    const card = cardRefs.current.get(requestedId);
+    if (!card) return;
+    const frame = window.requestAnimationFrame(() => {
+      card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      scrolledRequest.current = requestKey;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [requestKey, requestedId, selectedId, filtered]);
 
   const toggleType = (type: GrenadeType) => {
     setTypes((current) => {

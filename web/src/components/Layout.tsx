@@ -5,7 +5,7 @@ import { setLang, t, useLang } from "../i18n";
 
 function mapFromPath(pathname: string): string | null {
   const first = pathname.split("/").filter(Boolean)[0];
-  return first ?? null;
+  return first && first !== "heatmaps" ? first : null;
 }
 
 function navClass({ isActive }: { isActive: boolean }): string {
@@ -32,6 +32,9 @@ export default function Layout() {
           <nav className="main-nav" aria-label={t("ui.nav_maps")}>
             <NavLink to="/" end className={navClass}>
               {t("ui.nav_maps")}
+            </NavLink>
+            <NavLink to="/heatmaps" className={navClass}>
+              {t("ui.nav_heatmaps")}
             </NavLink>
             {map ? (
               <>

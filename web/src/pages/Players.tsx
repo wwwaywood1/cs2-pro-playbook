@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Stat from "../components/Stat";
 import { ErrorNotice, Loading } from "../components/Status";
 import { getMeta, getPlayers, useData } from "../data";
@@ -133,6 +133,12 @@ export default function Players() {
                       <Lanes shares={player.CT.lanes_15s} />
                     </div>
                   </div>
+                  <Link
+                    to={`/heatmaps/${encodeURIComponent(player.team.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""))}?${new URLSearchParams({ map, players: player.steamid })}`}
+                    className="button button-ghost"
+                  >
+                    {t("heatmap.title")}
+                  </Link>
                 </article>
               ))}
             </div>

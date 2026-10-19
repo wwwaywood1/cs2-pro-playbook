@@ -29,7 +29,8 @@
     "language": "语言",
     "generated_at": "数据生成时间",
     "data_source_note": "数据来源：职业比赛 demo（IEM Cologne Major 2026 等，经 Hugging Face cs2povarchive 公开）。",
-    "no_plant": "未下包"
+    "no_plant": "未下包",
+    "nav_heatmaps": "战队热力图"
   },
   "side": {
     "T": "T",
@@ -332,5 +333,70 @@
       "Canal": "水渠",
       "SideAlley": "侧巷"
     }
+  },
+  "heatmap": {
+    "title": "热力图",
+    "pick_team": "选择战队",
+    "search": "搜索队名",
+    "maps_count": "地图数",
+    "matches": "场数",
+    "team_not_found": "找不到该战队",
+    "back": "返回战队列表",
+    "prev_map": "上一张地图",
+    "next_map": "下一张地图",
+    "map_caption": "{matches} 场 · T {t} / CT {ct} 枪局",
+    "side": "阵营",
+    "players": "选手",
+    "select_all": "全选",
+    "select_none": "全不选",
+    "low_sample": "样本少",
+    "rounds": "{n} 回合",
+    "view": {
+      "presence": "站位",
+      "holding": "驻守",
+      "fights": "交火",
+      "utility": "道具落点"
+    },
+    "util": {
+      "all": "全部",
+      "smoke": "烟",
+      "flash": "闪",
+      "molotov": "火",
+      "he": "雷"
+    },
+    "phases": "阶段",
+    "phase": {
+      "early": "开局",
+      "mid": "中期",
+      "post": "下包后"
+    },
+    "mode": {
+      "stack": "叠加",
+      "owner": "区域归属"
+    },
+    "sigma": "平滑",
+    "level": {
+      "upper": "上层",
+      "lower": "下层"
+    },
+    "unit": {
+      "seconds": "秒",
+      "count": "次"
+    },
+    "per_round": "回合",
+    "setup": "默认站位",
+    "zones": "主要位置",
+    "holds": "常驻守点",
+    "show_holds": "在图上标出驻守点",
+    "hold_line": "{place} · {sec} 秒/回合 · 驻守 {rounds} 回合",
+    "fights": "交火（击杀 / 阵亡）",
+    "kpr": "每回合击杀",
+    "dpr": "每回合阵亡",
+    "openings": "首杀 / 首死",
+    "utility": "道具",
+    "util_spots": "常用落点",
+    "to_lineup": "去道具库看怎么扔",
+    "no_data": "暂无数据",
+    "help": "颜色代表选手，颜色越深表示该选手越常出现在这里。数据只统计双方枪局中选手活着的时间，并去掉开局前 5 秒和回合结束后的时间。站位显示停留时间，驻守显示几乎不动的时间，交火综合开枪、击杀和阵亡，道具视图显示道具落点。道具只看落点，想学怎么扔可以前往道具库。"
   }
 }

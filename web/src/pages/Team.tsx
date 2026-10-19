@@ -264,6 +264,12 @@ export default function Team() {
             {t("ui.matches_title")} · {fmtInt(team.n_matches)}
           </p>
         </div>
+        <Link
+          to={`/heatmaps/${encodeURIComponent(slug)}?${new URLSearchParams({ map })}`}
+          className="button button-ghost"
+        >
+          {t("heatmap.title")}
+        </Link>
         <Link to={`/${map}/teams`} className="button button-ghost">
           {t("ui.nav_teams")}
         </Link>

@@ -29,7 +29,8 @@
     "language": "Language",
     "generated_at": "Data generated",
     "data_source_note": "Data source: professional match demos (IEM Cologne Major 2026 and more, via the cs2povarchive dataset on Hugging Face).",
-    "no_plant": "No plant"
+    "no_plant": "No plant",
+    "nav_heatmaps": "Team heatmaps"
   },
   "side": {
     "T": "T",
@@ -332,5 +333,70 @@
       "Canal": "Canal",
       "SideAlley": "Side Alley"
     }
+  },
+  "heatmap": {
+    "title": "Heatmaps",
+    "pick_team": "Choose a team",
+    "search": "Search teams",
+    "maps_count": "Maps",
+    "matches": "Matches",
+    "team_not_found": "Team not found",
+    "back": "Back to teams",
+    "prev_map": "Previous map",
+    "next_map": "Next map",
+    "map_caption": "{matches} matches · T {t} / CT {ct} gun rounds",
+    "side": "Side",
+    "players": "Players",
+    "select_all": "Select all",
+    "select_none": "Select none",
+    "low_sample": "Low sample",
+    "rounds": "{n} rounds",
+    "view": {
+      "presence": "Presence",
+      "holding": "Holding",
+      "fights": "Fights",
+      "utility": "Utility landings"
+    },
+    "util": {
+      "all": "All",
+      "smoke": "Smoke",
+      "flash": "Flash",
+      "molotov": "Molotov",
+      "he": "HE"
+    },
+    "phases": "Phases",
+    "phase": {
+      "early": "Early",
+      "mid": "Mid-round",
+      "post": "Post-plant"
+    },
+    "mode": {
+      "stack": "Stack",
+      "owner": "Area owner"
+    },
+    "sigma": "Smoothing",
+    "level": {
+      "upper": "Upper level",
+      "lower": "Lower level"
+    },
+    "unit": {
+      "seconds": "s",
+      "count": "events"
+    },
+    "per_round": "round",
+    "setup": "Default setup",
+    "zones": "Main positions",
+    "holds": "Frequent holds",
+    "show_holds": "Mark holds on the map",
+    "hold_line": "{place} · {sec} s/round · held in {rounds} rounds",
+    "fights": "Fights (kills / deaths)",
+    "kpr": "Kills per round",
+    "dpr": "Deaths per round",
+    "openings": "Opening kills / deaths",
+    "utility": "Utility",
+    "util_spots": "Frequent landing spots",
+    "to_lineup": "Learn the throw in the lineup library",
+    "no_data": "No data",
+    "help": "Colors identify players; deeper shades mean a player appears there more often. Data includes living time in gun rounds for both teams, excluding the first 5 seconds and time after the round ends. Presence shows time spent, holding shows nearly stationary time, fights combine shots, kills and deaths, and utility shows grenade landings. Utility shows landing points only; visit the lineup library to learn the throws."
   }
 }
