@@ -13,15 +13,20 @@ T plans           one row per T round.
   commit_s        first second with >= 2 living T players on the target's bombsite core
                   (the BombsiteA/BombsiteB callout, named the same on every map), or the
                   plant if that came first. target = plant site, else the first site hit.
-  tempo           fast (commit <= 40 s), mid (<= 75 s), late, or no_hit.
+  tempo           fast (commit <= 40 s), mid, late (commit >= 75 s), or no_hit.
+  attempt         the target, or for no_hit rounds the lane of the densest execute
+                  utility (>= 3 grenades in 10 s): failed executes still count for a site.
   execute         utility popping from 15 s before to 5 s after the commit, except what
                   lands on the other site's lane.
-  split           attackers 6 s before the commit, seen from the site centre: split when
-                  their bearings form two groups >= 50 degrees apart.
+  split           attackers from two directions: their last positions before stepping onto
+                  the site region (entries 15 s before to 10 s after the commit) are >= 400
+                  units apart, or their bearings from the site centre 6 s before the commit
+                  form two groups >= 50 degrees apart. Null for no_hit rounds.
   lurk            a living T player on the other site's lane, or >= 2200 units from the
-                  target (not in T spawn), at the commit.
-  fake            >= 2 smokes/molotovs, or >= 3 grenades, popping on the other site's lane
-                  between 30 s and 5 s before the commit (after the first 15 s).
+                  target (not in T spawn), at the commit or 10 s before it.
+  fake            >= 2 smokes/molotovs, or >= 3 grenades, landing near the other site
+                  (within 1500 units of it and closer to it than to the target) between
+                  30 s and 5 s before the commit (after the first 15 s).
 Execute recipes   gun rounds hitting the same site with similar sets of smoke and molotov
                   spots, grouped by average-linkage clustering on Jaccard distance. Core
                   spots are those used in at least half of a recipe's rounds; each links to
@@ -52,8 +57,8 @@ SPOT_MIN_MATCHES = 2
 SITE_CORE = {"A": "BombsiteA", "B": "BombsiteB"}
 OTHER_SITE = {"A": "B", "B": "A"}
 COMMIT_MIN_PLAYERS = 2
-TEMPO_FAST_S = 40
-TEMPO_MID_S = 75
+TEMPO_FAST_S = 40   # commit <= 40 s
+TEMPO_LATE_S = 75   # commit >= 75 s (40 s or less on the clock)
 EXEC_BEFORE_S = 15
 EXEC_AFTER_S = 5
 EARLY_UTIL_S = 15
@@ -61,7 +66,12 @@ FAKE_FROM_S, FAKE_TO_S = 30, 5
 SPLIT_LOOKBACK_S = 6
 SPLIT_MIN_ANGLE = 50.0
 SPLIT_MIN_DIST, SPLIT_MAX_DIST = 400.0, 2500.0
+SPLIT_ENTRY_WINDOW = (15, 10)  # entries from 15 s before to 10 s after the commit
+SPLIT_ENTRY_DIST = 400.0
 LURK_MIN_DIST = 2200.0
+LURK_LOOKBACK_S = 10
+FAKE_RADIUS = 1500.0
+ATTEMPT_MIN_UTIL = 3
 
 RECIPE_TYPES = ("smoke", "molotov")
 RECIPE_MAX_DIST = 0.6
@@ -190,7 +200,7 @@ def _tempo(commit_s: float | None) -> str:
         return "no_hit"
     if commit_s <= TEMPO_FAST_S:
         return "fast"
-    if commit_s <= TEMPO_MID_S:
+    if commit_s < TEMPO_LATE_S:
         return "mid"
     return "late"
 
@@ -213,7 +223,7 @@ def t_plans(sub: dict[str, pl.DataFrame], mm: MapMeta, spot_assign: pl.DataFrame
 
     rows = []
     for row in tr.select(*KEYS, "team", "opponent", "won", "buy_type", "plant_site", "plant_t_s",
-                         "shape_30s").iter_rows(named=True):
+                         "shape_30s", "exec_n_util", "exec_lane").iter_rows(named=True):
         k = (row["demo_id"], row["round_num"])
         hits = {s: core_s[(*k, s)] for s in SITE_CORE if (*k, s) in core_s}
         target = row["plant_site"] or (min(hits, key=hits.get) if hits else None)
@@ -221,9 +231,15 @@ def t_plans(sub: dict[str, pl.DataFrame], mm: MapMeta, spot_assign: pl.DataFrame
         if target:
             cands = [v for v in (hits.get(target), row["plant_t_s"] if row["plant_site"] == target else None) if v is not None]
             commit = float(min(cands)) if cands else None
-        rows.append({**row, "target": target if commit is not None else None, "commit_s": commit,
-                     "tempo": _tempo(commit), "gun": row["buy_type"] in GUN_BUYS})
-    plans = pl.DataFrame(rows, schema_overrides={"commit_s": pl.Float64, "target": pl.Utf8, "plant_t_s": pl.Float64})
+        attempt = target if commit is not None else (
+            row["exec_lane"] if row["exec_lane"] in SITE_CORE and (row["exec_n_util"] or 0) >= ATTEMPT_MIN_UTIL else None)
+        rows.append({**{k_: v for k_, v in row.items() if k_ not in ("exec_n_util", "exec_lane")},
+                     "target": target if commit is not None else None, "commit_s": commit,
+                     "attempt": attempt, "tempo": _tempo(commit), "gun": row["buy_type"] in GUN_BUYS})
+    plans = pl.DataFrame(rows, schema_overrides={"commit_s": pl.Float64, "target": pl.Utf8, "attempt": pl.Utf8,
+                                                 "plant_t_s": pl.Float64})
+    cx = {s_: c[0] for s_, c in centres.items()}
+    cy = {s_: c[1] for s_, c in centres.items()}
 
     # utility around the commit
     u = (
@@ -244,9 +260,14 @@ def t_plans(sub: dict[str, pl.DataFrame], mm: MapMeta, spot_assign: pl.DataFrame
         exec_he=(pl.col("type") == "he").sum(),
         exec_spots=pl.col("spot_id").filter(pl.col("type").is_in(RECIPE_TYPES) & pl.col("spot_id").is_not_null()).unique().sort(),
     )
-    fake = u.filter(
+    # fake: utility landing near the other site (closer to it than to the target, within FAKE_RADIUS)
+    d_other = ((pl.col("land_x") - pl.col("other_lane").replace_strict(cx, default=None, return_dtype=pl.Float64)) ** 2
+               + (pl.col("land_y") - pl.col("other_lane").replace_strict(cy, default=None, return_dtype=pl.Float64)) ** 2).sqrt()
+    d_target = ((pl.col("land_x") - pl.col("target").replace_strict(cx, default=None, return_dtype=pl.Float64)) ** 2
+                + (pl.col("land_y") - pl.col("target").replace_strict(cy, default=None, return_dtype=pl.Float64)) ** 2).sqrt()
+    fake = u.with_columns(d_other=d_other, d_target=d_target).filter(
         (pl.col("pop_t_s") >= pl.col("commit_s") - FAKE_FROM_S) & (pl.col("pop_t_s") <= pl.col("commit_s") - FAKE_TO_S)
-        & (pl.col("pop_t_s") >= EARLY_UTIL_S) & (pl.col("land_lane") == pl.col("other_lane"))
+        & (pl.col("pop_t_s") >= EARLY_UTIL_S) & (pl.col("d_other") <= FAKE_RADIUS) & (pl.col("d_other") < pl.col("d_target"))
     ).group_by(KEYS).agg(
         fake_sm=pl.col("type").is_in(RECIPE_TYPES).sum(), fake_all=pl.len(), fake_from=pl.col("other_lane").first()
     ).with_columns(
@@ -257,10 +278,10 @@ def t_plans(sub: dict[str, pl.DataFrame], mm: MapMeta, spot_assign: pl.DataFrame
     committed = plans.filter(pl.col("commit_s").is_not_null()).select(
         *KEYS, "target", t_split=(pl.col("commit_s").floor().cast(pl.Int32) - SPLIT_LOOKBACK_S).clip(lower_bound=0),
         t_commit=pl.col("commit_s").floor().cast(pl.Int32),
+        t_lurk=(pl.col("commit_s").floor().cast(pl.Int32) - LURK_LOOKBACK_S).clip(lower_bound=EARLY_UTIL_S),
     )
-    tpos = pos.filter((pl.col("side") == "T") & pl.col("alive")).select(*KEYS, "t_s", "steamid", "name", "x", "y", "lane", "place")
-    cx = {s: c[0] for s, c in centres.items()}
-    cy = {s: c[1] for s, c in centres.items()}
+    tpos = pos.filter((pl.col("side") == "T") & pl.col("alive")).select(
+        *KEYS, "t_s", "steamid", "name", "x", "y", "region", "lane", "place")
 
     def _with_dist(df: pl.DataFrame) -> pl.DataFrame:
         return df.with_columns(
@@ -268,22 +289,40 @@ def t_plans(sub: dict[str, pl.DataFrame], mm: MapMeta, spot_assign: pl.DataFrame
             dy=pl.col("y") - pl.col("target").replace_strict(cy, default=None, return_dtype=pl.Float64),
         ).with_columns(dist=(pl.col("dx") ** 2 + pl.col("dy") ** 2).sqrt())
 
+    # (a) bearings seen from the site centre, SPLIT_LOOKBACK_S before the commit
     at_split = _with_dist(committed.join(tpos, left_on=[*KEYS, "t_split"], right_on=[*KEYS, "t_s"]))
-    split = (
+    bearings = (
         at_split.filter((pl.col("dist") >= SPLIT_MIN_DIST) & (pl.col("dist") <= SPLIT_MAX_DIST))
         .with_columns(bearing=pl.arctan2("dy", "dx").degrees())
         .group_by(KEYS).agg(bearings=pl.col("bearing"))
         .with_columns(n_directions=pl.col("bearings").map_elements(lambda b: _bearing_groups(list(b)), return_dtype=pl.Int64))
         .select(*KEYS, "n_directions")
     )
-    at_commit = _with_dist(committed.join(tpos, left_on=[*KEYS, "t_commit"], right_on=[*KEYS, "t_s"])).with_columns(
-        other_lane=pl.col("target").replace_strict(OTHER_SITE, default=None)
+    # (b) where the attackers stepped onto the site region: spread of their last outside positions
+    win = committed.join(tpos, on=KEYS).with_columns(site_region=pl.col("target") + "_SITE").filter(
+        pl.col("t_s") <= pl.col("t_commit") + SPLIT_ENTRY_WINDOW[1])
+    first_in = win.filter(pl.col("region") == pl.col("site_region")).group_by(*KEYS, "steamid").agg(t_in=pl.col("t_s").min())
+    first_in = first_in.join(committed.select(*KEYS, "t_commit"), on=KEYS).filter(
+        pl.col("t_in") >= pl.col("t_commit") - SPLIT_ENTRY_WINDOW[0])
+    entry = (
+        win.join(first_in.select(*KEYS, "steamid", "t_in"), on=[*KEYS, "steamid"])
+        .filter((pl.col("t_s") < pl.col("t_in")) & (pl.col("region") != pl.col("site_region")))
+        .sort("t_s").group_by(*KEYS, "steamid").agg(ex=pl.col("x").last(), ey=pl.col("y").last())
     )
+    spread = (
+        entry.join(entry, on=KEYS, suffix="_b").filter(pl.col("steamid") < pl.col("steamid_b"))
+        .group_by(KEYS).agg(entry_spread=((pl.col("ex") - pl.col("ex_b")) ** 2 + (pl.col("ey") - pl.col("ey_b")) ** 2).sqrt().max())
+    )
+    n_entries = entry.group_by(KEYS).agg(n_entries=pl.len())
+
+    # lurk: at the commit or LURK_LOOKBACK_S before it, a living T on the other site's lane or far away
+    lurk_pos = pl.concat([
+        committed.join(tpos, left_on=[*KEYS, "t_commit"], right_on=[*KEYS, "t_s"]),
+        committed.join(tpos, left_on=[*KEYS, "t_lurk"], right_on=[*KEYS, "t_s"]),
+    ])
     lurk = (
-        at_commit.filter(
-            (pl.col("lane") == pl.col("other_lane"))
-            | ((pl.col("dist") >= LURK_MIN_DIST) & (pl.col("lane") != "T_SPAWN"))
-        )
+        _with_dist(lurk_pos).with_columns(other_lane=pl.col("target").replace_strict(OTHER_SITE, default=None))
+        .filter((pl.col("lane") == pl.col("other_lane")) | ((pl.col("dist") >= LURK_MIN_DIST) & (pl.col("lane") != "T_SPAWN")))
         .sort("dist", descending=True)
         .group_by(KEYS, maintain_order=True)
         .agg(lurker_steamid=pl.col("steamid").first(), lurker_name=pl.col("name").first(), lurker_place=pl.col("place").first())
@@ -295,14 +334,17 @@ def t_plans(sub: dict[str, pl.DataFrame], mm: MapMeta, spot_assign: pl.DataFrame
     plans = (
         plans.join(exec_agg, on=KEYS, how="left")
         .join(fake, on=KEYS, how="left")
-        .join(split, on=KEYS, how="left")
+        .join(bearings, on=KEYS, how="left")
+        .join(spread, on=KEYS, how="left")
+        .join(n_entries, on=KEYS, how="left")
         .join(lurk, on=KEYS, how="left")
         .join(mid20, on=KEYS, how="left")
         .with_columns(
             pl.col("exec_n_util", "exec_smokes", "exec_molotovs", "exec_flashes", "exec_he").fill_null(0),
             pl.col("exec_spots").fill_null([]),
-            split=pl.col("n_directions").fill_null(0) >= 2,
-            lurk=pl.col("lurker_steamid").is_not_null(),
+            split=pl.when(pl.col("commit_s").is_null()).then(None).otherwise(
+                (pl.col("n_directions").fill_null(0) >= 2) | (pl.col("entry_spread").fill_null(0) >= SPLIT_ENTRY_DIST)),
+            lurk=pl.when(pl.col("commit_s").is_null()).then(None).otherwise(pl.col("lurker_steamid").is_not_null()),
         )
         .rename({"shape_30s": "setup_30s"})
         .sort(KEYS)

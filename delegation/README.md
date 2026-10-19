@@ -1,7 +1,7 @@
 # 任务分派板
 
 Claude 负责主线：架构、解析、语义、战术识别，以及审核和合并所有外包结果。
-体力活交给 DeepSeek。GPT 额度紧张，只承担一件需要读代码、跑测试的审查任务。
+界面和有固定规格的体力活交给 DeepSeek；需要通读代码、跑测试、联网查资料的任务交给 GPT（目前额度充足）。
 
 ## 怎么用
 
@@ -19,7 +19,11 @@ Claude 负责主线：架构、解析、语义、战术识别，以及审核和�
 | [DS-04](DS-04_frontend.md) | DeepSeek | 前端 v1，分 A/B/C 三阶段 | DS-03 | 中 | 完成 |
 | [GPT-01](GPT-01_robustness_review.md) | GPT (Codex) | 解析层边界情况审查和修复 | 仓库已推到 GitHub | 中：批量解析前做最好 | 完成 |
 | [DS-05](DS-05_map_configs.md) | DeepSeek | 其余 5 张图（Nuke、Dust2、Ancient、Anubis、Overpass）的点位映射 + 中英文译名 | 无（任务书已生成） | 高 | 完成 |
-| [DS-06](DS-06_heatmaps.md) | DeepSeek | 战队热力图页面：选战队 → 箭头切换地图 → T/CT → 勾选选手（五色），四种视图，选手总结卡片 | 无（数据、类型、计算函数已就绪） | 高 | 待发 |
+| [GPT-02](GPT-02_m2_review.md) | GPT (Codex) | 热力图、选手总结、战术识别三个新模块的代码审查和修复 | Claude 先把战术识别接进导出 | 高 | 暂缓（等 Claude 通知） |
+| [GPT-03](GPT-03_multipart_demos.md) | GPT (Codex) | 支持分段录制的 demo（约 7% 的比赛现在被跳过） | 无 | 中 | 可发 |
+| [GPT-04](GPT-04_ci.md) | GPT (Codex) | GitHub Actions：测试、前端构建、浏览器冒烟测试；手动触发的 Pages 部署 | 无 | 中 | 可发 |
+| [GPT-05](GPT-05_pro_roles.md) | GPT（联网） | 155 名选手的角色真值表（带出处），用来校准角色标签 | 附件 `delegation/inputs/players_roster.csv` | 高 | 可发 |
+| [DS-06](DS-06_heatmaps.md) | DeepSeek | 战队热力图页面：选战队 → 箭头切换地图 → T/CT → 勾选选手（五色），四种视图，选手总结卡片 | 无（数据、类型、计算函数已就绪） | 高 | 已发 |
 
 ## 审核记录（Claude）
 
@@ -32,6 +36,8 @@ Claude 负责主线：架构、解析、语义、战术识别，以及审核和�
 
 ## 待办（下一轮可发）
 
+**GPT 现在可发三件，互不冲突，可以同时开三个 Codex 任务：** GPT-03（分段 demo）、GPT-04（CI）、GPT-05（角色真值表，联网，带附件）。GPT-02 要审查的代码 Claude 还在改，等通知再发。之后还有一件：网站数据体积控制（道具库只导出用过 2 次以上的道具），等 GPT-02 合并后再写任务书。
+
 **DS-06 战队热力图页面**：把 `delegation/DS-06_heatmaps.md` 从分割线开始发给 DeepSeek，同时上传任务书开头列出的 11 个附件。数据（`samples/site/heatmap_teams.json`、`samples/site/de_mirage/heatmaps/`）、类型（`web/src/types.ts` 末尾）、计算和着色函数（`web/src/heatmap.ts`）都已就绪，DeepSeek 只做界面。效果参考 `scripts/heatmap_preview.py` 生成的图。
 
 现役图池 7 张图的点位映射和译名都已完成。新图进图池时，用 `python scripts/make_map_briefs.py data/raw --brief` 重新生成任务书，流程同 DS-05（模板在 `delegation/templates/DS-05_header.md`）。
@@ -40,5 +46,5 @@ Claude 负责主线：架构、解析、语义、战术识别，以及审核和�
 
 - DS-01/02/03 靠 CS 常识就能完成，输出是固定格式的配置或文案，Claude 审核成本低。
 - DS-04 工作量大，但规格已经写死：数据类型由 Claude 提供，验收标准明确。DeepSeek 写代码，Claude 编译、测试、修错。
-- GPT-01 需要通读代码、构造边界情况、跑测试，是推理密集型任务，交给 Codex 一次做完，省额度。
+- GPT-01/02/03/04 需要通读代码、构造边界情况、跑测试，是推理密集型任务，交给 Codex。GPT-05 需要联网查证，带出处。
 - 战术识别（M2）、角色阈值校准、数据管线改动留给 Claude，这部分的设计和验证不适合外包。
