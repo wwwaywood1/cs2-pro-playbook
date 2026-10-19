@@ -203,6 +203,14 @@ target 20/20, tempo 19/20, split 12/14, lurk 12/14, fake 18/20. Every remaining 
 is a borderline case explained in the `review` column. This is a human reading of the same
 position data, not video ground truth; it needs to grow (especially for recipes).
 
+### Team facts (playbook/insights.py)
+
+Per team and map, `insights[]` in the team profile: differences from all other teams on
+that map (tempo, site, split, lurk, fake; CT forward, stack, rotation) that are at least
+10 points and |z| >= 2 in a two-proportion test, plus signature facts (go-to execute,
+main lurker, default CT setup) above a minimum share. Each carries its numbers and a
+template sentence in zh/en. Written analysis (M4) may rephrase these, never add to them.
+
 ## Site data contract (data/site, schema_version 1)
 
 ```
@@ -313,7 +321,7 @@ Verified by GPT-03 on MOUZ vs Legacy Nuke (2394905: 13-6, 19 rounds); B8 vs TYLO
 | M1 | Map configs (all 7 active-duty maps), team aliases, first 65 demos (Cologne Major: 28 Mirage, 32 Inferno, 1 each of the other five) | done |
 | M2 | Team heatmaps and player summaries (done; page via DS-06). Tactic identification exported (tactics.json, team tactics); blind-labelled validation set (20 rounds); spot names (GPT-06); role thresholds against a sourced role table (GPT-05) | in progress |
 | M3 | Website v1: lineup library, team and player pages, bilingual (zh/en) | done on sample data; GitHub Pages deploy pending |
-| M4 | Natural-language summaries generated from the computed numbers (the LLM rewrites, never invents) | after M2 |
+| M4 | Natural-language summaries generated from the computed numbers (the LLM rewrites, never invents) | fact layer done (insights.py); rewriting next |
 | M5 | Full map pool, weekly incremental update | later |
 
 ## Work split

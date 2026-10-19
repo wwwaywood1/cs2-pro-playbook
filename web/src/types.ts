@@ -101,6 +101,8 @@ export interface TeamProfile {
   economy: { side: Side; buy_type: BuyType; rounds: number; won: number; win_rate: number | null }[];
   /** M2 tactic identification, gun rounds only (playbook/tactics.py) */
   tactics?: { T: TTactics; CT: CTTactics };
+  /** checked facts vs the other teams on this map (playbook/insights.py) */
+  insights?: Insight[];
 }
 
 export interface Share {
@@ -399,4 +401,22 @@ export interface TacticsFile {
   ct_overview: CTTactics;
   recipes: Recipe[];
   spots: Spot[];
+}
+
+export interface Insight {
+  id: string; // e.g. t_tempo_fast, t_signature_recipe, ct_default_setup
+  side: Side;
+  kind: "compare" | "signature";
+  value: number; // share for this team
+  baseline?: number; // other teams on the map (compare facts)
+  rounds: number;
+  z?: number; // two-proportion z score (compare facts, |z| >= 2)
+  direction?: "more" | "less";
+  text: { zh: string; en: string }; // template sentence; never edit numbers by hand
+  recipe_id?: string;
+  steamid?: string;
+  name?: string;
+  shape?: string;
+  won?: number;
+  win_rate?: number;
 }
