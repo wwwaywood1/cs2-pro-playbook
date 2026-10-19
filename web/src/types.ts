@@ -99,6 +99,8 @@ export interface TeamProfile {
   }[];
   sides: { T: TSide; CT: CTSide };
   economy: { side: Side; buy_type: BuyType; rounds: number; won: number; win_rate: number | null }[];
+  /** M2 tactic identification, gun rounds only (playbook/tactics.py) */
+  tactics?: { T: TTactics; CT: CTTactics };
 }
 
 export interface Share {
@@ -128,8 +130,20 @@ export interface PlayerProfile {
   traded_death_rate: number | null;
   awp_share: number | null;
   util_pr: number | null;
-  T: { avg_dist_to_team_30s: number | null; first_into_site_rate: number | null; lanes_15s: Share[]; places_30s: Share[] };
-  CT: { lanes_15s: Share[]; places_30s: Share[] };
+  T: {
+    avg_dist_to_team_30s: number | null;
+    first_into_site_rate: number | null;
+    lanes_15s: Share[];
+    places_30s: Share[];
+    /** share of the team's committed T gun rounds in which he was the lurker */
+    lurk_share?: number | null;
+  };
+  CT: {
+    lanes_15s: Share[];
+    places_30s: Share[];
+    /** share of the team's CT gun rounds in which he stood forward (T territory) at 15 s */
+    forward_share?: number | null;
+  };
   role_hints: RoleHint[];
 }
 
@@ -292,4 +306,96 @@ export interface TeamHeatmap {
   summary: Record<string, Partial<Record<Side, PlayerSideSummary>>>;
   /** which players are mainly on which lane, per side and phase */
   setup: Partial<Record<Side, Partial<Record<HeatPhase, Partial<Record<Lane, string[]>>>>>>;
+}
+
+// ----------------------------------------------------------------------------- tactics
+// <map>/tactics.json and TeamProfile.tactics (playbook/tactics.py). Gun rounds only.
+
+export type Tempo = "fast" | "mid" | "late" | "no_hit";
+
+export interface TTactics {
+  gun_rounds: number;
+  tempo: Ranked<Tempo>[];
+  target: Ranked<"A" | "B" | "none">[]; // site actually hit (commit or plant)
+  attempt: Ranked<"A" | "B" | "none">[]; // target, or the site a failed execute went for
+  avg_commit_s: number | null;
+  split_rate: number | null; // of rounds with a commit
+  lurk_rate: number | null;
+  fake_rate: number | null;
+  recipes: Ranked[]; // value = Recipe.id
+  lurkers: { steamid: string; name: string; rounds: number }[];
+}
+
+export interface CTTactics {
+  gun_rounds: number;
+  setups_20s: Ranked[]; // lane shape at 20 s, e.g. "A2 M1 B1 C1"
+  forward_rate: number | null; // rounds with >= 1 CT forward at 15 s
+  forward_players: { steamid: string; name: string | null; rounds: number; share: number | null }[];
+  stack_rate: number | null;
+  stacks: Ranked<"A" | "B">[];
+  rotation: {
+    rounds: number; // rounds with a T commit
+    avg_far_players: number | null; // CTs on the other site's lane 5 s before the commit
+    avg_rotated: number | null; // of those, how many reached the target lane in time
+    avg_delay_s: number | null;
+    avg_pre_rotated: number | null; // change of CTs on the target lane between 20 s and commit-5 s
+  };
+}
+
+export interface SpotRef {
+  spot_id: string;
+  type: "smoke" | "molotov";
+  label: string; // fallback name: callout (+ "#n")
+  place: string | null;
+  share: number; // share of the recipe's rounds using this spot
+  lineups: { lineup_id: string; n_throws: number }[]; // throw positions, ids in lineups.json
+}
+
+export interface Recipe {
+  id: string; // e.g. de_mirage-a-r01
+  site: "A" | "B";
+  core: SpotRef[]; // used in >= 50% of its rounds
+  options: SpotRef[]; // 20-50%
+  n_rounds: number;
+  n_matches: number;
+  teams: { team: string; rounds: number }[];
+  won: number;
+  win_rate: number;
+  plant_rate: number;
+  median_commit_s: number;
+  tempo: { value: Tempo; rounds: number }[];
+  avg_flashes: number;
+  split_rate: number;
+  examples: { demo_id: string; round_num: number; team: string }[];
+}
+
+export interface Spot {
+  spot_id: string;
+  side: Side;
+  type: GrenadeType;
+  place: string | null;
+  label: string;
+  name: { en: string | null; zh: string | null } | null; // from config/spots/<map>.toml when named
+  region: string;
+  lane: Lane;
+  x: number;
+  y: number;
+  z: number;
+  radar_x: number;
+  radar_y: number;
+  level: number;
+  n_throws: number;
+  n_matches: number;
+  median_pop_t_s: number | null;
+  lineups: { lineup_id: string; n_throws: number }[];
+  in_recipes: boolean;
+}
+
+export interface TacticsFile {
+  map: string;
+  definitions: Record<string, unknown>;
+  t_overview: TTactics;
+  ct_overview: CTTactics;
+  recipes: Recipe[];
+  spots: Spot[];
 }

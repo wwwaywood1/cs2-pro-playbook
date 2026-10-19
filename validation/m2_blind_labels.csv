@@ -1,21 +1,21 @@
-map,demo_id,round_num,target,tempo,split,lurk,fake,confidence,note
-de_mirage,2394885_b8-vs-gamerlegion-m2-mirage,10,,no_hit,,,,high,lost mid fights early; one T alone to B via apps late
-de_mirage,2395001_spirit-vs-falcons-m2-mirage,19,A,fast,Y,N,,high,ramp + palace hit ~20s
-de_mirage,2394871_pain-vs-tyloo-mirage,3,A,fast,Y,N,,high,3 on A via ramp+palace plant 34s; 2 died mid
-de_mirage,2394890_mibr-vs-b8-m1-mirage,20,B,late,Y,N,,low,mid/connector util 40s then B via apps+short ~85s
-de_mirage,2394978_vitality-vs-9z-m2-mirage,5,A,late,Y,N,,low,spread default then connector+ramp late
-de_mirage,2394850_liquid-vs-mibr-mirage,8,,no_hit,Y,N,,high,A exec ~60s from ramp+palace never reached site (attempt A)
-de_mirage,2394864_nrg-vs-big-m3-mirage,2,A,fast,Y,N,,high,5-man A ramp+palace ~20s
-de_mirage,2394986_spirit-vs-9z-m2-mirage,25,,no_hit,Y,N,,mid,B attempt ~85s apps+short; died at apps exit
-de_mirage,2394972_the-mongolz-vs-b8-m1-mirage,5,,no_hit,,,,high,slow default; late B apps attempt
-de_mirage,2394864_nrg-vs-big-m3-mirage,16,A,fast,Y,N,,mid,ramp rush with early smokes; one via palace; plant 31s
-de_mirage,2394890_mibr-vs-b8-m1-mirage,3,A,late,Y,N,,high,connector + palace/ramp; plant ~109s (dur_s says 106: check)
-de_mirage,2394973_fut-vs-g2-m3-mirage,3,A,fast,Y,N,,high,connector + ramp + palace plant ~30s
-de_inferno,2394896_legacy-vs-tyloo-m2-inferno,12,B,mid,N,Y,A,high,4 banana; A-side lurker; A util 47-50s
-de_inferno,2394855_gaimin-gladiators-vs-heroic-m2-inferno,9,A,late,Y,N,,high,mid + apps plant 87s
-de_inferno,2394976_natus-vincere-vs-legacy-m1-inferno,2,B,late,N,N,,high,5 banana plant 106s
-de_inferno,2394778_mibr-vs-thunder-downunder-inferno,17,A,late,Y,N,,mid,banana control early then mid+apps A ~75s
-de_inferno,2394851_thunder-downunder-vs-big-inferno,3,,no_hit,Y,N,,mid,A attempt ~35s mid+apps never on site
-de_inferno,2395002_furia-vs-falcons-m3-inferno,7,B,fast,N,N,A,mid,banana hit plant ~42s; A util 24-25 with nobody there
-de_inferno,2394853_tyloo-vs-sinners-m2-inferno,8,A,mid,Y,N,,high,mid + apps exec 55-66s
-de_inferno,2394903_parivision-vs-9z-m3-inferno,7,A,late,,,,partial,plant 88s; labelling interrupted
+map,demo_id,round_num,target,tempo,split,lurk,fake,confidence,note,review
+de_mirage,2394885_b8-vs-gamerlegion-m2-mirage,10,,no_hit,,,,high,lost mid fights early; one T alone to B via apps late,""
+de_mirage,2395001_spirit-vs-falcons-m2-mirage,19,A,fast,Y,N,,high,ramp + palace hit ~20s,""
+de_mirage,2394871_pain-vs-tyloo-mirage,3,A,fast,Y,N,,high,3 on A via ramp+palace plant 34s; 2 died mid,""
+de_mirage,2394890_mibr-vs-b8-m1-mirage,20,B,late,Y,N,,low,mid/connector util 40s then B via apps+short ~85s,"on review: only one attacker reached the site, so split cannot be measured from entries"
+de_mirage,2394978_vitality-vs-9z-m2-mirage,5,A,late,Y,N,,low,spread default then connector+ramp late,""
+de_mirage,2394850_liquid-vs-mibr-mirage,8,,no_hit,Y,N,,high,A exec ~60s from ramp+palace never reached site (attempt A),""
+de_mirage,2394864_nrg-vs-big-m3-mirage,2,A,fast,Y,N,,high,5-man A ramp+palace ~20s,""
+de_mirage,2394986_spirit-vs-9z-m2-mirage,25,,no_hit,Y,N,,mid,B attempt ~85s apps+short; died at apps exit,""
+de_mirage,2394972_the-mongolz-vs-b8-m1-mirage,5,,no_hit,,,,high,slow default; late B apps attempt,""
+de_mirage,2394864_nrg-vs-big-m3-mirage,16,A,fast,Y,N,,mid,ramp rush with early smokes; one via palace; plant 31s,on review: all five step onto A from the palace/ramp exit within 263 units; 'one via palace' is not visible in the data
+de_mirage,2394890_mibr-vs-b8-m1-mirage,3,A,late,Y,N,,high,connector + palace/ramp; plant ~109s (dur_s says 106: check),""
+de_mirage,2394973_fut-vs-g2-m3-mirage,3,A,fast,Y,N,,high,connector + ramp + palace plant ~30s,""
+de_inferno,2394896_legacy-vs-tyloo-m2-inferno,12,B,mid,N,Y,A,high,4 banana; A-side lurker; A util 47-50s,"on review: the A-side player went back to B before the hit (alive at B at 62 s), so no lurker at the commit; the A-side mid smoke+flash at 50 s is one smoke short of the fake rule"
+de_inferno,2394855_gaimin-gladiators-vs-heroic-m2-inferno,9,A,late,Y,N,,high,mid + apps plant 87s,""
+de_inferno,2394976_natus-vincere-vs-legacy-m1-inferno,2,B,late,N,N,,high,5 banana plant 106s,""
+de_inferno,2394778_mibr-vs-thunder-downunder-inferno,17,A,late,Y,N,,mid,banana control early then mid+apps A ~75s,""
+de_inferno,2394851_thunder-downunder-vs-big-inferno,3,,no_hit,Y,N,,mid,A attempt ~35s mid+apps never on site,""
+de_inferno,2395002_furia-vs-falcons-m3-inferno,7,B,fast,N,N,A,mid,banana hit plant ~42s; A util 24-25 with nobody there,"on review: KSCERATO was alive in mid 6 s before the commit (algorithm's lurker is right); the A-side smoke popped 4.6 s before the commit, just inside the 5 s exclusion"
+de_inferno,2394853_tyloo-vs-sinners-m2-inferno,8,A,mid,Y,N,,high,mid + apps exec 55-66s,""
+de_inferno,2394903_parivision-vs-9z-m3-inferno,7,A,late,,,,partial,plant 88s; labelling interrupted,partial label: commit at 55 s (two on site) although the plant came at 88 s

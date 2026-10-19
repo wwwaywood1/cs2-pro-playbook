@@ -6,6 +6,7 @@ import type {
   MapMeta,
   PlayerProfile,
   SiteIndex,
+  TacticsFile,
   TeamHeatmap,
   TeamProfile,
   TeamSummary,
@@ -67,6 +68,10 @@ export function getLineups(map: string): Promise<Lineup[]> {
   return cached(`lineups:${map}`, () =>
     fetchJson<Lineup[]>(`data/${segment(map)}/lineups.json`),
   );
+}
+
+export function getTactics(map: string): Promise<TacticsFile> {
+  return cached(`tactics:${map}`, () => fetchJson<TacticsFile>(`data/${segment(map)}/tactics.json`));
 }
 
 export function getHeatmapTeams(): Promise<HeatmapTeamIndexEntry[]> {

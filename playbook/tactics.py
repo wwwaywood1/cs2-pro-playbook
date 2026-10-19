@@ -566,3 +566,118 @@ def analyse_map(sub: dict[str, pl.DataFrame], mm: MapMeta, nade_lineup: pl.DataF
         "spots": spots, "spot_assign": spot_assign, "spot_lineups": spot_lineups, "centres": centres,
         "plans": plans, "recipes": recipes, "territory": sorted(territory), "ct": ct,
     }
+
+
+# ------------------------------------------------------------------------ site JSON
+
+SITE_SPOTS_PER_KIND = 12  # besides recipe spots, the most used spots per side and type
+
+
+def name_spots(spots: pl.DataFrame, names: list[dict]) -> dict[str, dict]:
+    """spot_id -> {"en", "zh"} from config/spots/<map>.toml (nearest entry of the same side
+    and type within its radius)."""
+    out: dict[str, dict] = {}
+    for r in spots.iter_rows(named=True):
+        best = None
+        for n in names:
+            if n.get("side") != r["side"] or n.get("type") != r["type"]:
+                continue
+            d = ((n["x"] - r["x"]) ** 2 + (n["y"] - r["y"]) ** 2) ** 0.5
+            if d <= n.get("radius", 200) and (best is None or d < best[0]):
+                best = (d, n)
+        if best:
+            out[r["spot_id"]] = {"en": best[1].get("en"), "zh": best[1].get("zh")}
+    return out
+
+
+def _rate(num: int, den: int):
+    return round(num / den, 3) if den else None
+
+
+def _ranked(df: pl.DataFrame, col: str, k: int = 6) -> list[dict]:
+    d = df.filter(pl.col(col).is_not_null())
+    if d.is_empty():
+        return []
+    g = d.group_by(col).agg(rounds=pl.len(), won=pl.col("won").sum()).sort("rounds", col, descending=[True, False]).head(k)
+    return [{"value": v, "rounds": n, "share": _rate(n, df.height), "won": int(w), "win_rate": _rate(int(w), n)}
+            for v, n, w in g.iter_rows()]
+
+
+def t_summary(plans: pl.DataFrame) -> dict:
+    """Gun-round T plans of one team (or all teams) as site numbers."""
+    g = plans.filter(pl.col("gun"))
+    hit = g.filter(pl.col("commit_s").is_not_null())
+    return {
+        "gun_rounds": g.height,
+        "tempo": _ranked(g, "tempo", 4),
+        "target": _ranked(g.with_columns(pl.col("target").fill_null("none")), "target", 3),
+        "attempt": _ranked(g.with_columns(pl.col("attempt").fill_null("none")), "attempt", 3),
+        "avg_commit_s": round(float(hit["commit_s"].mean()), 1) if hit.height else None,
+        "split_rate": _rate(int(hit["split"].sum()), hit.height),
+        "lurk_rate": _rate(int(hit["lurk"].sum()), hit.height),
+        "fake_rate": _rate(int(hit["fake_from"].is_not_null().sum()), hit.height),
+        "recipes": _ranked(g, "recipe_id", 8),
+        "lurkers": [{"steamid": str(s), "name": n, "rounds": c} for s, n, c in
+                    hit.filter(pl.col("lurk")).group_by("lurker_steamid").agg(name=pl.col("lurker_name").mode().first(), c=pl.len())
+                    .sort("c", "name", descending=[True, False]).head(3).iter_rows()],
+    }
+
+
+def ct_summary(ct: pl.DataFrame, names: dict[int, str] | None = None) -> dict:
+    g = ct.filter(pl.col("gun"))
+    hit = g.filter(pl.col("t_target").is_not_null())
+    fwd = g.select(*KEYS, "forward_steamids").explode("forward_steamids").drop_nulls("forward_steamids")
+    fwd_players = fwd.group_by("forward_steamids").agg(c=pl.col("round_num").len()).sort("c", descending=True).head(5)
+    return {
+        "gun_rounds": g.height,
+        "setups_20s": _ranked(g, "shape_20s", 6),
+        "forward_rate": _rate(int((g["n_forward"] > 0).sum()), g.height),
+        "forward_players": [{"steamid": str(s), "name": (names or {}).get(s), "rounds": c, "share": _rate(c, g.height)}
+                            for s, c in fwd_players.iter_rows()],
+        "stack_rate": _rate(int(g["stack_site"].is_not_null().sum()), g.height),
+        "stacks": _ranked(g, "stack_site", 2),
+        "rotation": {
+            "rounds": hit.height,
+            "avg_far_players": round(float(hit["n_far"].mean()), 2) if hit.height else None,
+            "avg_rotated": round(float(hit["n_rotated"].mean()), 2) if hit.height else None,
+            "avg_delay_s": round(float(hit["rotate_delay_s"].drop_nulls().mean()), 1) if hit["rotate_delay_s"].drop_nulls().len() else None,
+            "avg_pre_rotated": round(float(hit["pre_rotated"].mean()), 2) if hit.height else None,
+        },
+    }
+
+
+def site_spots(res: dict, names: dict[str, dict], mm: MapMeta) -> list[dict]:
+    """Spots used by recipes plus the most used ones per side and type, for the site."""
+    used = {c["spot_id"] for r in res["recipes"] for c in r["core"] + r["options"]}
+    sp = res["spots"]
+    top = set()
+    for (side, typ), g in sp.group_by("side", "type", maintain_order=True):
+        top |= set(g.sort("n_throws", "spot_id", descending=[True, False]).head(SITE_SPOTS_PER_KIND)["spot_id"].to_list())
+    keep = sp.filter(pl.col("spot_id").is_in(list(used | top))).sort("side", "type", "spot_id")
+    return [{
+        "spot_id": r["spot_id"], "side": r["side"], "type": r["type"], "place": r["place"], "label": r["label"],
+        "name": names.get(r["spot_id"]), "region": r["region"], "lane": r["lane"],
+        "x": round(r["x"], 1), "y": round(r["y"], 1), "z": round(r["z"], 1),
+        "radar_x": round(r["radar_x"], 1), "radar_y": round(r["radar_y"], 1),
+        "level": int(r["z"] < mm.radar["lower_level_max_z"]) if "lower_level_max_z" in mm.radar else 0,
+        "n_throws": r["n_throws"], "n_matches": r["n_matches"],
+        "median_pop_t_s": round(r["median_pop_t_s"], 1) if r["median_pop_t_s"] is not None else None,
+        "lineups": res["spot_lineups"].get(r["spot_id"], [])[:3],
+        "in_recipes": r["spot_id"] in used,
+    } for r in keep.iter_rows(named=True)]
+
+
+DEFINITIONS = {
+    "commit": "first second with >= 2 living T players on the site core (BombsiteA/B callout), or the plant",
+    "tempo": {"fast": "commit <= 40 s", "mid": "40-75 s", "late": "commit >= 75 s", "no_hit": "no commit"},
+    "attempt": "target, or for no_hit rounds the lane of the densest execute utility (>= 3 grenades in 10 s)",
+    "split": "entry points onto the site >= 400 units apart, or bearings from the site centre >= 50 degrees apart",
+    "lurk": "a living T on the other site's lane or >= 2200 units from the target, at the commit or 10 s before",
+    "fake": ">= 2 smokes/molotovs or >= 3 grenades landing near the other site 30-5 s before the commit",
+    "recipe": "gun rounds hitting one site with similar smoke+molotov spot sets (average linkage, Jaccard <= 0.6); "
+              "core = spots in >= 50% of its rounds, options = 20-50%",
+    "ct_setup": "lanes of living CT players at 20 s",
+    "forward": "CT standing at 15 s on a callout the T side holds in >= 60% of samples",
+    "stack": "a site lane with >= max(3, map median + 2) CT players at 20 s",
+    "rotation": "CT players on the other site's lane 5 s before the commit who reach the target lane within 20 s",
+}

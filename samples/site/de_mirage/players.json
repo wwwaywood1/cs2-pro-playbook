@@ -52,7 +52,8 @@
      "value": "BackAlley",
      "share": 0.091
     }
-   ]
+   ],
+   "lurk_share": 0.0
   },
   "CT": {
    "lanes_15s": [
@@ -74,7 +75,8 @@
      "value": "Connector",
      "share": 0.2
     }
-   ]
+   ],
+   "forward_share": 0.0
   },
   "role_hints": [
    {
@@ -151,7 +153,8 @@
      "value": "Middle",
      "share": 0.182
     }
-   ]
+   ],
+   "lurk_share": 0.0
   },
   "CT": {
    "lanes_15s": [
@@ -181,7 +184,8 @@
      "value": "BombsiteA",
      "share": 0.2
     }
-   ]
+   ],
+   "forward_share": 0.0
   },
   "role_hints": [
    {
@@ -248,7 +252,8 @@
      "value": "TopofMid",
      "share": 0.091
     }
-   ]
+   ],
+   "lurk_share": 0.333
   },
   "CT": {
    "lanes_15s": [
@@ -282,7 +287,8 @@
      "value": "Ladder",
      "share": 0.2
     }
-   ]
+   ],
+   "forward_share": 0.0
   },
   "role_hints": []
  },
@@ -339,7 +345,8 @@
      "value": "TopofMid",
      "share": 0.091
     }
-   ]
+   ],
+   "lurk_share": 0.0
   },
   "CT": {
    "lanes_15s": [
@@ -377,7 +384,8 @@
      "value": "BombsiteA",
      "share": 0.2
     }
-   ]
+   ],
+   "forward_share": 0.0
   },
   "role_hints": []
  },
@@ -434,7 +442,8 @@
      "value": "PalaceAlley",
      "share": 0.091
     }
-   ]
+   ],
+   "lurk_share": 0.0
   },
   "CT": {
    "lanes_15s": [
@@ -464,7 +473,8 @@
      "value": "Shop",
      "share": 0.2
     }
-   ]
+   ],
+   "forward_share": 0.0
   },
   "role_hints": []
  },
@@ -517,7 +527,8 @@
      "value": "BackAlley",
      "share": 0.2
     }
-   ]
+   ],
+   "lurk_share": 0.0
   },
   "CT": {
    "lanes_15s": [
@@ -555,7 +566,8 @@
      "value": "SnipersNest",
      "share": 0.091
     }
-   ]
+   ],
+   "forward_share": 0.0
   },
   "role_hints": [
    {
@@ -614,7 +626,8 @@
      "value": "BackAlley",
      "share": 0.2
     }
-   ]
+   ],
+   "lurk_share": 0.0
   },
   "CT": {
    "lanes_15s": [
@@ -648,7 +661,8 @@
      "value": "BombsiteB",
      "share": 0.091
     }
-   ]
+   ],
+   "forward_share": 0.0
   },
   "role_hints": []
  },
@@ -701,7 +715,8 @@
      "value": "House",
      "share": 0.2
     }
-   ]
+   ],
+   "lurk_share": 0.0
   },
   "CT": {
    "lanes_15s": [
@@ -727,7 +742,8 @@
      "value": "CTSpawn",
      "share": 0.091
     }
-   ]
+   ],
+   "forward_share": 0.0
   },
   "role_hints": [
    {
@@ -796,7 +812,8 @@
      "value": "Underpass",
      "share": 0.2
     }
-   ]
+   ],
+   "lurk_share": 0.0
   },
   "CT": {
    "lanes_15s": [
@@ -822,7 +839,8 @@
      "value": "Underpass",
      "share": 0.091
     }
-   ]
+   ],
+   "forward_share": 0.0
   },
   "role_hints": [
    {
@@ -885,7 +903,8 @@
      "value": "Apartments",
      "share": 0.2
     }
-   ]
+   ],
+   "lurk_share": 0.0
   },
   "CT": {
    "lanes_15s": [
@@ -919,7 +938,8 @@
      "value": "Ladder",
      "share": 0.091
     }
-   ]
+   ],
+   "forward_share": 0.0
   },
   "role_hints": [
    {

@@ -41,7 +41,8 @@ callout mapping to the stored tables and rebuilds the semantic tables (no demo n
 | `playbook/export.py` | Site JSON: team profiles, player profiles, lineup library, heatmaps |
 | `playbook/heatmap.py` | Team heatmaps per player: presence, holding, shots, kills, deaths, utility landing by type (cleaned frames) |
 | `playbook/zones.py` | Per-player summaries on the cleaned frames: zones, holding spots, fights, utility spots; team setup |
-| `playbook/tactics.py` | M2, in progress: landing spots, T plans (commit, tempo, split, lurk, fake), execute recipes, CT setups |
+| `playbook/tactics.py` | M2: landing spots, T plans (commit, tempo, split, lurk, fake), execute recipes, CT setups; site summaries |
+| `config/spots/*.toml` | Optional human names for landing spots, matched by position (survive re-clustering) |
 | `playbook/store.py` | Parquet storage, one file per demo per table |
 | `config/maps/*.toml` | Callout to region to lane mapping, radar transform, per map |
 | `config/team_aliases.csv` | In-game clan names to canonical team names |
@@ -169,6 +170,33 @@ typical time); fights by callout (kills, deaths, openings); utility per round by
 the landing spots he uses most, linked to the lineups he throws them from. Per team and
 side, `setup` lists which players are mainly on which lane in each phase.
 
+### Tactic identification (playbook/tactics.py)
+
+Computed per map over all its demos; the exported numbers use gun rounds only.
+
+- **Landing spots**: grenades of one side and type landing in the same place, whatever the
+  throw position (density-seeded clustering, radius 160 units for smokes and molotovs,
+  260 for flashes and HE; at least 4 throws from 2 matches). Each spot links to the
+  lineups (throw positions) that hit it. Names come from `config/spots/<map>.toml` when
+  present (matched by position), otherwise the callout plus `#n`.
+- **T plans**, one per T round: `commit_s` (first second with two living T players on the
+  bombsite core callout, or the plant), `target`, `tempo` (fast <= 40 s, late >= 75 s),
+  `attempt` (the target, or for rounds without a commit the lane of the densest execute
+  utility), `split`, `lurk`, `fake`, execute utility. Exact rules: `tactics.DEFINITIONS`,
+  also written into `tactics.json`.
+- **Execute recipes**: gun rounds hitting one site with similar smoke+molotov spot sets
+  (average linkage on Jaccard distance, cut 0.6), merged when they share the same smoke
+  core. Core spots appear in at least half of a recipe's rounds, options in 20-50%.
+- **CT setups**: lanes at 20 s, forward players at 15 s (standing on callouts the T side
+  holds in >= 60% of samples), stacks (a site lane with >= max(3, map median + 2) players),
+  rotations after the T commit.
+
+Validation: `validation/m2_blind_labels.csv` holds 20 rounds labelled blind from storyboards
+(`scripts/storyboard.py`), then reviewed where they disagreed. `scripts/validate_m2.py`:
+target 20/20, tempo 19/20, split 12/14, lurk 12/14, fake 18/20. Every remaining disagreement
+is a borderline case explained in the `review` column. This is a human reading of the same
+position data, not video ground truth; it needs to grow (especially for recipes).
+
 ## Site data contract (data/site, schema_version 1)
 
 ```
@@ -180,6 +208,7 @@ index.json                      { schema_version, generated_at, min_matches_reli
 heatmap_teams.json              [{ team, slug, n_matches, maps: [{ map, display_name, n_matches, rounds{T,CT}, players[] }] (most played first), roster: [{ steamid, name, color, rounds }] }]
 <map>/heatmaps/baseline.json    { map, grid, cell_px, levels, layers[], phases[], sides[], n_colors, early_s, spawn_skip_s, hold_speed, min_reliable_rounds, rounds{T,CT}, per_round, data }
 <map>/heatmaps/teams/<slug>.json { team, slug, map, n_matches, rounds{T,CT}, roster: [{ steamid, name, color, rounds, low_sample }], team_grid, players{steamid: { per_round, data }}, summary{steamid: {side: { zones, main_lane, holds, fights, utility }}}, setup{side: {phase: {lane: [names]}}} }
+<map>/tactics.json              { map, definitions, t_overview: TTactics, ct_overview: CTTactics, recipes: [{ id, site, core[], options[], n_rounds, n_matches, teams[], won, win_rate, plant_rate, median_commit_s, tempo[], avg_flashes, split_rate, examples[] }], spots: [{ spot_id, side, type, place, label, name, radar_x, radar_y, level, n_throws, lineups[], in_recipes, ... }] }
 <map>/lineups.json              [{ id, side, type, throw_place, land_place, land_region, land_lane, n_throws, n_matches, teams[], throwers[], round_win_rate, median_pop_t_s, technique, jump_share, throw{x,y,z,pitch,yaw,radar_x,radar_y}, land{x,y,z,radar_x,radar_y}, practice_cmd, example{demo_id,round_num,throw_tick} }]
 ```
 
@@ -187,6 +216,9 @@ heatmap_teams.json              [{ team, slug, n_matches, maps: [{ map, display_
   `default_then_execute` 35 to 65s, `late`, `no_clear_execute`), `execute_lane`,
   `setups_15s`, `setups_30s`.
 - `sides.CT` includes `setups_15s/30s`, `plants_against`, `retake_win_rate`, `stack_rate_15s`.
+- Team profiles carry `tactics.T` (tempo, target, attempt, avg_commit_s, split/lurk/fake rates,
+  recipes used, lurkers) and `tactics.CT` (setups_20s, forward rate and players, stacks,
+  rotation). Player profiles add `T.lurk_share` and `CT.forward_share`. Types: `web/src/types.ts`.
 - Ranked lists use `{ value, rounds, share, won, win_rate }`.
 - Setups and executes are computed on gun rounds only (`full` or `force` buys); pistol and
   eco rounds appear in `economy`.
@@ -247,7 +279,7 @@ heatmap_teams.json              [{ team, slug, n_matches, maps: [{ map, display_
 |---|---|---|
 | M0 | Pipeline: fetch, parse, semantics, export, tests | done |
 | M1 | Map configs (all 7 active-duty maps), team aliases, first 65 demos (Cologne Major: 28 Mirage, 32 Inferno, 1 each of the other five) | done |
-| M2 | Team heatmaps and player summaries (done; page via DS-06). Tactic identification: landing spots, T plans, execute recipes, CT setups (first version in tactics.py, not exported yet); blind-labelled validation set (20 rounds so far); tuned role thresholds | in progress |
+| M2 | Team heatmaps and player summaries (done; page via DS-06). Tactic identification exported (tactics.json, team tactics); blind-labelled validation set (20 rounds); spot names (GPT-06); role thresholds against a sourced role table (GPT-05) | in progress |
 | M3 | Website v1: lineup library, team and player pages, bilingual (zh/en) | done on sample data; GitHub Pages deploy pending |
 | M4 | Natural-language summaries generated from the computed numbers (the LLM rewrites, never invents) | after M2 |
 | M5 | Full map pool, weekly incremental update | later |

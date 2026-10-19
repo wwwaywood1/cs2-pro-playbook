@@ -27,7 +27,8 @@ import polars as pl
 
 from playbook.config import PARSED_DIR, SITE_DIR, MapMeta, load_map, team_slug
 from playbook.heatmap import build_heatmaps, roster_order
-from playbook.tactics import landing_spots
+from playbook.config import load_spot_names
+from playbook.tactics import DEFINITIONS, analyse_map, ct_summary, name_spots, site_spots, t_summary
 from playbook.zones import make_summarizer, team_setup
 from playbook.store import read_all
 
@@ -348,6 +349,37 @@ def build_lineups(sub: dict[str, pl.DataFrame], mm: MapMeta) -> tuple[list[dict]
     return out, nade_lineup
 
 
+# ------------------------------------------------------------------------- tactics
+
+
+def _add_team_tactics(mdir: Path, teams: list[dict], res: dict, names: dict) -> None:
+    """Write each team profile with its M2 tactics block (T plans, CT setups)."""
+    for p in teams:
+        p["tactics"] = {
+            "T": t_summary(res["plans"].filter(pl.col("team") == p["team"])),
+            "CT": ct_summary(res["ct"].filter(pl.col("team") == p["team"]), names),
+        }
+        _write(mdir / "teams" / f"{p['slug']}.json", p)
+
+
+def _add_player_tactics(mdir: Path, players: list[dict], res: dict) -> None:
+    """Lurk share (T, rounds with a commit) and forward share (CT) per player, rewritten
+    into players.json; inputs for the role hints."""
+    hit = res["plans"].filter(pl.col("gun") & pl.col("commit_s").is_not_null())
+    lurks = dict(hit.filter(pl.col("lurk")).group_by("lurker_steamid").agg(n=pl.len()).iter_rows())
+    team_hits = dict(hit.group_by("team").agg(n=pl.len()).iter_rows())
+    ct = res["ct"].filter(pl.col("gun"))
+    fwd = dict(ct.select("forward_steamids").explode("forward_steamids").drop_nulls()
+               .group_by("forward_steamids").agg(n=pl.len()).iter_rows())
+    ct_rounds = dict(ct.group_by("team").agg(n=pl.len()).iter_rows())
+    for p in players:
+        sid = int(p["steamid"])
+        th, cr = team_hits.get(p["team"], 0), ct_rounds.get(p["team"], 0)
+        p["T"]["lurk_share"] = _rate(lurks.get(sid, 0), th) if th else None
+        p["CT"]["forward_share"] = _rate(fwd.get(sid, 0), cr) if cr else None
+    _write(mdir / "players.json", players)
+
+
 # --------------------------------------------------------------------------- driver
 
 
@@ -376,17 +408,23 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
             "radar_image": f"https://github.com/pnxenopoulos/awpy-data/releases (radars/{map_name}.png)",
             "regions": mm.region_lane, "callouts": mm.callout_region,
         })
-        for p in teams:
-            _write(mdir / "teams" / f"{p['slug']}.json", p)
         _write(mdir / "teams.json", [
             {"team": p["team"], "slug": p["slug"], "n_matches": p["n_matches"], "low_sample": p["low_sample"],
              "win_rate_T": p["sides"]["T"]["win_rate"], "win_rate_CT": p["sides"]["CT"]["win_rate"]}
             for p in teams
         ])
-        _write(mdir / "players.json", players)
         _write(mdir / "lineups.json", lineups)
-        spots, spot_assign = landing_spots(sub["utility"], mm)
-        hm = build_heatmaps(sub, mm, order, make_summarizer(mm, spots, spot_assign, nade_lineup))
+        res = analyse_map(sub, mm, nade_lineup)
+        spot_names = name_spots(res["spots"], load_spot_names(map_name))
+        names = {sid: n for sid, n in sub["player_rounds"].group_by("steamid").agg(pl.col("name").mode().first()).iter_rows()}
+        _write(mdir / "tactics.json", {
+            "map": map_name, "definitions": DEFINITIONS,
+            "t_overview": t_summary(res["plans"]), "ct_overview": ct_summary(res["ct"], names),
+            "recipes": res["recipes"], "spots": site_spots(res, spot_names, mm),
+        })
+        _add_team_tactics(mdir, teams, res, names)
+        _add_player_tactics(mdir, players, res)
+        hm = build_heatmaps(sub, mm, order, make_summarizer(mm, res["spots"], res["spot_assign"], nade_lineup))
         _write_compact(mdir / "heatmaps" / "baseline.json", hm["baseline"])
         for slug, entry in hm["teams"].items():
             entry["setup"] = team_setup(entry)

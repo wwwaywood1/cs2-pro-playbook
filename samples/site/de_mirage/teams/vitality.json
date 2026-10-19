@@ -324,5 +324,137 @@
    "won": 0,
    "win_rate": 0.0
   }
- ]
+ ],
+ "tactics": {
+  "T": {
+   "gun_rounds": 4,
+   "tempo": [
+    {
+     "value": "mid",
+     "rounds": 2,
+     "share": 0.5,
+     "won": 1,
+     "win_rate": 0.5
+    },
+    {
+     "value": "fast",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "late",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    }
+   ],
+   "target": [
+    {
+     "value": "A",
+     "rounds": 3,
+     "share": 0.75,
+     "won": 2,
+     "win_rate": 0.667
+    },
+    {
+     "value": "B",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    }
+   ],
+   "attempt": [
+    {
+     "value": "A",
+     "rounds": 3,
+     "share": 0.75,
+     "won": 2,
+     "win_rate": 0.667
+    },
+    {
+     "value": "B",
+     "rounds": 1,
+     "share": 0.25,
+     "won": 1,
+     "win_rate": 1.0
+    }
+   ],
+   "avg_commit_s": 59.8,
+   "split_rate": 0.25,
+   "lurk_rate": 0.0,
+   "fake_rate": 0.0,
+   "recipes": [],
+   "lurkers": []
+  },
+  "CT": {
+   "gun_rounds": 11,
+   "setups_20s": [
+    {
+     "value": "A3 B2",
+     "rounds": 3,
+     "share": 0.273,
+     "won": 2,
+     "win_rate": 0.667
+    },
+    {
+     "value": "A2 M1 B1 C1",
+     "rounds": 2,
+     "share": 0.182,
+     "won": 1,
+     "win_rate": 0.5
+    },
+    {
+     "value": "A1 M1 B3",
+     "rounds": 1,
+     "share": 0.091,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A1 M3 B1",
+     "rounds": 1,
+     "share": 0.091,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A2 B2 C1",
+     "rounds": 1,
+     "share": 0.091,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A2 M1 B1",
+     "rounds": 1,
+     "share": 0.091,
+     "won": 1,
+     "win_rate": 1.0
+    }
+   ],
+   "forward_rate": 0.0,
+   "forward_players": [],
+   "stack_rate": 0.091,
+   "stacks": [
+    {
+     "value": "B",
+     "rounds": 1,
+     "share": 0.091,
+     "won": 1,
+     "win_rate": 1.0
+    }
+   ],
+   "rotation": {
+    "rounds": 3,
+    "avg_far_players": 1.33,
+    "avg_rotated": 0.33,
+    "avg_delay_s": 8.0,
+    "avg_pre_rotated": -1.0
+   }
+  }
+ }
 }

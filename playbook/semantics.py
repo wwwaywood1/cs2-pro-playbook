@@ -163,7 +163,8 @@ def build_team_rounds(t: dict[str, pl.DataFrame]) -> pl.DataFrame:
 
 
 def build_player_rounds(t: dict[str, pl.DataFrame], team_rounds: pl.DataFrame) -> pl.DataFrame:
-    lo = t["loadouts"].select(*KEYS, "steamid", "name", "team", "side", "primary_weapon")
+    lo = t["loadouts"].filter(pl.col("steamid").is_not_null() & pl.col("team").is_not_null()).select(
+        *KEYS, "steamid", "name", "team", "side", "primary_weapon")
     pos = t["positions"]
 
     def at(sec: int, cols: list[str]) -> pl.DataFrame:

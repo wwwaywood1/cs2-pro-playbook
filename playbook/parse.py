@@ -310,6 +310,7 @@ def parse_demo(path: Path, aliases: dict[str, str] | None = None, verbose: bool 
             "secondary_weapon", "armor", "has_helmet", "has_defuser", "has_bomb", "smoke_grenades", "flashbangs",
             "he_grenades", "fire_grenades", "money", "equipment_value",
         )
+        .filter(pl.col("steamid").is_not_null() & pl.col("team").is_not_null())  # coach / empty slots
     )
 
     # ---- kills ------------------------------------------------------------------------

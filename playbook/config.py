@@ -83,3 +83,13 @@ def load_map(map_name: str) -> MapMeta:
         callout_region=raw.get("callouts", {}),
         region_lane=raw.get("regions", {}),
     )
+
+
+def load_spot_names(map_name: str) -> list[dict]:
+    """``config/spots/<map>.toml``: human names for landing spots, matched by position
+    (side, type and within ``radius`` units), so names survive re-clustering."""
+    path = CONFIG_DIR / "spots" / f"{map_name}.toml"
+    if not path.exists():
+        return []
+    with open(path, "rb") as fh:
+        return tomllib.load(fh).get("spot", [])

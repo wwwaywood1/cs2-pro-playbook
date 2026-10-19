@@ -324,5 +324,142 @@
    "won": 0,
    "win_rate": 0.0
   }
- ]
+ ],
+ "tactics": {
+  "T": {
+   "gun_rounds": 10,
+   "tempo": [
+    {
+     "value": "no_hit",
+     "rounds": 7,
+     "share": 0.7,
+     "won": 0,
+     "win_rate": 0.0
+    },
+    {
+     "value": "mid",
+     "rounds": 2,
+     "share": 0.2,
+     "won": 2,
+     "win_rate": 1.0
+    },
+    {
+     "value": "late",
+     "rounds": 1,
+     "share": 0.1,
+     "won": 0,
+     "win_rate": 0.0
+    }
+   ],
+   "target": [
+    {
+     "value": "none",
+     "rounds": 7,
+     "share": 0.7,
+     "won": 0,
+     "win_rate": 0.0
+    },
+    {
+     "value": "B",
+     "rounds": 2,
+     "share": 0.2,
+     "won": 1,
+     "win_rate": 0.5
+    },
+    {
+     "value": "A",
+     "rounds": 1,
+     "share": 0.1,
+     "won": 1,
+     "win_rate": 1.0
+    }
+   ],
+   "attempt": [
+    {
+     "value": "none",
+     "rounds": 5,
+     "share": 0.5,
+     "won": 0,
+     "win_rate": 0.0
+    },
+    {
+     "value": "B",
+     "rounds": 3,
+     "share": 0.3,
+     "won": 1,
+     "win_rate": 0.333
+    },
+    {
+     "value": "A",
+     "rounds": 2,
+     "share": 0.2,
+     "won": 1,
+     "win_rate": 0.5
+    }
+   ],
+   "avg_commit_s": 78.4,
+   "split_rate": 0.667,
+   "lurk_rate": 0.333,
+   "fake_rate": 0.0,
+   "recipes": [],
+   "lurkers": [
+    {
+     "steamid": "76561198382173659",
+     "name": "kensizor",
+     "rounds": 1
+    }
+   ]
+  },
+  "CT": {
+   "gun_rounds": 5,
+   "setups_20s": [
+    {
+     "value": "A1 B2 C2",
+     "rounds": 1,
+     "share": 0.2,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A1 M2 B1 C1",
+     "rounds": 1,
+     "share": 0.2,
+     "won": 0,
+     "win_rate": 0.0
+    },
+    {
+     "value": "A1 M3 B1",
+     "rounds": 1,
+     "share": 0.2,
+     "won": 1,
+     "win_rate": 1.0
+    },
+    {
+     "value": "A2 M2 B1",
+     "rounds": 1,
+     "share": 0.2,
+     "won": 0,
+     "win_rate": 0.0
+    },
+    {
+     "value": "A3 B1 C1",
+     "rounds": 1,
+     "share": 0.2,
+     "won": 0,
+     "win_rate": 0.0
+    }
+   ],
+   "forward_rate": 0.0,
+   "forward_players": [],
+   "stack_rate": 0.0,
+   "stacks": [],
+   "rotation": {
+    "rounds": 4,
+    "avg_far_players": 2.0,
+    "avg_rotated": 0.5,
+    "avg_delay_s": 7.5,
+    "avg_pre_rotated": 0.25
+   }
+  }
+ }
 }

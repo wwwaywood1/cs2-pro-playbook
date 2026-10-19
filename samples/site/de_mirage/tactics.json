@@ -1,0 +1,180 @@
+{
+ "map": "de_mirage",
+ "definitions": {
+  "commit": "first second with >= 2 living T players on the site core (BombsiteA/B callout), or the plant",
+  "tempo": {
+   "fast": "commit <= 40 s",
+   "mid": "40-75 s",
+   "late": "commit >= 75 s",
+   "no_hit": "no commit"
+  },
+  "attempt": "target, or for no_hit rounds the lane of the densest execute utility (>= 3 grenades in 10 s)",
+  "split": "entry points onto the site >= 400 units apart, or bearings from the site centre >= 50 degrees apart",
+  "lurk": "a living T on the other site's lane or >= 2200 units from the target, at the commit or 10 s before",
+  "fake": ">= 2 smokes/molotovs or >= 3 grenades landing near the other site 30-5 s before the commit",
+  "recipe": "gun rounds hitting one site with similar smoke+molotov spot sets (average linkage, Jaccard <= 0.6); core = spots in >= 50% of its rounds, options = 20-50%",
+  "ct_setup": "lanes of living CT players at 20 s",
+  "forward": "CT standing at 15 s on a callout the T side holds in >= 60% of samples",
+  "stack": "a site lane with >= max(3, map median + 2) CT players at 20 s",
+  "rotation": "CT players on the other site's lane 5 s before the commit who reach the target lane within 20 s"
+ },
+ "t_overview": {
+  "gun_rounds": 14,
+  "tempo": [
+   {
+    "value": "no_hit",
+    "rounds": 7,
+    "share": 0.5,
+    "won": 0,
+    "win_rate": 0.0
+   },
+   {
+    "value": "mid",
+    "rounds": 4,
+    "share": 0.286,
+    "won": 3,
+    "win_rate": 0.75
+   },
+   {
+    "value": "late",
+    "rounds": 2,
+    "share": 0.143,
+    "won": 1,
+    "win_rate": 0.5
+   },
+   {
+    "value": "fast",
+    "rounds": 1,
+    "share": 0.071,
+    "won": 1,
+    "win_rate": 1.0
+   }
+  ],
+  "target": [
+   {
+    "value": "none",
+    "rounds": 7,
+    "share": 0.5,
+    "won": 0,
+    "win_rate": 0.0
+   },
+   {
+    "value": "A",
+    "rounds": 4,
+    "share": 0.286,
+    "won": 3,
+    "win_rate": 0.75
+   },
+   {
+    "value": "B",
+    "rounds": 3,
+    "share": 0.214,
+    "won": 2,
+    "win_rate": 0.667
+   }
+  ],
+  "attempt": [
+   {
+    "value": "A",
+    "rounds": 5,
+    "share": 0.357,
+    "won": 3,
+    "win_rate": 0.6
+   },
+   {
+    "value": "none",
+    "rounds": 5,
+    "share": 0.357,
+    "won": 0,
+    "win_rate": 0.0
+   },
+   {
+    "value": "B",
+    "rounds": 4,
+    "share": 0.286,
+    "won": 2,
+    "win_rate": 0.5
+   }
+  ],
+  "avg_commit_s": 67.7,
+  "split_rate": 0.429,
+  "lurk_rate": 0.143,
+  "fake_rate": 0.0,
+  "recipes": [],
+  "lurkers": [
+   {
+    "steamid": "76561198382173659",
+    "name": "kensizor",
+    "rounds": 1
+   }
+  ]
+ },
+ "ct_overview": {
+  "gun_rounds": 16,
+  "setups_20s": [
+   {
+    "value": "A3 B2",
+    "rounds": 3,
+    "share": 0.188,
+    "won": 2,
+    "win_rate": 0.667
+   },
+   {
+    "value": "A1 M3 B1",
+    "rounds": 2,
+    "share": 0.125,
+    "won": 2,
+    "win_rate": 1.0
+   },
+   {
+    "value": "A2 M1 B1 C1",
+    "rounds": 2,
+    "share": 0.125,
+    "won": 1,
+    "win_rate": 0.5
+   },
+   {
+    "value": "A2 M2 B1",
+    "rounds": 2,
+    "share": 0.125,
+    "won": 1,
+    "win_rate": 0.5
+   },
+   {
+    "value": "A1 B2 C2",
+    "rounds": 1,
+    "share": 0.062,
+    "won": 1,
+    "win_rate": 1.0
+   },
+   {
+    "value": "A1 M1 B3",
+    "rounds": 1,
+    "share": 0.062,
+    "won": 1,
+    "win_rate": 1.0
+   }
+  ],
+  "forward_rate": 0.0,
+  "forward_players": [],
+  "stack_rate": 0.062,
+  "stacks": [
+   {
+    "value": "B",
+    "rounds": 1,
+    "share": 0.062,
+    "won": 1,
+    "win_rate": 1.0
+   }
+  ],
+  "rotation": {
+   "rounds": 7,
+   "avg_far_players": 1.71,
+   "avg_rotated": 0.43,
+   "avg_delay_s": 7.8,
+   "avg_pre_rotated": -0.29
+  }
+ },
+ "recipes": [],
+ "spots": []
+}
