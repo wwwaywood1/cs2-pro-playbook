@@ -40,6 +40,7 @@ LINEUP_TYPES = ("smoke", "flashbang", "molotov", "he")
 LINEUP_THROW_RADIUS = 48.0  # same lineup if thrown within this distance ...
 LINEUP_LAND_RADIUS = 120.0  # ... and landing within this distance
 MOVING_SPEED = 100.0
+ACTIVE_POOL = {"de_mirage", "de_inferno", "de_nuke", "de_dust2", "de_ancient", "de_anubis", "de_cache"}  # Overpass left
 AWP_ANY = 0.4        # role hint thresholds, see _add_role_hints and DESIGN.md › Role hints
 AWP_TEAM_TOP = 0.15
 
@@ -402,7 +403,7 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
     }
     order = roster_order(t["player_rounds"])  # stable player colours across maps
     team_maps: dict[str, list[dict]] = {}
-    for map_name in sorted(matches["map"].unique().to_list()):
+    for map_name in sorted(m for m in matches["map"].unique().to_list() if m in ACTIVE_POOL):
         mm = load_map(map_name)
         ids = matches.filter(pl.col("map") == map_name)["demo_id"].to_list()
         sub = {k: v.filter(pl.col("demo_id").is_in(ids)) for k, v in t.items() if "demo_id" in v.columns}
