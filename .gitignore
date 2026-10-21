@@ -21,3 +21,7 @@ web/public/radars/
 
 # design skills fetched for delegated UI work (third-party, not committed)
 delegation/design-skills/
+
+# team logos and player portraits supplied by the owner (third-party images, kept out of the public repo)
+web/public/logos/
+web/public/players/
