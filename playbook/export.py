@@ -37,6 +37,7 @@ SCHEMA_VERSION = 1
 MIN_MATCHES_RELIABLE = 5
 GUN_BUYS = ("full", "force")  # setups / executes are summarised on gun rounds only
 LINEUP_TYPES = ("smoke", "flashbang", "molotov", "he")
+LINEUP_MIN_THROWS = 2
 LINEUP_THROW_RADIUS = 48.0  # same lineup if thrown within this distance ...
 LINEUP_LAND_RADIUS = 120.0  # ... and landing within this distance
 MOVING_SPEED = 100.0
@@ -281,7 +282,11 @@ def _technique(jump, crouch, walk, speed) -> str:
 
 
 def build_lineups(sub: dict[str, pl.DataFrame], mm: MapMeta) -> tuple[list[dict], pl.DataFrame]:
-    """(lineups, nade_lineup). nade_lineup maps (demo_id, nade_id) -> lineup_id."""
+    """Exportable lineups and the complete (demo_id, nade_id) -> lineup_id mapping.
+
+    Singleton clusters still participate in analysis; only their exported records
+    and links are omitted.
+    """
     u = sub["utility"].filter(
         pl.col("matched") & ~pl.col("is_post_round") & pl.col("thrower_side").is_not_null()
         & pl.col("type").is_in(LINEUP_TYPES)
@@ -354,7 +359,13 @@ def build_lineups(sub: dict[str, pl.DataFrame], mm: MapMeta) -> tuple[list[dict]
         l["id"] = f"{mm.name}-{l['side'].lower()}-{l['type']}-{i:04d}"
         pairs.extend((d, n, l["id"]) for d, n in l.pop("_members"))
     nade_lineup = pl.DataFrame(pairs, schema={"demo_id": pl.Utf8, "nade_id": pl.UInt32, "lineup_id": pl.Utf8}, orient="row")
-    return out, nade_lineup
+    return [l for l in out if l["n_throws"] >= LINEUP_MIN_THROWS], nade_lineup
+
+
+def _filter_lineup_refs(spots: list[dict], lineup_ids: set[str]) -> None:
+    """Keep only links to the exported library, preserving spot statistics."""
+    for spot in spots:
+        spot["lineups"] = [l for l in spot["lineups"] if l["lineup_id"] in lineup_ids]
 
 
 # ------------------------------------------------------------------------- tactics
@@ -410,6 +421,7 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         teams = team_profiles(sub, mm)
         players = player_profiles(sub)
         lineups, nade_lineup = build_lineups(sub, mm)
+        lineup_ids = {l["id"] for l in lineups}
         mdir = out_dir / map_name
         _write(mdir / "meta.json", {
             "map": map_name, "display_name": mm.display_name, "radar": mm.radar,
@@ -425,13 +437,17 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         res = analyse_map(sub, mm, nade_lineup)
         spot_names = name_spots(res["spots"], load_spot_names(map_name))
         for r in res["recipes"]:
+            _filter_lineup_refs(r["core"], lineup_ids)
+            _filter_lineup_refs(r["options"], lineup_ids)
             for c in r["core"] + r["options"]:
                 c["name"] = spot_names.get(c["spot_id"])
         names = {sid: n for sid, n in sub["player_rounds"].group_by("steamid").agg(pl.col("name").mode().first()).iter_rows()}
+        spots = site_spots(res, spot_names, mm)
+        _filter_lineup_refs(spots, lineup_ids)
         _write(mdir / "tactics.json", {
             "map": map_name, "definitions": DEFINITIONS,
             "t_overview": t_summary(res["plans"]), "ct_overview": ct_summary(res["ct"], names),
-            "recipes": res["recipes"], "spots": site_spots(res, spot_names, mm),
+            "recipes": res["recipes"], "spots": spots,
         })
         for p in teams:
             p["insights"] = team_insights(p["team"], res["plans"], res["ct"], res["recipes"], spot_names)
@@ -440,6 +456,9 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         hm = build_heatmaps(sub, mm, order, make_summarizer(mm, res["spots"], res["spot_assign"], nade_lineup))
         _write_compact(mdir / "heatmaps" / "baseline.json", hm["baseline"])
         for slug, entry in hm["teams"].items():
+            for by_side in entry["summary"].values():
+                for summary in by_side.values():
+                    _filter_lineup_refs(summary["utility"]["spots"], lineup_ids)
             entry["setup"] = team_setup(entry)
             _write_compact(mdir / "heatmaps" / "teams" / f"{slug}.json", entry)
             team_maps.setdefault(entry["team"], []).append({
