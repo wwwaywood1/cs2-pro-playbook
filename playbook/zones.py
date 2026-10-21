@@ -61,7 +61,7 @@ def _holds(p: pl.DataFrame, rounds: int) -> list[dict]:
     if h.height < 5:
         return []
     labels = density_clusters(h.select("x", "y", "z").to_numpy(), HOLD_RADIUS,
-                              max(4, math.ceil(HOLD_MIN_SHARE * h.height)))
+                              max(4, math.ceil(HOLD_MIN_SHARE * h.height)), h["level"].to_numpy())
     h = h.with_columns(_cl=pl.Series(labels)).filter(pl.col("_cl") >= 0)
     out = []
     for (_,), g in h.group_by("_cl", maintain_order=True):
@@ -79,7 +79,7 @@ def _holds(p: pl.DataFrame, rounds: int) -> list[dict]:
             "phases": {ph: _r((g["phase"] == ph).mean()) for ph in PHASES},
         })
     out = [o for o in out if (o["seconds_per_round"] or 0) >= HOLD_MIN_SECONDS_PR]
-    out.sort(key=lambda o: (-o["seconds_per_round"], o["place"], o["radar_x"]))
+    out.sort(key=lambda o: (-o["seconds_per_round"], o["place"] or "", o["level"], o["radar_x"], o["radar_y"]))
     return out[:HOLD_TOP]
 
 
@@ -124,6 +124,7 @@ def make_summarizer(mm: MapMeta, spots: pl.DataFrame | None = None, spot_assign:
                 util["spots"].append({
                     "spot_id": sid, "type": s.get("type"), "place": s.get("place"), "label": s.get("label"),
                     "radar_x": _r(s.get("radar_x"), 1), "radar_y": _r(s.get("radar_y"), 1),
+                    "level": int(s.get("z", 0) < mm.radar["lower_level_max_z"]) if "lower_level_max_z" in mm.radar else 0,
                     "n": g.height, "per_round": _r(g.height / rounds),
                     "median_t_s": _r(g["throw_t_s"].median(), 0),
                     "lineups": [{"lineup_id": lid, "n": n} for lid, n in lineups],

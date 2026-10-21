@@ -32,6 +32,7 @@ import numpy as np
 import polars as pl
 
 from playbook.config import MapMeta, team_slug
+from playbook.semantics import round_plants
 
 GRID = 64
 CELL_PX = 1024 / GRID
@@ -50,6 +51,7 @@ KEYS = ["demo_id", "round_num"]
 
 def _cells(df: pl.DataFrame, mm: MapMeta, x: str, y: str, z: str) -> pl.DataFrame:
     """Add radar pixel coordinates and `cell`; drop rows outside the radar."""
+    df = df.filter(pl.all_horizontal(pl.col(c).is_finite() for c in (x, y, z)))
     r = mm.radar
     level = pl.lit(0, dtype=pl.Int64)
     if "lower_level_max_z" in r:
@@ -83,15 +85,16 @@ def clean_frames(sub: dict[str, pl.DataFrame], mm: MapMeta) -> dict[str, pl.Data
     steamid, team, side, phase, cell, radar_x/y. Keys: presence, shots, kills, deaths, utility."""
     tr = sub["team_rounds"]
     gun = tr.filter(pl.col("buy_type").is_in(GUN_BUYS)).select(*KEYS, "team")
-    plant = tr.filter(pl.col("side") == "T").select(*KEYS, "plant_t_s")
+    plant = round_plants(sub).select(*KEYS, "plant_t_s")
 
     def prep(df: pl.DataFrame) -> pl.DataFrame:
-        return df.join(gun, on=[*KEYS, "team"], how="inner").join(plant, on=KEYS, how="left")
+        return df.join(gun, on=[*KEYS, "team"], how="inner", validate="m:1").join(plant, on=KEYS, how="left", validate="m:1")
 
     pos = sub["positions"].filter(pl.col("alive") & (pl.col("t_s") >= 0)).sort(*KEYS, "steamid", "t_s")
     pos = pos.with_columns(
         step=((pl.col("x") - pl.col("x").shift(1).over(*KEYS, "steamid")) ** 2
-              + (pl.col("y") - pl.col("y").shift(1).over(*KEYS, "steamid")) ** 2).sqrt(),
+              + (pl.col("y") - pl.col("y").shift(1).over(*KEYS, "steamid")) ** 2
+              + (pl.col("z") - pl.col("z").shift(1).over(*KEYS, "steamid")) ** 2).sqrt(),
         gap=pl.col("t_s") - pl.col("t_s").shift(1).over(*KEYS, "steamid"),
     ).filter(pl.col("t_s") >= SPAWN_SKIP_S)
     pos = _cells(prep(pos), mm, "x", "y", "z").with_columns(
@@ -107,7 +110,7 @@ def clean_frames(sub: dict[str, pl.DataFrame], mm: MapMeta) -> dict[str, pl.Data
     else:
         out["shots"] = pos.head(0).select(shot_cols)
 
-    k = sub["kills"].filter(~pl.col("is_post_round"))
+    k = sub["kills"].filter(~pl.col("is_post_round") & (pl.col("t_s") >= 0))
     kills = k.filter(~pl.col("is_teamkill").fill_null(True) & pl.col("attacker_steamid").is_not_null()
                      & pl.col("attacker_x").is_not_null())
     kills = kills.rename({"attacker_steamid": "steamid", "attacker_team": "team", "attacker_side": "side",
@@ -120,7 +123,7 @@ def clean_frames(sub: dict[str, pl.DataFrame], mm: MapMeta) -> dict[str, pl.Data
         phase=_phase("t_s")).select(fight_cols)
 
     u = sub["utility"].filter(
-        ~pl.col("is_post_round") & pl.col("thrower_steamid").is_not_null() & pl.col("thrower_side").is_not_null()
+        ~pl.col("is_post_round") & (pl.col("throw_t_s") >= 0) & pl.col("thrower_steamid").is_not_null() & pl.col("thrower_side").is_not_null()
         & pl.col("land_x").is_not_null() & pl.col("type").is_in(list(UTIL_LAYER))
     ).rename({"thrower_steamid": "steamid", "thrower_team": "team", "thrower_side": "side"})
     out["utility"] = _cells(prep(u), mm, "land_x", "land_y", "land_z").with_columns(
@@ -181,9 +184,9 @@ def roster_order(player_rounds: pl.DataFrame) -> dict[str, list[str]]:
     every map and side."""
     g = (
         player_rounds.filter(pl.col("team").is_not_null() & pl.col("steamid").is_not_null())
-        .group_by("team", "steamid").agg(n=pl.len(), name=pl.col("name").mode().first())
+        .group_by("team", "steamid").agg(n=pl.len(), name=pl.col("name").mode().sort().first())
         .with_columns(_key=pl.col("name").str.to_lowercase())
-        .sort("team", "n", "_key", descending=[False, True, False])
+        .sort("team", "n", "_key", "steamid", descending=[False, True, False, False])
     )
     return {team: [str(s) for s in d["steamid"].to_list()] for (team,), d in g.group_by("team", maintain_order=True)}
 
@@ -206,7 +209,7 @@ def build_heatmaps(sub: dict[str, pl.DataFrame], mm: MapMeta, order: dict[str, l
     order = order or roster_order(sub["player_rounds"])
 
     teams = {}
-    for (team,), td in tr.filter(pl.col("team").is_not_null()).group_by("team"):
+    for (team,), td in tr.filter(pl.col("team").is_not_null()).group_by("team", maintain_order=True):
         team_rounds = {s: td.filter(pl.col("side") == s).height for s in SIDES}
         tev = ev.filter(pl.col("team") == team)
         mine = pr.filter(pl.col("team") == team)
@@ -218,7 +221,7 @@ def build_heatmaps(sub: dict[str, pl.DataFrame], mm: MapMeta, order: dict[str, l
             d = mine.filter(pl.col("steamid") == int(steamid))
             rounds = {s: d.filter(pl.col("side") == s).height for s in SIDES}
             color = global_order.index(steamid) if steamid in global_order else len(global_order)
-            roster.append({"steamid": steamid, "name": d["name"].mode().first(), "color": color, "rounds": rounds,
+            roster.append({"steamid": steamid, "name": d["name"].mode().sort().first(), "color": color, "rounds": rounds,
                            "low_sample": {s: rounds[s] < MIN_RELIABLE_ROUNDS for s in SIDES}})
             players[steamid] = grids(tev.filter(pl.col("steamid") == int(steamid)), rounds)
             if summaries is not None:

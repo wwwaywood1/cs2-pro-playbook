@@ -173,7 +173,8 @@ cells, alpha within 1/255).
 Summaries per player and side (zones.py): callout shares per phase and main lane;
 holding spots (clusters of held seconds within 150 units: seconds per round, rounds held,
 typical time); fights by callout (kills, deaths, openings); utility per round by type and
-the landing spots he uses most, linked to the lineups he throws them from. Per team and
+the landing spots he uses most, linked to the lineups he throws them from. Utility spot
+summaries include `level` (0 upper, 1 lower), matching the landing library and grids. Per team and
 side, `setup` lists which players are mainly on which lane in each phase.
 
 ### Tactic identification (playbook/tactics.py)
