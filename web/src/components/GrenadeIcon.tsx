@@ -2,34 +2,80 @@ import type { GrenadeType } from "../types";
 
 export type GrenadeIconType = GrenadeType | "flash" | "incendiary";
 
-/** Original 32-unit artwork, shared by inline labels and radar markers. */
+/** Grenade colours, shared with map coverage and legends. */
+export const GRENADE_COLORS: Record<"smoke" | "molotov" | "flash" | "he", string> = {
+  smoke: "#b9c3cc",
+  molotov: "#ff7a1a",
+  flash: "#f2d649",
+  he: "#8fb04c",
+};
+
+const INK = "#0b0f14"; // outline and cut-outs: dark, so the glyph reads on bright radar floors too
+
+function kind(type: GrenadeIconType): keyof typeof GRENADE_COLORS {
+  if (type === "molotov" || type === "incendiary") return "molotov";
+  if (type === "flash" || type === "flashbang") return "flash";
+  if (type === "smoke") return "smoke";
+  return "he";
+}
+
+/**
+ * Original 32-unit pictograms: flat single-colour silhouettes with straight edges, one shared
+ * construction (upright body on the same baseline, spoon lever on the right, pin ring on the
+ * left) so the four read as one set. Type is carried by silhouette and colour, never colour alone.
+ */
 export function GrenadeGlyph({ type }: { type: GrenadeIconType }) {
-  if (type === "smoke") return <g stroke="#26313d" strokeWidth="1.5" strokeLinejoin="round">
-    <path d="M5 16C0 14 2 8 6 8C5 2 14 1 16 6C22 2 28 6 26 11C32 13 29 19 24 19H7Z" fill="#d4dae0" />
-    <rect x="10" y="14" width="13" height="16" rx="3" fill="#8d9aa7" />
-    <path d="M12 19H21M12 25H21M14 14V11H21" fill="none" />
-  </g>;
-  if (type === "molotov" || type === "incendiary") return <g stroke="#462b1b" strokeWidth="1.5" strokeLinejoin="round">
-    <path d="M18 17C13 11 22 8 21 1C31 8 32 17 24 21Z" fill="#ff8b35" />
-    <path d="M22 17C19 13 24 11 24 8C28 14 27 17 25 19Z" fill="#ffe296" stroke="none" />
-    <path d="M10 8L16 10L14 16L16 22L12 30L3 26L7 18L10 15Z" fill="#829852" />
-    <path d="M9 9L11 5L18 8L16 12M6 21L14 24" fill="#e6cf9c" />
-  </g>;
-  if (type === "flash" || type === "flashbang") return <g stroke="#6b5a21" strokeWidth="1.5" strokeLinejoin="round">
-    <path d="M18 1L21 8L29 4L26 12L32 16L25 19L29 27L21 24L17 32L14 24L5 28L9 20L1 16L10 12L6 4L14 8Z" fill="#ffe58c" />
-    <rect x="12" y="12" width="9" height="16" rx="2" fill="#fffbea" />
-    <path d="M14 12V9H21M14 17H19M14 22H19" fill="none" />
-  </g>;
-  return <g stroke="#d5ddbd" strokeWidth="1.5" strokeLinejoin="round">
-    <circle cx="23" cy="6" r="4" fill="none" />
-    <path d="M13 10V5H20L24 15" fill="none" />
-    <circle cx="15" cy="21" r="10" fill="#3f593b" />
-    <path d="M7 17H23M6 23H24M12 12V30M18 12V30" stroke="#233b26" />
+  const k = kind(type);
+  const fill = GRENADE_COLORS[k];
+  const line = { stroke: INK, strokeWidth: 1.4, strokeLinejoin: "miter" as const, strokeLinecap: "square" as const };
+
+  if (k === "molotov") {
+    return <g {...line}>
+      {/* flame: two hard-edged tongues */}
+      <path d="M15 1 L19 6 L18 2 L23 8 L19 11 H13 Z" fill={fill} />
+      {/* rag + neck */}
+      <path d="M14 11 H19 V15 H14 Z" fill="#e8d3a8" />
+      {/* bottle: chamfered shoulders, square base */}
+      <path d="M13 15 H20 L24 20 V30 H9 V20 Z" fill={fill} />
+      <path d="M12 23 H21" fill="none" />
+    </g>;
+  }
+
+  if (k === "he") {
+    return <g {...line}>
+      <circle cx="9" cy="6" r="2.6" fill="none" stroke={fill} strokeWidth={1.8} />
+      <path d="M12 9 V6 H19 L24 16" fill="none" stroke={fill} strokeWidth={2} />
+      <path d="M12 9 H20 V12 H12 Z" fill={fill} />
+      {/* octagonal fragmentation body */}
+      <path d="M11 12 H21 L26 17 V25 L21 30 H11 L6 25 V17 Z" fill={fill} />
+      <path d="M6 21 H26 M16 12 V30" fill="none" />
+    </g>;
+  }
+
+  if (k === "flash") {
+    return <g {...line}>
+      <circle cx="8" cy="5" r="2.6" fill="none" stroke={fill} strokeWidth={1.8} />
+      <path d="M11 8 V5 H19 L23 13" fill="none" stroke={fill} strokeWidth={2} />
+      {/* slim canister with perforations */}
+      <path d="M11 8 H20 V30 H11 Z" fill={fill} />
+      <path d="M13 12 H18 V14 H13 Z M13 17 H18 V19 H13 Z M13 22 H18 V24 H13 Z" fill={INK} stroke="none" />
+      {/* burst ticks */}
+      <path d="M23 18 H28 M22.5 24 L27 27 M22.5 12.5 L26 10" fill="none" stroke={fill} strokeWidth={2} />
+    </g>;
+  }
+
+  // smoke: wide canister, vent band on top, two body bands
+  return <g {...line}>
+    <circle cx="7" cy="5" r="2.6" fill="none" stroke={fill} strokeWidth={1.8} />
+    <path d="M10 8 V5 H19 L24 13" fill="none" stroke={fill} strokeWidth={2} />
+    <path d="M9 8 H23 V30 H9 Z" fill={fill} />
+    <path d="M11 10.5 H13 V12.5 H11 Z M15 10.5 H17 V12.5 H15 Z M19 10.5 H21 V12.5 H19 Z" fill={INK} stroke="none" />
+    <path d="M9 15 H23 M9 25 H23" fill="none" />
   </g>;
 }
 
 export default function GrenadeIcon({ type, size = 16 }: { type: GrenadeIconType; size?: number }) {
-  return <svg className="grenade-icon" width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+  return <svg className="grenade-icon" width={size} height={size} viewBox="3 0.5 26 30.5" aria-hidden="true" focusable="false">
     <GrenadeGlyph type={type} />
   </svg>;
 }
