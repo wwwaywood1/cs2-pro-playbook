@@ -3,11 +3,21 @@
 Claude 负责主线：架构、解析、语义、战术识别，以及审核和合并所有外包结果。
 界面和有固定规格的体力活交给 DeepSeek；需要通读代码、跑测试、联网查资料的任务交给 GPT（目前额度充足）。
 
-## 怎么用
+## 怎么用（自动派活，2026-10 起）
 
-1. 打开对应的任务书，从分割线开始**整段**复制给对应模型；有附件的按任务书说明上传。
-2. 把模型的回复**原样**贴回给 Claude，不用自己改。
-3. Claude 负责落盘、跑测试、修错、合并，并把这张表的状态更新为“完成”。
+Claude 通过 PAL MCP 直接派活、收结果、落盘、测试、合并，不再需要人工复制粘贴。路由规则：
+
+| 任务类型 | 派给 | 通道 | 不可用时 |
+|---|---|---|---|
+| 固定格式的文案、配置、命名、翻译、数据整理、第二意见 | deepseek-flash（只用这个 DeepSeek 型号） | PAL `chat` | 在 VT 校园网时 PAL 自动隐藏 DeepSeek，改用 MiniMax-M3.1-Flash |
+| 读代码、改代码、跑测试、开 PR | Codex CLI | PAL `clink`（cli_name=codex） | 退回手动：把任务书发给 Codex 网页版 |
+| 需要联网查证、带出处 | ChatGPT 网页版 | 手动 | — |
+| 看图任务（雷达图标注等） | ChatGPT 网页版 | 手动 | 先试 MiniMax 看图，不行再手动 |
+
+规则：
+1. 每次派活前，Claude 先调用 `listmodels`，按当时能用的模型选通道。
+2. 外包结果一律由 Claude 跑测试和 CI 检查后再合并，并在下面的审核记录里写一行。
+3. 只有走"手动"通道的任务需要你转发：把任务书从分割线开始整段发给对应模型，回复原样贴回给 Claude。
 
 ## 任务
 
@@ -19,7 +29,7 @@ Claude 负责主线：架构、解析、语义、战术识别，以及审核和�
 | [DS-04](DS-04_frontend.md) | DeepSeek | 前端 v1，分 A/B/C 三阶段 | DS-03 | 中 | 完成 |
 | [GPT-01](GPT-01_robustness_review.md) | GPT (Codex) | 解析层边界情况审查和修复 | 仓库已推到 GitHub | 中：批量解析前做最好 | 完成 |
 | [DS-05](DS-05_map_configs.md) | DeepSeek | 其余 5 张图（Nuke、Dust2、Ancient、Anubis、Overpass）的点位映射 + 中英文译名 | 无（任务书已生成） | 高 | 完成 |
-| [GPT-02](GPT-02_m2_review.md) | GPT (Codex) | 热力图、选手总结、战术识别三个新模块的代码审查和修复 | Claude 先把战术识别接进导出 | 高 | 可发 |
+| [GPT-02](GPT-02_m2_review.md) | GPT (Codex) | 热力图、选手总结、战术识别三个新模块的代码审查和修复 | Claude 先把战术识别接进导出 | 高 | 完成 |
 | [GPT-03](GPT-03_multipart_demos.md) | GPT (Codex) | 支持分段录制的 demo（约 7% 的比赛现在被跳过） | 无 | 中 | 完成 |
 | [GPT-04](GPT-04_ci.md) | GPT (Codex) | GitHub Actions：测试、前端构建、浏览器冒烟测试；手动触发的 Pages 部署 | 无 | 中 | 完成 |
 | [GPT-05](GPT-05_pro_roles.md) | GPT（联网） | 155 名选手的角色真值表（带出处），用来校准角色标签 | 附件 `delegation/inputs/players_roster.csv` | 高 | 完成 |
@@ -48,7 +58,8 @@ Claude 负责主线：架构、解析、语义、战术识别，以及审核和�
 - **GPT-04**：PR #1 合并，CI 56 秒通过；Pages 只能手动触发（私有仓库）。
 - **GPT-05**：表格存为 `validation/pro_roles.csv`。据此把狙击手标签改为"队内狙最多且 ≥15%，或任何人 ≥40%"：50 名职业狙中找出 49 名，没有误标（原规则只找出 29 名）。自由人标签精度高但漏掉大半，原因写在 DESIGN.md。
 - **GPT-06**：108 个落点名字写入 `config/spots/*.toml`（坐标取自原表，不手抄）。爆弹套路现在显示为"楼梯烟 + 丛林烟 + …"、"B区警家烟 + 棺材烟 + B包三箱火"。
-- **GPT-02**：还没收到交付。
+- **GPT-02**：PR #3 合并（121 项测试）。CI 失败的原因不在 PR #3：PR #2 新增的 `tests/test_tune_roles.py` 在干净环境里无法导入 `scripts`，Claude 在 `pyproject.toml` 加了 `pythonpath = ["."]` 后 CI 通过。
+- **GPT-06 续（Nuke、Dust2、Ancient、Anubis）**：ChatGPT 交付 230 个落点名字，其中 8 个标为低置信度，待放入 `config/spots/`。
 
 ## 为什么这样分
 
