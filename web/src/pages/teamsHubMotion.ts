@@ -134,6 +134,27 @@ export function usePlayerEntrance(id: string, reduced: boolean, host: RefObject<
       window.removeEventListener("keydown", skip, true);
     };
   }, [id, entrance, reduced]);
+  // Refresh the native-pixel cap after zoom or moving between different-DPR screens.
+  // Run before the transfer effect measures its destination.
+  useLayoutEffect(() => {
+    const root = host.current;
+    if (!root) return;
+    let resolution: MediaQueryList | undefined;
+    const update = () => {
+      resolution?.removeEventListener("change", update);
+      const dpr = window.devicePixelRatio || 1;
+      root.style.setProperty("--hub-dpr", String(dpr));
+      resolution = window.matchMedia(`(resolution: ${dpr}dppx)`);
+      resolution.addEventListener("change", update);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => {
+      resolution?.removeEventListener("change", update);
+      window.removeEventListener("resize", update);
+      root.style.removeProperty("--hub-dpr");
+    };
+  }, [host]);
   const transfer = useRef(origin);
   useLayoutEffect(() => {
     const from = transfer.current;

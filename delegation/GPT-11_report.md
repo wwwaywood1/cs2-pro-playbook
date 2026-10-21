@@ -59,3 +59,20 @@ Review production Falcons → Mirage → all five portraits at 1280×900, 1440×
 Also exercise rapid side changes, Back/Forward/reload, rapid Escape, live reduced motion during each animation, Nuke floor switching, substitute focus restoration, missing portraits/quotes, and low/empty sample layers. A portrait that has not finished loading uses the normal entrance rather than a transfer.
 
 No new dependencies, generated build/data output, or image changes. No edits to `.github`, `delegation/design-skills/`, or `data/raw`. This checkout has no `.git` directory, so no commit was created.
+
+
+## Round 2
+
+Applied review items **1–3 only**. Changed files:
+
+- `web/src/teams-hub.css`
+- `web/src/pages/teamsHubMotion.ts`
+- `delegation/GPT-11_report.md`
+
+1. **Readable vertical verse:** columns cannot flex-shrink; each glyph has an explicit 1em-wide, 1.12em-tall vertical advance, with a 1em column gap. Desktop type is 40–48px. Removed the final .78 scale; the existing settle timing now gently dims the glint instead. Brush reveals, upright vertical writing, accessible original copy, and right-to-left column order remain intact. The verse has its own reserved lane on the right.
+2. **Whole, crisp bust:** desktop portrait fits the remaining left lane at its original 1000:666 ratio and is bottom-aligned at the slide floor. Its maximum width budgets for the 1.06 entrance scale: `min(700 / 1.06, 1000 / devicePixelRatio / 1.06)` CSS pixels (about 472px settled / 500px during entrance at DPR 2). DPR is written before portrait-transfer measurement and refreshed on resize/resolution changes, with listener cleanup. No image or crop edits.
+3. **Outline separation:** the outline remains behind the portrait, with its own clipped bounds ending before the verse lane; the spacing also allows for opposing parallax and the portrait's entrance scale.
+
+Verification: recursively parsed CSS rules, declarations, media queries, and keyframes with `tinycss2` successfully. Arithmetic layout checks at 1280, 1440, and 1920px, with DPR 1/1.5/2/3, confirmed positive portrait widths, the native-pixel/700px caps including entrance scale, and separation of the portrait/name from the two-column verse under maximum parallax. These are static checks, not browser assertions.
+
+Per the original rules, no npm build, TypeScript compilation, or browser smoke run was performed; Claude should visually confirm Falcons → Mirage → NiKo at 1440×900, including settled/full/short/skipped entrances and a DPR/zoom change. The existing 375px overflow/mobile pass (item 4) remains deferred; its media-query overrides were not edited. No dependencies, URL/keyboard behavior, smoke selectors, data, or protected files changed.
