@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import GrenadeIcon from "../components/GrenadeIcon";
 import Radar from "../components/Radar";
 import { ErrorNotice, Loading } from "../components/Status";
 import { getLineups, getMeta, useData } from "../data";
@@ -227,7 +228,7 @@ export default function Lineups() {
                 aria-pressed={types.includes(type)}
                 onClick={() => toggleType(type)}
               >
-                {t(`grenade.${type}`)}
+                <GrenadeIcon type={type} />{t(`grenade.${type}`)}
               </button>
             ))}
           </div>
@@ -334,7 +335,7 @@ export default function Lineups() {
                   >
                     <div className="lineup-top">
                       <span className={`badge badge-${lineup.type}`}>
-                        {t(`grenade.${lineup.type}`)}
+                        <GrenadeIcon type={lineup.type} />{t(`grenade.${lineup.type}`)}
                       </span>
                       <span className={`chip chip-side-${lineup.side.toLowerCase()}`}>
                         {t(`side.${lineup.side}`)}

@@ -1,3 +1,4 @@
+import GrenadeIcon, { GrenadeGlyph } from "./GrenadeIcon";
 import { useEffect, useState } from "react";
 import { calloutLabel, t } from "../i18n";
 import type { GrenadeType, Lineup } from "../types";
@@ -20,7 +21,7 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
 
   return (
     <div className="radar-panel-inner">
-      <svg className="radar" viewBox="0 0 1024 1024" role="img" aria-label={map}>
+      <svg className="radar" viewBox="0 0 1024 1024" role="group" aria-label={map}>
         <rect className="radar-bg" x="0" y="0" width="1024" height="1024" />
         {imageOk ? (
           <image
@@ -67,6 +68,11 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
             <g
               key={lineup.id}
               className={className}
+              role="button"
+              tabIndex={0}
+              aria-pressed={selected}
+              aria-label={`${t(`grenade.${lineup.type}`)} · ${calloutLabel(map, lineup.throw_place)} → ${calloutLabel(map, lineup.land_place)}`}
+              onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(lineup.id); } }}
               onClick={() => onSelect(lineup.id)}
             >
               <title>{`${calloutLabel(map, lineup.throw_place)} → ${calloutLabel(
@@ -94,12 +100,9 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
                 cy={lineup.throw.radar_y}
                 r={selected ? 9 : 5.5}
               />
-              <circle
-                className="land-dot"
-                cx={lineup.land.radar_x}
-                cy={lineup.land.radar_y}
-                r={selected ? 7 : 4}
-              />
+              <svg x={lineup.land.radar_x - 24} y={lineup.land.radar_y - 24} width="48" height="48" viewBox="0 0 32 32" aria-hidden="true">
+                <GrenadeGlyph type={lineup.type} />
+              </svg>
             </g>
           );
         })}
@@ -107,8 +110,8 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
 
       <div className="radar-legend">
         {TYPES.map((type) => (
-          <span key={type} className={`legend legend-${type}`}>
-            {t(`grenade.${type}`)}
+          <span key={type} className="grenade-label">
+            <GrenadeIcon type={type} />{t(`grenade.${type}`)}
           </span>
         ))}
       </div>

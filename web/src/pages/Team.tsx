@@ -6,6 +6,7 @@ import { ErrorNotice, Loading } from "../components/Status";
 import { getTeam, useData } from "../data";
 import { fmtInt, fmtPct, fmtSeconds } from "../format";
 import { t, useLang } from "../i18n";
+import "../tactics.css";
 import type { BuyType, CTSide, Ranked, Side, TeamProfile, TSide } from "../types";
 
 const BUY_TYPES: BuyType[] = ["pistol", "eco", "force", "full"];
@@ -278,11 +279,17 @@ export default function Team() {
       {team.insights?.length ? (
         <section className="panel team-insights">
           <h3>{t("tactics.insights")}</h3>
-          <ul>
-            {team.insights.map((insight) => (
+          <ul className="team-insights-top">
+            {team.insights.slice(0, 3).map((insight) => (
               <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>
             ))}
           </ul>
+          {team.insights.length > 3 && <details>
+            <summary>{t("tactics.expand_insights", { n: fmtInt(team.insights.length - 3) })}</summary>
+            <ul className="team-insights-rest">{team.insights.slice(3).map((insight) => (
+              <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>
+            ))}</ul>
+          </details>}
         </section>
       ) : null}
 
