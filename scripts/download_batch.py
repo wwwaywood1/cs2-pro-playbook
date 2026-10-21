@@ -7,6 +7,7 @@ machine that can reach huggingface.co.
     python3 scripts/download_batch.py --dry-run                       # list, sizes per map
     python3 scripts/download_batch.py --maps nuke dust2 ancient anubis cache --max-gb 40
     python3 scripts/download_batch.py --events iem_cologne_major_2026 cac_2026 --max-gb 60
+    python3 scripts/download_batch.py --teams falcons --max-gb 500       # every game of one team
 
 Selection: games of the chosen events and maps, all parts of multipart games (the parser
 stitches them, see DESIGN.md), duplicate "(1)" uploads skipped. Games already on disk are
@@ -35,6 +36,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--events", nargs="*", default=[], help="event folders (default: all)")
     ap.add_argument("--maps", nargs="*", default=POOL)
+    ap.add_argument("--teams", nargs="*", default=[], help="only games involving these teams (slug substring, e.g. falcons)")
     ap.add_argument("--max-gb", type=float, default=40.0, help="budget for new downloads")
     ap.add_argument("--out", type=Path, default=OUT)
     ap.add_argument("--dry-run", action="store_true")
@@ -51,6 +53,8 @@ def main() -> None:
         path = getattr(e, "path", "")
         m = PATH_RE.match(path)
         if not m or m["dup"] or (a.events and m["event"] not in a.events) or m["map"] not in a.maps:
+            continue
+        if a.teams and not any(t.lower() in (m["team1"] + "|" + m["team2"]).lower() for t in a.teams):
             continue
         key = (int(m["match_id"]), int(m["map_no"] or 1), m["map"])
         g = games.setdefault(key, {"event": m["event"], "map": m["map"], "parts": [], "bytes": 0,
