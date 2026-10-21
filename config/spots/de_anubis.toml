@@ -1,0 +1,564 @@
+# config/spots/de_anubis.toml
+# Landing locations; x/y are original game coordinates, not radar pixels.
+
+[[spot]]
+id = "de_anubis-ct-molotov-s020"
+side = "CT"
+type = "molotov"
+x = -121.8
+y = 175.4
+radius = 150
+en = "Bridge molotov"
+zh = "中桥火"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-molotov-s021"
+side = "CT"
+type = "molotov"
+x = 1250.0
+y = 843.1
+radius = 150
+en = "Water molotov (A-main entrance)"
+zh = "水下火（A大入口）"
+confidence = "medium"
+
+[[spot]]
+id = "de_anubis-ct-molotov-s022"
+side = "CT"
+type = "molotov"
+x = -369.1
+y = 146.1
+radius = 150
+en = "Water molotov (Dark entrance)"
+zh = "水下火（黑屋入口）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-molotov-s023"
+side = "CT"
+type = "molotov"
+x = -1594.4
+y = 272.3
+radius = 150
+en = "B main molotov"
+zh = "B大火"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-molotov-s024"
+side = "CT"
+type = "molotov"
+x = -817.5
+y = 358.9
+radius = 150
+en = "Dark molotov (B exit)"
+zh = "黑屋火（B点出口）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-molotov-s025"
+side = "CT"
+type = "molotov"
+x = 1463.1
+y = 849.2
+radius = 150
+en = "A main molotov (water entrance)"
+zh = "A大火（水下入口）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-molotov-s026"
+side = "CT"
+type = "molotov"
+x = 1345.2
+y = 538.1
+radius = 150
+en = "A main approach molotov (upper walkway)"
+zh = "A大入口火（上层通道）"
+confidence = "medium"
+
+[[spot]]
+id = "de_anubis-ct-molotov-s027"
+side = "CT"
+type = "molotov"
+x = -1797.4
+y = 384.8
+radius = 150
+en = "B main molotov (outer ledge)"
+zh = "B大火（外侧高台）"
+confidence = "medium"
+
+[[spot]]
+id = "de_anubis-ct-molotov-s028"
+side = "CT"
+type = "molotov"
+x = 1025.1
+y = 882.4
+radius = 150
+en = "Water molotov (A-side corner)"
+zh = "水下火（A侧角落）"
+confidence = "medium"
+
+[[spot]]
+id = "de_anubis-ct-molotov-s029"
+side = "CT"
+type = "molotov"
+x = 1579.4
+y = 1143.5
+radius = 150
+en = "A main molotov"
+zh = "A大火"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-molotov-s030"
+side = "CT"
+type = "molotov"
+x = 654.3
+y = 1297.2
+radius = 150
+en = "A connector molotov"
+zh = "A连接火"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-molotov-s031"
+side = "CT"
+type = "molotov"
+x = 749.3
+y = -81.1
+radius = 150
+en = "Water stairs molotov (T side)"
+zh = "下水楼梯火（匪侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-smoke-s000"
+side = "CT"
+type = "smoke"
+x = -1589.9
+y = 338.1
+radius = 200
+en = "B main smoke"
+zh = "B大烟"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-smoke-s001"
+side = "CT"
+type = "smoke"
+x = -388.4
+y = 96.0
+radius = 200
+en = "Water smoke (Dark entrance)"
+zh = "水下烟（黑屋入口）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-smoke-s002"
+side = "CT"
+type = "smoke"
+x = -127.5
+y = 224.3
+radius = 200
+en = "Bridge smoke (mid side)"
+zh = "中桥烟（靠中路）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-smoke-s003"
+side = "CT"
+type = "smoke"
+x = 1360.6
+y = 853.7
+radius = 200
+en = "A main smoke (water entrance)"
+zh = "A大烟（水下入口）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-smoke-s004"
+side = "CT"
+type = "smoke"
+x = 794.3
+y = -56.4
+radius = 200
+en = "Water stairs smoke (T side)"
+zh = "下水楼梯烟（匪侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-smoke-s005"
+side = "CT"
+type = "smoke"
+x = 1707.4
+y = 1313.7
+radius = 200
+en = "A main smoke (site entrance)"
+zh = "A大烟（包点入口）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-smoke-s006"
+side = "CT"
+type = "smoke"
+x = -758.0
+y = 339.5
+radius = 200
+en = "Dark smoke (B exit)"
+zh = "黑屋烟（B点出口）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-smoke-s007"
+side = "CT"
+type = "smoke"
+x = 594.6
+y = 1296.8
+radius = 200
+en = "A connector smoke"
+zh = "A连接烟"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-smoke-s008"
+side = "CT"
+type = "smoke"
+x = -82.2
+y = 21.3
+radius = 200
+en = "Bridge smoke (T side)"
+zh = "中桥烟（匪侧）"
+confidence = "high"
+
+[[spot]]
+# Low confidence: Centroid is in the open site entrance area, rather than at an identifiable named choke.
+id = "de_anubis-ct-smoke-s009"
+side = "CT"
+type = "smoke"
+x = 1130.4
+y = 1501.2
+radius = 200
+en = "A site smoke (between main and connector)"
+zh = "A包点烟（A大与连接之间）"
+confidence = "low"
+
+[[spot]]
+id = "de_anubis-ct-smoke-s010"
+side = "CT"
+type = "smoke"
+x = 212.1
+y = 568.3
+radius = 200
+en = "Mid doors smoke"
+zh = "中门烟"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-ct-smoke-s011"
+side = "CT"
+type = "smoke"
+x = 1155.4
+y = 862.0
+radius = 200
+en = "Water smoke (A-main entrance)"
+zh = "水下烟（A大入口）"
+confidence = "medium"
+
+[[spot]]
+id = "de_anubis-t-molotov-s152"
+side = "T"
+type = "molotov"
+x = 247.7
+y = 511.1
+radius = 150
+en = "Mid doors molotov"
+zh = "中门火"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-molotov-s153"
+side = "T"
+type = "molotov"
+x = -740.8
+y = 299.2
+radius = 150
+en = "Dark molotov"
+zh = "黑屋火"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-molotov-s154"
+side = "T"
+type = "molotov"
+x = -1095.0
+y = 368.4
+radius = 150
+en = "B default molotov"
+zh = "B默认包点火"
+confidence = "medium"
+
+[[spot]]
+id = "de_anubis-t-molotov-s155"
+side = "T"
+type = "molotov"
+x = -812.2
+y = 1142.5
+radius = 150
+en = "Palace molotov"
+zh = "B连接火"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-molotov-s156"
+side = "T"
+type = "molotov"
+x = 1318.4
+y = 860.9
+radius = 150
+en = "A main molotov (water entrance)"
+zh = "A大火（水下入口）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-molotov-s157"
+side = "T"
+type = "molotov"
+x = 1575.0
+y = 1094.0
+radius = 150
+en = "A main molotov"
+zh = "A大火"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-molotov-s158"
+side = "T"
+type = "molotov"
+x = -635.8
+y = 604.1
+radius = 150
+en = "Back site molotov (B)"
+zh = "B后点火"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-molotov-s159"
+side = "T"
+type = "molotov"
+x = -6.3
+y = 784.0
+radius = 150
+en = "Mid molotov (B-connector entrance)"
+zh = "中路火（B连接入口）"
+confidence = "medium"
+
+[[spot]]
+id = "de_anubis-t-molotov-s160"
+side = "T"
+type = "molotov"
+x = 840.0
+y = 1602.8
+radius = 150
+en = "A connector molotov (site exit)"
+zh = "A连接火（包点出口）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-molotov-s161"
+side = "T"
+type = "molotov"
+x = 1042.1
+y = 1973.4
+radius = 150
+en = "A site molotov (Heaven side)"
+zh = "A包点火（天堂侧）"
+confidence = "medium"
+
+[[spot]]
+id = "de_anubis-t-molotov-s162"
+side = "T"
+type = "molotov"
+x = 1690.1
+y = 1899.6
+radius = 150
+en = "Fountain molotov"
+zh = "喷泉火"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-molotov-s163"
+side = "T"
+type = "molotov"
+x = 580.9
+y = 1285.0
+radius = 150
+en = "A connector molotov"
+zh = "A连接火"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-molotov-s164"
+side = "T"
+type = "molotov"
+x = -1559.2
+y = 322.2
+radius = 150
+en = "B main molotov"
+zh = "B大火"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-molotov-s169"
+side = "T"
+type = "molotov"
+x = 698.3
+y = 1957.6
+radius = 150
+en = "Heaven molotov (CT approach)"
+zh = "天堂火（警家入口）"
+confidence = "medium"
+
+[[spot]]
+id = "de_anubis-t-molotov-s174"
+side = "T"
+type = "molotov"
+x = 971.3
+y = 2234.8
+radius = 150
+en = "Heaven molotov"
+zh = "天堂火"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-smoke-s126"
+side = "T"
+type = "smoke"
+x = -488.9
+y = 114.6
+radius = 200
+en = "Dark smoke (water side)"
+zh = "黑屋烟（水下侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-smoke-s127"
+side = "T"
+type = "smoke"
+x = -900.5
+y = 1138.6
+radius = 200
+en = "Palace smoke"
+zh = "B连接烟"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-smoke-s128"
+side = "T"
+type = "smoke"
+x = 549.7
+y = 1320.3
+radius = 200
+en = "A connector smoke"
+zh = "A连接烟"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-smoke-s129"
+side = "T"
+type = "smoke"
+x = -1215.9
+y = 855.8
+radius = 200
+en = "CT smoke (B)"
+zh = "警家烟（B点）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-smoke-s130"
+side = "T"
+type = "smoke"
+x = -49.4
+y = 816.9
+radius = 200
+en = "B connector smoke (mid entrance)"
+zh = "B连接烟（中路口）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-smoke-s131"
+side = "T"
+type = "smoke"
+x = 1004.7
+y = 2253.4
+radius = 200
+en = "Heaven smoke"
+zh = "天堂烟"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-smoke-s132"
+side = "T"
+type = "smoke"
+x = -708.5
+y = 213.5
+radius = 200
+en = "Dark smoke (deep)"
+zh = "黑屋烟（深）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-smoke-s133"
+side = "T"
+type = "smoke"
+x = 1657.2
+y = 1397.9
+radius = 200
+en = "A main smoke (site entrance)"
+zh = "A大烟（包点入口）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-smoke-s134"
+side = "T"
+type = "smoke"
+x = -1442.0
+y = 477.0
+radius = 200
+en = "B main smoke (site side)"
+zh = "B大烟（包点侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-smoke-s135"
+side = "T"
+type = "smoke"
+x = 47.8
+y = 1571.7
+radius = 200
+en = "Top mid smoke (Palace junction)"
+zh = "中路上段烟（B连接岔口）"
+confidence = "medium"
+
+[[spot]]
+id = "de_anubis-t-smoke-s136"
+side = "T"
+type = "smoke"
+x = -741.2
+y = 380.5
+radius = 200
+en = "Dark smoke (B exit)"
+zh = "黑屋烟（B点出口）"
+confidence = "high"
+
+[[spot]]
+id = "de_anubis-t-smoke-s137"
+side = "T"
+type = "smoke"
+x = -1202.1
+y = 1081.7
+radius = 200
+en = "CT smoke (B, deep)"
+zh = "警家烟（B点，深）"
+confidence = "high"

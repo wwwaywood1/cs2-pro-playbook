@@ -1,0 +1,642 @@
+# config/spots/de_dust2.toml
+# Landing locations; x/y are original game coordinates, not radar pixels.
+
+[[spot]]
+id = "de_dust2-ct-molotov-s039"
+side = "CT"
+type = "molotov"
+x = -1987.4
+y = 1603.7
+radius = 150
+en = "B tunnels molotov"
+zh = "B洞火"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-molotov-s040"
+side = "CT"
+type = "molotov"
+x = 590.2
+y = 611.1
+radius = 150
+en = "Long doors molotov (inside)"
+zh = "A门火（门内）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-molotov-s041"
+side = "CT"
+type = "molotov"
+x = 396.3
+y = 1911.7
+radius = 150
+en = "Short molotov (top stairs)"
+zh = "A小火（楼梯上）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-molotov-s042"
+side = "CT"
+type = "molotov"
+x = 599.9
+y = 1066.3
+radius = 150
+en = "Long corner molotov"
+zh = "A大拐角火"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-molotov-s043"
+side = "CT"
+type = "molotov"
+x = 163.8
+y = 1403.8
+radius = 150
+en = "Catwalk molotov"
+zh = "A小火（中段）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-molotov-s044"
+side = "CT"
+type = "molotov"
+x = -436.4
+y = 1685.4
+radius = 150
+en = "Mid doors molotov (T side)"
+zh = "中门火（匪侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-molotov-s045"
+side = "CT"
+type = "molotov"
+x = -95.0
+y = 388.7
+radius = 150
+en = "Top mid molotov"
+zh = "中路匪口火"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-molotov-s046"
+side = "CT"
+type = "molotov"
+x = 1016.9
+y = 2567.9
+radius = 150
+en = "A default molotov"
+zh = "A默认包点火"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-molotov-s047"
+side = "CT"
+type = "molotov"
+x = 639.1
+y = 830.8
+radius = 150
+en = "Long doors molotov (long exit)"
+zh = "A门火（A大出口）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-molotov-s048"
+side = "CT"
+type = "molotov"
+x = -976.6
+y = 1385.5
+radius = 150
+en = "Lower tunnels molotov (deep)"
+zh = "下层B洞火（深）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-molotov-s049"
+side = "CT"
+type = "molotov"
+x = 728.1
+y = 432.4
+radius = 150
+en = "Long doors molotov (T entrance)"
+zh = "A门火（匪侧入口）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-molotov-s050"
+side = "CT"
+type = "molotov"
+x = -195.3
+y = 1305.6
+radius = 150
+en = "Catwalk molotov (mid entrance)"
+zh = "A小火（中路入口）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-smoke-s000"
+side = "CT"
+type = "smoke"
+x = 595.1
+y = 651.1
+radius = 200
+en = "Long doors smoke"
+zh = "A门烟"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-smoke-s001"
+side = "CT"
+type = "smoke"
+x = -1996.8
+y = 1560.2
+radius = 200
+en = "B tunnels smoke"
+zh = "B洞烟"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-smoke-s002"
+side = "CT"
+type = "smoke"
+x = 406.1
+y = 1941.3
+radius = 200
+en = "Short smoke (top stairs)"
+zh = "A小烟（楼梯上）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-smoke-s003"
+side = "CT"
+type = "smoke"
+x = -444.9
+y = 1745.5
+radius = 200
+en = "Mid doors smoke (T side)"
+zh = "中门烟（匪侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-smoke-s004"
+side = "CT"
+type = "smoke"
+x = 139.7
+y = 1439.0
+radius = 200
+en = "Catwalk smoke"
+zh = "A小烟（中段）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-smoke-s005"
+side = "CT"
+type = "smoke"
+x = 1418.1
+y = 1403.9
+radius = 200
+en = "Long smoke (pit side)"
+zh = "A大烟（大坑侧）"
+confidence = "medium"
+
+[[spot]]
+id = "de_dust2-ct-smoke-s006"
+side = "CT"
+type = "smoke"
+x = -372.2
+y = 1539.6
+radius = 200
+en = "Lower mid smoke"
+zh = "中路下段烟"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-smoke-s007"
+side = "CT"
+type = "smoke"
+x = -1408.1
+y = 2205.6
+radius = 200
+en = "B doors smoke (site side)"
+zh = "B门烟（包点侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-smoke-s008"
+side = "CT"
+type = "smoke"
+x = -1973.4
+y = 1327.7
+radius = 200
+en = "B tunnels smoke (deep)"
+zh = "B洞烟（深）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-smoke-s009"
+side = "CT"
+type = "smoke"
+x = 820.1
+y = 2177.6
+radius = 200
+en = "CT smoke (below A)"
+zh = "警家烟（A点下方）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-smoke-s010"
+side = "CT"
+type = "smoke"
+x = -450.4
+y = 1947.8
+radius = 200
+en = "Mid doors smoke"
+zh = "中门烟"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-ct-smoke-s011"
+side = "CT"
+type = "smoke"
+x = -2003.8
+y = 1738.8
+radius = 200
+en = "B tunnels smoke (exit)"
+zh = "B洞烟（出口）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-molotov-s229"
+side = "T"
+type = "molotov"
+x = -131.2
+y = 1471.6
+radius = 150
+en = "Catwalk molotov (mid entrance)"
+zh = "A小火（中路入口）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-molotov-s230"
+side = "T"
+type = "molotov"
+x = 366.6
+y = 1621.7
+radius = 150
+en = "Short stairs molotov"
+zh = "A小楼梯火"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-molotov-s231"
+side = "T"
+type = "molotov"
+x = 447.5
+y = 1970.0
+radius = 150
+en = "Short molotov (top stairs)"
+zh = "A小火（楼梯上）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-molotov-s232"
+side = "T"
+type = "molotov"
+x = -1171.9
+y = 2625.6
+radius = 150
+en = "B window molotov (outside)"
+zh = "B窗口火（外侧）"
+confidence = "medium"
+
+[[spot]]
+id = "de_dust2-t-molotov-s233"
+side = "T"
+type = "molotov"
+x = -640.8
+y = 1393.7
+radius = 150
+en = "Lower tunnels molotov (mid exit)"
+zh = "下层B洞火（中路出口）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-molotov-s234"
+side = "T"
+type = "molotov"
+x = 729.5
+y = 2137.4
+radius = 150
+en = "CT molotov (below A)"
+zh = "警家火（A点下方）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-molotov-s235"
+side = "T"
+type = "molotov"
+x = 1054.0
+y = 2579.7
+radius = 150
+en = "A default molotov"
+zh = "A默认包点火"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-molotov-s236"
+side = "T"
+type = "molotov"
+x = 1755.4
+y = 1960.9
+radius = 150
+en = "Car molotov (A)"
+zh = "A大车位火"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-molotov-s237"
+side = "T"
+type = "molotov"
+x = -1636.3
+y = 2747.1
+radius = 150
+en = "B default molotov"
+zh = "B默认包点火"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-molotov-s238"
+side = "T"
+type = "molotov"
+x = 1453.8
+y = 2517.8
+radius = 150
+en = "A ramp molotov"
+zh = "A坡火"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-molotov-s239"
+side = "T"
+type = "molotov"
+x = -349.8
+y = 1755.4
+radius = 150
+en = "Mid doors molotov (T side)"
+zh = "中门火（匪侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-molotov-s240"
+side = "T"
+type = "molotov"
+x = 33.3
+y = 2070.1
+radius = 150
+en = "CT molotov (mid side)"
+zh = "警家火（中路侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-molotov-s241"
+side = "T"
+type = "molotov"
+x = 1150.8
+y = 2938.5
+radius = 150
+en = "Goose molotov"
+zh = "鹅位火"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-molotov-s242"
+side = "T"
+type = "molotov"
+x = -2037.4
+y = 2986.5
+radius = 150
+en = "Back plat molotov (B)"
+zh = "B后平台火"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-molotov-s243"
+side = "T"
+type = "molotov"
+x = 470.5
+y = 2717.9
+radius = 150
+en = "A site molotov (short-side boxes)"
+zh = "A包点火（A小侧箱子）"
+confidence = "medium"
+
+[[spot]]
+# Low confidence: Open site centroid does not identify a specific box or named position.
+id = "de_dust2-t-molotov-s247"
+side = "T"
+type = "molotov"
+x = -1875.3
+y = 2588.2
+radius = 150
+en = "B site molotov (between plat and default)"
+zh = "B包点火（平台与默认包点之间）"
+confidence = "low"
+
+[[spot]]
+id = "de_dust2-t-molotov-s251"
+side = "T"
+type = "molotov"
+x = -2062.4
+y = 2766.3
+radius = 150
+en = "Back plat molotov (B, front edge)"
+zh = "B后平台火（前沿）"
+confidence = "medium"
+
+[[spot]]
+id = "de_dust2-t-molotov-s256"
+side = "T"
+type = "molotov"
+x = 597.9
+y = 2346.7
+radius = 150
+en = "A short drop molotov"
+zh = "A小跳警家处火"
+confidence = "medium"
+
+[[spot]]
+id = "de_dust2-t-molotov-s259"
+side = "T"
+type = "molotov"
+x = 509.6
+y = 2184.2
+radius = 150
+en = "CT molotov (A-side exit)"
+zh = "警家火（A侧出口）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-smoke-s194"
+side = "T"
+type = "smoke"
+x = -395.1
+y = 1599.7
+radius = 200
+en = "Xbox smoke (low)"
+zh = "Xbox烟（低落点）"
+confidence = "medium"
+
+[[spot]]
+id = "de_dust2-t-smoke-s195"
+side = "T"
+type = "smoke"
+x = -158.6
+y = 2202.0
+radius = 200
+en = "CT smoke (mid-to-B)"
+zh = "警家烟（夹B）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-smoke-s196"
+side = "T"
+type = "smoke"
+x = -1281.5
+y = 2248.9
+radius = 200
+en = "B doors smoke"
+zh = "B门烟"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-smoke-s197"
+side = "T"
+type = "smoke"
+x = 1135.9
+y = 2155.2
+radius = 200
+en = "A cross smoke (long side)"
+zh = "A过点烟（A大侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-smoke-s198"
+side = "T"
+type = "smoke"
+x = -464.9
+y = 1601.3
+radius = 200
+en = "Xbox smoke"
+zh = "Xbox烟"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-smoke-s199"
+side = "T"
+type = "smoke"
+x = -1957.9
+y = 1870.5
+radius = 200
+en = "B tunnels smoke (site exit)"
+zh = "B洞烟（包点出口）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-smoke-s200"
+side = "T"
+type = "smoke"
+x = 1313.0
+y = 1190.8
+radius = 200
+en = "Long corner smoke"
+zh = "A大拐角烟"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-smoke-s201"
+side = "T"
+type = "smoke"
+x = 581.5
+y = 2349.9
+radius = 200
+en = "A short drop smoke"
+zh = "A小跳警家烟"
+confidence = "medium"
+
+[[spot]]
+id = "de_dust2-t-smoke-s202"
+side = "T"
+type = "smoke"
+x = 457.7
+y = 2004.3
+radius = 200
+en = "Short smoke (top stairs)"
+zh = "A小烟（楼梯上）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-smoke-s203"
+side = "T"
+type = "smoke"
+x = -562.7
+y = 2146.0
+radius = 200
+en = "Mid doors smoke (CT side)"
+zh = "中门烟（警侧）"
+confidence = "high"
+
+[[spot]]
+# Low confidence: The low centroid is south of Xbox; it does not clearly establish a standard Xbox smoke.
+id = "de_dust2-t-smoke-s204"
+side = "T"
+type = "smoke"
+x = -286.3
+y = 1407.1
+radius = 200
+en = "Mid smoke (below catwalk)"
+zh = "中路烟（A小下方）"
+confidence = "low"
+
+[[spot]]
+id = "de_dust2-t-smoke-s205"
+side = "T"
+type = "smoke"
+x = 661.2
+y = 593.0
+radius = 200
+en = "Long doors smoke"
+zh = "A门烟"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-smoke-s207"
+side = "T"
+type = "smoke"
+x = 159.7
+y = 1431.1
+radius = 200
+en = "Catwalk smoke"
+zh = "A小烟（中段）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-smoke-s208"
+side = "T"
+type = "smoke"
+x = 1173.8
+y = 2373.8
+radius = 200
+en = "A ramp smoke (site edge)"
+zh = "A坡烟（包点边缘）"
+confidence = "high"
+
+[[spot]]
+id = "de_dust2-t-smoke-s228"
+side = "T"
+type = "smoke"
+x = 1557.9
+y = 1915.0
+radius = 200
+en = "Car smoke (A)"
+zh = "A大车位烟"
+confidence = "high"

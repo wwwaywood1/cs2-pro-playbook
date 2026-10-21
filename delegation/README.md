@@ -59,7 +59,7 @@ Claude 通过 PAL MCP 直接派活、收结果、落盘、测试、合并，不�
 - **GPT-05**：表格存为 `validation/pro_roles.csv`。据此把狙击手标签改为"队内狙最多且 ≥15%，或任何人 ≥40%"：50 名职业狙中找出 49 名，没有误标（原规则只找出 29 名）。自由人标签精度高但漏掉大半，原因写在 DESIGN.md。
 - **GPT-06**：108 个落点名字写入 `config/spots/*.toml`（坐标取自原表，不手抄）。爆弹套路现在显示为"楼梯烟 + 丛林烟 + …"、"B区警家烟 + 棺材烟 + B包三箱火"。
 - **GPT-02**：PR #3 合并（121 项测试）。CI 失败的原因不在 PR #3：PR #2 新增的 `tests/test_tune_roles.py` 在干净环境里无法导入 `scripts`，Claude 在 `pyproject.toml` 加了 `pythonpath = ["."]` 后 CI 通过。
-- **GPT-06 续（Nuke、Dust2、Ancient、Anubis）**：ChatGPT 交付 230 个落点名字，其中 8 个标为低置信度，待放入 `config/spots/`。
+- **GPT-06 续（Nuke、Dust2、Ancient、Anubis）**：ChatGPT 交付 230 个落点名字，其中 8 个标为低置信度。已写入 `config/spots/`，ID 无重复、中英文齐全，测试通过。
 
 ## 为什么这样分
 

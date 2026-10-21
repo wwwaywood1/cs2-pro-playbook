@@ -1,0 +1,752 @@
+# config/spots/de_nuke.toml
+# Landing locations; x/y are original game coordinates, not radar pixels.
+# Source z is retained in comments for floor auditing; matching schema remains x/y-only.
+# Floor labels describe the landing elevation, not the throw position.
+
+[[spot]]
+# Source z = -401.1
+id = "de_nuke-ct-molotov-s031"
+side = "CT"
+type = "molotov"
+x = 248.7
+y = -1175.7
+radius = 150
+en = "Squeaky molotov (upper A)"
+zh = "黄门火（上层A区）"
+confidence = "high"
+
+[[spot]]
+# Source z = -322.2
+id = "de_nuke-ct-molotov-s032"
+side = "CT"
+type = "molotov"
+x = 159.7
+y = -2112.0
+radius = 150
+en = "Outside molotov (below silo)"
+zh = "外场火（筒仓下方）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -412.1
+id = "de_nuke-ct-molotov-s033"
+side = "CT"
+type = "molotov"
+x = 105.6
+y = -130.8
+radius = 150
+en = "Radio molotov (upper floor)"
+zh = "收音机房火（上层）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -388.1
+id = "de_nuke-ct-molotov-s034"
+side = "CT"
+type = "molotov"
+x = 331.6
+y = -942.6
+radius = 150
+en = "Hut molotov (upper A, entrance)"
+zh = "小木屋火（上层A区，入口）"
+confidence = "high"
+
+[[spot]]
+# Source z = -409.1
+id = "de_nuke-ct-molotov-s035"
+side = "CT"
+type = "molotov"
+x = 779.1
+y = -2102.8
+radius = 150
+en = "Outside molotov (red-container crossing)"
+zh = "外场火（红箱过点）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -399.6
+id = "de_nuke-ct-molotov-s036"
+side = "CT"
+type = "molotov"
+x = 237.4
+y = -1302.6
+radius = 150
+en = "Squeaky molotov (upper A, doorway)"
+zh = "黄门火（上层A区，门口）"
+confidence = "high"
+
+[[spot]]
+# Source z = -412.8
+id = "de_nuke-ct-molotov-s037"
+side = "CT"
+type = "molotov"
+x = 1221.1
+y = -2397.0
+radius = 150
+en = "Outside molotov (Secret approach)"
+zh = "外场火（铁板入口前）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -412.0
+id = "de_nuke-ct-molotov-s038"
+side = "CT"
+type = "molotov"
+x = -86.3
+y = -1296.1
+radius = 150
+en = "Lobby molotov (upper floor, Squeaky approach)"
+zh = "匪厅火（上层，黄门入口前）"
+confidence = "high"
+
+[[spot]]
+# Source z = -412.5
+id = "de_nuke-ct-molotov-s039"
+side = "CT"
+type = "molotov"
+x = -12.3
+y = -1251.6
+radius = 150
+en = "Lobby molotov (upper floor, near Squeaky)"
+zh = "匪厅火（上层，靠黄门）"
+confidence = "high"
+
+[[spot]]
+# Source z = -384.8
+id = "de_nuke-ct-molotov-s040"
+side = "CT"
+type = "molotov"
+x = 402.7
+y = -799.6
+radius = 150
+en = "Hut molotov (upper A, site exit)"
+zh = "小木屋火（上层A区，包点出口）"
+confidence = "high"
+
+[[spot]]
+# Source z = -412.1
+id = "de_nuke-ct-molotov-s041"
+side = "CT"
+type = "molotov"
+x = 785.8
+y = -2340.0
+radius = 150
+en = "Outside molotov (south of red container)"
+zh = "外场火（红箱南侧）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -226.5
+# Low confidence: Elevated z near Mini; radar labels this Silo but the centroid is east of the visible silo. Exact roof or ledge is uncertain.
+id = "de_nuke-ct-molotov-s042"
+side = "CT"
+type = "molotov"
+x = 796.8
+y = -1739.4
+radius = 150
+en = "Molotov above Mini (roof level)"
+zh = "正门上方火（屋顶高度）"
+confidence = "low"
+
+[[spot]]
+# Source z = -413.9
+id = "de_nuke-ct-smoke-s000"
+side = "CT"
+type = "smoke"
+x = 186.4
+y = -1273.4
+radius = 200
+en = "Squeaky smoke (upper A)"
+zh = "黄门烟（上层A区）"
+confidence = "high"
+
+[[spot]]
+# Source z = -413.8
+id = "de_nuke-ct-smoke-s001"
+side = "CT"
+type = "smoke"
+x = 115.1
+y = -217.2
+radius = 200
+en = "Radio smoke (upper floor)"
+zh = "收音机房烟（上层）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -413.9
+id = "de_nuke-ct-smoke-s002"
+side = "CT"
+type = "smoke"
+x = 575.9
+y = -1967.9
+radius = 200
+en = "Outside smoke (red-container crossing)"
+zh = "外场烟（红箱过点）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -413.9
+id = "de_nuke-ct-smoke-s003"
+side = "CT"
+type = "smoke"
+x = 130.4
+y = 14.7
+radius = 200
+en = "Radio smoke (upper floor, ramp side)"
+zh = "收音机房烟（上层，靠斜坡）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -413.1
+id = "de_nuke-ct-smoke-s004"
+side = "CT"
+type = "smoke"
+x = 381.5
+y = -1284.6
+radius = 200
+en = "Squeaky smoke (upper A, site side)"
+zh = "黄门烟（上层A区，包点侧）"
+confidence = "high"
+
+[[spot]]
+# Source z = -635.8
+id = "de_nuke-ct-smoke-s005"
+side = "CT"
+type = "smoke"
+x = 1127.6
+y = -1859.2
+radius = 200
+en = "Secret tunnels smoke (lower approach)"
+zh = "铁板通道烟（下层入口）"
+confidence = "high"
+
+[[spot]]
+# Source z = -359.1
+id = "de_nuke-ct-smoke-s006"
+side = "CT"
+type = "smoke"
+x = 370.6
+y = -1046.8
+radius = 200
+en = "Hut smoke (upper A)"
+zh = "小木屋烟（上层A区）"
+confidence = "high"
+
+[[spot]]
+# Source z = -413.9
+id = "de_nuke-ct-smoke-s007"
+side = "CT"
+type = "smoke"
+x = 660.2
+y = -1619.0
+radius = 200
+en = "Mini smoke (upper A)"
+zh = "正门烟（上层A区）"
+confidence = "high"
+
+[[spot]]
+# Source z = -414.0
+id = "de_nuke-ct-smoke-s008"
+side = "CT"
+type = "smoke"
+x = -354.0
+y = -1022.6
+radius = 200
+en = "Lobby smoke (upper floor, T entrance)"
+zh = "匪厅烟（上层，匪侧入口）"
+confidence = "high"
+
+[[spot]]
+# Source z = -402.9
+id = "de_nuke-ct-smoke-s009"
+side = "CT"
+type = "smoke"
+x = 233.2
+y = -1063.9
+radius = 200
+en = "Hut smoke (upper A, lobby side)"
+zh = "小木屋烟（上层A区，匪厅侧）"
+confidence = "high"
+
+[[spot]]
+# Source z = -414.0
+id = "de_nuke-ct-smoke-s010"
+side = "CT"
+type = "smoke"
+x = 149.8
+y = -389.2
+radius = 200
+en = "Trophy smoke (upper floor)"
+zh = "奖杯房烟（上层）"
+confidence = "high"
+
+[[spot]]
+# Source z = -410.1
+id = "de_nuke-ct-smoke-s011"
+side = "CT"
+type = "smoke"
+x = -54.1
+y = -1316.4
+radius = 200
+en = "Squeaky smoke (upper A, lobby side)"
+zh = "黄门烟（上层A区，匪厅侧）"
+confidence = "high"
+
+[[spot]]
+# Source z = -167.9
+id = "de_nuke-t-molotov-s189"
+side = "T"
+type = "molotov"
+x = 427.1
+y = -1100.8
+radius = 150
+en = "Hut roof molotov (upper A)"
+zh = "小木屋顶火（上层A区）"
+confidence = "high"
+
+[[spot]]
+# Source z = -412.5
+id = "de_nuke-t-molotov-s190"
+side = "T"
+type = "molotov"
+x = 662.5
+y = -1513.0
+radius = 150
+en = "Mini molotov (upper A)"
+zh = "正门火（上层A区）"
+confidence = "high"
+
+[[spot]]
+# Source z = -527.6
+id = "de_nuke-t-molotov-s191"
+side = "T"
+type = "molotov"
+x = 1502.2
+y = -2423.6
+radius = 150
+en = "Secret stairs molotov (descending to B)"
+zh = "铁板楼梯火（下B通道）"
+confidence = "high"
+
+[[spot]]
+# Source z = -412.4
+id = "de_nuke-t-molotov-s192"
+side = "T"
+type = "molotov"
+x = 905.3
+y = -1360.1
+radius = 150
+en = "A site molotov (Mini-side corner, upper floor)"
+zh = "A包点火（上层，正门侧角落）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -393.2
+id = "de_nuke-t-molotov-s193"
+side = "T"
+type = "molotov"
+x = 751.3
+y = -567.2
+radius = 150
+en = "Back A molotov (upper floor)"
+zh = "A后点火（上层）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -118.1
+id = "de_nuke-t-molotov-s194"
+side = "T"
+type = "molotov"
+x = 1083.7
+y = -389.6
+radius = 150
+en = "Heaven molotov (upper A balcony)"
+zh = "三楼火（A区高台）"
+confidence = "high"
+
+[[spot]]
+# Source z = -412.5
+id = "de_nuke-t-molotov-s195"
+side = "T"
+type = "molotov"
+x = 1173.5
+y = -7.3
+radius = 150
+en = "Ramp molotov (upper floor, CT entrance)"
+zh = "斜坡火（上层，警侧入口）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -585.8
+id = "de_nuke-t-molotov-s196"
+side = "T"
+type = "molotov"
+x = 524.0
+y = -1454.9
+radius = 150
+en = "Vents molotov (shaft between A and B)"
+zh = "管道火（A至B竖井）"
+confidence = "high"
+
+[[spot]]
+# Source z = -389.3
+id = "de_nuke-t-molotov-s197"
+side = "T"
+type = "molotov"
+x = 1462.4
+y = -1612.0
+radius = 150
+en = "Garage molotov (north entrance)"
+zh = "车库火（北侧入口）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -761.5
+id = "de_nuke-t-molotov-s198"
+side = "T"
+type = "molotov"
+x = 1194.0
+y = -1013.4
+radius = 150
+en = "Decon molotov (lower B)"
+zh = "消毒间火（下层B区）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -389.8
+id = "de_nuke-t-molotov-s199"
+side = "T"
+type = "molotov"
+x = 394.3
+y = -919.0
+radius = 150
+en = "Hut molotov (upper A)"
+zh = "小木屋火（上层A区）"
+confidence = "high"
+
+[[spot]]
+# Source z = -636.5
+id = "de_nuke-t-molotov-s200"
+side = "T"
+type = "molotov"
+x = 470.9
+y = 29.8
+radius = 150
+en = "Ramp molotov (lower B, west exit)"
+zh = "斜坡火（下层B区，西侧出口）"
+confidence = "high"
+
+[[spot]]
+# Source z = -386.7
+id = "de_nuke-t-molotov-s202"
+side = "T"
+type = "molotov"
+x = 788.8
+y = -1120.3
+radius = 150
+en = "A site molotov (silo area, upper floor)"
+zh = "A包点火（上层，核弹柱区域）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -88.1
+# Low confidence: High z and an upper-left A centroid do not distinguish the roof from a nearby elevated surface.
+id = "de_nuke-t-molotov-s203"
+side = "T"
+type = "molotov"
+x = 338.9
+y = -716.7
+radius = 150
+en = "Molotov above Hut (roof level)"
+zh = "小木屋上方火（屋顶高度）"
+confidence = "low"
+
+[[spot]]
+# Source z = -636.7
+id = "de_nuke-t-molotov-s204"
+side = "T"
+type = "molotov"
+x = 823.9
+y = 51.8
+radius = 150
+en = "Ramp molotov (lower B, east exit)"
+zh = "斜坡火（下层B区，东侧出口）"
+confidence = "high"
+
+[[spot]]
+# Source z = -409.6
+id = "de_nuke-t-molotov-s208"
+side = "T"
+type = "molotov"
+x = 916.7
+y = -1201.3
+radius = 150
+en = "A site molotov (east side, upper floor)"
+zh = "A包点火（上层，东侧）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -713.2
+id = "de_nuke-t-molotov-s211"
+side = "T"
+type = "molotov"
+x = 842.7
+y = -397.1
+radius = 150
+en = "B site molotov (ramp side, lower floor)"
+zh = "B包点火（下层，斜坡侧）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -412.6
+id = "de_nuke-t-molotov-s213"
+side = "T"
+type = "molotov"
+x = 119.0
+y = -1271.7
+radius = 150
+en = "Squeaky molotov (upper A)"
+zh = "黄门火（上层A区）"
+confidence = "high"
+
+[[spot]]
+# Source z = -201.1
+id = "de_nuke-t-molotov-s214"
+side = "T"
+type = "molotov"
+x = 673.0
+y = -639.1
+radius = 150
+en = "Rafters molotov (upper A)"
+zh = "A区横梁火（上层）"
+confidence = "high"
+
+[[spot]]
+# Source z = -742.5
+id = "de_nuke-t-molotov-s219"
+side = "T"
+type = "molotov"
+x = 578.2
+y = -1315.4
+radius = 150
+en = "B site molotov (vent side, lower floor)"
+zh = "B包点火（下层，管道侧）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -413.6
+id = "de_nuke-t-smoke-s149"
+side = "T"
+type = "smoke"
+x = 1082.5
+y = -2128.8
+radius = 200
+en = "Outside wall smoke (Secret side)"
+zh = "外场一线烟（铁板侧）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -414.0
+id = "de_nuke-t-smoke-s150"
+side = "T"
+type = "smoke"
+x = 1000.2
+y = -1843.8
+radius = 200
+en = "Outside wall smoke (middle)"
+zh = "外场一线烟（中段）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -413.9
+id = "de_nuke-t-smoke-s151"
+side = "T"
+type = "smoke"
+x = 429.6
+y = -1289.4
+radius = 200
+en = "Squeaky smoke (upper A, site side)"
+zh = "黄门烟（上层A区，包点侧）"
+confidence = "high"
+
+[[spot]]
+# Source z = -413.9
+id = "de_nuke-t-smoke-s152"
+side = "T"
+type = "smoke"
+x = 359.2
+y = -2131.2
+radius = 200
+en = "Outside smoke (red container, T side)"
+zh = "外场红箱烟（匪侧）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -413.8
+id = "de_nuke-t-smoke-s153"
+side = "T"
+type = "smoke"
+x = 673.3
+y = -1565.3
+radius = 200
+en = "Mini smoke (upper A)"
+zh = "正门烟（上层A区）"
+confidence = "high"
+
+[[spot]]
+# Source z = -414.0
+id = "de_nuke-t-smoke-s154"
+side = "T"
+type = "smoke"
+x = 1097.8
+y = -1700.6
+radius = 200
+en = "Outside smoke (Mini-to-garage gap)"
+zh = "外场烟（正门与车库之间）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -238.0
+# Low confidence: Elevated z near Mini; nearest Silo label does not match the visible silo location. Exact surface is uncertain.
+id = "de_nuke-t-smoke-s155"
+side = "T"
+type = "smoke"
+x = 837.0
+y = -1686.1
+radius = 200
+en = "Smoke above Mini (roof level)"
+zh = "正门上方烟（屋顶高度）"
+confidence = "low"
+
+[[spot]]
+# Source z = -413.6
+id = "de_nuke-t-smoke-s156"
+side = "T"
+type = "smoke"
+x = 848.8
+y = -2188.8
+radius = 200
+en = "Outside wall smoke (red-container side)"
+zh = "外场一线烟（红箱侧）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -413.5
+id = "de_nuke-t-smoke-s157"
+side = "T"
+type = "smoke"
+x = 1216.8
+y = -2011.5
+radius = 200
+en = "Outside wall smoke (garage side)"
+zh = "外场一线烟（车库侧）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -410.6
+# Low confidence: Ground-level centroid beside the building; no unambiguous standard choke or community smoke name.
+id = "de_nuke-t-smoke-s158"
+side = "T"
+type = "smoke"
+x = 1087.0
+y = -824.6
+radius = 200
+en = "Outside smoke (east of A, ground level)"
+zh = "外场烟（A区东侧，地面）"
+confidence = "low"
+
+[[spot]]
+# Source z = -126.0
+id = "de_nuke-t-smoke-s159"
+side = "T"
+type = "smoke"
+x = 1099.5
+y = -364.7
+radius = 200
+en = "Heaven smoke (upper A balcony)"
+zh = "三楼烟（A区高台）"
+confidence = "high"
+
+[[spot]]
+# Source z = -414.0
+id = "de_nuke-t-smoke-s160"
+side = "T"
+type = "smoke"
+x = 1156.1
+y = -1523.5
+radius = 200
+en = "Outside smoke (Mini east exit)"
+zh = "外场烟（正门东侧出口）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -766.0
+id = "de_nuke-t-smoke-s161"
+side = "T"
+type = "smoke"
+x = 379.9
+y = -1268.3
+radius = 200
+en = "Vents smoke (lower B exit)"
+zh = "管道烟（下层B区出口）"
+confidence = "high"
+
+[[spot]]
+# Source z = -638.0
+id = "de_nuke-t-smoke-s162"
+side = "T"
+type = "smoke"
+x = 829.9
+y = 4.2
+radius = 200
+en = "Ramp smoke (lower B, east exit)"
+zh = "斜坡烟（下层B区，东侧出口）"
+confidence = "high"
+
+[[spot]]
+# Source z = -414.0
+id = "de_nuke-t-smoke-s164"
+side = "T"
+type = "smoke"
+x = 682.6
+y = -1167.4
+radius = 200
+en = "A site smoke (silo area, upper floor)"
+zh = "A包点烟（上层，核弹柱区域）"
+confidence = "medium"
+
+[[spot]]
+# Source z = -411.5
+id = "de_nuke-t-smoke-s165"
+side = "T"
+type = "smoke"
+x = 191.9
+y = -1232.6
+radius = 200
+en = "Squeaky smoke (upper A)"
+zh = "黄门烟（上层A区）"
+confidence = "high"
+
+[[spot]]
+# Source z = -414.0
+id = "de_nuke-t-smoke-s168"
+side = "T"
+type = "smoke"
+x = 1381.7
+y = -1953.1
+radius = 200
+en = "Garage smoke"
+zh = "车库烟"
+confidence = "high"
+
+[[spot]]
+# Source z = -635.5
+id = "de_nuke-t-smoke-s181"
+side = "T"
+type = "smoke"
+x = 1126.9
+y = -1833.4
+radius = 200
+en = "Secret tunnels smoke (lower approach)"
+zh = "铁板通道烟（下层入口）"
+confidence = "high"

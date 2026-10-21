@@ -1,0 +1,652 @@
+# config/spots/de_ancient.toml
+# Landing locations; x/y are original game coordinates, not radar pixels.
+
+[[spot]]
+id = "de_ancient-ct-molotov-s043"
+side = "CT"
+type = "molotov"
+x = -815.6
+y = -758.7
+radius = 150
+en = "Bottom mid molotov"
+zh = "匪口火"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-molotov-s044"
+side = "CT"
+type = "molotov"
+x = 643.9
+y = -816.3
+radius = 150
+en = "B lane molotov"
+zh = "B小火"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-ct-molotov-s045"
+side = "CT"
+type = "molotov"
+x = 1277.5
+y = -423.5
+radius = 150
+en = "B ramp molotov"
+zh = "B坡火"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-molotov-s046"
+side = "CT"
+type = "molotov"
+x = 277.7
+y = -866.4
+radius = 150
+en = "B lane molotov (mid side)"
+zh = "B小火（靠中路）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-ct-molotov-s047"
+side = "CT"
+type = "molotov"
+x = -2065.8
+y = 396.6
+radius = 150
+en = "A main molotov"
+zh = "A厅火"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-molotov-s048"
+side = "CT"
+type = "molotov"
+x = 781.8
+y = -26.4
+radius = 150
+en = "B site molotov (front)"
+zh = "B包点火（前点）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-ct-molotov-s049"
+side = "CT"
+type = "molotov"
+x = -960.4
+y = -654.2
+radius = 150
+en = "Bottom mid molotov (west corner)"
+zh = "匪口火（西侧角落）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-ct-molotov-s050"
+side = "CT"
+type = "molotov"
+x = -1126.3
+y = -860.4
+radius = 150
+en = "T mid entrance molotov"
+zh = "匪口入口火"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-molotov-s051"
+side = "CT"
+type = "molotov"
+x = -363.8
+y = -797.4
+radius = 150
+en = "Bottom mid molotov (east side)"
+zh = "中路下段火（东侧）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-ct-molotov-s052"
+side = "CT"
+type = "molotov"
+x = -678.4
+y = -874.9
+radius = 150
+en = "Bottom mid molotov (deep)"
+zh = "匪口火（深）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-molotov-s053"
+side = "CT"
+type = "molotov"
+x = 1208.6
+y = -217.8
+radius = 150
+en = "B ramp molotov (top)"
+zh = "B坡火（坡顶）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-molotov-s054"
+side = "CT"
+type = "molotov"
+x = 1307.1
+y = -711.3
+radius = 150
+en = "B ramp molotov (bottom)"
+zh = "B坡火（坡底）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-smoke-s000"
+side = "CT"
+type = "smoke"
+x = -1123.8
+y = -865.1
+radius = 200
+en = "T mid entrance smoke"
+zh = "匪口烟"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-smoke-s001"
+side = "CT"
+type = "smoke"
+x = 1094.4
+y = -969.2
+radius = 200
+en = "B main smoke (deep)"
+zh = "B门烟（深）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-smoke-s002"
+side = "CT"
+type = "smoke"
+x = 1252.8
+y = -295.0
+radius = 200
+en = "B ramp smoke (top)"
+zh = "B坡烟（坡顶）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-smoke-s003"
+side = "CT"
+type = "smoke"
+x = 242.3
+y = -853.2
+radius = 200
+en = "B lane smoke"
+zh = "B小烟"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-ct-smoke-s004"
+side = "CT"
+type = "smoke"
+x = -2049.0
+y = 373.3
+radius = 200
+en = "A main smoke"
+zh = "A厅烟"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-smoke-s005"
+side = "CT"
+type = "smoke"
+x = 433.6
+y = -487.7
+radius = 200
+en = "Cave smoke (T entrance)"
+zh = "黑屋烟（匪侧入口）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-smoke-s006"
+side = "CT"
+type = "smoke"
+x = -928.7
+y = -171.6
+radius = 200
+en = "Donut smoke (mid entrance)"
+zh = "甜甜圈烟（中路口）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-smoke-s007"
+side = "CT"
+type = "smoke"
+x = -1367.2
+y = 207.6
+radius = 200
+en = "Donut smoke (A corridor)"
+zh = "甜甜圈烟（A侧通道）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-smoke-s008"
+side = "CT"
+type = "smoke"
+x = -735.8
+y = -692.5
+radius = 200
+en = "Bottom mid smoke"
+zh = "匪口烟（中路内）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-smoke-s009"
+side = "CT"
+type = "smoke"
+x = -1435.2
+y = 719.7
+radius = 200
+en = "A site smoke (Donut side)"
+zh = "A包点烟（靠甜甜圈）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-ct-smoke-s010"
+side = "CT"
+type = "smoke"
+x = 569.2
+y = 131.4
+radius = 200
+en = "Cave smoke (B exit)"
+zh = "黑屋烟（B点出口）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-ct-smoke-s011"
+side = "CT"
+type = "smoke"
+x = 442.0
+y = -239.8
+radius = 200
+en = "Cave smoke (inside)"
+zh = "黑屋烟（内部）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-molotov-s222"
+side = "T"
+type = "molotov"
+x = 1236.0
+y = -228.6
+radius = 150
+en = "B ramp molotov (top)"
+zh = "B坡火（坡顶）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-molotov-s223"
+side = "T"
+type = "molotov"
+x = -225.6
+y = -196.9
+radius = 150
+en = "Mid cubby molotov"
+zh = "中路凹槽火"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-t-molotov-s224"
+side = "T"
+type = "molotov"
+x = 689.0
+y = 91.9
+radius = 150
+en = "B pillar molotov"
+zh = "B点柱子火"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-t-molotov-s225"
+side = "T"
+type = "molotov"
+x = -685.3
+y = -595.1
+radius = 150
+en = "Bottom mid molotov"
+zh = "匪口火"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-molotov-s226"
+side = "T"
+type = "molotov"
+x = 430.1
+y = -415.1
+radius = 150
+en = "Cave molotov (T entrance)"
+zh = "黑屋火（匪侧入口）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-molotov-s227"
+side = "T"
+type = "molotov"
+x = -1730.1
+y = 1115.3
+radius = 150
+en = "Back A molotov (Temple side)"
+zh = "A后点火（靠墓地）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-t-molotov-s228"
+side = "T"
+type = "molotov"
+x = 617.0
+y = 855.6
+radius = 150
+en = "B short molotov (deep)"
+zh = "一道火（深）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-t-molotov-s229"
+side = "T"
+type = "molotov"
+x = -164.2
+y = -710.8
+radius = 150
+en = "B lane molotov (mid entrance)"
+zh = "B小火（中路入口）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-t-molotov-s230"
+side = "T"
+type = "molotov"
+x = -496.6
+y = 855.2
+radius = 150
+en = "Red room molotov"
+zh = "VIP火"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-molotov-s231"
+side = "T"
+type = "molotov"
+x = -840.0
+y = 1089.6
+radius = 150
+en = "CT molotov (A approach)"
+zh = "警家火（A侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-molotov-s232"
+side = "T"
+type = "molotov"
+x = 1288.2
+y = 415.4
+radius = 150
+en = "B long molotov"
+zh = "二道火"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-molotov-s233"
+side = "T"
+type = "molotov"
+x = -1090.1
+y = 798.2
+radius = 150
+en = "A site molotov (CT-side boxes)"
+zh = "A包点火（警家侧箱子）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-t-molotov-s236"
+side = "T"
+type = "molotov"
+x = 1177.0
+y = 863.8
+radius = 150
+en = "B long molotov (deep)"
+zh = "二道火（深）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-molotov-s239"
+side = "T"
+type = "molotov"
+x = -1508.3
+y = 1133.5
+radius = 150
+en = "Temple molotov"
+zh = "墓地火"
+confidence = "medium"
+
+[[spot]]
+# Low confidence: Elevated centroid at the Cave-side edge; the specific box or ledge cannot be resolved from this radar.
+id = "de_ancient-t-molotov-s240"
+side = "T"
+type = "molotov"
+x = 714.1
+y = -269.8
+radius = 150
+en = "B site molotov (Cave-side ledge)"
+zh = "B包点火（黑屋侧平台）"
+confidence = "low"
+
+[[spot]]
+id = "de_ancient-t-molotov-s245"
+side = "T"
+type = "molotov"
+x = 92.1
+y = -785.9
+radius = 150
+en = "B lane molotov"
+zh = "B小火"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-t-molotov-s256"
+side = "T"
+type = "molotov"
+x = -625.1
+y = -865.0
+radius = 150
+en = "Bottom mid molotov (T side)"
+zh = "匪口火（匪侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-molotov-s264"
+side = "T"
+type = "molotov"
+x = -1243.0
+y = -154.6
+radius = 150
+en = "Donut molotov (inside)"
+zh = "甜甜圈火（内部）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-smoke-s177"
+side = "T"
+type = "smoke"
+x = -513.8
+y = 255.6
+radius = 200
+en = "Red room smoke"
+zh = "VIP烟"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-smoke-s178"
+side = "T"
+type = "smoke"
+x = 239.9
+y = -703.4
+radius = 200
+en = "Cave smoke (outside T entrance)"
+zh = "黑屋烟（匪侧入口外）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-t-smoke-s179"
+side = "T"
+type = "smoke"
+x = -857.1
+y = -176.2
+radius = 200
+en = "Donut smoke (mid entrance)"
+zh = "甜甜圈烟（中路口）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-smoke-s180"
+side = "T"
+type = "smoke"
+x = 673.8
+y = 458.1
+radius = 200
+en = "B short smoke"
+zh = "一道烟"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-smoke-s181"
+side = "T"
+type = "smoke"
+x = -1114.0
+y = 1050.2
+radius = 200
+en = "CT smoke (A)"
+zh = "警家烟（A点）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-smoke-s182"
+side = "T"
+type = "smoke"
+x = 648.4
+y = -814.9
+radius = 200
+en = "B lane smoke (B main side)"
+zh = "B小烟（靠B门）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-t-smoke-s183"
+side = "T"
+type = "smoke"
+x = 1261.6
+y = 368.2
+radius = 200
+en = "B long smoke"
+zh = "二道烟"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-smoke-s184"
+side = "T"
+type = "smoke"
+x = -1342.5
+y = 347.6
+radius = 200
+en = "Donut smoke (A exit)"
+zh = "甜甜圈烟（A点出口）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-smoke-s185"
+side = "T"
+type = "smoke"
+x = -819.1
+y = -778.9
+radius = 200
+en = "Bottom mid smoke"
+zh = "匪口烟"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-smoke-s186"
+side = "T"
+type = "smoke"
+x = 565.2
+y = 238.1
+radius = 200
+en = "B short smoke (shallow)"
+zh = "一道烟（浅）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-t-smoke-s187"
+side = "T"
+type = "smoke"
+x = 1055.2
+y = 88.9
+radius = 200
+en = "B site smoke (long side)"
+zh = "B包点烟（靠二道）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-t-smoke-s188"
+side = "T"
+type = "smoke"
+x = 500.6
+y = 868.4
+radius = 200
+en = "B short smoke (deep)"
+zh = "一道烟（深）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-t-smoke-s189"
+side = "T"
+type = "smoke"
+x = 488.1
+y = 148.0
+radius = 200
+en = "Cave smoke (B exit)"
+zh = "黑屋烟（B点出口）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-smoke-s190"
+side = "T"
+type = "smoke"
+x = -1332.9
+y = 27.2
+radius = 200
+en = "Donut smoke (inside)"
+zh = "甜甜圈烟（内部）"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-smoke-s191"
+side = "T"
+type = "smoke"
+x = -1146.4
+y = 851.0
+radius = 200
+en = "CT smoke (A, shallow)"
+zh = "警家烟（A点，浅）"
+confidence = "medium"
+
+[[spot]]
+id = "de_ancient-t-smoke-s193"
+side = "T"
+type = "smoke"
+x = 1323.1
+y = -470.8
+radius = 200
+en = "B ramp smoke"
+zh = "B坡烟"
+confidence = "high"
+
+[[spot]]
+id = "de_ancient-t-smoke-s207"
+side = "T"
+type = "smoke"
+x = -1393.4
+y = 584.8
+radius = 200
+en = "Donut smoke (outside A exit)"
+zh = "甜甜圈烟（A点出口外）"
+confidence = "high"
