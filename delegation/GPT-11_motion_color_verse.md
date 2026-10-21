@@ -42,3 +42,14 @@ No new npm deps (CSS, WAAPI, pointer events, requestAnimationFrame only); keep U
 
 ## Deliverable
 Edit in place; write `delegation/GPT-11_report.md` (changed files, how each point was done, anything unsure).
+
+---
+
+## Round 2 (Claude's review at 1440×900, Falcons → Mirage → NiKo)
+
+1. **Verse columns are broken**: in the final state the two vertical columns overlap — the left column's characters are squashed on top of each other ("负尽狂名十五年" unreadable) and the verse box is tiny next to the portrait. Each column must show its characters at full size with normal vertical spacing (no overlapping spans, no negative margins); give the verse a proper block (font-size ≈ 40–48 px, column gap ≈ 1 em), placed right of the face, not over the outline name.
+2. **Portrait is enlarged too much** (only the face is visible and it looks soft). The cut-outs are 1000×666; never display them larger than their native pixels at the current devicePixelRatio (`max-width: calc(1000px / dpr)`, i.e. ~500 CSS px on Retina, ~700 CSS px max), keep the whole bust visible (head to shoulders), bottom aligned to the slide floor.
+3. Keep the outline name behind the portrait, but it should not collide with the verse.
+4. (Later, not now) 375 px overflow on the hub and player slide — leave for the mobile pass.
+
+Append "Round 2" to `delegation/GPT-11_report.md`.
