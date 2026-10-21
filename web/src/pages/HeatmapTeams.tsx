@@ -1,3 +1,5 @@
+import { Stagger } from "../components/Motion";
+import { PageContext, PageSurface, MetricStrip } from "../components/Page";
 import { Link, useSearchParams } from "react-router-dom";
 import { ErrorNotice, Loading } from "../components/Status";
 import { getHeatmapTeams, useData } from "../data";
@@ -12,10 +14,11 @@ export default function HeatmapTeams() {
   const search = params.get("q") ?? "";
   const filtered = (teams ?? []).filter((team) => team.team.toLowerCase().includes(search.trim().toLowerCase()));
   return (
-    <div className="hm-page">
+    <PageSurface className="hm-page">
       <header className="page-head">
-        <div><h1>{t("heatmap.title")}</h1><p>{t("heatmap.pick_team")}</p></div>
+        <div><p className="eyebrow">{t("site.eyebrow")}</p><h1>{t("heatmap.title")}</h1><PageContext>{t("site.heatmaps_context")}</PageContext></div>
       </header>
+      {teams ? <MetricStrip items={[{ label: t("site.results"), value: filtered.length }, { label: t("ui.nav_teams"), value: teams.length }, { label: t("site.map_coverage"), value: new Set(teams.flatMap((team) => team.maps.map((map) => map.map))).size }]} /> : null}
       <label className="hm-search">
         <span>{t("heatmap.search")}</span>
         <input type="search" value={search} placeholder={t("heatmap.search")} onChange={(event) => {
@@ -28,9 +31,9 @@ export default function HeatmapTeams() {
       {loading ? <Loading /> : error ? <ErrorNotice error={error} /> : filtered.length === 0 ? (
         <p>{t("heatmap.no_data")}</p>
       ) : (
-        <div className="hm-team-grid">
+        <Stagger className="hm-team-grid">
           {filtered.map((team) => (
-            <Link key={team.slug} to={`/heatmaps/${encodeURIComponent(team.slug)}`} className="hm-team-card">
+            <Link key={team.slug} to={`/heatmaps/${encodeURIComponent(team.slug)}`} className="hm-team-card" data-motion-tilt>
               <h2>{team.team}</h2>
               <p>{t("heatmap.matches")} · {team.n_matches ?? "—"} · {t("heatmap.maps_count")} · {team.maps.length}</p>
               <ul>
@@ -43,8 +46,8 @@ export default function HeatmapTeams() {
               </ul>
             </Link>
           ))}
-        </div>
+        </Stagger>
       )}
-    </div>
+    </PageSurface>
   );
 }

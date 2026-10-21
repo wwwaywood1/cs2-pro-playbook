@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import RouteTransition from "./RouteTransition";
 import { getIndex, useData } from "../data";
 import { fmtDateTime } from "../format";
 import { setLang, t, useLang } from "../i18n";
@@ -71,7 +72,7 @@ export default function Layout() {
       </header>
 
       <main className="main" id="main-content" tabIndex={-1}>
-        <Outlet />
+        <RouteTransition />
       </main>
 
       <footer className="footer">

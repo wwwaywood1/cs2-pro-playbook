@@ -1,3 +1,5 @@
+import { Reveal, Stagger } from "../components/Motion";
+import { PageContext, PageSurface, MetricStrip } from "../components/Page";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import GrenadeIcon from "../components/GrenadeIcon";
@@ -5,6 +7,7 @@ import Radar from "../components/Radar";
 import { ErrorNotice, Loading } from "../components/Status";
 import { getLineups, getMeta, useData } from "../data";
 import { fmtPct, fmtSeconds } from "../format";
+import { motionScrollBehavior } from "../motion";
 import { calloutLabel, t, useLang } from "../i18n";
 import type { GrenadeType, Lane, Lineup, Side, Technique } from "../types";
 
@@ -132,7 +135,7 @@ export default function Lineups() {
     const card = cardRefs.current.get(requestedId);
     if (!card) return;
     const frame = window.requestAnimationFrame(() => {
-      card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      card.scrollIntoView({ behavior: motionScrollBehavior(), block: "nearest" });
       scrolledRequest.current = requestKey;
     });
     return () => window.cancelAnimationFrame(frame);
@@ -161,7 +164,7 @@ export default function Lineups() {
   const selectFromRadar = (id: string) => {
     setSelectedId(id);
     const card = cardRefs.current.get(id);
-    if (card) card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (card) card.scrollIntoView({ behavior: motionScrollBehavior(), block: "nearest" });
   };
 
   const handleCopy = async (lineup: Lineup) => {
@@ -178,18 +181,20 @@ export default function Lineups() {
   const title = meta?.display_name ?? map;
 
   return (
-    <div className="lineups-page">
+    <PageSurface className="lineups-page">
       <header className="page-head">
         <div>
           <p className="eyebrow">{map}</p>
           <h1>
             {title} · {t("ui.nav_lineups")}
           </h1>
+          <PageContext>{t("site.lineups_context")}</PageContext>
         </div>
         <p className="result-count">
           {loading ? "…" : `${filtered.length} / ${lineups?.length ?? 0}`}
         </p>
       </header>
+      {lineups ? <MetricStrip items={[{ label: t("site.results"), value: filtered.length }, { label: t("ui.nav_lineups"), value: lineups.length }]} /> : null}
 
       <section className="filters">
         <div className="filter-group" role="group" aria-label={t("ui.filter_side")}>
@@ -208,6 +213,7 @@ export default function Lineups() {
                 key={value}
                 type="button"
                 className={side === value ? "is-active" : ""}
+                data-side={value}
                 aria-pressed={side === value}
                 onClick={() => setSide(value)}
               >
@@ -308,15 +314,15 @@ export default function Lineups() {
       ) : (
         <div className="lineups-layout">
           <aside className="radar-panel">
-            <Radar
+            <Reveal className="motion-radar"><Radar
               map={map}
               lineups={filtered}
               selectedId={selectedId}
               onSelect={selectFromRadar}
-            />
+            /></Reveal>
           </aside>
 
-          <div className="lineup-list">
+          <Stagger className="lineup-list">
             {filtered.length === 0 ? (
               <div className="empty">—</div>
             ) : (
@@ -330,7 +336,14 @@ export default function Lineups() {
                       if (node) cardRefs.current.set(lineup.id, node);
                       else cardRefs.current.delete(lineup.id);
                     }}
-                    className={`lineup-card${selected ? " is-selected" : ""}`}
+                    className={`lineup-card${selected ? " is-selected" : ""}`} data-motion-tilt={selected || undefined}
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+                        event.preventDefault();
+                        setSelectedId(lineup.id);
+                      }
+                    }}
                     onClick={() => setSelectedId(lineup.id)}
                   >
                     <div className="lineup-top">
@@ -398,9 +411,9 @@ export default function Lineups() {
                 );
               })
             )}
-          </div>
+          </Stagger>
         </div>
       )}
-    </div>
+    </PageSurface>
   );
 }

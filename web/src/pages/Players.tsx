@@ -1,3 +1,5 @@
+import { Stagger } from "../components/Motion";
+import { PageContext, PageSurface, MetricStrip } from "../components/Page";
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import Stat from "../components/Stat";
@@ -58,16 +60,18 @@ export default function Players() {
   const title = meta?.display_name ?? map;
 
   return (
-    <div className="players-page">
+    <PageSurface className="players-page">
       <header className="page-head">
         <div>
           <p className="eyebrow">{map}</p>
           <h1>
             {title} · {t("ui.nav_players")}
           </h1>
+          <PageContext>{t("site.players_context")}</PageContext>
         </div>
         {players ? <p className="result-count">{players.length}</p> : null}
       </header>
+      {players ? <MetricStrip items={[{ label: t("ui.nav_players"), value: players.length }, { label: t("ui.nav_teams"), value: groups.length }]} /> : null}
 
       {loading ? (
         <Loading />
@@ -79,9 +83,9 @@ export default function Players() {
         groups.map((group) => (
           <section key={group.team} className="team-block">
             <h2>{group.team}</h2>
-            <div className="player-grid">
+            <Stagger className="player-grid">
               {group.players.map((player) => (
-                <article key={player.steamid} className="player-card">
+                <article key={player.steamid} className="player-card" data-motion-tilt>
                   <div className="player-head">
                     <h3>{player.name}</h3>
                     <span className="muted" title={t("ui.matches_title")}>
@@ -141,10 +145,10 @@ export default function Players() {
                   </Link>
                 </article>
               ))}
-            </div>
+            </Stagger>
           </section>
         ))
       )}
-    </div>
+    </PageSurface>
   );
 }

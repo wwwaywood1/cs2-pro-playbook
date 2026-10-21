@@ -1,7 +1,7 @@
 .hm-page {
-  --hm-border: var(--border, #354052);
-  --hm-panel: var(--panel, #18202c);
-  --hm-muted: var(--muted, #aab3c2);
+  --hm-border: var(--border);
+  --hm-panel: var(--surface);
+  --hm-muted: var(--muted);
   width: 100%;
   min-width: 0;
   overflow-wrap: anywhere;
@@ -52,7 +52,7 @@
 .hm-help { margin: 0; color: var(--hm-muted); font-size: .85rem; line-height: 1.7; }
 .hm-figure { grid-column: 1; grid-row: 1; margin: 0; min-width: 0; }
 .hm-radar { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: .65rem; border: 1px solid var(--hm-border); }
-.hm-radar-bg { fill: var(--hm-panel); }
+.hm-radar-bg { fill: var(--hm-panel, var(--surface-stage)); }
 .hm-figure figcaption { display: grid; gap: .4rem; margin-top: .8rem; font-size: .9rem; }
 .hm-caption { align-items: baseline; }
 .hm-setup { margin: 1.5rem 0; padding: 1rem; background: var(--hm-panel); border: 1px solid var(--hm-border); border-radius: .6rem; line-height: 1.8; }
@@ -66,14 +66,25 @@
 .hm-metrics > div { display: flex; justify-content: space-between; align-items: baseline; gap: .8rem; margin: .35rem 0; }
 .hm-metrics dd { margin: 0; flex-shrink: 0; }
 .hm-lineup-link { display: block; margin: .25rem 0; text-underline-offset: .2rem; }
-/* This stylesheet also covers the shared header while a heatmap route is open. */
-body:has(.hm-page) .topbar-inner { flex-wrap: wrap; gap: .75rem; min-width: 0; }
-body:has(.hm-page) .main-nav { display: flex; flex-wrap: wrap; min-width: 0; }
-body:has(.hm-page) :is(.shell, .main, .footer-inner, .footer-detail) { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 @media (max-width: 760px) {
   .hm-workspace { grid-template-columns: minmax(0, 1fr); }
   .hm-controls, .hm-figure { grid-column: 1; grid-row: auto; }
   .hm-switcher { gap: .35rem; }
-  body:has(.hm-page) .brand { min-width: 0; white-space: normal; }
-  body:has(.hm-page) .main-nav { gap: .4rem; }
 }
+
+/* Shared hub surfaces and controls; player colours retain their ownership meaning. */
+.site-page.hm-page { --hm-border: var(--border); --hm-panel: var(--surface); --hm-muted: var(--ink-muted); }
+.site-page.hm-page .page-head h1 { font-size: var(--type-title); }
+.site-page.hm-page .hm-search { max-width: 30rem; }
+.site-page.hm-page .hm-search input { border-radius: var(--radius-sm); border-color: var(--border); background: var(--surface); }
+.site-page.hm-page :is(.hm-team-card, .hm-player-card, .hm-setup) { border-radius: var(--radius-panel); background: var(--surface); }
+.site-page.hm-page .hm-team-card { padding: 24px; }
+.site-page.hm-page .hm-team-card:hover { border-color: var(--accent); }
+.site-page.hm-page .hm-team-card h2 { font-size: 1.6rem; }
+.site-page.hm-page .hm-team-card p { color: var(--muted); }
+.site-page.hm-page .hm-controls { padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); }
+.site-page.hm-page .hm-buttons button[aria-pressed="true"] { box-shadow: none; }
+.site-page.hm-page[data-side="T"] .hm-field:first-child button[aria-pressed="true"] { background: var(--side-t); border-color: var(--side-t); }
+.site-page.hm-page[data-side="CT"] .hm-field:first-child button[aria-pressed="true"] { background: var(--side-ct); border-color: var(--side-ct); }
+.site-page.hm-page .hm-figure .hm-radar { width: min(100%, 760px); }
+@media (max-width: 760px) { .site-page.hm-page .page-head h1 { font-size: 2rem; } }

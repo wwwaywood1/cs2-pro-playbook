@@ -534,5 +534,29 @@
     "lurk_scope": "T gun rounds with a commit",
     "forward_scope": "CT gun rounds",
     "spot_scope": "Frequent clustered landings on this floor. Each side retains only its top spots; this is not every throw."
+  },
+  "site": {
+    "eyebrow": "PRO PLAY · FIELD NOTES",
+    "home_context": "Start with a map. Explore professional decisions and bring the coordination into your rounds.",
+    "teams_context": "Compare teams on this map, then explore their match records and play styles.",
+    "team_context": "Explore this team's match sample and attacking and defending choices on this map.",
+    "players_context": "Explore roles, duels and utility to understand each player's contribution.",
+    "lineups_context": "Filter by side, destination and technique to find professional utility you can practice.",
+    "tactics_context": "Read the key numbers, then follow utility on the map to unpack the play.",
+    "heatmaps_context": "Choose a team and map to explore positioning, fights and utility.",
+    "team_heatmap_context": "Switch maps, sides and players to inspect the recorded round distributions.",
+    "teams_entry": "Explore teams",
+    "teams_entry_context": "Map results, player roles and play styles.",
+    "tactics_entry": "Unpack a play",
+    "tactics_entry_context": "Read attacks and defenses around one map.",
+    "lineups_entry": "Take utility to practice",
+    "lineups_entry_context": "Find a destination and copy its practice command.",
+    "results": "Matching results",
+    "reliable_teams": "Teams with reliable samples",
+    "rounds": "Sample rounds",
+    "roster": "Roster players",
+    "selected_players": "Selected players",
+    "awaiting_sample": "Awaiting match samples",
+    "map_coverage": "Maps covered"
   }
 }

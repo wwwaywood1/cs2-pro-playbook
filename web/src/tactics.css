@@ -99,3 +99,22 @@
   .tactics-recipe-details { padding-left: 0; }
   .tactics-more > .panel { padding: 16px; }
 }
+
+/* Shared deck treatment; radar geometry and DPR/viewbox limits above stay authoritative. */
+.site-page.tactics-page { gap: 16px; }
+.site-page.tactics-page .page-head { margin: 0; }
+.site-page.tactics-page .page-head h1 { font-size: clamp(2rem, 2.5vw, 2.8rem); }
+.site-page.tactics-page .page-context { margin-top: 8px; }
+.site-page.tactics-page .tactics-key-numbers { gap: 16px; padding-bottom: 12px; }
+.site-page.tactics-page .tactics-key { border-left: 1px solid var(--border); padding-left: 16px; }
+.site-page.tactics-page .tactics-key dd { color: var(--secondary); font-size: clamp(1.8rem, 2.8vw, 2.6rem); }
+.site-page.tactics-page .tactics-key.is-primary dd { color: var(--accent); }
+.site-page.tactics-page .tactics-recipe { border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+.site-page.tactics-page .tactics-recipe.is-selected { border-color: var(--accent); background: var(--surface-hover); }
+.site-page.tactics-page[data-side="T"] .tactics-sides button.is-active { background: var(--side-t); border-color: var(--side-t); }
+.site-page.tactics-page[data-side="CT"] .tactics-sides button.is-active { background: var(--side-ct); border-color: var(--side-ct); }
+@media (max-width: 560px) {
+  .site-page.tactics-page .tactics-key-numbers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .site-page.tactics-page .tactics-key { padding-left: 12px; }
+  .site-page.tactics-page .page-head h1 { font-size: 1.8rem; }
+}

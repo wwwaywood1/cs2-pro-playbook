@@ -1,0 +1,52 @@
+/* Shared hub palette, typography, surfaces and motion contract. */
+:root {
+  color-scheme: dark;
+  --bg: #08151f;
+  --bg-elev: #0d1c26;
+  --bg-elev-2: #132b35;
+  --line: #63788e;
+  --text: #f1f6fa;
+  --muted: #b6c5d2;
+  --primary: #f2b134;
+  --secondary: #e8b75a;
+  --tertiary: #a6b7c9;
+  --accent: var(--primary);
+  --side-t: #ffb46b;
+  --side-ct: #8fcaff;
+  --ct: var(--side-ct);
+  --smoke: #9aa7b8;
+  --flash: #ffd34d;
+  --molotov: #ff6b3d;
+  --he: #5ad67d;
+  --danger: #ff7a7a;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --radius-panel: 16px;
+  --radius-pill: 100px;
+  --surface: #0d1c26;
+  --surface-stage: #08151f;
+  --surface-hover: #132b35;
+  --surface-pressed: #1d3b42;
+  --border: #63788e;
+  --ink: #f1f6fa;
+  --ink-muted: #b6c5d2;
+  --ink-on-accent: #08151f;
+  --ease: cubic-bezier(.2,.8,.2,1);
+  --duration-fast: 160ms;
+  --duration-control: 300ms;
+  --duration-route: 260ms;
+  --duration-stage: 520ms;
+  --duration-card: 560ms;
+  --duration-reveal: 700ms;
+  --type-label: .75rem;
+  --type-body: 1rem;
+  --type-section: clamp(1.5rem, 3vw, 2.8rem);
+  --type-title: clamp(2rem, 3.4vw, 3.6rem);
+  --type-cover: clamp(2.8rem, 5.3vw, 6rem);
+  --type-number: clamp(1.8rem, 3.8vw, 4rem);
+  --shadow-card: 0 16px 32px #0005;
+  --shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+}

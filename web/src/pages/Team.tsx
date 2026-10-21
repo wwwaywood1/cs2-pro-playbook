@@ -1,4 +1,7 @@
-import { Fragment, useState } from "react";
+import { Stagger } from "../components/Motion";
+import { teamTheme } from "../theme";
+import { PageContext, PageSurface, SampleStrip } from "../components/Page";
+import { Fragment, useState, type CSSProperties } from "react";
 import { Link, useParams } from "react-router-dom";
 import LowSampleBanner from "../components/LowSampleBanner";
 import Stat from "../components/Stat";
@@ -70,7 +73,7 @@ function RankedBars({ rows, labelFor }: RankedBarsProps) {
   );
 }
 
-function SetupTables({ side }: { side: TSide | CTSide }) {
+function SetupTables({ side, className = "", style }: { side: TSide | CTSide; className?: string; style?: CSSProperties }) {
   const [helpOpen, setHelpOpen] = useState(false);
   const phases = [
     { key: "15s", rows: side.setups_15s },
@@ -78,7 +81,7 @@ function SetupTables({ side }: { side: TSide | CTSide }) {
   ];
 
   return (
-    <section className="panel panel-span-2">
+    <section className={`panel panel-span-2 ${className}`} style={style}>
       <div className="setup-head">
         <h3>{t("ui.setups_title")}</h3>
         <button
@@ -135,7 +138,7 @@ function TSideView({ side }: { side: TSide }) {
   return (
     <>
       <CommonStats side={side} />
-      <div className="two-col">
+      <Stagger className="two-col">
         <SetupTables side={side} />
 
         <section className="panel">
@@ -163,7 +166,7 @@ function TSideView({ side }: { side: TSide }) {
             labelFor={(value) => t(`lane.${value}`)}
           />
         </section>
-      </div>
+      </Stagger>
     </>
   );
 }
@@ -172,7 +175,7 @@ function CTSideView({ side }: { side: CTSide }) {
   return (
     <>
       <CommonStats side={side} />
-      <div className="two-col">
+      <Stagger className="two-col">
         <SetupTables side={side} />
 
         <section className="panel">
@@ -194,7 +197,7 @@ function CTSideView({ side }: { side: CTSide }) {
           <h3>{t("ui.plant_sites_title")}</h3>
           <RankedBars rows={side.plants_against_by_site} labelFor={siteLabel} />
         </section>
-      </div>
+      </Stagger>
     </>
   );
 }
@@ -205,7 +208,7 @@ function EconomyTable({ rows }: { rows: TeamProfile["economy"] }) {
   );
 
   return (
-    <section className="panel economy-panel">
+    <section className="panel economy-panel motion-reveal">
       <h3>{t("ui.economy_title")}</h3>
       <table className="table">
         <thead>
@@ -254,16 +257,14 @@ export default function Team() {
   }
 
   return (
-    <div className="team-page">
+    <PageSurface className="team-page" style={teamTheme(slug)}>
       <LowSampleBanner n_matches={team.n_matches} low_sample={team.low_sample} />
 
       <header className="page-head">
         <div>
           <p className="eyebrow">{map}</p>
           <h1>{team.team}</h1>
-          <p className="muted">
-            {t("ui.matches_title")} · {fmtInt(team.n_matches)}
-          </p>
+          <PageContext>{t("site.team_context")}</PageContext>
         </div>
         <Link
           to={`/heatmaps/${encodeURIComponent(slug)}?${new URLSearchParams({ map })}`}
@@ -275,9 +276,10 @@ export default function Team() {
           {t("ui.nav_teams")}
         </Link>
       </header>
+      <SampleStrip matches={team.n_matches} />
 
       {team.insights?.length ? (
-        <section className="panel team-insights">
+        <section className="panel team-insights motion-reveal" data-motion-spotlight>
           <h3>{t("tactics.insights")}</h3>
           {team.summary ? <>
             <p className="team-summary">{team.summary[lang]}</p>
@@ -305,7 +307,7 @@ export default function Team() {
 
       <section className="panel">
         <h3>{t("ui.matches_title")}</h3>
-        <ul className="match-list">
+        <Stagger as="ul" className="match-list">
           {team.matches.length === 0 ? (
             <li className="empty">—</li>
           ) : (
@@ -330,7 +332,7 @@ export default function Team() {
               );
             })
           )}
-        </ul>
+        </Stagger>
       </section>
 
       <div className="tabs" role="tablist" aria-label={t("ui.nav_teams")}>
@@ -342,7 +344,15 @@ export default function Team() {
             id={`tab-${value}`}
             aria-selected={side === value}
             aria-controls="team-side-panel"
+            tabIndex={side === value ? 0 : -1}
             onClick={() => setSide(value)}
+            onKeyDown={(event) => {
+              if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+              event.preventDefault();
+              const next = event.key === "Home" ? "T" : event.key === "End" ? "CT" : side === "T" ? "CT" : "T";
+              setSide(next);
+              document.getElementById(`tab-${next}`)?.focus();
+            }}
           >
             {t(`side.${value}`)}
           </button>
@@ -363,6 +373,6 @@ export default function Team() {
       </div>
 
       <EconomyTable rows={team.economy} />
-    </div>
+    </PageSurface>
   );
 }

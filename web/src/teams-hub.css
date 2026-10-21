@@ -4,11 +4,11 @@
   --side-t: #ffb46b;
   --side-ct: #8fcaff;
   --side-data: var(--tertiary);
-  --hub-border: #63788e;
-  --hub-surface: #0d1c26;
-  --hub-ink: #f1f6fa;
-  --hub-muted: #b6c5d2;
-  --hub-ease: cubic-bezier(.2,.8,.2,1);
+  --hub-border: var(--border);
+  --hub-surface: var(--surface);
+  --hub-ink: var(--ink);
+  --hub-muted: var(--ink-muted);
+  --hub-ease: var(--ease);
   --hub-viewport: max(520px, calc(100svh - 164px));
   --text: var(--hub-ink);
   --muted: var(--hub-muted);
@@ -17,10 +17,10 @@
   isolation: isolate;
 }
 .hub-page *, .hub-page *::before, .hub-page *::after { box-sizing: border-box; }
-.hub-page h2 { font-size: clamp(1.5rem, 3vw, 2.8rem); line-height: 1.15; }
+.hub-page h2 { font-size: var(--type-section); line-height: 1.15; }
 .hub-page h3 { font-size: 1rem; }
-.hub-page :is(button, input, select) { min-height: 44px; max-width: 100%; border: 1px solid var(--hub-border); border-radius: 8px; background: var(--hub-surface); color: var(--text); padding: 10px 14px; font: inherit; }
-.hub-page button { cursor: pointer; text-align: start; transition: border-color 300ms var(--hub-ease), background-color 300ms var(--hub-ease), transform 300ms var(--hub-ease), box-shadow 300ms var(--hub-ease); }
+.hub-page :is(button, input, select) { min-height: 44px; max-width: 100%; border: 1px solid var(--hub-border); border-radius: var(--radius-sm); background: var(--hub-surface); color: var(--text); padding: 10px 14px; font: inherit; }
+.hub-page button { cursor: pointer; text-align: start; transition: border-color var(--duration-control) var(--hub-ease), background-color var(--duration-control) var(--hub-ease), transform var(--duration-control) var(--hub-ease), box-shadow var(--duration-control) var(--hub-ease); }
 .hub-page button:hover { border-color: var(--accent); background: #132b35; }
 .hub-page button:active { border-color: var(--accent); background: #1d3b42; }
 .hub-page button:disabled { cursor: default; border-color: transparent; background: transparent; color: var(--text); }
@@ -47,20 +47,20 @@
 .hub-compact-title { font-size: 1rem; line-height: 1.2; margin: 0 8px 0 0; }
 .hub-breadcrumbs .hub-close { margin-left: auto; }
 .hub-breadcrumbs button { font-size: .85rem; }
-.hub-stage { --hub-entry-x: 48px; min-width: 0; animation: hub-stage-in 520ms var(--hub-ease) both; }
+.hub-stage { --hub-entry-x: 48px; min-width: 0; animation: hub-stage-in var(--duration-stage) var(--hub-ease) both; }
 .hub-stage[data-direction="back"] { --hub-entry-x: -48px; }
-.hub-panel { position: relative; min-height: var(--hub-viewport); border: 1px solid var(--hub-border); border-radius: 16px; padding: clamp(20px, 3vw, 48px); background: #08151f; isolation: isolate; }
+.hub-panel { position: relative; min-height: var(--hub-viewport); border: 1px solid var(--hub-border); border-radius: var(--radius-panel); padding: clamp(20px, 3vw, 48px); background: #08151f; isolation: isolate; }
 /* A finite light reveal and a quiet grid add depth without perpetual movement. */
-.hub-panel::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; background: radial-gradient(ellipse at 50% 0%, #9aafc70b, transparent 65%), repeating-linear-gradient(90deg, transparent 0 79px, #b6c5d207 79px 80px); animation: hub-light-in 700ms var(--hub-ease) both; }
+.hub-panel::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; background: radial-gradient(ellipse at 50% 0%, #9aafc70b, transparent 65%), repeating-linear-gradient(90deg, transparent 0 79px, #b6c5d207 79px 80px); animation: hub-light-in var(--duration-reveal) var(--hub-ease) both; }
 .hub-team-panel { display: grid; align-content: center; gap: 24px; }
 .hub-team-head { display: grid; justify-items: center; text-align: center; gap: 20px; }
-.hub-team-head .hub-badge { width: clamp(120px, 15vh, 176px); height: clamp(120px, 15vh, 176px); border: 0; border-radius: 0; background: transparent; font-size: 3rem; filter: drop-shadow(0 0 30px color-mix(in srgb, var(--accent) 32%, transparent)); animation: hub-logo-in 700ms var(--hub-ease) both; }
+.hub-team-head .hub-badge { width: clamp(120px, 15vh, 176px); height: clamp(120px, 15vh, 176px); border: 0; border-radius: 0; background: transparent; font-size: 3rem; filter: drop-shadow(0 0 30px color-mix(in srgb, var(--accent) 32%, transparent)); animation: hub-logo-in var(--duration-reveal) var(--hub-ease) both; }
 .hub-team-head h2 { margin: 0; font-size: clamp(2.8rem, 5vw, 6rem); font-weight: 800; letter-spacing: .16em; text-transform: uppercase; overflow-wrap: anywhere; }
 .hub-team-head p:last-child { margin: 12px 0 0; }
 .hub-team-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .hub-team-panel > .hub-team-layout > section > :is(h3, p) { text-align: center; margin: 0 0 12px; }
 .hub-map-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 12px; }
-.hub-page .hub-map-card { display: grid; justify-items: center; align-content: start; text-align: center; gap: 8px; padding: 18px 12px; animation: hub-card-in 560ms var(--hub-ease) var(--stagger, 0ms) backwards; }
+.hub-page .hub-map-card { display: grid; justify-items: center; align-content: start; text-align: center; gap: 8px; padding: 18px 12px; animation: hub-card-in var(--duration-card) var(--hub-ease) var(--stagger, 0ms) backwards; }
 .hub-page .hub-map-card:is(:hover, :focus-visible) { --hover-lift: -6px; box-shadow: 0 16px 32px #0005; }
 .hub-map-card .hub-map-name { font-size: 1.1rem; font-weight: 600; }
 .hub-rate { position: relative; display: grid; place-items: center; width: 108px; height: 108px; border-radius: 50%; background: #0d1c26f2; }
@@ -84,8 +84,7 @@
 .hub-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 16px 0; font-variant-numeric: tabular-nums; }
 .hub-team-layout > *, .hub-player-view > *, .hub-kpis > * { min-width: 0; }
 .hub-kpis .stat { box-shadow: none; border: 0; border-left: 1px solid var(--hub-border); border-radius: 0; background: #08151fe8; padding: 12px 20px; }
-.hub-kpis .stat-value { color: var(--secondary); font-size: clamp(1.8rem, 3.8vw, 4rem); line-height: 1.15; }
-.hub-count { display: inline-block; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.hub-kpis .stat-value { color: var(--secondary); font-size: var(--type-number); line-height: 1.15; }
 .hub-kpis .stat-label, .hub-kpis .stat-sub { color: var(--muted); font-size: .8rem; }
 .hub-summary { max-width: 90ch; padding: 12px 20px; border-left: 2px solid var(--accent); background: #08151fe8; line-height: 1.7; }
 .hub-details { margin: 16px 0; border-top: 1px solid var(--hub-border); }
@@ -95,7 +94,7 @@
 .hub-data-list a { display: block; min-height: 44px; padding: 8px 0; color: var(--accent); overflow-wrap: anywhere; }
 .hub-text-link { display: inline-flex; align-items: center; min-height: 44px; margin-top: 12px; color: var(--accent); text-decoration: underline; text-underline-offset: 4px; }
 .hub-team-map-view { position: relative; isolation: isolate; min-width: 0; }
-.hub-map-backdrop { position: absolute; top: -80px; right: 0; width: min(80%, 820px); aspect-ratio: 1; object-fit: contain; opacity: .13; z-index: -1; pointer-events: none; mask-image: linear-gradient(180deg, #000 35%, transparent); animation: hub-radar-in 700ms var(--hub-ease) both; }
+.hub-map-backdrop { position: absolute; top: -80px; right: 0; width: min(80%, 820px); aspect-ratio: 1; object-fit: contain; opacity: .13; z-index: -1; pointer-events: none; mask-image: linear-gradient(180deg, #000 35%, transparent); animation: hub-radar-in var(--duration-reveal) var(--hub-ease) both; }
 .hub-map-context .hub-kpis { margin-top: 0; }
 .hub-map-context .hub-details { background: #08151fe8; }
 .hub-map-context .hub-details .hub-team-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -106,7 +105,7 @@
 .hub-page .hub-player-card { position: relative; isolation: isolate; display: grid; align-content: end; justify-items: center; gap: 6px; padding: 0 0 12px; border: 0; border-radius: 0; background: transparent; box-shadow: none; animation: hub-portrait-in 600ms var(--hub-ease) var(--stagger, 0ms) backwards; }
 .hub-page .hub-player-card:is(:hover, :active, :focus-visible) { background: transparent; }
 .hub-card-portrait-depth { position: relative; display: block; width: 155%; pointer-events: none; translate: calc(var(--depth-h, 0) * .65px) calc(var(--depth-v, 0) * .65px); }
-.hub-player-card .hub-portrait { transition: filter 300ms var(--hub-ease); filter: brightness(.9); }
+.hub-player-card .hub-portrait { transition: filter var(--duration-control) var(--hub-ease); filter: brightness(.9); }
 .hub-player-card strong { position: relative; color: var(--hub-ink); overflow-wrap: anywhere; font-size: 1.05rem; text-shadow: 0 2px 10px #08151f; }
 .hub-player-card small { position: relative; text-align: center; }
 .hub-roster-light { position: absolute; inset: 0 -15%; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at 50% 70%, color-mix(in srgb, var(--primary) 15%, transparent), transparent 65%); translate: calc(var(--depth-h, 0) * -.5px) calc(var(--depth-v, 0) * -.5px); }
@@ -149,9 +148,9 @@
 .hub-segments button { font-size: .85rem; }
 .hub-segments button[aria-pressed="true"] { color: #08151f; background: var(--accent); border-color: var(--accent); font-weight: 700; }
 .hub-side-switch { flex: 0 1 252px; width: 252px; max-width: 100%; }
-.hub-side-switch > div { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; padding: 4px; border: 1px solid var(--hub-border); border-radius: 100px; background: #08151f; isolation: isolate; }
-.hub-side-indicator { position: absolute; z-index: -1; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 3); background: var(--side-data); border-radius: 100px; transform: translateX(calc(var(--side-index, 0) * 100%)); transition: transform 420ms var(--hub-ease), background-color 420ms var(--hub-ease); }
-.hub-page .hub-side-switch button { min-width: 0; padding: 8px; border-radius: 100px; border-color: transparent; background: transparent; text-align: center; transition: color 300ms var(--hub-ease); }
+.hub-side-switch > div { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; padding: 4px; border: 1px solid var(--hub-border); border-radius: var(--radius-pill); background: #08151f; isolation: isolate; }
+.hub-side-indicator { position: absolute; z-index: -1; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 3); background: var(--side-data); border-radius: var(--radius-pill); transform: translateX(calc(var(--side-index, 0) * 100%)); transition: transform 420ms var(--hub-ease), background-color 420ms var(--hub-ease); }
+.hub-page .hub-side-switch button { min-width: 0; padding: 8px; border-radius: var(--radius-pill); border-color: transparent; background: transparent; text-align: center; transition: color var(--duration-control) var(--hub-ease); }
 .hub-page .hub-side-switch button[aria-pressed="true"] { background: transparent; color: #08151f; }
 .hub-page .hub-side-switch button:hover { box-shadow: inset 0 0 0 1px var(--accent); }
 .hub-analysis-toolbar { display: grid; gap: 12px; margin-bottom: 12px; }
@@ -196,22 +195,14 @@
 .hub-player-view .hub-radar { box-shadow: 0 0 40px -26px var(--side-data); transition: box-shadow 420ms var(--hub-ease); }
 .hub-panel::after, .hub-player-bio::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none; opacity: var(--spot-alpha, 0); background: radial-gradient(360px circle at calc(var(--spot-x, 50) * 1%) calc(var(--spot-y, 50) * 1%), #d4e4f412, transparent 75%); }
 /* Transform and translation have separate owners: springs never overwrite entrances. */
-.hub-page :is(.hub-map-card, .hub-player-card, .hub-kpis .stat, .hub-primary) { position: relative; transform: perspective(900px) rotateX(calc(var(--tilt-v, 0) * 1deg)) rotateY(calc(var(--tilt-h, 0) * 1deg)); scale: var(--hover-scale, 1); translate: calc(var(--magnet-h, 0) * 1px) calc(var(--hover-lift, 0px) + var(--magnet-v, 0) * 1px); transition: border-color 300ms var(--hub-ease), box-shadow 300ms var(--hub-ease), background-color 300ms var(--hub-ease), translate 160ms var(--hub-ease), scale 250ms var(--hub-ease); }
+.hub-page :is(.hub-map-card, .hub-player-card, .hub-kpis .stat, .hub-primary) { position: relative; transform: perspective(900px) rotateX(calc(var(--tilt-v, 0) * 1deg)) rotateY(calc(var(--tilt-h, 0) * 1deg)); scale: var(--hover-scale, 1); translate: calc(var(--magnet-h, 0) * 1px) calc(var(--hover-lift, 0px) + var(--magnet-v, 0) * 1px); transition: border-color var(--duration-control) var(--hub-ease), box-shadow var(--duration-control) var(--hub-ease), background-color var(--duration-control) var(--hub-ease), translate 160ms var(--hub-ease), scale 250ms var(--hub-ease); }
 .hub-page :is(.hub-map-card, .hub-player-card, .hub-kpis .stat)::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: calc(var(--shine-alpha, 0) * .08); background: radial-gradient(180px circle at calc(var(--shine-x, 50) * 1%) calc(var(--shine-y, 50) * 1%), #fff, transparent 80%); }
 .hub-page .hub-map-card { overflow: hidden; isolation: isolate; background: #0d1c26; }
 .hub-map-card > :not(.hub-map-preview) { position: relative; z-index: 1; }
 .hub-map-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; filter: grayscale(.35); mask-image: linear-gradient(#0008, #0003); transition: opacity 400ms var(--hub-ease), scale 600ms var(--hub-ease); scale: 1.08; }
 .hub-map-card:is(:hover, :focus-visible) .hub-map-preview { opacity: .42; scale: 1; }
-.hub-map-card:is(:hover, :focus-visible) .hub-arc { stroke: var(--primary); animation: hub-preview-arc 700ms var(--hub-ease) both; }
+.hub-map-card:is(:hover, :focus-visible) .hub-arc { stroke: var(--primary); animation: hub-preview-arc var(--duration-reveal) var(--hub-ease) both; }
 @keyframes hub-preview-arc { from { stroke-dashoffset: 100; } }
-/* Real digit reels keep a single exact, accessible value throughout. */
-.hub-number-display { display: inline-block; position: relative; line-height: 1.15; }
-.hub-number-reels { display: none; position: absolute; inset: 0; white-space: nowrap; align-items: center; }
-.hub-count[data-rolling="true"] .hub-number-final { visibility: hidden; }
-.hub-count[data-rolling="true"] .hub-number-reels { display: flex; }
-.hub-digit { display: inline-block; height: 1em; width: 1ch; overflow: hidden; line-height: 1; }
-.hub-digit-track { display: flex; flex-direction: column; }
-.hub-digit-track > span { display: block; height: 1em; flex: 0 0 1em; }
 /* Three spatial planes: grid/light, outline, cut-out, then foreground type/dust. */
 .hub-player-view { position: relative; isolation: isolate; }
 .hub-stage-light, .hub-depth-grid, .hub-foreground-dust { position: absolute; inset: 0; pointer-events: none; }

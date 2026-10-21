@@ -1,24 +1,6 @@
-:root {
-  color-scheme: dark;
-  --bg: #0b1220;
-  --bg-elev: #111b2c;
-  --bg-elev-2: #16233a;
-  --line: #23324a;
-  --text: #e8eef7;
-  --muted: #8fa3bd;
-  --accent: #f2b134;
-  --ct: #4da3ff;
-  --smoke: #9aa7b8;
-  --flash: #ffd34d;
-  --molotov: #ff6b3d;
-  --he: #5ad67d;
-  --danger: #ff7a7a;
-  --radius: 14px;
-  --shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
-  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  --sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
+@import "./theme.css";
+@import "./motion.css";
+
 
 * {
   box-sizing: border-box;
@@ -334,12 +316,11 @@ h3 {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: linear-gradient(160deg, var(--bg-elev), #0e1726);
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  transition: border-color var(--duration-control) var(--ease);
 }
 
 .map-card:hover {
   border-color: rgba(242, 177, 52, 0.6);
-  transform: translateY(-2px);
 }
 
 .map-card-head {
@@ -1422,7 +1403,6 @@ input:focus-visible,
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 
 /* Shared analytics hierarchy and keyboard access across all routes. */
-:root { --line: #35465e; --muted: #a2b2c8; --radius: 10px; }
 .topbar-inner, .main, .footer-inner, .footer-detail { max-width: 1440px; }
 .nav-link, .lang-toggle { min-height: 44px; display: inline-flex; align-items: center; }
 :where(a, button, input, select, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
@@ -1433,3 +1413,102 @@ input:focus-visible,
 .skip-link:focus { transform: translateY(0); }
 #main-content:focus { outline: none; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
+/* One product surface, derived from the cinematic team deck. */
+.topbar-inner, .main, .footer-inner, .footer-detail { max-width: 1600px; }
+.topbar { background: #08151fed; border-color: var(--border); }
+.brand-mark { background: var(--primary); color: var(--ink-on-accent); width: 36px; height: 36px; }
+.main { padding-inline: clamp(16px, 3vw, 48px); }
+.footer { background: var(--surface-stage); }
+.site-page { min-width: 0; color: var(--ink); --text: var(--ink); --muted: var(--ink-muted); }
+.site-page .page-head { align-items: center; gap: 16px; margin-bottom: 24px; animation: motion-reveal var(--duration-stage) var(--ease) backwards; }
+.site-page .page-head > div:first-child { min-width: 0; flex: 1 1 500px; }
+.site-page .page-head h1 { font-size: var(--type-title); font-weight: 800; letter-spacing: -.025em; }
+.site-page .eyebrow { color: var(--muted); font: 700 var(--type-label)/1.5 var(--sans); letter-spacing: .16em; }
+.page-context { margin: 12px 0 0; color: var(--muted); max-width: 78ch; font-size: .9rem; line-height: 1.7; }
+.site-page :is(.team-card, .player-card, .lineup-card, .panel) { border-radius: var(--radius-panel); background-color: var(--surface); border-color: var(--border); }
+.site-page :is(.team-card, .player-card) { padding: clamp(20px, 2vw, 28px); }
+.site-page :is(.team-card, .player-card, .lineup-card):is(:hover, :focus-visible) { border-color: var(--accent); }
+.site-page .panel { padding: clamp(20px, 2vw, 28px); }
+.site-page .help { width: 44px; flex: 0 0 44px; }
+.site-page :is(select, input[type="number"]) { border-color: var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+.site-page :is(.hm-check, .hm-lineup-link) { display: inline-flex; align-items: center; }
+.site-page .team-card dl { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.site-page .team-card dt { overflow-wrap: anywhere; }
+.site-page .result-count { color: var(--tertiary); }
+.site-page .section-title { margin: 0 0 16px; font-size: var(--type-section); }
+.site-page .team-card h2, .site-page .player-card h3 { font-size: clamp(1.25rem, 2vw, 1.8rem); }
+.site-page :is(.team-grid, .player-grid) { gap: 16px; }
+.site-page .stat { border-color: var(--border); border-radius: var(--radius-sm); background: var(--surface-stage); }
+.site-page .stat-value, .site-page .team-card dd { color: var(--secondary); }
+.key-strip { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 24px; padding: 0; }
+.key-strip > div { flex: 1 1 160px; min-width: 0; padding: 12px 20px; border-left: 1px solid var(--border); background: var(--surface-stage); }
+.key-strip dt { color: var(--muted); font-size: .8rem; }
+.key-strip dd { margin: 4px 0 0; color: var(--secondary); font-size: var(--type-number); line-height: 1.15; }
+.site-page :is(button, select, input:not([type="checkbox"]):not([type="range"]), summary) { min-height: 44px; }
+.site-page :is(.button, .help, .hm-check, .hm-chip, .role-chip, .hm-lineup-link) { min-height: 44px; }
+.site-page .button { display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border-color: var(--accent); background: var(--accent); color: var(--ink-on-accent); }
+.site-page .button-ghost { color: var(--text); background: var(--surface); border-color: var(--border); }
+.site-page .button-ghost:hover { border-color: var(--accent); background: var(--surface-hover); }
+.site-page :is(.segmented button, .tabs button, .hm-buttons button) { border-radius: var(--radius-pill); background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 14px; transition: background-color var(--duration-control) var(--ease), border-color var(--duration-control) var(--ease); }
+.site-page :is(.segmented button, .tabs button, .hm-buttons button):hover { border-color: var(--accent); background: var(--surface-hover); }
+.site-page :is(.segmented button.is-active, .tabs button[aria-selected="true"], .hm-buttons button[aria-pressed="true"]) { background: var(--accent); color: var(--ink-on-accent); border-color: var(--accent); box-shadow: none; font-weight: 700; }
+.site-page .chip { border-radius: var(--radius-pill); }
+.site-page .chip-side-t, .site-page .side-t .stat-value, .site-page .team-card dl > div:first-child dd { color: var(--side-t); }
+.site-page .chip-side-ct, .site-page .side-ct .stat-value, .site-page .team-card dl > div:nth-child(2) dd { color: var(--side-ct); }
+.site-page .side-t .bar-fill { background: var(--side-t); }
+.site-page .side-ct .bar-fill { background: var(--side-ct); }
+.site-page .team-block { margin-block: 32px; }
+.site-page .team-block > h2 { font-size: var(--type-section); margin-bottom: 16px; }
+.site-page .lineup-card.is-selected { background: var(--surface-hover); box-shadow: inset 3px 0 var(--accent); }
+.site-page .practice-cmd { color: var(--muted); border-color: var(--border); }
+.site-page :is(.radar-panel, .filters) { background: var(--surface); border-color: var(--border); border-radius: var(--radius-panel); }
+/* Deck cover: a neutral scrim protects text over any map's radar. */
+.home .hero { position: relative; isolation: isolate; max-width: none; padding: clamp(24px, 4vw, 60px) 0 32px; animation: motion-reveal var(--duration-reveal) var(--ease) backwards; }
+.home .hero h1 { max-width: 18ch; font-size: var(--type-cover); line-height: 1.08; font-weight: 800; }
+.cover-light { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at 30% 30%, #f2b13418, transparent 65%), repeating-linear-gradient(90deg, transparent 0 79px, #b6c5d207 79px 80px); }
+.home .map-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.home .map-card { position: relative; isolation: isolate; overflow: hidden; min-height: 310px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface-stage); }
+.home .map-card > :not(.map-card-radar) { position: relative; z-index: 1; }
+.home .map-card-radar { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .14; filter: grayscale(.35); transition: opacity var(--duration-control) var(--ease); }
+.home .map-card:is(:hover, :focus-visible) { border-color: var(--accent); }
+.home .map-card:is(:hover, :focus-visible) .map-card-radar { opacity: .2; }
+.home .map-card h2 { font-size: clamp(1.4rem, 2.1vw, 2rem); }
+.home :is(.map-code, .mini-stats, .map-card-cta) { width: fit-content; max-width: 100%; padding: 4px 6px; border-radius: 4px; background: #08151ff5; }
+.home .mini-stats { width: 100%; margin-top: auto; }
+.home .mini-stats dd { color: var(--secondary); }
+.home .map-card-cta { color: var(--accent); margin-top: 12px; }
+.home .map-code { color: var(--muted); }
+.home-entries { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 36px 0 0; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); }
+.home-entry { position: relative; min-width: 0; padding: 28px; border-right: 1px solid var(--border); }
+.home-entry:last-child { border-right: 0; }
+.home-entry h2 { font-size: 1.4rem; }
+.home-entry p { color: var(--muted); font-size: .9rem; }
+.entry-arrow { color: var(--accent); font-size: 1.8rem; }
+.home-entry:hover .entry-arrow { color: var(--secondary); }
+@media (max-width: 1100px) { .home .map-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .home .map-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-entries { grid-template-columns: minmax(0, 1fr); }
+  .home-entry { border-right: 0; border-bottom: 1px solid var(--border); }
+  .home-entry:last-child { border-bottom: 0; }
+  .site-page .page-head > div:first-child { flex-basis: 100%; }
+  .site-page .page-head h1 { font-size: 2rem; }
+  .key-strip { gap: 12px; }
+  .key-strip > div { flex-basis: 120px; padding: 12px; }
+}
+@media (max-width: 480px) {
+  .home .map-grid { grid-template-columns: minmax(0, 1fr); }
+  .home .map-card { min-height: 270px; }
+  .site-page :is(.team-grid, .player-grid) { grid-template-columns: minmax(0, 1fr); }
+  .home .hero h1 { font-size: 2.7rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-page .page-head, .home .hero { animation: none; }
+  .home .map-card-radar { filter: none; }
+}
+.site-page button { min-width: 44px; }
+.site-page input[type="range"] { min-height: 44px; }
+.site-page .role-chip { align-items: center; }
+.site-page .segmented button[data-side="T"].is-active, .team-page .tabs #tab-T[aria-selected="true"] { background: var(--side-t); border-color: var(--side-t); color: var(--ink-on-accent); }
+.site-page .segmented button[data-side="CT"].is-active, .team-page .tabs #tab-CT[aria-selected="true"] { background: var(--side-ct); border-color: var(--side-ct); color: var(--ink-on-accent); }

@@ -1,4 +1,7 @@
-import { Fragment, useCallback, useEffect, useMemo } from "react";
+import { Reveal, Stagger } from "../components/Motion";
+import { teamTheme } from "../theme";
+import { PageContext, PageSurface, SampleStrip } from "../components/Page";
+import { Fragment, useCallback, useEffect, useMemo, type CSSProperties } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import HeatmapCanvas from "../components/HeatmapCanvas";
 import MapSwitcher from "../components/MapSwitcher";
@@ -27,8 +30,10 @@ function choice<T extends string>(raw: string | null, options: readonly T[], fal
 }
 
 function PlayerCard({
-  player, summary, map, phases, showHolds, onShowHolds,
+  player, summary, map, phases, showHolds, onShowHolds, className = "", style,
 }: {
+  className?: string;
+  style?: CSSProperties;
   player: RosterEntry;
   summary: PlayerSideSummary | undefined;
   map: string;
@@ -38,7 +43,7 @@ function PlayerCard({
 }) {
   const color = playerColor(player.color).deep;
   return (
-    <article className="hm-player-card" style={{ borderColor: color }}>
+    <article className={`hm-player-card ${className}`} data-motion-tilt style={{ ...style, borderColor: color }}>
       <h2><span className="hm-swatch" style={{ backgroundColor: color }} aria-hidden="true" />{player.name}</h2>
       {!summary ? <p>{t("heatmap.no_data")}</p> : (
         <>
@@ -195,11 +200,12 @@ function HeatmapView({ entry, team, baseline }: {
   const captionLabel = view === "utility" && util !== "all" ? t(`heatmap.util.${util}`) : t(`heatmap.view.${view}`);
 
   return (
-    <div className="hm-page">
+    <PageSurface className="hm-page" style={teamTheme(entry.slug)} data-side={side}>
       <header className="page-head">
-        <h1>{entry.team} · {t("heatmap.title")}</h1>
+        <div><p className="eyebrow">{team.map}</p><h1>{entry.team} · {t("heatmap.title")}</h1><PageContext>{t("site.team_heatmap_context")}</PageContext></div>
         <Link to="/heatmaps" className="button button-ghost">{t("heatmap.back")}</Link>
       </header>
+      <SampleStrip matches={entry.maps.find((map) => map.map === team.map)?.n_matches} players={selected.length} maps={entry.maps.length} />
       <MapSwitcher maps={entry.maps} map={team.map} onChange={changeMap} />
       <div className="hm-workspace">
         <div className="hm-controls">
@@ -249,7 +255,7 @@ function HeatmapView({ entry, team, baseline }: {
           <p className="hm-help">{t("heatmap.help")}</p>
         </div>
         <figure className="hm-figure">
-          <HeatmapCanvas map={team.map} level={level} overlays={overlays} markers={markers} />
+          <Reveal className="motion-radar" key={`${team.map}:${level}`}><HeatmapCanvas map={team.map} level={level} overlays={overlays} markers={markers} /></Reveal>
           <figcaption>
             {selected.length ? selected.map((player) => (
               <div key={player.steamid} className="hm-caption">
@@ -273,13 +279,13 @@ function HeatmapView({ entry, team, baseline }: {
           </Fragment>
         )) : <p>{t("heatmap.no_data")}</p>}
       </section>
-      <div className="hm-player-grid">
+      <Stagger className="hm-player-grid">
         {selected.map((player) => (
           <PlayerCard key={player.steamid} player={player} summary={team.summary[player.steamid]?.[side]} map={team.map} phases={phases}
             showHolds={holdsIds.includes(player.steamid)} onShowHolds={(checked) => update({ holds: (checked ? [...holdsIds, player.steamid] : holdsIds.filter((id) => id !== player.steamid)).join(",") })} />
         ))}
-      </div>
-    </div>
+      </Stagger>
+    </PageSurface>
   );
 }
 
@@ -289,7 +295,11 @@ function MapData({ entry, map }: { entry: HeatmapTeamIndexEntry; map: string }) 
     return { team, baseline };
   }, [map, entry.slug]);
   if (loading) return <Loading />;
-  if (error || !data) return <div className="hm-page"><Link to="/heatmaps">{t("heatmap.back")}</Link><ErrorNotice error={error ?? new Error(t("heatmap.no_data"))} /></div>;
+  if (error || !data) return <PageSurface className="hm-page" style={teamTheme(entry.slug)}>
+    <header className="page-head"><div><p className="eyebrow">{map}</p><h1>{entry.team} · {t("heatmap.title")}</h1><PageContext>{t("site.team_heatmap_context")}</PageContext></div>
+      <Link to="/heatmaps" className="button button-ghost">{t("heatmap.back")}</Link></header>
+    <ErrorNotice error={error ?? new Error(t("heatmap.no_data"))} />
+  </PageSurface>;
   return <HeatmapView entry={entry} team={data.team} baseline={data.baseline} />;
 }
 
@@ -302,7 +312,11 @@ export default function TeamHeatmap() {
   if (error) return <ErrorNotice error={error} />;
   const entry = teams?.find((team) => team.slug === slug);
   if (!entry || !entry.maps.length) return (
-    <div className="hm-page"><p>{t(entry ? "heatmap.no_data" : "heatmap.team_not_found")}</p><Link to="/heatmaps">{t("heatmap.back")}</Link></div>
+    <PageSurface className="hm-page" style={teamTheme(slug)}>
+      <header className="page-head"><div><p className="eyebrow">{t("site.eyebrow")}</p><h1>{t("heatmap.title")}</h1><PageContext>{t("site.team_heatmap_context")}</PageContext></div>
+        <Link to="/heatmaps" className="button button-ghost">{t("heatmap.back")}</Link></header>
+      <p role="status">{t(entry ? "heatmap.no_data" : "heatmap.team_not_found")}</p>
+    </PageSurface>
   );
   const map = entry.maps.find((item) => item.map === params.get("map"))?.map ?? entry.maps[0].map;
   return <MapData key={`${slug}:${map}`} entry={entry} map={map} />;

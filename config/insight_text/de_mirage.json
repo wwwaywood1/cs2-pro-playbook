@@ -1,128 +1,180 @@
 {
  "9z": {
-  "zh": "T 方分兵进点占 87%，高于其他队伍的 61%；拖后进攻仅占 7%，低于其他队伍的 26%，更少把进攻留到后段。",
-  "en": "The T side favors split hits at 87% versus the other teams' 61%. Late hits account for just 7% versus their 26%, showing less reliance on delayed attacks.",
+  "zh": "T 方拖后进攻占 8%，低于其他队伍的 26%。T 方最常用丛林烟和楼梯火爆弹 A 点，5 次赢下 1 次。",
+  "en": "Late hits account for 8% of T gun rounds versus 26% for other teams. The go-to A execute uses Jungle smoke and a Stairs molotov, winning 1 of 5 attempts.",
   "facts": [
-   "t_split",
-   "t_tempo_late"
+   "t_tempo_late",
+   "t_signature_recipe"
   ],
-  "fingerprint": "5f251a1df0a0"
+  "fingerprint": "61fda65464e5"
  },
  "b8": {
-  "zh": "T 方先假打再转点仅占 2%，低于其他队伍的 16%。最常用的 A 点爆弹为丛林烟、楼梯烟和 A二楼脚手架处的火，7 次赢下 4 次。",
-  "en": "The T side rarely fakes before the hit: 2% versus the other teams' 16%. Its go-to A execute uses Jungle smoke, Stairs smoke and a Palace scaffolding molotov, winning 4 of 7 attempts.",
+  "zh": "T 方先假打再转点占 2%，低于其他队伍的 16%。T 方最常用丛林烟、楼梯烟、警家烟和 A二楼脚手架火爆弹 A 点，8 次赢下 5 次。",
+  "en": "The T side fakes before the hit on 2% of attacks versus 16% for other teams. The go-to A execute uses Jungle, Stairs and CT smokes plus a Palace scaffolding molotov, winning 5 of 8 attempts.",
   "facts": [
    "t_fake",
    "t_signature_recipe"
   ],
-  "fingerprint": "46604c96d7bc"
+  "fingerprint": "03d502c4bcf0"
  },
  "betboom": {
-  "zh": "BETBOOM 的 T 方明显偏向 A 点：进攻 A 点占 91%，高于其他队伍的 65%；B 点仅占 9%，低于其他队伍的 35%。",
-  "en": "BETBOOM's T side heavily favors A, attacking it in 91% of rounds versus the other teams' 65%. B accounts for just 9% versus their 35%.",
+  "zh": "T 方先假打再转点占 33%，高于其他队伍的 15%。T 方最常由 Boombl4 摸边，4 次进攻时他在另一侧或远离进攻点。",
+  "en": "The T side fakes before the hit on 33% of attacks versus 15% for other teams. Boombl4 is the usual T lurker, on the other side or far from the hit on 4 attacks.",
   "facts": [
-   "t_site_A",
-   "t_site_B"
+   "t_fake",
+   "t_main_lurker"
   ],
-  "fingerprint": "06cbb76885a4"
+  "fingerprint": "522f87536ca6"
+ },
+ "big": {
+  "zh": "T 方最常用丛林烟、楼梯烟、警家烟和 A二楼脚手架火爆弹 A 点，4 次赢下 1 次。",
+  "en": "The go-to A execute uses Jungle, Stairs and CT smokes plus a Palace scaffolding molotov, winning 1 of 4 attempts.",
+  "facts": [
+   "t_signature_recipe"
+  ],
+  "fingerprint": "e3f38adc39e1"
+ },
+ "falcons": {
+  "zh": "T 方分兵进点占 73%，高于其他队伍的 61%。T 方最常用丛林烟、楼梯烟、警家烟和 A二楼脚手架火爆弹 A 点，15 次赢下 11 次。",
+  "en": "The T side uses split hits on 73% of attacks versus 61% for other teams. The go-to A execute uses Jungle, Stairs and CT smokes plus a Palace scaffolding molotov, winning 11 of 15 attempts.",
+  "facts": [
+   "t_split",
+   "t_signature_recipe"
+  ],
+  "fingerprint": "27923d76717e"
+ },
+ "flc": {
+  "zh": "T 方快攻占 0%，低于其他队伍的 16%。",
+  "en": "Fast hits account for 0% of T gun rounds versus 16% for other teams.",
+  "facts": [
+   "t_tempo_fast"
+  ],
+  "fingerprint": "3c03e7f94d70"
  },
  "furia": {
-  "zh": "FURIA 的 T 方有摸边的进攻占 44%，高于其他队伍的 23%，进攻时更常保留侧翼活动。",
-  "en": "FURIA's T side includes a lurker on 44% of hits versus the other teams' 23%, making activity away from the main hit a more frequent feature.",
-  "facts": [
-   "t_lurk"
-  ],
-  "fingerprint": "a00405323716"
- },
- "lgcy": {
-  "zh": "LGCY 的 CT 方在进攻开始后及时回防的回合仅占 7%，低于其他队伍的 32%，及时回防较少。",
-  "en": "LGCY's CT side rotates in time after a hit begins in just 7% of rounds versus the other teams' 32%, with timely support less common.",
-  "facts": [
-   "ct_rotate"
-  ],
-  "fingerprint": "004a3b1cd0cb"
- },
- "m80": {
-  "zh": "T 方先假打再转点占 30%，高于其他队伍的 14%，更常在进点前用假打改变进攻方向。",
-  "en": "The T side fakes before the hit in 30% of rounds versus the other teams' 14%, more often changing the attack direction after a fake.",
-  "facts": [
-   "t_fake"
-  ],
-  "fingerprint": "2888093574d2"
- },
- "mibr": {
-  "zh": "MIBR 的 T 方最常用 A 点爆弹，以丛林烟、楼梯火配合，6 次进攻赢下 3 次。",
-  "en": "MIBR's T side favors an A execute with Jungle smoke and Stairs molotov, winning 3 of 6 attempts.",
-  "facts": [
-   "t_signature_recipe"
-  ],
-  "fingerprint": "88cd076265f7"
- },
- "mnglz": {
-  "zh": "MNGLZ 的 T 方最常用 A 点爆弹，以丛林烟、楼梯火配合，5 次进攻赢下 1 次。",
-  "en": "MNGLZ's T side favors an A execute with Jungle smoke and Stairs molotov, winning 1 of 5 attempts.",
-  "facts": [
-   "t_signature_recipe"
-  ],
-  "fingerprint": "0d8a6a34cec8"
- },
- "monte": {
-  "zh": "Monte 的 T 方最常由 AZUWU 摸边，7 次进攻时他在另一侧或远离进攻点。",
-  "en": "Monte's T side usually has AZUWU lurking, with him on the other side or away from the hit on 7 attacks.",
+  "zh": "T 方最常由 YEKINDAR 摸边，4 次进攻时他在另一侧或远离进攻点。",
+  "en": "YEKINDAR is the usual T lurker, on the other side or far from the hit on 4 attacks.",
   "facts": [
    "t_main_lurker"
   ],
-  "fingerprint": "8f896318f3bf"
+  "fingerprint": "5e990d9b9f98"
+ },
+ "g2": {
+  "zh": "T 方快攻占 26%，高于其他队伍的 15%。",
+  "en": "Fast hits account for 26% of T gun rounds versus 15% for other teams.",
+  "facts": [
+   "t_tempo_fast"
+  ],
+  "fingerprint": "d5e03b715eff"
+ },
+ "lgcy": {
+  "zh": "开局 20 秒的 CT 默认站位为 A3 M1 B1，占 25% 的枪局，胜率 100%。进攻开始后 CT 及时回防占 6%，低于其他队伍的 31%。",
+  "en": "At 20 s, the default CT setup is A3 M1 B1, used in 25% of gun rounds with a win rate of 100%. CT rotations arrive in time in 6% of rounds versus 31% for other teams.",
+  "facts": [
+   "ct_default_setup",
+   "ct_rotate"
+  ],
+  "fingerprint": "9501f1ac74d3"
+ },
+ "m80": {
+  "zh": "T 方先假打再转点占 30%，高于其他队伍的 15%。",
+  "en": "The T side fakes before the hit on 30% of attacks versus 15% for other teams.",
+  "facts": [
+   "t_fake"
+  ],
+  "fingerprint": "615cfe6a5e7b"
+ },
+ "mibr": {
+  "zh": "T 方有人摸边的进攻占 11%，低于其他队伍的 26%。T 方最常用丛林烟和楼梯火爆弹 A 点，6 次赢下 3 次。",
+  "en": "The T side includes a lurker on 11% of hits versus 26% for other teams. The go-to A execute uses Jungle smoke and a Stairs molotov, winning 3 of 6 attempts.",
+  "facts": [
+   "t_lurk",
+   "t_signature_recipe"
+  ],
+  "fingerprint": "4e1de159486d"
+ },
+ "mnglz": {
+  "zh": "T 方最常用丛林烟和楼梯火爆弹 A 点，6 次赢下 1 次。",
+  "en": "The go-to A execute uses Jungle smoke and a Stairs molotov, winning 1 of 6 attempts.",
+  "facts": [
+   "t_signature_recipe"
+  ],
+  "fingerprint": "0c74f4bef5f9"
+ },
+ "monte": {
+  "zh": "T 方最常由 AZUWU 摸边，9 次进攻时他在另一侧或远离进攻点。",
+  "en": "AZUWU is the usual T lurker, on the other side or far from the hit on 9 attacks.",
+  "facts": [
+   "t_main_lurker"
+  ],
+  "fingerprint": "26497e09b163"
  },
  "mouz": {
-  "zh": "MOUZ 的 CT 方在进攻开始后及时回防的回合占 50%，高于其他队伍的 30%，更常及时补上防守。",
-  "en": "MOUZ's CT side rotates in time after a hit begins in 50% of rounds versus the other teams' 30%, bringing timely defensive support more often.",
+  "zh": "进攻开始后 CT 及时回防占 52%，高于其他队伍的 29%。",
+  "en": "CT rotations arrive in time in 52% of rounds versus 29% for other teams.",
   "facts": [
    "ct_rotate"
   ],
-  "fingerprint": "1f1aee3577d3"
+  "fingerprint": "1e343cad6c0d"
+ },
+ "natus-vincere": {
+  "zh": "T 方分兵进点占 81%，高于其他队伍的 62%。T 方有人摸边的进攻占 44%，高于其他队伍的 25%。",
+  "en": "The T side uses split hits on 81% of attacks versus 62% for other teams. The T side includes a lurker on 44% of hits versus 25% for other teams.",
+  "facts": [
+   "t_split",
+   "t_lurk"
+  ],
+  "fingerprint": "bcdc6caabb58"
  },
  "pain": {
-  "zh": "paiN 的 T 方快攻占 37%，高于其他队伍的 17%，进攻节奏更积极。CT 默认站位 A3 M1 B1 占 28% 的枪局，胜率 67%。",
-  "en": "paiN's T side fast-hits in 37% of rounds versus the other teams' 17%, favoring a quicker pace. Its default CT setup A3 M1 B1 covers 28% of gun rounds with a 67% win rate.",
+  "zh": "T 方快攻占 37%，高于其他队伍的 16%。开局 20 秒的 CT 默认站位为 A3 M1 B1，占 28% 的枪局，胜率 67%。",
+  "en": "Fast hits account for 37% of T gun rounds versus 16% for other teams. At 20 s, the default CT setup is A3 M1 B1, used in 28% of gun rounds with a win rate of 67%.",
   "facts": [
    "t_tempo_fast",
    "ct_default_setup"
   ],
-  "fingerprint": "3d237b02b160"
+  "fingerprint": "6a7f8a89a9a9"
  },
  "parivision": {
-  "zh": "PARIVISION 的 CT 方开局前压占 69%，高于其他队伍的 39%，防守更常主动向前展开。",
-  "en": "PARIVISION's CT side pushes early in 69% of rounds versus the other teams' 39%, more often taking a forward defensive posture.",
+  "zh": "CT 开局有人前压的回合占 69%，高于其他队伍的 38%。",
+  "en": "The CT side pushes early in 69% of gun rounds versus 38% for other teams.",
   "facts": [
    "ct_forward"
   ],
-  "fingerprint": "c8a0e4f29939"
+  "fingerprint": "1a0b9cd1b094"
  },
  "spirit": {
-  "zh": "Spirit 的 T 方最常用丛林烟、楼梯烟和 A二楼脚手架处的火爆弹 A 点，7 次赢下 4 次。CT 开局前压仅占 12%，低于其他队伍的 42%。",
-  "en": "Spirit's go-to T execute hits A with Jungle smoke, Stairs smoke and a Palace scaffolding molotov, winning 4 of 7 attempts. Its CT side pushes early in just 12% of rounds versus the other teams' 42%.",
+  "zh": "CT 开局有人前压的回合占 12%，低于其他队伍的 41%。",
+  "en": "The CT side pushes early in 12% of gun rounds versus 41% for other teams.",
   "facts": [
-   "t_signature_recipe",
    "ct_forward"
   ],
-  "fingerprint": "34537b1bfd22"
+  "fingerprint": "b1062c6e733b"
  },
  "the-mongolz": {
-  "zh": "The MongolZ 的 CT 默认站位 A3 M1 B1 占 28% 的枪局，胜率 57%。",
-  "en": "The MongolZ's default CT setup A3 M1 B1 covers 28% of gun rounds with a 57% win rate.",
+  "zh": "开局 20 秒的 CT 默认站位为 A3 M1 B1，占 30% 的枪局，胜率 73%。",
+  "en": "At 20 s, the default CT setup is A3 M1 B1, used in 30% of gun rounds with a win rate of 73%.",
   "facts": [
    "ct_default_setup"
   ],
-  "fingerprint": "a578550fbd4e"
+  "fingerprint": "4c17a9d7e979"
  },
  "tyloo": {
-  "zh": "TYLOO 的 T 方拖后进攻仅占 4%，低于其他队伍的 26%；CT 开局前压占 67%，高于其他队伍的 39%。",
-  "en": "TYLOO's T side uses late hits in just 4% of rounds versus the other teams' 26%. Its CT side pushes early in 67% versus their 39%, showing frequent early defensive aggression.",
+  "zh": "T 方拖后进攻占 8%，低于其他队伍的 26%。T 方有人摸边的进攻占 8%，低于其他队伍的 26%。CT 开局有人前压的回合占 68%，高于其他队伍的 38%。",
+  "en": "Late hits account for 8% of T gun rounds versus 26% for other teams. The T side includes a lurker on 8% of hits versus 26% for other teams. The CT side pushes early in 68% of gun rounds versus 38% for other teams.",
   "facts": [
    "t_tempo_late",
+   "t_lurk",
    "ct_forward"
   ],
-  "fingerprint": "8835f924c4fb"
+  "fingerprint": "9dcb8d091c75"
+ },
+ "vitality": {
+  "zh": "T 方最常用丛林烟和楼梯火爆弹 A 点，4 次赢下 3 次。",
+  "en": "The go-to A execute uses Jungle smoke and a Stairs molotov, winning 3 of 4 attempts.",
+  "facts": [
+   "t_signature_recipe"
+  ],
+  "fingerprint": "147bf77e5c59"
  }
 }

@@ -534,5 +534,29 @@
     "lurk_scope": "有进攻落点的 T 持枪局",
     "forward_scope": "CT 持枪局",
     "spot_scope": "当前楼层的常用聚类落点；每方仅保留最常用的落点，并非全部投掷。"
+  },
+  "site": {
+    "eyebrow": "职业赛场 · 战术档案",
+    "home_context": "从一张地图开始，看懂职业战队的选择，把配合带进自己的回合。",
+    "teams_context": "比较同图战队的攻防表现，再进入战队的比赛与打法档案。",
+    "team_context": "从比赛样本到攻防细节，读懂这支战队在本图的选择。",
+    "players_context": "结合角色线索、对枪与道具数据，了解每位选手的分工。",
+    "lineups_context": "按阵营、落点与投掷方式筛选，找到可以直接练习的职业道具。",
+    "tactics_context": "先看关键数字，再沿地图上的道具落点拆解职业配合。",
+    "heatmaps_context": "选择战队与地图，追踪选手的站位、交火和道具分布。",
+    "team_heatmap_context": "切换地图、阵营与选手，查看有样本依据的回合分布。",
+    "teams_entry": "走进战队档案",
+    "teams_entry_context": "地图表现、选手分工与攻防习惯。",
+    "tactics_entry": "拆解职业配合",
+    "tactics_entry_context": "围绕一张地图，读懂进攻与防守。",
+    "lineups_entry": "把道具带进练习",
+    "lineups_entry_context": "筛选职业落点，复制指令即可复现。",
+    "results": "当前结果",
+    "reliable_teams": "样本充足的战队",
+    "rounds": "回合样本",
+    "roster": "在册选手",
+    "selected_players": "已选选手",
+    "awaiting_sample": "暂无比赛样本",
+    "map_coverage": "覆盖地图"
   }
 }

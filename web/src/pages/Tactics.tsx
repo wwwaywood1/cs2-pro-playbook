@@ -1,3 +1,7 @@
+import CountUp from "../components/CountUp";
+import { Reveal } from "../components/Motion";
+import type { CSSProperties } from "react";
+import { PageContext, PageSurface } from "../components/Page";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import GrenadeIcon, { GrenadeGlyph } from "../components/GrenadeIcon";
@@ -313,7 +317,7 @@ function RecipeDetails({ recipe, entries }: { recipe: Recipe; entries: RecipeSpo
 }
 
 function KeyNumber({ label, value, context, primary = false }: { label: string; value: string; context: string; primary?: boolean }) {
-  return <div className={`tactics-key${primary ? " is-primary" : ""}`}><dt>{label}</dt><dd>{value}</dd><p>{context}</p></div>;
+  return <div className={`tactics-key${primary ? " is-primary" : ""}`}><dt>{label}</dt><dd><CountUp text={value} /></dd><p>{context}</p></div>;
 }
 
 export default function Tactics() {
@@ -361,9 +365,9 @@ export default function Tactics() {
   const topRecipe = [...data.recipes].sort((a, b) => b.n_rounds - a.n_rounds || a.id.localeCompare(b.id))[0];
   const topRecipeName = topRecipe ? recipeSpots(map, topRecipe, spotsById, lang).filter((entry) => entry.core).map((entry) => entry.name).join(" + ") : t("tactics.no_data");
   const scale = meta && Number.isFinite(meta.radar.scale) && meta.radar.scale > 0 ? meta.radar.scale : undefined;
-  return <div className="tactics-page">
+  return <PageSurface className="tactics-page" data-side={side}>
     <header className="page-head">
-      <div><p className="eyebrow">{map}</p><h1>{meta?.display_name ?? map} · {t("ui.nav_tactics")}</h1></div>
+      <div><p className="eyebrow">{map}</p><h1>{meta?.display_name ?? map} · {t("ui.nav_tactics")}</h1><PageContext>{t("site.tactics_context")}</PageContext></div>
       <div className="segmented tactics-sides" role="group" aria-label={t("ui.filter_side")}>
         {(["T", "CT"] as const).map((value) => <button key={value} type="button" className={side === value ? "is-active" : ""} aria-pressed={side === value} onClick={() => update("side", value)}>{t(`tactics.side_${value}`)}</button>)}
       </div>
@@ -382,9 +386,9 @@ export default function Tactics() {
     </dl>
     <div className="tactics-workspace">
       <aside className="tactics-map-panel">
-        <RecipeRadar key={`${map}:${side}`} map={map} scale={scale} spots={side === "T" ? entries : ctSpots} title={side === "T" ? t("tactics.selected_utility") : t("tactics.ct_utility")}
+        <Reveal className="motion-radar" key={`${map}:${side}`}><RecipeRadar key={`${map}:${side}`} map={map} scale={scale} spots={side === "T" ? entries : ctSpots} title={side === "T" ? t("tactics.selected_utility") : t("tactics.ct_utility")}
           site={side === "T" ? shown?.site : site === "all" ? undefined : site}
-          selectionLabel={side === "T" && shown ? `${siteLabel(shown.site)} · ${entries.filter((entry) => entry.core).map((entry) => entry.name).join(" + ")}` : undefined} />
+          selectionLabel={side === "T" && shown ? `${siteLabel(shown.site)} · ${entries.filter((entry) => entry.core).map((entry) => entry.name).join(" + ")}` : undefined} /></Reveal>
       </aside>
       <section className="tactics-browser" aria-labelledby="tactics-recipes-title">
         <h2 id="tactics-recipes-title">{t(side === "T" ? "tactics.recipes" : "tactics.setups")}</h2>
@@ -396,11 +400,11 @@ export default function Tactics() {
         </div>
         {side === "T" ? <div className="tactics-recipes" onMouseLeave={() => setPreview(null)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setPreview(null); }}>
           <p className="muted tactics-help">{t("tactics.recipe_count", { n: fmtInt(recipes.length) })} · {t("tactics.preview_hint")}</p>
-          {recipes.length ? recipes.map((recipe) => {
+          {recipes.length ? recipes.map((recipe, index) => {
             const rowEntries = recipeSpots(map, recipe, spotsById, lang);
             const active = recipe.id === selected?.id;
             const open = active && collapsedRecipe !== recipe.id;
-            return <article className={`tactics-recipe${active ? " is-selected" : ""}`} key={recipe.id} onMouseEnter={() => setPreview(recipe.id)} onFocus={() => setPreview(recipe.id)}>
+            return <article className={`tactics-recipe motion-reveal${active ? " is-selected" : ""}`} data-motion-tilt={active || undefined} style={{ "--stagger": `${Math.min(index * 55, 385)}ms` } as CSSProperties} key={recipe.id} onMouseEnter={() => setPreview(recipe.id)} onFocus={() => setPreview(recipe.id)}>
               <h3><button type="button" className="tactics-recipe-toggle" aria-expanded={open} aria-controls={`details-${recipe.id}`} onClick={() => {
                 setCollapsedRecipe(open ? recipe.id : null); setPreview(null); update("recipe", recipe.id);
               }}><span className="tactics-recipe-heading"><span className="tactics-chevron" aria-hidden="true">{open ? "▾" : "▸"}</span><span className="tactics-site">{siteLabel(recipe.site)}</span><RecipeTitle entries={rowEntries.filter((entry) => entry.core)} /></span>
@@ -414,7 +418,7 @@ export default function Tactics() {
           {setups.map((setup, index) => {
             const active = setup.value === currentSetup?.value;
             const open = active && collapsedSetup !== setup.value;
-            return <article className={`tactics-recipe${active ? " is-selected" : ""}`} key={setup.value}>
+            return <article className={`tactics-recipe motion-reveal${active ? " is-selected" : ""}`} data-motion-tilt={active || undefined} style={{ "--stagger": `${Math.min(index * 55, 385)}ms` } as CSSProperties} key={setup.value}>
               <h3><button type="button" className="tactics-recipe-toggle" aria-expanded={open} aria-controls={`setup-${index}`} onClick={() => { setSetupChoice(setup.value); setCollapsedSetup(open ? setup.value : null); }}>
                 <span className="tactics-recipe-heading"><span aria-hidden="true">{open ? "▾" : "▸"}</span>{setup.value}</span>
                 <span className="tactics-row-meta">{t("tactics.setup_meta", { rounds: fmtInt(setup.rounds), share: fmtPct(setup.share), win: fmtPct(setup.win_rate) })}</span>
@@ -429,5 +433,5 @@ export default function Tactics() {
     <details className="tactics-more" key={`${map}:${side}`}><summary>{t("tactics.more_data")}</summary>
       {side === "T" ? <TOverview data={data.t_overview} /> : <CTOverview data={data.ct_overview} />}
     </details>
-  </div>;
+  </PageSurface>;
 }

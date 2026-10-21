@@ -1,8 +1,20 @@
+import type { CSSProperties, ReactNode } from "react";
+import { PageContext, PageSurface, MetricStrip } from "../components/Page";
 import { Link } from "react-router-dom";
 import { ErrorNotice, Loading } from "../components/Status";
 import { getIndex, useData } from "../data";
-import { fmtInt } from "../format";
+import CountUp from "../components/CountUp";
+import { ParallaxLayer, Reveal, Spotlight, Stagger } from "../components/Motion";
 import { t, useLang } from "../i18n";
+
+const MAP_CATALOG = [
+  ["de_ancient", "Ancient"], ["de_anubis", "Anubis"], ["de_dust2", "Dust II"],
+  ["de_inferno", "Inferno"], ["de_mirage", "Mirage"], ["de_nuke", "Nuke"], ["de_overpass", "Overpass"],
+] as const;
+function MapTile({ map, available, children, className = "", style }: { map: string; available: boolean; children: ReactNode; className?: string; style?: CSSProperties }) {
+  const props = { className: `map-card ${className}`, style, "data-motion-tilt": true };
+  return available ? <Link {...props} to={`/${map}/lineups`}>{children}</Link> : <article {...props}>{children}</article>;
+}
 
 export default function Home() {
   useLang();
@@ -13,25 +25,34 @@ export default function Home() {
     return <ErrorNotice error={error ?? new Error("index.json is empty")} />;
   }
 
+  const maps = MAP_CATALOG.map(([map, display_name]) => ({ map, display_name, sample: data.maps.find((item) => item.map === map) }));
+
   return (
-    <div className="home">
-      <section className="hero">
+    <PageSurface className="home">
+      <section className="hero" data-motion-parallax>
+        <ParallaxLayer className="cover-light" />
+        <p className="eyebrow">{t("site.eyebrow")}</p>
         <h1>{t("ui.app_title")}</h1>
-        <p className="hero-copy">{t("ui.data_source_note")}</p>
+        <PageContext>{t("site.home_context")}</PageContext>
       </section>
 
-      <section>
+      <MetricStrip items={[
+        { label: t("site.map_coverage"), value: data.maps.length },
+        { label: t("ui.nav_lineups"), value: data.maps.reduce((n, item) => n + item.n_lineups, 0) },
+      ]} />
+      <section className="cover-maps">
         <h2 className="section-title">{t("ui.nav_maps")}</h2>
-        <div className="map-grid">
-          {data.maps.map((item) => (
-            <Link key={item.map} to={`/${item.map}/lineups`} className="map-card">
+        <Stagger className="map-grid">
+          {maps.map((item) => (
+            <MapTile key={item.map} map={item.map} available={!!item.sample}>
+              <img className="map-card-radar" src={`${import.meta.env.BASE_URL}radars/${item.map}.png`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />
               <div className="map-card-head">
                 <h2>{item.display_name}</h2>
-                {item.n_matches < data.min_matches_reliable ? (
+                {item.sample && item.sample.n_matches < data.min_matches_reliable ? (
                   <span
                     className="tag-warn"
-                    title={t("ui.low_sample_warning", { n: item.n_matches })}
-                    aria-label={t("ui.low_sample_warning", { n: item.n_matches })}
+                    title={t("ui.low_sample_warning", { n: item.sample.n_matches })}
+                    aria-label={t("ui.low_sample_warning", { n: item.sample.n_matches })}
                   >
                     !
                   </span>
@@ -42,25 +63,30 @@ export default function Home() {
               <dl className="mini-stats">
                 <div>
                   <dt>{t("ui.matches_title")}</dt>
-                  <dd>{fmtInt(item.n_matches)}</dd>
+                  <dd><CountUp value={item.sample?.n_matches} format="integer" /></dd>
                 </div>
                 <div>
                   <dt>{t("ui.nav_lineups")}</dt>
-                  <dd>{fmtInt(item.n_lineups)}</dd>
+                  <dd><CountUp value={item.sample?.n_lineups} format="integer" /></dd>
                 </div>
                 <div>
                   <dt>{t("ui.nav_players")}</dt>
-                  <dd>{fmtInt(item.n_players)}</dd>
+                  <dd><CountUp value={item.sample?.n_players} format="integer" /></dd>
                 </div>
               </dl>
 
               <span className="map-card-cta">
-                {t("ui.nav_lineups")} →
+                {item.sample ? `${t("ui.nav_lineups")} →` : t("site.awaiting_sample")}
               </span>
-            </Link>
+            </MapTile>
           ))}
-        </div>
+        </Stagger>
       </section>
-    </div>
+      <Reveal><Spotlight className="home-entries">
+        {(["teams", "tactics", "lineups"] as const).map((entry) => <Link key={entry} className="home-entry" to={entry === "teams" ? "/teams-hub" : data.maps[0] ? `/${data.maps[0].map}/${entry}` : "/"}>
+          <span className="eyebrow">{t(`ui.nav_${entry}`)}</span><h2>{t(`site.${entry}_entry`)}</h2><p>{t(`site.${entry}_entry_context`)}</p><span className="entry-arrow" aria-hidden="true">↗</span>
+        </Link>)}
+      </Spotlight></Reveal>
+    </PageSurface>
   );
 }

@@ -1,50 +1,64 @@
 {
  "aurora": {
-  "zh": "Aurora 的 CT 方默认站位为 A1 M1 B3，占 33% 的枪局，胜率 43%。进攻开始后及时回防占 19%，低于其他队伍的 50%，回防调度偏慢。",
-  "en": "Aurora's CT side defaults to A1 M1 B3, used in 33% of gun rounds with a 43% win rate. Only 19% of rounds saw a timely CT rotation, below the other teams' 50%, suggesting a slower defensive response.",
+  "zh": "T 方最常用警家烟、B连接烟和 B后点火爆弹 B 点，5 次赢下 4 次。进攻开始后 CT 及时回防占 20%，低于其他队伍的 48%。",
+  "en": "The go-to B execute uses CT smoke, Palace smoke and a Back B molotov, winning 4 of 5 attempts. CT rotations arrive in time in 20% of rounds versus 48% for other teams.",
   "facts": [
-   "ct_default_setup",
+   "t_signature_recipe",
    "ct_rotate"
   ],
-  "fingerprint": "d23aabff208b"
+  "fingerprint": "72b49db970b5"
+ },
+ "betboom": {
+  "zh": "CT 堆点防守占 26%，高于其他队伍的 8%。",
+  "en": "The CT side stacks a site in 26% of gun rounds versus 8% for other teams.",
+  "facts": [
+   "ct_stack"
+  ],
+  "fingerprint": "40baee913ea8"
  },
  "falcons": {
-  "zh": "Falcons 的 T 方最常用 B 点爆弹：B连接烟、警家烟和 B后点火，10 次进攻赢下 8 次。NiKo 是最常摸边的人，有 8 次进攻时在另一侧或远离进攻点。",
-  "en": "Falcons' T side most often executes B with Palace smoke, CT smoke and a Back site molotov, winning 8 of 10 attempts. NiKo is the usual lurker, hitting the other side or staying away from the entry on 8 attacks.",
+  "zh": "T 方最常用警家烟、B连接烟和 B后点火爆弹 B 点，25 次赢下 17 次。T 方最常由 NiKo 摸边，22 次进攻时他在另一侧或远离进攻点。",
+  "en": "The go-to B execute uses CT smoke, Palace smoke and a Back B molotov, winning 17 of 25 attempts. NiKo is the usual T lurker, on the other side or far from the hit on 22 attacks.",
   "facts": [
    "t_signature_recipe",
    "t_main_lurker"
   ],
-  "fingerprint": "bd5a2f237c80"
+  "fingerprint": "5249b7f37b25"
  },
  "flyquest": {
-  "zh": "FlyQuest 的 T 方最常用 A 点爆弹，以天堂烟、A连接烟、A连接火和 A包点火组合，4 次进攻赢下 3 次。jks 是最常摸边的人，有 4 次进攻时在另一侧或远离进攻点。",
-  "en": "FlyQuest's T side favors an A execute using Heaven smoke, A connector smoke, A connector molotov and A site molotov, winning 3 of 4 attempts. jks is the usual lurker, hitting the other side or staying away from the entry on 4 attacks.",
+  "zh": "T 方最常用天堂烟、A连接烟、天堂侧 A包点火、包点出口的 A连接火和喷泉火爆弹 A 点，4 次赢下 3 次。",
+  "en": "The go-to A execute uses Heaven and A connector smokes, A site molotov on the Heaven side, A connector molotov at the site exit and Fountain molotov, winning 3 of 4 attempts.",
   "facts": [
-   "t_signature_recipe",
-   "t_main_lurker"
+   "t_signature_recipe"
   ],
-  "fingerprint": "1eea1fb86fd0"
+  "fingerprint": "56d639395c81"
+ },
+ "furia": {
+  "zh": "T 方快攻占 27%，高于其他队伍的 12%。T 方分兵进点占 88%，高于其他队伍的 60%。",
+  "en": "Fast hits account for 27% of T gun rounds versus 12% for other teams. The T side uses split hits on 88% of attacks versus 60% for other teams.",
+  "facts": [
+   "t_tempo_fast",
+   "t_split"
+  ],
+  "fingerprint": "141c43ded8a7"
  },
  "fut-esports": {
-  "zh": "FUT Esports 的 T 方快攻占 33%，高于其他队伍的 13%；CT 方开局前压占 32%，也高于其他队伍的 15%。CT 默认站位 A1 M2 B2，占 27% 的枪局，胜率 67%。",
-  "en": "FUT Esports' T side fast-hits 33% of the time, above the other teams' 13%, while its CT side pushes early in 32% of rounds versus their 15%. The default CT setup A1 M2 B2 covers 27% of gun rounds with a 67% win rate.",
+  "zh": "T 方快攻占 33%，高于其他队伍的 12%。CT 开局有人前压的回合占 32%，高于其他队伍的 14%。",
+  "en": "Fast hits account for 33% of T gun rounds versus 12% for other teams. The CT side pushes early in 32% of gun rounds versus 14% for other teams.",
   "facts": [
    "t_tempo_fast",
-   "ct_forward",
-   "ct_default_setup"
+   "ct_forward"
   ],
-  "fingerprint": "7c4aac06a556"
+  "fingerprint": "c06058bbbf5a"
  },
  "g2": {
-  "zh": "G2 的 T 方快攻占 30%，高于其他队伍的 13%，但分兵进点仅占 29%，低于其他队伍的 59%，整体更偏向直接进入。CT 默认站位 A1 M2 B2，占 29% 的枪局，胜率 80%。",
-  "en": "G2's T side fast-hits 30% of the time, above the other teams' 13%, but only splits 29% of hits versus their 59%, showing a preference for direct entries. The default CT setup A1 M2 B2 covers 29% of gun rounds with an 80% win rate.",
+  "zh": "T 方快攻占 30%，高于其他队伍的 12%。T 方分兵进点占 29%，低于其他队伍的 62%。",
+  "en": "Fast hits account for 30% of T gun rounds versus 12% for other teams. The T side uses split hits on 29% of attacks versus 62% for other teams.",
   "facts": [
    "t_tempo_fast",
-   "t_split",
-   "ct_default_setup"
+   "t_split"
   ],
-  "fingerprint": "ae65ab4834ac"
+  "fingerprint": "4a4c695aa74e"
  },
  "mibr": {
   "zh": "MIBR 的 CT 默认站位 A2 M1 B2 覆盖 52% 的枪局，胜率 91%，是队伍最常用且胜率很高的防守布局。",
@@ -55,12 +69,13 @@
   "fingerprint": "34f2fb47dd01"
  },
  "natus-vincere": {
-  "zh": "Natus Vincere 的 T 方拖后进攻占 62%，高于其他队伍的 36%，节奏明显偏慢，更多依靠延迟后的进攻创造空间。",
-  "en": "Natus Vincere's T side runs late hits 62% of the time, above the other teams' 36%, showing a clear preference for slower timing and creating space through delayed attacks.",
+  "zh": "T 方拖后进攻占 57%，高于其他队伍的 36%。T 方最常用B连接烟和 B后点火爆弹 B 点，7 次赢下 7 次。",
+  "en": "Late hits account for 57% of T gun rounds versus 36% for other teams. The go-to B execute uses Palace smoke and a Back B molotov, winning 7 of 7 attempts.",
   "facts": [
-   "t_tempo_late"
+   "t_tempo_late",
+   "t_signature_recipe"
   ],
-  "fingerprint": "5750eff20413"
+  "fingerprint": "3675946aed4a"
  },
  "pain": {
   "zh": "paiN 的 CT 默认站位 A1 M2 B2 占 37% 的枪局，胜率 57%，是队伍最常用的防守布局。",
@@ -71,12 +86,29 @@
   "fingerprint": "e39348bb4a47"
  },
  "spirit": {
-  "zh": "Spirit 的 T 方由 zont1x 负责最常见的摸边，6 次进攻时在另一侧或远离进攻点。CT 默认站位 A2 M1 B2，占 43% 的枪局，胜率 60%。",
-  "en": "Spirit's T side relies on zont1x as the usual lurker, hitting the other side or staying away from the entry on 6 attacks. The default CT setup A2 M1 B2 covers 43% of gun rounds with a 60% win rate.",
+  "zh": "T 方最常由 zont1x 摸边，7 次进攻时他在另一侧或远离进攻点。开局 20 秒的 CT 默认站位为 A2 M1 B2，占 33% 的枪局，胜率 60%。",
+  "en": "zont1x is the usual T lurker, on the other side or far from the hit on 7 attacks. At 20 s, the default CT setup is A2 M1 B2, used in 33% of gun rounds with a win rate of 60%.",
   "facts": [
    "t_main_lurker",
    "ct_default_setup"
   ],
-  "fingerprint": "82e163f98f02"
+  "fingerprint": "5d7b497a4309"
+ },
+ "tyloo": {
+  "zh": "T 方拖后进攻占 10%，低于其他队伍的 39%。开局 20 秒的 CT 默认站位为 A2 M1 B2，占 40% 的枪局，胜率 67%。",
+  "en": "Late hits account for 10% of T gun rounds versus 39% for other teams. At 20 s, the default CT setup is A2 M1 B2, used in 40% of gun rounds with a win rate of 67%.",
+  "facts": [
+   "t_tempo_late",
+   "ct_default_setup"
+  ],
+  "fingerprint": "9cc27dbc4926"
+ },
+ "vitality": {
+  "zh": "T 方最常用警家烟、B连接烟和 B后点火爆弹 B 点，5 次赢下 4 次。",
+  "en": "The go-to B execute uses CT smoke, Palace smoke and a Back B molotov, winning 4 of 5 attempts.",
+  "facts": [
+   "t_signature_recipe"
+  ],
+  "fingerprint": "fb1e14d9e244"
  }
 }
