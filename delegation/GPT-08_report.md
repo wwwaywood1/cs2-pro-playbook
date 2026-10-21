@@ -50,3 +50,26 @@ Coverage radius in radar coordinates is `144 / scale` for smoke and `120 / scale
 - Check missing radar/metadata, empty recipes, long translated names, insight lists with more than three entries, and a fixture containing lower-floor/mixed-floor recipe spots. Existing recipe exports use level 0, so a lower-floor fixture is still needed to exercise that path.
 - The current public/sample Mirage export has no tactics file; use the full exported site data when serving the browser checks. No data export was modified as part of this frontend-only task.
 - Coverage is intentionally approximate; walls, height, and actual fire spread are not modeled. CT utility cannot be attributed to individual setup shapes with the supplied schema.
+
+## Round 2
+
+Changed files:
+
+- `web/src/pages/Tactics.tsx`
+- `web/src/tactics.css`
+- `delegation/GPT-08_report.md`
+
+Changes applied to the five review items:
+
+1. Increased the minimum focus box from 35% to 60% of the 1024px map. It remains centred on the selected utility bounds, grows to include the target bombsite centre with padding, and retains the dimmed contextual perimeter. Frontend-only anchors cover all seven exported maps, using the mean plant-position convention in `playbook/tactics.py:site_centres`, transformed through each map's existing radar metadata. No pipeline, config, or exported data changed. Unknown maps with a target site use the full map. The viewport calculation also caps raster enlargement at 1.6 physical pixels per source pixel, accounting for devicePixelRatio; very dense displays can further limit the square's CSS width.
+2. Made the desktop radar square's width the minimum of its column width, 760px, the raster limit, and the available viewport height minus its top offset and 24px. ResizeObserver measures the actual SVG width, initial workspace offset, caption/floor controls, and header/page size changes; the map panel retains its sticky positioning. Reserving the initial offset keeps the square visible on the first screen as well as while sticky. Below 1000px, the existing stacked layout uses the column width. Headline numbers are 32px with tighter margins/padding and one line of context; page and map-heading gaps are smaller.
+3. Removed the dark backplate behind each grenade. The shared glyph now renders at 28 CSS px directly over coverage, with a thin dark drop shadow. Optional markers retain their unfilled dashed outline and 50% opacity; the top-right number badge is a small 16px circle with 11px text. Existing coverage, numbering, and lineup links remain intact.
+4. Matched the tactics page header container to the content's 1440px maximum width. Side padding matches at desktop (20px), <=720px (14px), and <=560px (12px), scoped to the tactics page.
+5. Changed the expanded recipe metadata to four equal columns in one row, with 8px gaps, 11px labels, and 13px values. Long labels can wrap inside their column without forcing horizontal overflow.
+
+Validation and handoff:
+
+- Read-only arithmetic checks covered all 75 exported recipes / 342 spot references, plus CT site/floor groups: 1,470 combinations of groups, widths, and devicePixelRatio values passed minimum zoom, map bounds, marker/site containment, and <=1.6x raster enlargement checks. Representative desktop viewport sizing arithmetic passed at 768/900/1080px heights. These checks mirror the calculations; they do not execute the browser layout.
+- `tinycss2` tokenization passed for `web/src/tactics.css`. Both locale key sets still match, and literal translation lookups in `Tactics.tsx` resolve. No UI strings were added, so no locale files needed changes.
+- No build, Node/npm invocation, new dependencies, or browser execution. TypeScript compilation and actual layout still need verification in the build-capable environment, particularly the full square at 1440x900, Retina raster sharpness, Nuke floor controls, resize/scroll behavior, and English/Chinese four-stat rows at 375px.
+- Site anchors are snapshots of the current parsed plant means, not newly exported geometry. If supported maps or radar transforms change, refresh the frontend anchors; unsupported target maps safely stay at full view.

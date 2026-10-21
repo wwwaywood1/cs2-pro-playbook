@@ -130,8 +130,20 @@ function recipeSpots(map: string, recipe: Recipe, byId: Map<string, Spot>, lang:
 
 interface ViewBox { x: number; y: number; size: number }
 const FULL_VIEW: ViewBox = { x: 0, y: 0, size: 1024 };
+interface RadarPoint { x: number; y: number }
+// Mean plant positions, matching playbook/tactics.py:site_centres, transformed
+// with each map's radar metadata. Keep these frontend-only anchors in radar px.
+const SITE_CENTRES: Record<string, Record<Recipe["site"], RadarPoint> | undefined> = {
+  de_ancient: { A: { x: 324.1, y: 282.0 }, B: { x: 759.1, y: 426.0 } },
+  de_anubis: { A: { x: 770.8, y: 263.4 }, B: { x: 329.4, y: 512.2 } },
+  de_dust2: { A: { x: 800.8, y: 184.6 }, B: { x: 213.3, y: 162.2 } },
+  de_inferno: { A: { x: 820.4, y: 701.6 }, B: { x: 528.8, y: 205.1 } },
+  de_mirage: { A: { x: 564.1, y: 759.2 }, B: { x: 251.8, y: 267.8 } },
+  de_nuke: { A: { x: 583.6, y: 526.0 }, B: { x: 572.4, y: 561.2 } },
+  de_overpass: { A: { x: 454.6, y: 221.9 }, B: { x: 701.7, y: 352.5 } },
+};
 
-function fitSpots(entries: RecipeSpot[], scale: number | undefined): ViewBox {
+function fitSpots(entries: RecipeSpot[], scale: number | undefined, siteCentre?: RadarPoint): ViewBox {
   const points = entries.flatMap(({ spot, type }) => spot && Number.isFinite(spot.radar_x) && Number.isFinite(spot.radar_y)
     ? [{ x: spot.radar_x, y: spot.radar_y, radius: scale ? (type === "smoke" ? 144 : type === "molotov" ? 120 : 0) / scale : 0 }] : []);
   if (!points.length) return FULL_VIEW;
@@ -139,30 +151,38 @@ function fitSpots(entries: RecipeSpot[], scale: number | undefined): ViewBox {
   const right = Math.max(...points.map((p) => p.x + p.radius));
   const top = Math.min(...points.map((p) => p.y - p.radius));
   const bottom = Math.max(...points.map((p) => p.y + p.radius));
-  const size = Math.min(1024, Math.max(1024 * 0.35, right - left + 112, bottom - top + 112));
-  return { size, x: Math.max(0, Math.min(1024 - size, (left + right - size) / 2)),
-    y: Math.max(0, Math.min(1024 - size, (top + bottom - size) / 2)) };
+  const cx = (left + right) / 2;
+  const cy = (top + bottom) / 2;
+  const size = Math.min(1024, Math.max(1024 * 0.6, right - left + 112, bottom - top + 112,
+    siteCentre ? Math.abs(siteCentre.x - cx) * 2 + 112 : 0,
+    siteCentre ? Math.abs(siteCentre.y - cy) * 2 + 112 : 0));
+  return { size, x: Math.max(0, Math.min(1024 - size, cx - size / 2)),
+    y: Math.max(0, Math.min(1024 - size, cy - size / 2)) };
 }
 
 /** SVG is rendered by the browser at devicePixelRatio, including all vector overlays. */
-function RecipeRadar({ map, spots, scale, title, selectionLabel }: { map: string; spots: RecipeSpot[]; scale: number | undefined; title: string; selectionLabel?: string }) {
+function RecipeRadar({ map, spots, scale, site, title, selectionLabel }: { map: string; spots: RecipeSpot[]; scale: number | undefined; site?: Recipe["site"]; title: string; selectionLabel?: string }) {
   const [full, setFull] = useState(false);
   const [chosenLevel, setChosenLevel] = useState<number | null>(null);
   const [failedSource, setFailedSource] = useState<string | null>(null);
   const [width, setWidth] = useState(640);
+  const [pixelRatio, setPixelRatio] = useState(1);
   const host = useRef<HTMLElement>(null);
+  const radar = useRef<SVGSVGElement>(null);
   const maskId = useId();
   const levels = [...new Set(spots.flatMap(({ spot }) => spot ? [spot.level] : []))].sort();
   const level = chosenLevel !== null && levels.includes(chosenLevel) ? chosenLevel : levels[0] ?? 0;
   const visible = useMemo(() => spots.filter(({ spot }) => spot?.level === level), [spots, level]);
-  const focus = useMemo(() => fitSpots(visible, scale), [visible, scale]);
+  const siteCentre = site ? SITE_CENTRES[map]?.[site] : undefined;
+  const focus = useMemo(() => site && !siteCentre ? FULL_VIEW : fitSpots(visible, scale, siteCentre), [visible, scale, site, siteCentre]);
   // Leave a little context around the focus box so the dimmed perimeter remains visible.
   const target = useMemo(() => {
     if (full) return FULL_VIEW;
-    const size = Math.min(1024, focus.size * 1.12);
+    // Cap raster enlargement in physical pixels, including high-DPI screens.
+    const size = Math.min(1024, Math.max(focus.size * 1.12, width * pixelRatio / 1.6));
     return { size, x: Math.max(0, Math.min(1024 - size, focus.x - (size - focus.size) / 2)),
       y: Math.max(0, Math.min(1024 - size, focus.y - (size - focus.size) / 2)) };
-  }, [focus, full]);
+  }, [focus, full, width, pixelRatio]);
   const [view, setView] = useState(FULL_VIEW);
   const currentView = useRef(view);
   useEffect(() => {
@@ -184,10 +204,33 @@ function RecipeRadar({ map, spots, scale, title, selectionLabel }: { map: string
   }, [target]);
   useEffect(() => {
     const element = host.current;
-    if (!element) return;
-    const observer = new ResizeObserver(([entry]) => { if (entry && entry.contentRect.width > 0) setWidth(entry.contentRect.width); });
+    const svg = radar.current;
+    if (!element || !svg) return;
+    const workspace = element.closest<HTMLElement>(".tactics-workspace");
+    const panel = element.closest<HTMLElement>(".tactics-map-panel");
+    const page = element.closest<HTMLElement>(".tactics-page");
+    const topbar = document.querySelector<HTMLElement>(".topbar");
+    const measure = () => {
+      const dpr = window.devicePixelRatio || 1;
+      setPixelRatio(dpr);
+      element.style.setProperty("--tactics-raster-limit", `${1024 * 1.6 / dpr}px`);
+      const stickyTop = panel ? parseFloat(window.getComputedStyle(panel).top) || 0 : 0;
+      // The workspace stays in normal flow while its map panel sticks. Reserve
+      // its initial viewport offset as well as the caption/floor controls.
+      const workspaceTop = workspace ? workspace.getBoundingClientRect().top + window.scrollY : stickyTop;
+      const controlsHeight = svg.getBoundingClientRect().top - element.getBoundingClientRect().top;
+      element.style.setProperty("--tactics-radar-top", `${Math.max(stickyTop, workspaceTop) + controlsHeight}px`);
+      const renderedWidth = svg.getBoundingClientRect().width;
+      if (renderedWidth > 0) setWidth(renderedWidth);
+    };
+    const observer = new ResizeObserver(measure);
     observer.observe(element);
-    return () => observer.disconnect();
+    observer.observe(svg);
+    if (page) observer.observe(page);
+    if (topbar) observer.observe(topbar);
+    window.addEventListener("resize", measure);
+    measure();
+    return () => { observer.disconnect(); window.removeEventListener("resize", measure); };
   }, []);
   const source = `${import.meta.env.BASE_URL}radars/${map}${level === 1 ? "_lower" : ""}.png`;
   const unit = view.size / width;
@@ -202,7 +245,7 @@ function RecipeRadar({ map, spots, scale, title, selectionLabel }: { map: string
         {t(`heatmap.level.${value === 1 ? "lower" : "upper"}`)} ({spots.filter(({ spot }) => spot?.level === value).length})
       </button>)}
     </div>}
-    <svg className="radar tactics-radar" viewBox={`${view.x} ${view.y} ${view.size} ${view.size}`} role="group" aria-label={t("tactics.radar_label", { map })}>
+    <svg ref={radar} className="radar tactics-radar" viewBox={`${view.x} ${view.y} ${view.size} ${view.size}`} role="group" aria-label={t("tactics.radar_label", { map })}>
       <defs>
         <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024"><rect width="1024" height="1024" fill="white" /><rect x={focus.x} y={focus.y} width={focus.size} height={focus.size} fill="black" /></mask>
         <radialGradient id={`${maskId}-smoke`}><stop offset="0" stopColor="#d4dae0" stopOpacity="0.4" /><stop offset="0.75" stopColor="#c6ced8" stopOpacity="0.25" /><stop offset="1" stopColor="#c6ced8" stopOpacity="0.04" /></radialGradient>
@@ -219,9 +262,9 @@ function RecipeRadar({ map, spots, scale, title, selectionLabel }: { map: string
         const marker = <g transform={`translate(${spot.radar_x}, ${spot.radar_y})`} opacity={entry.core ? 1 : 0.5}>
           {radius !== null && <circle r={radius} fill={`url(#${maskId}-${entry.type})`} className={`tactics-effect tactics-effect-${entry.type}`} strokeDasharray={entry.core ? undefined : "5 4"} vectorEffect="non-scaling-stroke" />}
           <g transform={`scale(${unit})`}>
-            <circle r="21" fill="#0b1220" fillOpacity="0.8" stroke={entry.core ? "#d4dae0" : "#8fa3bd"} strokeWidth="1" strokeDasharray={entry.core ? undefined : "4 3"} />
-            <g transform="translate(-16 -16)"><GrenadeGlyph type={entry.type} /></g>
-            <text className="tactics-marker-number" x="18" y="-17">{entry.number}</text>
+            {!entry.core && <circle r="17" fill="none" stroke="#8fa3bd" strokeWidth="1" strokeDasharray="4 3" />}
+            <g className="tactics-marker-icon" transform="translate(-14 -14) scale(0.875)"><GrenadeGlyph type={entry.type} /></g>
+            <g transform="translate(15 -15)"><circle r="8" fill="#0b1220" /><text className="tactics-marker-number" textAnchor="middle" y="4">{entry.number}</text></g>
           </g>
         </g>;
         return entry.to ? <a key={entry.id} href={`#${entry.to}`} aria-label={`${label} · ${t("tactics.open_lineup")}`}><title>{label}</title>{marker}</a>
@@ -340,6 +383,7 @@ export default function Tactics() {
     <div className="tactics-workspace">
       <aside className="tactics-map-panel">
         <RecipeRadar key={`${map}:${side}`} map={map} scale={scale} spots={side === "T" ? entries : ctSpots} title={side === "T" ? t("tactics.selected_utility") : t("tactics.ct_utility")}
+          site={side === "T" ? shown?.site : site === "all" ? undefined : site}
           selectionLabel={side === "T" && shown ? `${siteLabel(shown.site)} · ${entries.filter((entry) => entry.core).map((entry) => entry.name).join(" + ")}` : undefined} />
       </aside>
       <section className="tactics-browser" aria-labelledby="tactics-recipes-title">
