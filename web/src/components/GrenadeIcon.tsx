@@ -23,16 +23,15 @@ function kind(type: GrenadeIconType): keyof typeof GRENADE_COLORS {
  * shape holds on bright radar floors. 32-unit grid, objects stand on y = 31.
  */
 const PATHS: Record<keyof typeof GRENADE_COLORS, string> = {
-  // M18-style canister: cap, body with top and bottom vent holes, spoon along the right side, pin ring
+  // M18-style canister: short and wide, vent holes, label band, spoon flush with the body, pin ring
   smoke:
-    "M12.5 6.2 H19.5 V8.6 H12.5 Z " +
-    "M11 9 H21 V30.2 Q21 31 20.2 31 H11.8 Q11 31 11 30.2 Z " +
-    "M12.6 11 H14.2 V12.6 H12.6 Z M15.2 11 H16.8 V12.6 H15.2 Z M17.8 11 H19.4 V12.6 H17.8 Z " +
-    "M12.6 27.4 H14.2 V29 H12.6 Z M15.2 27.4 H16.8 V29 H15.2 Z M17.8 27.4 H19.4 V29 H17.8 Z " +
-    "M11 15.2 H21 V16 H11 Z " +
-    "M19.5 6.4 L23.4 7.2 Q24 7.4 23.9 8 L22.9 22.5 L21.7 22.4 L22.5 8.6 L19.5 8 Z " +
-    "M8.6 4.4 A2.7 2.7 0 1 0 8.61 4.4 Z M8.6 5.6 A1.5 1.5 0 1 1 8.59 5.6 Z M10.9 6.6 H12.6 V7.6 H10.9 Z",
-  // M84-style flashbang: slim tube with slotted sides, spoon, pin ring
+    "M11.4 9.6 H20.6 V12 H11.4 Z " +
+    "M8.8 12.2 H23.2 V29.8 Q23.2 31 22 31 H10 Q8.8 31 8.8 29.8 Z " +
+    "M10.6 14 H12.6 V16 H10.6 Z M13.6 14 H15.6 V16 H13.6 Z M16.6 14 H18.6 V16 H16.6 Z M19.6 14 H21.6 V16 H19.6 Z " +
+    "M10.6 20 H21.4 V25 H10.6 Z " +
+    "M20.6 9.8 L24.4 10.6 Q25.2 10.9 25.1 11.7 L24.3 24 H23.2 V12.4 L20.6 11.8 Z " +
+    "M7.4 7.6 A2.7 2.7 0 1 0 7.41 7.6 Z M7.4 8.8 A1.5 1.5 0 1 1 7.39 8.8 Z M9.7 9.9 H11.4 V10.9 H9.7 Z",
+  // M84-style flashbang: slim tube with slotted sides and burst rays above the cap, spoon, pin ring
   flash:
     "M13.4 6.4 H18.6 V8.8 H13.4 Z " +
     "M12.6 9 H19.4 V30.3 Q19.4 31 18.7 31 H13.3 Q12.6 31 12.6 30.3 Z " +
@@ -40,7 +39,8 @@ const PATHS: Record<keyof typeof GRENADE_COLORS, string> = {
     "M14.1 18.8 H15.3 V24.4 H14.1 Z M16.7 18.8 H17.9 V24.4 H16.7 Z " +
     "M12.6 26.4 H19.4 V27.2 H12.6 Z " +
     "M18.6 6.6 L22.2 7.4 Q22.8 7.6 22.7 8.2 L21.6 21 L20.4 20.9 L21.3 8.8 L18.6 8.2 Z " +
-    "M10.4 4.4 A2.7 2.7 0 1 0 10.41 4.4 Z M10.4 5.6 A1.5 1.5 0 1 1 10.39 5.6 Z M12.6 6.8 H13.5 V7.8 H12.6 Z",
+    "M10.4 4.4 A2.7 2.7 0 1 0 10.41 4.4 Z M10.4 5.6 A1.5 1.5 0 1 1 10.39 5.6 Z M12.6 6.8 H13.5 V7.8 H12.6 Z " +
+    "M15.4 0.4 H16.6 V4.6 H15.4 Z M19.6 1.2 L20.6 1.9 L18.6 5.2 L17.6 4.5 Z M23.4 4.6 L23.9 5.7 L20.4 7 L20 5.9 Z",
   // M67-style fragmentation: smooth sphere, fuze neck, curved spoon, pin ring
   he:
     "M16 12.4 A9.3 9.3 0 1 0 16.01 12.4 Z " +
