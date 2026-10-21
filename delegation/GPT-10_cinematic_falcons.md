@@ -28,3 +28,15 @@ Owner feedback: the UI is not cool enough. The finished product should feel like
 
 ## Deliverable
 Edit in place; write `delegation/GPT-10_report.md` (changed files, the motion system you built, anything unsure).
+
+---
+
+## Round 2 (Claude ran `python web/e2e/smoke.py` against the sample build: 49 checks, 3 failures)
+
+1. `FAIL CT segment changes selected state and URL` (player slide, sample team vitality).
+2. `FAIL hub_player (#/teams-hub?team=vitality&map=de_mirage&player=76561198113666193&side=CT)`: waiting for `.hub-map-card` to be visible timed out after 10 s — a deep link straight to the player slide must render without first showing the map cards (or the test must wait for the player slide instead; fix whichever is wrong).
+3. `FAIL 375px no horizontal scroll on #/teams-hub (overflow 22px)` — the team list slide overflows at 375 px.
+
+Also: the supplied portraits carry a "Player" badge, flags and a logo on their left edge. In the player slide and the portrait cards, crop the portrait to the face/torso (`object-fit: cover; object-position: 70% 20%` or similar) so those badges are cut off.
+
+Fix in place (you can reason from `web/e2e/smoke.py`; it needs a served build so you cannot run it). Append "Round 2" to `delegation/GPT-10_report.md`.
