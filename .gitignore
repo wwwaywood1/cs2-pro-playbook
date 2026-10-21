@@ -25,3 +25,6 @@ delegation/design-skills/
 # team logos and player portraits supplied by the owner (third-party images, kept out of the public repo)
 web/public/logos/
 web/public/players/
+
+# local static build for previewing the site (python3 -m http.server -d site-preview)
+site-preview/
