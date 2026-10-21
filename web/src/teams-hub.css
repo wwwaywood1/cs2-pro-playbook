@@ -122,10 +122,10 @@
 .hub-team-radar .hub-radar { width: min(100%, 600px); }
 .hub-page-selected .hub-map-panel:has(.hub-player-view) { padding: 0; }
 .hub-player-view { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); min-height: var(--hub-viewport); align-items: stretch; }
-.hub-player-bio { --hub-verse-font: clamp(40px, 3vw, 48px); --hub-verse-reserve: calc(var(--hub-verse-font) * 3 + 64px); position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: end; min-width: 0; min-height: 640px; padding: clamp(24px, 3vw, 48px); border-radius: 16px 0 0 16px; overflow: hidden; background: #07121b; }
+.hub-player-bio { --hub-verse-font: clamp(40px, 3vw, 48px); --hub-verse-reserve: calc(var(--hub-verse-font) * 3 + 64px); position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: end; min-width: 0; min-height: min(640px, calc(100vh - 210px)); padding: clamp(24px, 3vw, 48px); border-radius: 16px 0 0 16px; overflow: hidden; background: #07121b; }
 .hub-player-bio::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(0deg, #08151f 1%, #08151fee 15%, transparent 45%), linear-gradient(90deg, transparent 75%, #08151f); }
 /* Leave a dedicated verse lane; include the 1.06 entrance scale in the pixel budget. */
-.hub-portrait-motion { position: absolute; z-index: -2; width: calc(100% - var(--hub-verse-reserve) - 48px); max-width: min(calc(700px / 1.06), calc(1000px / var(--hub-dpr, 2) / 1.06)); left: 16px; bottom: 0; aspect-ratio: 1000 / 666; pointer-events: none; translate: calc(var(--depth-h, 0) * .85px) calc(var(--depth-v, 0) * .85px); }
+.hub-portrait-motion { position: absolute; z-index: -2; width: min(calc(100% - 150px), 600px); max-width: none; left: 0; top: 96px; bottom: auto; aspect-ratio: 1000 / 666; pointer-events: none; translate: calc(var(--depth-h, 0) * .85px) calc(var(--depth-v, 0) * .85px); }
 .hub-portrait-motion .hub-portrait { width: 100%; height: 100%; filter: drop-shadow(0 0 14px color-mix(in srgb, var(--primary) 22%, transparent)); }
 .hub-player-identity { position: relative; translate: calc(var(--depth-h, 0) * -.25px) calc(var(--depth-v, 0) * -.25px); }
 .hub-player-identity h3 { margin: 16px 0 0; font-size: clamp(2.4rem, 4.5vw, 5rem); line-height: 1.05; overflow-wrap: anywhere; letter-spacing: .02em; text-shadow: 0 2px 18px #000; }
