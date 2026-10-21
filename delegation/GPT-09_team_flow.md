@@ -33,3 +33,13 @@ Use the existing exports first: `data/site/heatmap_teams.json`, `<map>/heatmaps/
 
 ## Deliverable
 Edit in place; write `delegation/GPT-09_report.md` listing changed files, design choices (which style from the skill and why), data added, and open questions.
+
+---
+
+## Round 2 (Claude's review at 1440×900)
+
+1. **Player view must fit one screen at 1440×900.** Once a team is selected, collapse the page hero (eyebrow + big title + subtitle) into the breadcrumb row; put "karrigan · Mirage" on the same line as the side switch. Portrait column ≈ 300 px (portrait 4:5, verse under it). The map on the right uses the same sizing rule as the tactics page: square, `min(column width, 100vh − top − 24px)`; put the 4 stat cards and the layer buttons in a compact row above it (or to its right on wide screens) so the whole map is visible without scrolling. Same rule for the team-on-map view.
+2. **Utility landings on the player map use the shared grenade icons** (`GrenadeGlyph` from `web/src/components/GrenadeIcon.tsx`, ~24 px, colours from `GRENADE_COLORS`), not coloured rings; keep the translucent coverage disc under each icon, as on the tactics page.
+3. **Navigation must be consistent on every page**: 战队 (hub) · 地图 · 战术 · 道具库 · 选手 · 战队热力图. Per-map entries go to the currently selected map (default the first map in the index).
+
+Append a "Round 2" section to `delegation/GPT-09_report.md`.
