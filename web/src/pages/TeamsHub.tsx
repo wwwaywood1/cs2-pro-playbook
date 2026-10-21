@@ -7,9 +7,10 @@ import Stat from "../components/Stat";
 import { Loading } from "../components/Status";
 import { getAssetSlots, getHeatmapBaseline, getHeatmapTeams, getMeta, getPlayerQuotes, getPlayers, getTactics, getTeam, getTeamHeatmap, useData } from "../data";
 import { fmtInt, fmtNum, fmtPct, fmtSeconds } from "../format";
-import { blur, combine, denseLayers, HEAT_PHASES, playerColor, playerRgba, toDataUrl, VIEW_WEIGHTS, type Dense, type HeatView } from "../heatmap";
+import { blur, combine, denseLayers, HEAT_PHASES, playerRgba, toDataUrl, VIEW_WEIGHTS, type Dense, type HeatView } from "../heatmap";
 import { calloutLabel, t, useLang } from "../i18n";
 import type { AssetSlots, HeatLayer, HeatmapBaseline, HeatmapTeamIndexEntry, PlayerProfile, PlayerQuotes, PlayerSideSummary, RosterEntry, Side, TeamHeatmap, TeamProfile, TacticsFile, UtilitySpot } from "../types";
+import { rememberPortrait, useHubPointer, usePlayerEntrance } from "./teamsHubMotion";
 import "../heatmap.css";
 import "../teams-hub.css";
 
@@ -24,12 +25,27 @@ const Assets = createContext<AssetSlots>(EMPTY_ASSETS);
 const GRENADES = ["smoke", "flash", "molotov", "he"] as const;
 const MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 const ReducedMotion = createContext(false);
-const TEAM_ACCENTS: Record<string, string> = {
-  falcons: "#2ecc71", vitality: "#f8cf55", spirit: "#8cdeb0", "natus-vincere": "#f5d547",
-  g2: "#a9b9f6", mouz: "#ff9696", "the-mongolz": "#75c9e8",
+const NumberEntrance = createContext<number | "static">(0);
+type TeamPalette = { primary: string; secondary: string; tertiary: string };
+const TEAM_PALETTES: Record<string, TeamPalette> = {
+  falcons: { primary: "#2ecc71", secondary: "#e8b75a", tertiary: "#9aafc7" },
+  vitality: { primary: "#f8cf55", secondary: "#bcb0f4", tertiary: "#9cb8cf" },
+  spirit: { primary: "#8cdeb0", secondary: "#efb580", tertiary: "#a6b7d4" },
+  "natus-vincere": { primary: "#f5d547", secondary: "#b9b4f6", tertiary: "#9cb8cf" },
+  g2: { primary: "#a9b9f6", secondary: "#f0b58c", tertiary: "#9fc6cd" },
+  mouz: { primary: "#ff9696", secondary: "#e8c780", tertiary: "#9cb8cf" },
+  "the-mongolz": { primary: "#75c9e8", secondary: "#e8b75a", tertiary: "#b4b9cd" },
+};
+const DEFAULT_PALETTE: TeamPalette = { primary: "#f2b134", secondary: "#a8ccf0", tertiary: "#a6b7c9" };
+const SIDE_COLORS = {
+  T: { key: "orange", light: "#ffdaa9", deep: "#e8893c" },
+  CT: { key: "blue", light: "#c7e7ff", deep: "#519ee9" },
+  all: { key: "grey", light: "#d4e4f4", deep: "#8baccd" },
 };
 function theme(slug: string): CSSProperties {
-  return { "--accent": TEAM_ACCENTS[slug] ?? "#f2b134" } as CSSProperties;
+  const palette = TEAM_PALETTES[slug] ?? DEFAULT_PALETTE;
+  return { "--accent": palette.primary, "--primary": palette.primary, "--secondary": palette.secondary,
+    "--tertiary": palette.tertiary } as CSSProperties;
 }
 
 function useReducedMotion() {
@@ -47,6 +63,9 @@ function useReducedMotion() {
 type Route = Pick<Selection, "team" | "map" | "player">;
 function routeKey(route: Route) { return JSON.stringify([route.team, route.map, route.player]); }
 function depth(route: Route) { return route.player ? 3 : route.map ? 2 : route.team ? 1 : 0; }
+// HashRouter defers React renders; history already holds the latest destination.
+// Read it for actions so rapid Escape presses cannot reuse an outgoing route.
+function currentHubParams() { return new URLSearchParams(window.location.hash.split("?")[1] ?? ""); }
 
 /** Keep the outgoing React tree alive until its exit finishes. URL/history stays immediate.
  * Replacing the destination cancels the old animation; no input is blocked by motion. */
@@ -77,37 +96,74 @@ function formatNumber(value: number | null | undefined, format: NumberFormat): s
 }
 function CountUp({ value, format = "number" }: { value: number | null | undefined; format?: NumberFormat }) {
   const reduced = useContext(ReducedMotion);
+  const entrance = useContext(NumberEntrance);
   const visual = useRef<HTMLSpanElement>(null);
+  const previous = useRef("");
+  const lastEntrance = useRef(entrance);
   const final = formatNumber(value, format);
   useLayoutEffect(() => {
     const node = visual.current;
     if (!node) return;
-    if (reduced || value == null || !Number.isFinite(value)) { node.textContent = final; return; }
-    if (!node.animate) { node.textContent = final; return; }
-    let frame = 0;
-    node.textContent = formatNumber(0, format);
-    // WAAPI owns the clock/easing; rAF only writes the current numeric text.
-    const animation = node.animate([{ opacity: .5 }, { opacity: 1 }], {
-      duration: 650, easing: "cubic-bezier(.2,.8,.2,1)", fill: "both",
+    node.dataset.rolling = "false";
+    const old = previous.current;
+    const settling = entrance === "static" && lastEntrance.current !== "static";
+    lastEntrance.current = entrance;
+    if (reduced || settling || value == null || !Number.isFinite(value) || old === final || !node.animate) { previous.current = final; return; }
+    const tracks = [...node.querySelectorAll<HTMLElement>(".hub-digit-track")];
+    if (!tracks.length) return;
+    node.dataset.rolling = "true";
+    const animations = tracks.map((track, index) => {
+      const position = Number(track.dataset.position);
+      const start = Number(old[position + old.length - final.length]) || 0;
+      const end = 20 + Number(final[position]);
+      return track.animate([
+        { transform: `translateY(${-start}em)` }, { transform: `translateY(${-end}em)` },
+      ], { duration: 560, delay: (typeof entrance === "number" ? entrance : 0) + index * 22, easing: "cubic-bezier(.2,.8,.2,1)", fill: "both" });
     });
-    const tick = () => {
-      const progress = animation.effect?.getComputedTiming().progress ?? 0;
-      node.textContent = progress === 1 ? final : formatNumber(value * progress, format);
-      if (progress < 1) frame = requestAnimationFrame(tick);
+    let cancelled = false;
+    void Promise.all(animations.map((animation) => animation.finished)).then(() => {
+      if (!cancelled) { previous.current = final; node.dataset.rolling = "false"; animations.forEach((animation) => animation.cancel()); }
+    }, () => {});
+    return () => {
+      cancelled = true;
+      if (node.dataset.rolling === "true") {
+        const digits = Array.from(final);
+        tracks.forEach((track, index) => {
+          const position = Number(track.dataset.position);
+          const start = Number(old[position + old.length - final.length]) || 0;
+          const end = 20 + Number(final[position]);
+          const progress = animations[index].effect?.getComputedTiming().progress ?? 0;
+          digits[position] = String(Math.floor(start + (end - start) * progress) % 10);
+        });
+        previous.current = digits.join("");
+      }
+      animations.forEach((animation) => animation.cancel());
     };
-    frame = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(frame); animation.cancel(); };
-  }, [value, format, final, reduced]);
-  return <span className="hub-count"><span className="sr-only">{final}</span><span aria-hidden="true" ref={visual}>{final}</span></span>;
+  }, [value, final, reduced, entrance]);
+  return <span className="hub-count" ref={visual} data-value={final} data-rolling="false">
+    <span className="sr-only">{final}</span><span aria-hidden="true" className="hub-number-display">
+      <span className="hub-number-final">{final}</span><span className="hub-number-reels">{Array.from(final).map((character, position) => /[0-9]/.test(character) ?
+        <span className="hub-digit" key={position}><span className="hub-digit-track" data-position={position}>{Array.from({ length: 30 }, (_, digit) => <span key={digit}>{digit % 10}</span>)}</span></span> :
+        <span key={position}>{character}</span>)}</span>
+    </span>
+  </span>;
 }
 function AnimatedStat({ label, value, format, sub }: { label: string; value: number | null | undefined; format?: NumberFormat; sub?: string }) {
   return <Stat label={label} value={<CountUp value={value} format={format} />} sub={sub} />;
 }
 
 function Verse({ text }: { text: string }) {
-  const characters = Array.from(text);
-  return <p className="hub-verse-line" lang="zh" key={text}><span className="sr-only">{text}</span>
-    <span aria-hidden="true">{characters.map((character, index) => <span key={index} style={{ "--character-delay": `${index * Math.min(35, 400 / Math.max(1, characters.length - 1))}ms` } as CSSProperties}>{character}</span>)}</span>
+  // Owner copy is authoritative. Split a couplet at punctuation; balance a single line.
+  const phrases = text.trim().split(/[，,。！？；;\n]+/u).map((part) => part.trim()).filter(Boolean);
+  const glyphs = Array.from(phrases[0] ?? "");
+  const columns = phrases.length > 1 ? phrases : [glyphs.slice(0, Math.ceil(glyphs.length / 2)).join(""), glyphs.slice(Math.ceil(glyphs.length / 2)).join("")].filter(Boolean);
+  let offset = 0;
+  const total = columns.reduce((sum, column) => sum + Array.from(column).length, 0);
+  return <p className="hub-verse-line" lang="zh"><span className="sr-only">{text}</span>
+    <span aria-hidden="true" className="hub-verse-columns">{columns.map((column, columnIndex) => <span className="hub-verse-column" key={columnIndex}>{Array.from(column).map((character) => {
+      const index = offset++;
+      return <span className="hub-verse-character" key={index} style={{ "--character-delay": `${index * Math.min(38, 500 / Math.max(1, total - 1))}ms` } as CSSProperties}>{character}</span>;
+    })}</span>)}</span>
   </p>;
 }
 
@@ -139,7 +195,7 @@ function Asset({ path, name, badge = false }: { path: string; name: string; badg
   const stem = path.split("/").pop()?.replace(/\.png$/, "") ?? "";
   const supplied = (badge ? assets.teams : assets.players).includes(stem);
   return <span className={`hub-asset ${badge ? "hub-badge" : "hub-portrait"}`}>
-    {!failed && supplied ? <img src={`${import.meta.env.BASE_URL}${path}`} alt="" width={badge ? 80 : 240} height={badge ? 80 : 280} onError={() => setFailed(true)} /> : badge ?
+    {!failed && supplied ? <img src={`${import.meta.env.BASE_URL}${path}`} alt="" width={badge ? 80 : 1000} height={badge ? 80 : 666} onError={() => setFailed(true)} /> : badge ?
       <span aria-hidden="true">{name.split(/\s+/).map((part) => part[0]).join("").slice(0, 3).toUpperCase()}</span> :
       <svg viewBox="0 0 240 280" aria-hidden="true"><circle cx="120" cy="88" r="42" /><path d="M32 260v-28a88 88 0 0 1 176 0v28Z" /></svg>}
   </span>;
@@ -177,8 +233,9 @@ function TeamPanel({ team, change }: { team: TeamEntry; change: Change }) {
     </header>
     <div className="hub-team-layout">
       <section><h3>{t("hub.choose_map")}</h3><p className="muted">{t("hub.map_rate_help")}</p>
-        <div className="hub-map-grid">{team.maps.map((map, index) => <button type="button" className="hub-map-card" style={{ "--stagger": `${index * 70}ms`, "--hub-progress": 100 - Math.max(0, Math.min(1, map.map_win_rate ?? 0)) * 100 } as CSSProperties} id={`hub-map-${map.map}`} key={map.map} onClick={() => change({ map: map.map, player: "", side: "all" })}>
-          <span>{map.display_name}</span><span className="hub-rate">
+        <div className="hub-map-grid">{team.maps.map((map, index) => <button type="button" className="hub-map-card hub-primary" style={{ "--stagger": `${index * 70}ms`, "--hub-progress": 100 - Math.max(0, Math.min(1, map.map_win_rate ?? 0)) * 100 } as CSSProperties} id={`hub-map-${map.map}`} key={map.map} onClick={() => change({ map: map.map, player: "", side: "all" })}>
+          <img className="hub-map-preview" src={`${import.meta.env.BASE_URL}radars/${map.map}.png`} alt="" aria-hidden="true" loading="lazy" onError={(event) => { event.currentTarget.hidden = true; }} />
+          <span className="hub-map-name">{map.display_name}</span><span className="hub-rate">
             <svg viewBox="0 0 100 100" aria-hidden="true"><circle className="hub-arc-track" cx="50" cy="50" r="44" /><circle className="hub-arc" cx="50" cy="50" r="44" pathLength="100" /></svg>
             <strong><CountUp value={map.map_win_rate} format="percent" /></strong>
           </span>
@@ -199,8 +256,8 @@ function MapOverview({ profile, tactics }: { profile: TeamProfile; tactics: Tact
     <LowSampleBanner n_matches={profile.n_matches} low_sample={profile.low_sample} />
     <div className="hub-kpis">
       <AnimatedStat label={t("ui.round_win_rate")} value={rounds ? (T.won + CT.won) / rounds : null} format="percent" sub={t("heatmap.rounds", { n: fmtInt(rounds) })} />
-      <AnimatedStat label={t("hub.t_win")} value={T.win_rate} format="percent" sub={t("heatmap.rounds", { n: fmtInt(T.rounds) })} />
-      <AnimatedStat label={t("hub.ct_win")} value={CT.win_rate} format="percent" sub={t("heatmap.rounds", { n: fmtInt(CT.rounds) })} />
+      <div className="hub-side-stat" data-side="T"><AnimatedStat label={t("hub.t_win")} value={T.win_rate} format="percent" sub={t("heatmap.rounds", { n: fmtInt(T.rounds) })} /></div>
+      <div className="hub-side-stat" data-side="CT"><AnimatedStat label={t("hub.ct_win")} value={CT.win_rate} format="percent" sub={t("heatmap.rounds", { n: fmtInt(CT.rounds) })} /></div>
       <AnimatedStat label={t("tactics.avg_commit")} value={profile.tactics?.T.avg_commit_s} format="seconds" />
     </div>
     {profile.summary?.[lang] ? <p className="hub-summary">{profile.summary[lang]}</p> : null}
@@ -221,10 +278,11 @@ function MapOverview({ profile, tactics }: { profile: TeamProfile; tactics: Tact
 }
 
 function PlayerCards({ roster, change }: { roster: RosterEntry[]; change: Change }) {
+  const reduced = useContext(ReducedMotion);
   const ordered = [...roster].sort((a, b) => (b.rounds.T + b.rounds.CT) - (a.rounds.T + a.rounds.CT) || a.color - b.color);
   function cards(players: RosterEntry[]) {
-    return <div className="hub-player-cards">{players.map((player, index) => <button type="button" className="hub-player-card" style={{ "--stagger": `${index * 75}ms` } as CSSProperties} key={player.steamid} id={`hub-player-${player.steamid}`} onClick={() => change({ player: player.steamid, side: "all" })}>
-      <Asset path={`players/${player.steamid}.png`} name={player.name} /><strong>{player.name}</strong>
+    return <div className="hub-player-cards" data-hub-parallax>{players.map((player, index) => <button type="button" className="hub-player-card hub-primary" style={{ "--stagger": `${index * 75}ms` } as CSSProperties} key={player.steamid} id={`hub-player-${player.steamid}`} onClick={(event) => { rememberPortrait(event.currentTarget, reduced); change({ player: player.steamid, side: "all" }); }}>
+      <span className="hub-roster-light" aria-hidden="true" /><span className="hub-card-portrait-depth"><Asset path={`players/${player.steamid}.png`} name={player.name} /></span><strong>{player.name}</strong>
       <small>{t("heatmap.rounds", { n: fmtInt(player.rounds.T + player.rounds.CT) })}</small>
     </button>)}</div>;
   }
@@ -310,7 +368,7 @@ function TeamMapView({ profile, tactics, heatmap, baseline, change }: {
     }
     const dense = blur(combine(layers, VIEW_WEIGHTS[view], shape), shape, 1.1);
     if (!dense.subarray(level * shape.grid * shape.grid, (level + 1) * shape.grid * shape.grid).some((v) => v > 0)) return [];
-    return [{ key: `team-${view}-${level}`, url: toDataUrl(playerRgba(dense, shape, level, playerColor(0)), shape.grid) }];
+    return [{ key: `team-${view}-${level}`, url: toDataUrl(playerRgba(dense, shape, level, SIDE_COLORS.all), shape.grid) }];
   }, [heatmap, baseline, view, level]);
   return <div className="hub-team-map-view">
     <img className="hub-map-backdrop" src={`${import.meta.env.BASE_URL}radars/${heatmap.map}.png`} alt="" aria-hidden="true" />
@@ -328,6 +386,9 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
   player: RosterEntry; profile?: PlayerProfile; heatmap: TeamHeatmap; baseline: HeatmapBaseline;
   side: HubSide; quote?: PlayerQuotes[string]; change: Change; displayName: string;
 }) {
+  const reduced = useContext(ReducedMotion);
+  const host = useRef<HTMLDivElement>(null);
+  const { entrance, skip } = usePlayerEntrance(player.steamid, reduced, host);
   const [view, setView] = useState<HeatView>("presence");
   const [level, setLevel] = useState(0);
   const selectedSides: Side[] = side === "all" ? ["T", "CT"] : [side];
@@ -360,7 +421,7 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
     const dense = blur(combine(layers, VIEW_WEIGHTS[view], shape), shape, 1.1);
     const floor = dense.subarray(level * shape.grid * shape.grid, (level + 1) * shape.grid * shape.grid);
     if (!floor.some((v) => v > 0)) return [];
-    return [{ key: `${player.steamid}-${side}-${view}-${level}`, url: toDataUrl(playerRgba(dense, shape, level, playerColor(player.color)), shape.grid) }];
+    return [{ key: `${player.steamid}-${side}-${view}-${level}`, url: toDataUrl(playerRgba(dense, shape, level, SIDE_COLORS[side]), shape.grid) }];
   }, [heatmap, player, baseline, side, view, level]);
   const spots = new Map<string, UtilitySpot>();
   for (const summary of summaries) for (const spot of summary.utility.spots) {
@@ -368,14 +429,20 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
     spots.set(spot.spot_id, prev ? { ...prev, n: prev.n + spot.n } : spot);
   }
   const landingSpots = [...spots.values()].filter((spot) => spot.level === level).sort((a, b) => b.n - a.n);
-  return <div className="hub-player-view">
-    <aside className="hub-player-bio" aria-label={player.name}><Asset path={`players/${player.steamid}.png`} name={player.name} />
+  return <NumberEntrance.Provider value={entrance === "settled" || reduced ? "static" : entrance === "full" ? 1670 : 0}><div className="hub-player-view" ref={host} data-entrance={entrance} data-side={side} data-hub-parallax>
+    {entrance !== "settled" && !reduced ? <button type="button" className="hub-intro-skip" onClick={skip}>{t("hub.skip_intro")}</button> : null}
+    <aside className="hub-player-bio" aria-label={player.name}>
+      <div className="hub-stage-light" aria-hidden="true" /><div className="hub-depth-grid" aria-hidden="true" />
+      <span className="hub-outline-name" aria-hidden="true">{player.name}</span>
+      <div className="hub-portrait-motion"><Asset path={`players/${player.steamid}.png`} name={player.name} /></div>
+      <div className="hub-foreground-dust" aria-hidden="true" />
       {quote && (quote.zh.trim() || quote.en.trim()) ? <blockquote className="hub-verse"><p className="hub-eyebrow">{t("hub.verse")}</p>
         {quote.zh.trim() ? <Verse text={quote.zh} /> : null}
         {quote.en.trim() ? <p className="hub-verse-translation" lang="en">{quote.en}</p> : null}
       </blockquote> : null}
-      <h3>{player.name}</h3>
-      <details className="hub-details"><summary>{t("hub.role_hints")}</summary>
+      <div className="hub-player-identity"><h3>{player.name}</h3>
+        <p className="hub-player-role">{profile?.role_hints[0] ? t(`role.${profile.role_hints[0].role}`) : t("hub.player")} · {displayName}</p></div>
+      <details className="hub-details hub-player-roles"><summary>{t("hub.role_hints")}</summary>
         <p className="muted">{t("hub.roles_scope")}</p>
         {profile?.role_hints.length ? <ul>{profile.role_hints.map((hint) => <li key={hint.role}>{t(`role.${hint.role}`)}<p className="muted">{t(`role_desc.${hint.role}`)}</p></li>)}</ul> : <p className="muted">{t("heatmap.no_data")}</p>}
       </details>
@@ -411,7 +478,7 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
         </li>)}</ul>{!landingSpots.length ? <p className="muted">{t("heatmap.no_data")}</p> : null}
       </details>
     </section>
-  </div>;
+  </div></NumberEntrance.Provider>;
 }
 
 function MapPanel({ team, map, playerId, side, change }: { team: TeamEntry; map: string; playerId: string; side: HubSide; change: Change }) {
@@ -421,7 +488,7 @@ function MapPanel({ team, map, playerId, side, change }: { team: TeamEntry; map:
   const displayName = team.maps.find((entry) => entry.map === map)?.display_name ?? map;
   return <section className="hub-panel hub-map-panel" aria-labelledby="hub-heading">
     {!playerId || (!bundle.loading && !player) ? <header className="hub-section-head"><Heading>{playerId ? `${t("hub.player")} · ${displayName}` : `${team.team} · ${displayName}`}</Heading></header> : null}
-    {bundle.loading ? <Loading /> : bundle.error ? <Failure /> : bundle.data ? <>
+    {bundle.loading || (playerId && quotes.loading) ? <Loading /> : bundle.error ? <Failure /> : bundle.data ? <>
       {!playerId ? <TeamMapView profile={bundle.data[0]} tactics={bundle.data[4]} heatmap={bundle.data[2]} baseline={bundle.data[3]} change={change} /> : player ? <PlayerView key={player.steamid} displayName={displayName} player={player} profile={bundle.data[1].find((p) => p.steamid === player.steamid && p.team === team.team)} heatmap={bundle.data[2]} baseline={bundle.data[3]} side={side} quote={quotes.data?.[player.steamid]} change={change} /> : <p className="notice" role="alert">{t("hub.player_not_found")}</p>}
     </> : null}
   </section>;
@@ -434,6 +501,8 @@ export default function TeamsHub() {
   const assets = useData(getAssetSlots, []);
   const [search, setSearch] = useState("");
   const reduced = useReducedMotion();
+  const page = useRef<HTMLDivElement>(null);
+  useHubPointer(page, reduced);
   const requested = useMemo(() => ({ team: params.get("team") ?? "", map: params.get("map") ?? "", player: params.get("player") ?? "" }), [params]);
   const slide = useSlideRoute(requested, reduced);
   const { team: teamSlug, map, player } = slide.route;
@@ -442,20 +511,21 @@ export default function TeamsHub() {
   const team = teams.data?.find((entry) => entry.slug === teamSlug);
   const validMap = team?.maps.some((entry) => entry.map === map);
   function change(patch: Partial<Selection>) {
-    const next = new URLSearchParams(params);
+    const next = currentHubParams();
     for (const [key, value] of Object.entries(patch)) value ? next.set(key, value) : next.delete(key);
     if (!next.get("team")) for (const key of ["map", "player", "side"]) next.delete(key);
     else if (!next.get("map")) for (const key of ["player", "side"]) next.delete(key);
     setParams(next);
   }
   function close() {
-    if (requested.player) change({ player: "", side: "all" });
-    else if (requested.map) change({ map: "", player: "", side: "all" });
+    const current = currentHubParams();
+    if (current.get("player")) change({ player: "", side: "all" });
+    else if (current.get("map")) change({ map: "", player: "", side: "all" });
     else change({ team: "" });
   }
   useEffect(() => {
     function escape(event: KeyboardEvent) {
-      if (event.key === "Escape" && requested.team && !event.defaultPrevented) { event.preventDefault(); close(); }
+      if (event.key === "Escape" && currentHubParams().get("team") && !event.defaultPrevented) { event.preventDefault(); close(); }
     }
     document.addEventListener("keydown", escape);
     return () => document.removeEventListener("keydown", escape);
@@ -486,7 +556,7 @@ export default function TeamsHub() {
     return () => { cancelAnimationFrame(frame); observer.disconnect(); };
   }, [teamSlug, map, player, teams.loading]);
   const filtered = (teams.data ?? []).filter((entry) => entry.team.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
-  return <ReducedMotion.Provider value={reduced}><Assets.Provider value={assets.data ?? EMPTY_ASSETS}><div className={`hub-page${teamSlug ? " hub-page-selected" : ""}`} style={theme(teamSlug)}>
+  return <ReducedMotion.Provider value={reduced}><Assets.Provider value={assets.data ?? EMPTY_ASSETS}><div className={`hub-page${teamSlug ? " hub-page-selected" : ""}`} ref={page} style={theme(teamSlug)}>
     {!teamSlug ? <header className="page-head"><div><p className="hub-eyebrow">{t("hub.eyebrow")}</p><h1>{t("hub.title")}</h1><p className="muted">{t("hub.description")}</p></div></header> : null}
     {teams.loading ? <Loading /> : teams.error ? <Failure /> : <>
       {teamSlug ? <nav className="hub-breadcrumbs" aria-label={t("hub.breadcrumb")}>

@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Callable
 from urllib.parse import urlsplit
 
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page, expect, sync_playwright
 
 
 @dataclass
@@ -138,7 +138,7 @@ def check_teams_hub(smoke: Smoke, page: Page) -> None:
     smoke.check(page.locator('.hub-map-card strong .sr-only').first.inner_text() == '100%',
                 'sample Vitality map card shows map wins, not round wins')
     page.wait_for_function("""() => [...document.querySelectorAll('.hub-map-card .hub-count')].every(
-        el => el.querySelector('.sr-only').textContent === el.querySelector('[aria-hidden]').textContent)""")
+        el => el.dataset.rolling === 'false' && el.querySelector('.sr-only').textContent === el.querySelector('.hub-number-final').textContent)""")
     smoke.check(True, 'animated map rates settle on the exact exported values')
     page.locator('#hub-map-de_mirage').click()
     page.wait_for_selector('.hub-player-card')
@@ -154,10 +154,13 @@ def check_teams_hub(smoke: Smoke, page: Page) -> None:
     smoke.check(page.locator('.hub-verse').count() == 0, 'absent owner verse is hidden')
     page.get_by_role('button', name='CT', exact=True).click()
     page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('side') === 'CT'")
+    # HashRouter updates history before its deferred React render commits.
+    expect(page.get_by_role('button', name='CT', exact=True)).to_have_attribute('aria-pressed', 'true')
     smoke.check(page.get_by_role('button', name='CT', exact=True).get_attribute('aria-pressed') == 'true',
                 'CT segment changes selected state and URL')
     page.go_back()
     page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('side') === 'all'")
+    expect(page.get_by_role('button', name='CT', exact=True)).to_have_attribute('aria-pressed', 'false')
     smoke.check(page.get_by_role('button', name='CT', exact=True).get_attribute('aria-pressed') == 'false',
                 'Back restores overall side')
     page.go_forward()
@@ -184,6 +187,17 @@ def check_teams_hub(smoke: Smoke, page: Page) -> None:
 @route('#/teams-hub?team=vitality', '.hub-map-card')
 def check_hub_team(smoke: Smoke, page: Page) -> None:
     smoke.check(page.locator('.hub-results li').count() == 1, 'team panel shows the recorded sample result')
+    card = page.locator('#hub-map-de_mirage')
+    card.hover(position={'x': 24, 'y': 28})
+    page.wait_for_function("parseFloat(getComputedStyle(document.querySelector('#hub-map-de_mirage .hub-map-preview')).opacity) > .3")
+    page.wait_for_function("Math.abs(parseFloat(document.querySelector('#hub-map-de_mirage').style.getPropertyValue('--tilt-h'))) > .5")
+    smoke.check(card.locator('.hub-map-preview').get_attribute('src').endswith('radars/de_mirage.png'),
+                'hover previews the selected map radar with spring tilt')
+    page.emulate_media(reduced_motion='reduce')
+    page.wait_for_function("getComputedStyle(document.querySelector('#hub-map-de_mirage')).transform === 'none'")
+    smoke.check(card.evaluate("el => getComputedStyle(el).translate") == 'none',
+                'live reduced motion cancels tilt and magnetic translation')
+    page.emulate_media(reduced_motion='no-preference')
 
 
 @route('#/teams-hub?team=vitality&map=de_mirage', '.hub-player-card')
@@ -201,7 +215,7 @@ def check_hub_player(smoke: Smoke, page: Page) -> None:
     page.set_viewport_size({'width': 1280, 'height': 900})
     page.emulate_media(reduced_motion='reduce')
     page.wait_for_function("""() => [...document.querySelectorAll('.hub-count')].every(
-        el => el.querySelector('.sr-only').textContent === el.querySelector('[aria-hidden]').textContent)""")
+        el => el.dataset.rolling === 'false' && el.querySelector('.sr-only').textContent === el.querySelector('.hub-number-final').textContent)""")
     page.get_by_role('button', name='T', exact=True).click()
     page.wait_for_function("""() => document.querySelector('.hub-side-indicator') &&
         getComputedStyle(document.querySelector('.hub-side-indicator')).transitionDuration === '0s' &&
@@ -209,7 +223,7 @@ def check_hub_player(smoke: Smoke, page: Page) -> None:
     smoke.check(page.locator('.hub-stage').evaluate('(el) => getComputedStyle(el).animationName') == 'none',
                 'reduced motion disables CSS motion and WAAPI count-ups during a side change')
     page.wait_for_function("""() => [...document.querySelectorAll('.hub-count')].every(
-        el => el.querySelector('.sr-only').textContent === el.querySelector('[aria-hidden]').textContent)""")
+        el => el.dataset.rolling === 'false' && el.querySelector('.sr-only').textContent === el.querySelector('.hub-number-final').textContent)""")
     smoke.check(True, 'reduced motion presents final numeric values immediately')
     page.emulate_media(reduced_motion='no-preference')
     page.wait_for_function("getComputedStyle(document.querySelector('.hub-side-indicator')).transitionDuration !== '0s'")
@@ -220,6 +234,57 @@ def check_hub_player(smoke: Smoke, page: Page) -> None:
     smoke.check('map=' not in page.url and 'player=' not in page.url,
                 'rapid Escape follows current URL depth without stale transition completion')
     page.emulate_media(reduced_motion='no-preference')
+
+
+@route('#/teams-hub?team=vitality&map=de_mirage&player=76561198113666193&side=all', '.hub-player-view')
+def check_hub_entrance(smoke: Smoke, page: Page) -> None:
+    # Test owner-style copy without modifying the sample registry or production data.
+    player = '76561198113666193'
+    page.route('**/data/player_quotes.json', lambda request: request.fulfill(json={
+        player: {'name': 'ZywOo', 'zh': '一箫一剑平生意，负尽狂名十五年', 'en': ''}
+    }))
+    try:
+        page.evaluate('(id) => sessionStorage.removeItem(`hub-intro:${id}`)', player)
+        page.reload()
+        page.wait_for_selector('.hub-player-view[data-entrance="full"]')
+        smoke.check(page.locator('.hub-verse-column').count() == 2,
+                    'Chinese couplet enters as two vertical columns')
+        smoke.check(page.locator('.hub-verse-column').first.evaluate('(el) => getComputedStyle(el).writingMode') == 'vertical-rl',
+                    'verse uses vertical writing rather than a horizontal quote card')
+        expect(page.locator('.hub-player-view')).to_have_attribute('data-entrance', 'settled', timeout=4000)
+        page.wait_for_function("!document.querySelector('.hub-count[data-rolling=\"true\"]')")
+        smoke.check(page.locator('.hub-verse-line .sr-only').inner_text() == '一箫一剑平生意，负尽狂名十五年',
+                    '2.5-second entrance settles with one complete accessible verse')
+        page.keyboard.press('Escape')
+        page.wait_for_selector(f'#hub-player-{player}')
+        page.locator(f'#hub-player-{player}').click()
+        expect(page.locator('.hub-player-view')).to_have_attribute('data-entrance', 'short')
+        page.keyboard.press('Shift')
+        expect(page.locator('.hub-player-view')).to_have_attribute('data-entrance', 'settled')
+        smoke.check('player=' in page.url, 'any key skips the shortened entrance without changing route')
+        counts = page.locator('.hub-analysis-toolbar .hub-count')
+        all_rounds = counts.last.get_attribute('data-value')
+        before_heat = page.locator('.hub-layer-in image').first.get_attribute('href')
+        page.get_by_role('button', name='CT', exact=True).click()
+        expect(page.get_by_role('button', name='CT', exact=True)).to_have_attribute('aria-pressed', 'true')
+        expect(counts.last).to_have_attribute('data-rolling', 'true')
+        smoke.check(counts.last.get_attribute('data-value') != all_rounds,
+                    'side change rolls digits to new values after the intro has settled')
+        page.wait_for_function("!document.querySelector('.hub-count[data-rolling=\"true\"]')")
+        smoke.check(page.locator('.hub-layer-in image').first.get_attribute('href') != before_heat,
+                    'CT changes the heat texture and side hue independently of team palette')
+        # Start another full entrance, then change the accessibility preference mid-flight.
+        page.evaluate('(id) => sessionStorage.removeItem(`hub-intro:${id}`)', player)
+        page.reload()
+        page.wait_for_selector('.hub-player-view[data-entrance="full"]')
+        page.emulate_media(reduced_motion='reduce')
+        expect(page.locator('.hub-player-view')).to_have_attribute('data-entrance', 'settled')
+        page.wait_for_function("!document.querySelector('.hub-stage').getAnimations({subtree: true}).some(a => a.playState === 'running')")
+        smoke.check(page.locator('.hub-intro-skip, .hub-portrait-transfer').count() == 0,
+                    'live reduced motion finishes the title sequence and removes transfer layers')
+    finally:
+        page.emulate_media(reduced_motion='no-preference')
+        page.unroute('**/data/player_quotes.json')
 
 
 @route('#/de_mirage/teams/vitality', 'h1')

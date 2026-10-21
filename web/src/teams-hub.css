@@ -1,6 +1,9 @@
 /* Cinematic team deck. Motion follows hierarchy; evidence remains in disclosures. */
 .main:has(.hub-page-selected) { max-width: 1920px; padding: 12px clamp(16px, 3vw, 56px) 24px; }
 .hub-page {
+  --side-t: #ffb46b;
+  --side-ct: #8fcaff;
+  --side-data: var(--tertiary);
   --hub-border: #63788e;
   --hub-surface: #0d1c26;
   --hub-ink: #f1f6fa;
@@ -27,9 +30,9 @@
 .hub-page small { display: block; color: var(--muted); font-size: .8rem; }
 .hub-page .muted { color: var(--muted); font-size: .9rem; }
 .hub-page .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-.hub-eyebrow { margin: 0 0 8px; color: var(--accent); font-size: .75rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
-.hub-search { display: grid; gap: 8px; max-width: 30rem; }
-.hub-search input { width: 100%; }
+.hub-eyebrow { margin: 0 0 8px; color: var(--hub-muted); font-size: .75rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.hub-search { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; max-width: 30rem; }
+.hub-search input { min-width: 0; width: 100%; }
 .hub-team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px; }
 .hub-page .hub-team-card { display: grid; justify-items: start; gap: 12px; padding: 24px; }
 .hub-team-card > strong { font-size: 1.15rem; }
@@ -37,8 +40,8 @@
 .hub-asset { position: relative; display: grid; place-items: center; overflow: hidden; background: #102630; flex: none; }
 .hub-asset img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .hub-badge { width: 64px; height: 64px; border: 1px solid var(--accent); border-radius: 12px; color: var(--accent); font: 700 1.3rem var(--mono); }
-.hub-portrait { width: 100%; aspect-ratio: 4 / 5; border-radius: 8px; }
-.hub-portrait img { object-fit: cover; object-position: center top; }
+.hub-portrait { width: 100%; aspect-ratio: 1000 / 666; overflow: visible; background: transparent; border-radius: 0; }
+.hub-portrait img { object-fit: contain; }
 .hub-portrait svg { width: 100%; height: 100%; fill: var(--muted); opacity: .6; }
 .hub-breadcrumbs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
 .hub-compact-title { font-size: 1rem; line-height: 1.2; margin: 0 8px 0 0; }
@@ -48,7 +51,7 @@
 .hub-stage[data-direction="back"] { --hub-entry-x: -48px; }
 .hub-panel { position: relative; min-height: var(--hub-viewport); border: 1px solid var(--hub-border); border-radius: 16px; padding: clamp(20px, 3vw, 48px); background: #08151f; isolation: isolate; }
 /* A finite light reveal and a quiet grid add depth without perpetual movement. */
-.hub-panel::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 65%), repeating-linear-gradient(90deg, transparent 0 79px, #b6c5d207 79px 80px); animation: hub-light-in 700ms var(--hub-ease) both; }
+.hub-panel::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; background: radial-gradient(ellipse at 50% 0%, #9aafc70b, transparent 65%), repeating-linear-gradient(90deg, transparent 0 79px, #b6c5d207 79px 80px); animation: hub-light-in 700ms var(--hub-ease) both; }
 .hub-team-panel { display: grid; align-content: center; gap: 24px; }
 .hub-team-head { display: grid; justify-items: center; text-align: center; gap: 20px; }
 .hub-team-head .hub-badge { width: clamp(120px, 15vh, 176px); height: clamp(120px, 15vh, 176px); border: 0; border-radius: 0; background: transparent; font-size: 3rem; filter: drop-shadow(0 0 30px color-mix(in srgb, var(--accent) 32%, transparent)); animation: hub-logo-in 700ms var(--hub-ease) both; }
@@ -58,14 +61,15 @@
 .hub-team-panel > .hub-team-layout > section > :is(h3, p) { text-align: center; margin: 0 0 12px; }
 .hub-map-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 12px; }
 .hub-page .hub-map-card { display: grid; justify-items: center; align-content: start; text-align: center; gap: 8px; padding: 18px 12px; animation: hub-card-in 560ms var(--hub-ease) var(--stagger, 0ms) backwards; }
-.hub-page .hub-map-card:hover { transform: translateY(-6px); box-shadow: 0 16px 32px #0005; }
-.hub-map-card > span:first-child { font-size: 1.1rem; font-weight: 600; }
-.hub-rate { position: relative; display: grid; place-items: center; width: 108px; height: 108px; }
+.hub-page .hub-map-card:is(:hover, :focus-visible) { --hover-lift: -6px; box-shadow: 0 16px 32px #0005; }
+.hub-map-card .hub-map-name { font-size: 1.1rem; font-weight: 600; }
+.hub-rate { position: relative; display: grid; place-items: center; width: 108px; height: 108px; border-radius: 50%; background: #0d1c26f2; }
 .hub-rate svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); fill: none; stroke-width: 1.5; }
 .hub-arc-track { stroke: var(--hub-border); }
-.hub-arc { stroke: var(--accent); stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: var(--hub-progress, 100); animation: hub-arc-in 650ms var(--hub-ease) var(--stagger, 0ms) both; }
-.hub-map-card strong { font: 700 clamp(1.8rem, 2.5vw, 2.5rem) var(--mono); color: var(--accent); }
-.hub-map-card > span:nth-last-child(2) { color: var(--muted); font-size: .85rem; }
+.hub-arc { stroke: var(--tertiary); stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: var(--hub-progress, 100); animation: hub-arc-in 650ms var(--hub-ease) var(--stagger, 0ms) both; }
+.hub-map-card strong { font: 700 clamp(1.8rem, 2.5vw, 2.5rem) var(--mono); color: var(--secondary); }
+.hub-map-card > span:nth-last-child(2) { font-size: .85rem; }
+.hub-page .hub-map-card > :is(small, span:nth-last-child(2)) { color: #e0e9f0; }
 .hub-team-panel .hub-team-results { margin: 0; }
 .hub-team-results > summary { text-align: center; }
 .hub-results { max-width: 760px; margin: 0 auto; }
@@ -80,8 +84,8 @@
 .hub-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 16px 0; font-variant-numeric: tabular-nums; }
 .hub-team-layout > *, .hub-player-view > *, .hub-kpis > * { min-width: 0; }
 .hub-kpis .stat { box-shadow: none; border: 0; border-left: 1px solid var(--hub-border); border-radius: 0; background: #08151fe8; padding: 12px 20px; }
-.hub-kpis .stat-value { color: var(--accent); font-size: clamp(1.8rem, 3.8vw, 4rem); line-height: 1.15; }
-.hub-count { display: inline-block; font-variant-numeric: tabular-nums; }
+.hub-kpis .stat-value { color: var(--secondary); font-size: clamp(1.8rem, 3.8vw, 4rem); line-height: 1.15; }
+.hub-count { display: inline-block; font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .hub-kpis .stat-label, .hub-kpis .stat-sub { color: var(--muted); font-size: .8rem; }
 .hub-summary { max-width: 90ch; padding: 12px 20px; border-left: 2px solid var(--accent); background: #08151fe8; line-height: 1.7; }
 .hub-details { margin: 16px 0; border-top: 1px solid var(--hub-border); }
@@ -98,29 +102,41 @@
 .hub-roster { margin-top: 24px; }
 .hub-roster > h3 { margin: 0 0 8px; }
 .hub-roster > p { margin: 0 0 16px; }
-.hub-player-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
-.hub-page .hub-player-card { display: grid; align-content: start; gap: 8px; padding: 8px; border-color: var(--hub-border); border-top-color: var(--accent); box-shadow: 0 -8px 28px -20px var(--accent); animation: hub-portrait-in 600ms var(--hub-ease) var(--stagger, 0ms) backwards; }
-.hub-player-card .hub-portrait { max-height: clamp(140px, 21vh, 260px); transition: filter 300ms var(--hub-ease); }
-.hub-player-card strong { overflow-wrap: anywhere; font-size: 1.05rem; }
-.hub-page .hub-player-card:is(:hover, :focus-visible) { transform: translateY(-8px); border-color: var(--accent); box-shadow: 0 0 24px -10px var(--accent), 0 20px 40px #0008; }
+.hub-player-cards { position: relative; isolation: isolate; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; padding-top: 24px; overflow: clip; overflow-clip-margin: 16px; }
+.hub-page .hub-player-card { position: relative; isolation: isolate; display: grid; align-content: end; justify-items: center; gap: 6px; padding: 0 0 12px; border: 0; border-radius: 0; background: transparent; box-shadow: none; animation: hub-portrait-in 600ms var(--hub-ease) var(--stagger, 0ms) backwards; }
+.hub-page .hub-player-card:is(:hover, :active, :focus-visible) { background: transparent; }
+.hub-card-portrait-depth { position: relative; display: block; width: 155%; pointer-events: none; translate: calc(var(--depth-h, 0) * .65px) calc(var(--depth-v, 0) * .65px); }
+.hub-player-card .hub-portrait { transition: filter 300ms var(--hub-ease); filter: brightness(.9); }
+.hub-player-card strong { position: relative; color: var(--hub-ink); overflow-wrap: anywhere; font-size: 1.05rem; text-shadow: 0 2px 10px #08151f; }
+.hub-player-card small { position: relative; text-align: center; }
+.hub-roster-light { position: absolute; inset: 0 -15%; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at 50% 70%, color-mix(in srgb, var(--primary) 15%, transparent), transparent 65%); translate: calc(var(--depth-h, 0) * -.5px) calc(var(--depth-v, 0) * -.5px); }
+.hub-page .hub-player-card:is(:hover, :focus-visible) { --hover-lift: -10px; --hover-scale: 1.045; z-index: 2; }
+.hub-player-card:is(:hover, :focus-visible) .hub-portrait { filter: brightness(1.08) contrast(1.04) drop-shadow(0 0 12px color-mix(in srgb, var(--primary) 60%, transparent)); }
 @media (hover: hover) and (pointer: fine) {
-  .hub-player-cards:has(.hub-player-card:hover) .hub-player-card:not(:hover):not(:focus-visible) .hub-portrait { filter: blur(1.5px) brightness(.72); }
+  .hub-player-cards:has(.hub-player-card:hover) .hub-player-card:not(:hover):not(:focus-visible) { --hover-scale: .97; }
+  .hub-player-cards:has(.hub-player-card:hover) .hub-player-card:not(:hover):not(:focus-visible) .hub-portrait { filter: blur(2px) brightness(.58); }
 }
-.hub-player-cards:has(.hub-player-card:focus-visible) .hub-player-card:not(:focus-visible) .hub-portrait { filter: blur(1px) brightness(.8); }
+.hub-player-cards:has(.hub-player-card:focus-visible) .hub-player-card:not(:focus-visible) { --hover-scale: .97; }
+.hub-player-cards:has(.hub-player-card:focus-visible) .hub-player-card:not(:focus-visible) .hub-portrait { filter: blur(2px) brightness(.58); }
 .hub-team-radar { margin-bottom: 0; }
 .hub-team-radar > section { display: grid; justify-items: center; }
 .hub-team-radar .hub-radar { width: min(100%, 600px); }
 .hub-page-selected .hub-map-panel:has(.hub-player-view) { padding: 0; }
 .hub-player-view { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); min-height: var(--hub-viewport); align-items: stretch; }
-.hub-player-bio { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: end; min-width: 0; padding: clamp(24px, 3vw, 48px); border-radius: 16px 0 0 16px; overflow: hidden; background: #08151f; }
-.hub-player-bio > .hub-portrait { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; aspect-ratio: auto; border-radius: 0; z-index: -2; animation: hub-portrait-in 650ms var(--hub-ease) both; }
-.hub-player-bio > .hub-portrait img { object-fit: cover; object-position: 50% 12%; }
-.hub-player-bio::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(0deg, #08151f 3%, #08151fee 22%, #08151f00 72%), linear-gradient(90deg, #08151f00 65%, #08151f); }
-.hub-player-bio > h3 { margin: 16px 0 0; font-size: clamp(2.4rem, 4.5vw, 5rem); line-height: 1.05; overflow-wrap: anywhere; letter-spacing: .02em; text-shadow: 0 2px 18px #000; animation: hub-name-in 300ms var(--hub-ease) 400ms both; }
-.hub-verse { margin: 0; padding: 16px 20px; border-left: 2px solid var(--accent); background: #08151fe8; }
-.hub-verse-line { margin: 0; max-width: 17em; font-family: "Kaiti SC", "STKaiti", "KaiTi", "Songti SC", serif; font-size: clamp(1.5rem, 2.2vw, 2.6rem); line-height: 1.7; letter-spacing: .08em; white-space: pre-line; text-wrap: balance; }
-.hub-verse-line > span[aria-hidden] > span { display: inline-block; white-space: pre; animation: hub-character-in 300ms var(--hub-ease) var(--character-delay, 0ms) both; }
-.hub-verse-translation { margin: 12px 0 0; line-height: 1.6; }
+.hub-player-bio { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: end; min-width: 0; min-height: 640px; padding: clamp(24px, 3vw, 48px); border-radius: 16px 0 0 16px; overflow: hidden; background: #07121b; }
+.hub-player-bio::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(0deg, #08151f 1%, #08151fee 15%, transparent 45%), linear-gradient(90deg, transparent 75%, #08151f); }
+.hub-portrait-motion { position: absolute; z-index: -2; width: 145%; left: -22.5%; bottom: 85px; aspect-ratio: 1000 / 666; pointer-events: none; translate: calc(var(--depth-h, 0) * .85px) calc(var(--depth-v, 0) * .85px); }
+.hub-portrait-motion .hub-portrait { width: 100%; height: 100%; filter: drop-shadow(0 0 14px color-mix(in srgb, var(--primary) 22%, transparent)); }
+.hub-player-identity { position: relative; translate: calc(var(--depth-h, 0) * -.25px) calc(var(--depth-v, 0) * -.25px); }
+.hub-player-identity h3 { margin: 16px 0 0; font-size: clamp(2.4rem, 4.5vw, 5rem); line-height: 1.05; overflow-wrap: anywhere; letter-spacing: .02em; text-shadow: 0 2px 18px #000; }
+.hub-player-role { margin: 10px 0 0; color: var(--hub-muted); line-height: 1.6; }
+.hub-verse { scale: .78; transform-origin: top right; position: absolute; top: 84px; right: clamp(18px, 2.5vw, 42px); margin: 0; padding: 12px 8px; color: var(--secondary); background: #07121be8; border: 0; border-radius: 4px; translate: calc(var(--depth-h, 0) * -.35px) calc(var(--depth-v, 0) * -.35px); }
+.hub-verse .hub-eyebrow { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.hub-verse-line { margin: 0; font-family: "Songti SC", "STSong", "Noto Serif SC", serif; font-size: clamp(1.5rem, 2.6vw, 2.8rem); line-height: 1.55; letter-spacing: .08em; text-shadow: 0 2px 12px #000; }
+.hub-verse-columns { position: relative; display: flex; flex-direction: row-reverse; align-items: start; gap: .15em; }
+.hub-verse-column { display: block; writing-mode: vertical-rl; text-orientation: upright; }
+.hub-verse-character { display: inline-block; }
+.hub-verse-translation { position: absolute; top: 100%; right: 0; width: clamp(140px, 16vw, 220px); margin: 12px 0 0; padding: 8px; background: #08151ff2; color: var(--hub-muted); font: .85rem/1.6 system-ui, sans-serif; }
 .hub-player-bio .hub-details { margin: 16px 0 0; background: #08151ff5; }
 .hub-player-bio .hub-details[open] { padding: 0 12px 12px; }
 .hub-player-analysis { min-width: 0; padding: 24px clamp(16px, 2vw, 32px); }
@@ -133,7 +149,7 @@
 .hub-segments button[aria-pressed="true"] { color: #08151f; background: var(--accent); border-color: var(--accent); font-weight: 700; }
 .hub-side-switch { flex: 0 1 252px; width: 252px; max-width: 100%; }
 .hub-side-switch > div { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; padding: 4px; border: 1px solid var(--hub-border); border-radius: 100px; background: #08151f; isolation: isolate; }
-.hub-side-indicator { position: absolute; z-index: -1; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 3); background: var(--accent); border-radius: 100px; transform: translateX(calc(var(--side-index, 0) * 100%)); transition: transform 420ms var(--hub-ease); }
+.hub-side-indicator { position: absolute; z-index: -1; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 3); background: var(--side-data); border-radius: 100px; transform: translateX(calc(var(--side-index, 0) * 100%)); transition: transform 420ms var(--hub-ease), background-color 420ms var(--hub-ease); }
 .hub-page .hub-side-switch button { min-width: 0; padding: 8px; border-radius: 100px; border-color: transparent; background: transparent; text-align: center; transition: color 300ms var(--hub-ease); }
 .hub-page .hub-side-switch button[aria-pressed="true"] { background: transparent; color: #08151f; }
 .hub-page .hub-side-switch button:hover { box-shadow: inset 0 0 0 1px var(--accent); }
@@ -155,20 +171,75 @@
 .hub-map-figure figcaption p { margin: 8px 0; }
 .hub-map-notes summary { min-height: 44px; padding: 10px 0; cursor: pointer; }
 .hub-legend { display: flex; flex-wrap: wrap; gap: 12px 20px; }
-.hub-low { border-left: 2px solid var(--accent); padding-left: 12px; color: var(--accent); font-size: .85rem; }
+.hub-low { border-left: 2px solid var(--secondary); padding-left: 12px; color: var(--secondary); font-size: .85rem; }
 .hub-player-analysis .hub-low { margin: 4px 0 8px; }
 .hub-player-analysis > .hub-details { margin: 0; }
 @keyframes hub-stage-in { from { opacity: 0; transform: translateX(var(--hub-entry-x)) scale(.99); filter: blur(8px); } to { opacity: 1; transform: none; filter: blur(0); } }
 @keyframes hub-logo-in { from { opacity: 0; transform: scale(1.08); filter: blur(20px); } to { opacity: 1; transform: scale(1); } }
 @keyframes hub-card-in { from { opacity: 0; transform: translate3d(0, 36px, 0) rotateX(8deg); } to { opacity: 1; transform: none; } }
 @keyframes hub-portrait-in { from { opacity: 0; transform: translateY(32px); filter: blur(4px); } to { opacity: 1; transform: none; filter: blur(0); } }
-@keyframes hub-character-in { from { opacity: 0; transform: translateY(8px); filter: blur(5px); } to { opacity: 1; transform: none; filter: blur(0); } }
 @keyframes hub-name-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes hub-radar-in { from { opacity: 0; transform: scale(1.04); } to { opacity: .13; transform: none; } }
 @keyframes hub-light-in { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: none; } }
 @keyframes hub-arc-in { from { stroke-dashoffset: 100; } }
 @keyframes hub-layer-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes hub-layer-out { from { opacity: 1; } to { opacity: 0; } }
+/* Neutral stage, gold numbers, steel data, brand light, and fixed side hues. */
+.hub-player-view[data-side="T"], .hub-side-stat[data-side="T"] { --side-data: var(--side-t); }
+.hub-player-view[data-side="CT"], .hub-side-stat[data-side="CT"] { --side-data: var(--side-ct); }
+.hub-side-stat .stat { height: 100%; }
+.hub-side-stat .stat-value { color: var(--side-data); }
+.hub-player-view:not([data-side="all"]) .hub-kpis .stat-value { color: var(--side-data); }
+.hub-analysis-head, .hub-analysis-toolbar { translate: calc(var(--depth-h, 0) * -.15px) calc(var(--depth-v, 0) * -.15px); }
+.hub-player-view .stat-value { transition: color 420ms var(--hub-ease); }
+.hub-player-view .hub-radar { box-shadow: 0 0 40px -26px var(--side-data); transition: box-shadow 420ms var(--hub-ease); }
+.hub-panel::after, .hub-player-bio::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none; opacity: var(--spot-alpha, 0); background: radial-gradient(360px circle at calc(var(--spot-x, 50) * 1%) calc(var(--spot-y, 50) * 1%), #d4e4f412, transparent 75%); }
+/* Transform and translation have separate owners: springs never overwrite entrances. */
+.hub-page :is(.hub-map-card, .hub-player-card, .hub-kpis .stat, .hub-primary) { position: relative; transform: perspective(900px) rotateX(calc(var(--tilt-v, 0) * 1deg)) rotateY(calc(var(--tilt-h, 0) * 1deg)); scale: var(--hover-scale, 1); translate: calc(var(--magnet-h, 0) * 1px) calc(var(--hover-lift, 0px) + var(--magnet-v, 0) * 1px); transition: border-color 300ms var(--hub-ease), box-shadow 300ms var(--hub-ease), background-color 300ms var(--hub-ease), translate 160ms var(--hub-ease), scale 250ms var(--hub-ease); }
+.hub-page :is(.hub-map-card, .hub-player-card, .hub-kpis .stat)::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: calc(var(--shine-alpha, 0) * .08); background: radial-gradient(180px circle at calc(var(--shine-x, 50) * 1%) calc(var(--shine-y, 50) * 1%), #fff, transparent 80%); }
+.hub-page .hub-map-card { overflow: hidden; isolation: isolate; background: #0d1c26; }
+.hub-map-card > :not(.hub-map-preview) { position: relative; z-index: 1; }
+.hub-map-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; filter: grayscale(.35); mask-image: linear-gradient(#0008, #0003); transition: opacity 400ms var(--hub-ease), scale 600ms var(--hub-ease); scale: 1.08; }
+.hub-map-card:is(:hover, :focus-visible) .hub-map-preview { opacity: .42; scale: 1; }
+.hub-map-card:is(:hover, :focus-visible) .hub-arc { stroke: var(--primary); animation: hub-preview-arc 700ms var(--hub-ease) both; }
+@keyframes hub-preview-arc { from { stroke-dashoffset: 100; } }
+/* Real digit reels keep a single exact, accessible value throughout. */
+.hub-number-display { display: inline-block; position: relative; line-height: 1.15; }
+.hub-number-reels { display: none; position: absolute; inset: 0; white-space: nowrap; align-items: center; }
+.hub-count[data-rolling="true"] .hub-number-final { visibility: hidden; }
+.hub-count[data-rolling="true"] .hub-number-reels { display: flex; }
+.hub-digit { display: inline-block; height: 1em; width: 1ch; overflow: hidden; line-height: 1; }
+.hub-digit-track { display: flex; flex-direction: column; }
+.hub-digit-track > span { display: block; height: 1em; flex: 0 0 1em; }
+/* Three spatial planes: grid/light, outline, cut-out, then foreground type/dust. */
+.hub-player-view { position: relative; isolation: isolate; }
+.hub-stage-light, .hub-depth-grid, .hub-foreground-dust { position: absolute; inset: 0; pointer-events: none; }
+.hub-stage-light { z-index: -4; background: radial-gradient(ellipse at 20% 45%, color-mix(in srgb, var(--primary) 24%, transparent), transparent 60%), radial-gradient(ellipse at 85% 25%, color-mix(in srgb, var(--secondary) 18%, transparent), transparent 55%); translate: calc(var(--depth-h, 0) * -.5px) calc(var(--depth-v, 0) * -.5px); }
+.hub-depth-grid { z-index: -4; opacity: .35; background: repeating-linear-gradient(90deg, transparent 0 63px, #a6bed51a 63px 64px), repeating-linear-gradient(0deg, transparent 0 63px, #a6bed512 63px 64px); translate: calc(var(--depth-h, 0) * -.65px) calc(var(--depth-v, 0) * -.65px); }
+.hub-outline-name { position: absolute; z-index: -3; top: 9%; left: -8%; font: 900 clamp(9rem, 24vw, 30rem)/1 system-ui, sans-serif; letter-spacing: -.07em; color: transparent; -webkit-text-stroke: 1px #c8d7e34a; white-space: nowrap; pointer-events: none; translate: calc(var(--depth-h, 0) * .3px) calc(var(--depth-v, 0) * .3px); }
+.hub-foreground-dust { z-index: -1; opacity: .6; background: radial-gradient(circle at 12% 48%, var(--secondary) 0 1px, transparent 2px), radial-gradient(circle at 80% 65%, var(--primary) 0 1px, transparent 2px), radial-gradient(circle at 27% 77%, #d9e5ef 0 1px, transparent 2px); translate: calc(var(--depth-h, 0) * 1.2px) calc(var(--depth-v, 0) * 1.2px); }
+.hub-page .hub-intro-skip { position: absolute; z-index: 5; top: 12px; left: 16px; min-height: 44px; max-width: calc(100% - 32px); font-size: .75rem; color: var(--hub-muted); background: #08151ff2; }
+.hub-player-view { --portrait-delay: 260ms; --portrait-duration: 900ms; --outline-duration: 800ms; --verse-delay: 820ms; --verse-duration: 400ms; --identity-delay: 1400ms; --analysis-delay: 1670ms; --settle-duration: 500ms; }
+.hub-player-view[data-entrance="short"] { --portrait-delay: 0ms; --portrait-duration: 380ms; --outline-duration: 350ms; --verse-delay: 100ms; --verse-duration: 180ms; --identity-delay: 150ms; --analysis-delay: 200ms; --settle-duration: 350ms; }
+.hub-player-view[data-entrance="short"] .hub-verse-character { --character-delay: 0ms !important; }
+.hub-player-view:not([data-entrance="settled"]) .hub-stage-light { animation: hub-leak-sweep 1200ms var(--hub-ease) both; }
+.hub-player-view[data-entrance="short"] .hub-stage-light { animation-duration: 450ms; }
+.hub-player-view:not([data-entrance="settled"]) .hub-outline-name { animation: hub-outline-enter var(--outline-duration) var(--hub-ease) both; }
+.hub-player-view:not([data-entrance="settled"]) .hub-portrait-motion .hub-portrait { animation: hub-dolly-in var(--portrait-duration) var(--hub-ease) var(--portrait-delay) both; }
+.hub-player-view:not([data-entrance="settled"]) .hub-verse { animation: hub-verse-settle 2500ms var(--hub-ease) both; }
+.hub-player-view[data-entrance="short"] .hub-verse { animation-duration: 600ms; }
+.hub-player-view:not([data-entrance="settled"]) .hub-verse-character { animation: hub-brush-in var(--verse-duration) var(--hub-ease) calc(var(--verse-delay) + var(--character-delay, 0ms)) both; }
+.hub-player-view:not([data-entrance="settled"]) .hub-verse-columns::after { content: ""; position: absolute; inset: -5% -10%; pointer-events: none; background: linear-gradient(160deg, transparent 35%, #fff2b75c 49%, transparent 63%); mix-blend-mode: screen; animation: hub-gold-glint 600ms ease-out 1100ms both; }
+.hub-player-view[data-entrance="short"] .hub-verse-columns::after { animation-duration: 200ms; animation-delay: 150ms; }
+.hub-player-view:not([data-entrance="settled"]) :is(.hub-player-identity, .hub-player-roles) { animation: hub-name-in 350ms var(--hub-ease) var(--identity-delay) both; }
+.hub-player-view:not([data-entrance="settled"]) .hub-player-analysis { animation: hub-analysis-in var(--settle-duration) var(--hub-ease) var(--analysis-delay) both; }
+@keyframes hub-leak-sweep { from { opacity: 0; transform: translateX(-25%) scale(1.2); } to { opacity: 1; transform: none; } }
+@keyframes hub-outline-enter { from { opacity: 0; transform: translateX(-12%); } to { opacity: 1; transform: none; } }
+@keyframes hub-dolly-in { from { opacity: 0; transform: translateY(40px) scale(1.06); filter: blur(14px); } to { opacity: 1; transform: none; } }
+@keyframes hub-verse-settle { 0%, 72% { scale: 1; } to { scale: .78; } }
+@keyframes hub-brush-in { from { opacity: 0; clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); } 50% { opacity: 1; clip-path: polygon(0 0, 100% 0, 92% 60%, 0 45%); } to { opacity: 1; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); } }
+@keyframes hub-gold-glint { from { opacity: 0; transform: translateY(-90%); } 35% { opacity: .8; } to { opacity: 0; transform: translateY(90%); } }
+@keyframes hub-analysis-in { from { opacity: 0; transform: translateX(36px); } to { opacity: 1; transform: none; } }
 @media (min-width: 1600px) { .hub-panel { padding: 40px 56px; } .hub-player-analysis { padding: 32px; } }
 @media (max-width: 1000px) {
   .hub-page { --hub-viewport: max(480px, calc(100svh - 164px)); }
@@ -194,11 +265,11 @@
   .hub-page .hub-team-card, .hub-page .hub-map-card { padding: 16px 10px; }
   .hub-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hub-player-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .hub-player-card .hub-portrait { max-height: none; }
   .hub-player-view, .hub-map-context .hub-details .hub-team-layout { grid-template-columns: minmax(0, 1fr); }
-  .hub-player-bio { min-height: 580px; border-radius: 16px 16px 0 0; }
-  .hub-player-bio > .hub-portrait { max-width: none; }
-  .hub-player-bio > .hub-portrait img { object-position: 50% 15%; }
+  .hub-player-bio { min-height: 640px; border-radius: 16px 16px 0 0; }
+  .hub-verse { top: 76px; right: 16px; }
+  .hub-verse-line { font-size: clamp(1.3rem, 5.5vw, 1.8rem); }
+  .hub-portrait-motion { width: 160%; left: -30%; bottom: 100px; }
   .hub-player-bio::after { background: linear-gradient(0deg, #08151f 3%, #08151fee 20%, #08151f00 75%); }
   .hub-player-analysis { padding: 24px 16px; }
   .hub-analysis-head { align-items: start; flex-direction: column; }
@@ -210,7 +281,14 @@
 /* CSS and JS both observe this preference, including changes during an exit/count. */
 @media (prefers-reduced-motion: reduce) {
   .hub-page *, .hub-page *::before, .hub-page *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
-  .hub-page :is(.hub-map-card, .hub-player-card):is(:hover, :focus-visible) { transform: none; }
+  .hub-page :is(.hub-map-card, .hub-player-card, .hub-kpis .stat, .hub-primary) { transform: none !important; translate: none !important; scale: none !important; }
+  .hub-page :is(.hub-map-preview, .hub-card-portrait-depth, .hub-roster-light, .hub-outline-name, .hub-portrait-motion, .hub-stage-light, .hub-depth-grid, .hub-foreground-dust, .hub-player-identity, .hub-analysis-head, .hub-analysis-toolbar) { transform: none !important; translate: none !important; scale: none !important; }
+  .hub-page .hub-verse { translate: none !important; }
+  .hub-page :is(.hub-panel, .hub-map-card, .hub-player-card, .hub-kpis .stat)::after { display: none; }
+  .hub-page .hub-player-bio::before { display: none; }
+  .hub-page .hub-player-bio::after { display: block; }
+  .hub-page .hub-map-preview { opacity: .2; }
+  .hub-page .hub-intro-skip, .hub-portrait-transfer { display: none; }
   .hub-player-cards .hub-player-card .hub-portrait { filter: none !important; }
   .hub-layer-out { display: none; }
 }

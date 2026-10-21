@@ -56,3 +56,22 @@ Per the task, **no frontend build, TypeScript compilation, or browser execution 
 4. Run the updated sample-data smoke suite using its existing setup instructions. Restore production data afterward with `.venv/bin/python scripts/sync_web_data.py`; the sample registry intentionally has no Falcons showcase assets/verses.
 
 This checkout has no `.git` directory; source changes were reviewed against temporary pre-edit copies. No commits, new dependencies, image moves, or edits to `.github`, `delegation/design-skills/`, or `data/raw`.
+
+## Round 2
+
+Applied only the three reported smoke-test fixes and portrait cropping.
+
+### Changed files
+
+- `web/src/pages/TeamsHub.tsx` — navigation actions now read the current HashRouter query directly from browser history. With `v7_startTransition`, history can advance before React renders; rapid Escape presses previously reused the outgoing player route and could close the player twice instead of closing player → map. Close buttons and patches now use the latest destination too.
+- `web/e2e/smoke.py` — CT selection and Back assertions now wait for the rendered `aria-pressed` state as well as the URL. This removes the race between synchronous history changes and deferred React commits. The player deep-link readiness selector was already `.hub-player-view`; its later `.hub-map-card` timeout came from the rapid-Escape check, addressed by the navigation fix above. Direct player links still render the player slide immediately, without an intermediate map-card slide.
+- `web/src/teams-hub.css` — the search grid uses a shrinkable `minmax(0, 1fr)` track and its input has `min-width: 0`, preventing its intrinsic width from overflowing the 375px team list. Portraits share `object-fit: cover`, `object-position: 70% 20%`, and a static 1.65× zoom anchored at the same point. The existing clipped frames remove the left-edge badge/flags/logo in both cards and the player slide. Removed desktop/mobile overrides that recentered the player portrait. Position alone would not crop the nearly matching source/frame aspect ratios.
+- `delegation/GPT-10_report.md` — appended this section.
+
+### Verification and remaining checks
+
+- Re-read the requested UI/UX skill, responsive/motion guidance and checklist; reviewed `HashRouter` configuration, slide lifecycle and smoke assertions.
+- Inspected all five supplied portraits; no image files were edited or moved.
+- `python3` AST validation of `web/e2e/smoke.py` passed. Recursive `tinycss2` parsing of stylesheet rules and declarations passed.
+- Reviewed the focused diff against temporary pre-edit copies. No dependencies, data, i18n strings, motion timings or unrelated files changed.
+- Per the same rules, no build, TypeScript compilation or browser smoke run was performed. Reviewer: rebuild and rerun `python web/e2e/smoke.py` against the served sample build; verify CT/Back, direct player links with rapid Escape, and 375px overflow. Review all five portrait crops on desktop and mobile with production assets.
