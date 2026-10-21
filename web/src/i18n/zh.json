@@ -477,6 +477,7 @@
     "expand_insights": "展开其余 {n} 条洞察",
     "top_target": "最常进攻包点",
     "target_context": "{site}，占全部 T 方长枪局的比例。",
-    "spot_index": "地图点位（{n}）"
+    "spot_index": "地图点位（{n}）",
+    "summary_basis": "数据依据（{n} 条）"
   }
 }

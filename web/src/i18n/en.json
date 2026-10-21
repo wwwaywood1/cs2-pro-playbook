@@ -477,6 +477,7 @@
     "setup_meta": "{rounds} rounds · Share {share} · Win {win}",
     "more_data": "More data",
     "expand_insights": "Expand {n} more insights",
-    "spot_index": "Map spots ({n})"
+    "spot_index": "Map spots ({n})",
+    "summary_basis": "Based on {n} facts"
   }
 }

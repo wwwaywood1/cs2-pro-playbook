@@ -279,17 +279,27 @@ export default function Team() {
       {team.insights?.length ? (
         <section className="panel team-insights">
           <h3>{t("tactics.insights")}</h3>
-          <ul className="team-insights-top">
-            {team.insights.slice(0, 3).map((insight) => (
-              <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>
-            ))}
-          </ul>
-          {team.insights.length > 3 && <details>
-            <summary>{t("tactics.expand_insights", { n: fmtInt(team.insights.length - 3) })}</summary>
-            <ul className="team-insights-rest">{team.insights.slice(3).map((insight) => (
-              <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>
-            ))}</ul>
-          </details>}
+          {team.summary ? <>
+            <p className="team-summary">{team.summary[lang]}</p>
+            <details>
+              <summary>{t("tactics.summary_basis", { n: fmtInt(team.insights.length) })}</summary>
+              <ul className="team-insights-rest">{team.insights.map((insight) => (
+                <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>
+              ))}</ul>
+            </details>
+          </> : <>
+            <ul className="team-insights-top">
+              {team.insights.slice(0, 3).map((insight) => (
+                <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>
+              ))}
+            </ul>
+            {team.insights.length > 3 && <details>
+              <summary>{t("tactics.expand_insights", { n: fmtInt(team.insights.length - 3) })}</summary>
+              <ul className="team-insights-rest">{team.insights.slice(3).map((insight) => (
+                <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>
+              ))}</ul>
+            </details>}
+          </>}
         </section>
       ) : null}
 

@@ -76,6 +76,7 @@
 .tactics-people li { margin: 8px 0; overflow-wrap: anywhere; }
 .team-insights .team-insights-top { display: grid; gap: 8px; padding: 0; list-style: none; }
 .team-insights-top li { margin: 0; padding: 8px 16px; border-left: 2px solid var(--accent); background: rgba(242, 177, 52, 0.06); font-size: 14px; }
+.team-summary { margin: 0 0 12px; padding: 12px 16px; border-left: 3px solid var(--accent); background: rgba(242, 177, 52, 0.06); font-size: 16px; line-height: 1.7; }
 .team-insights-rest { padding-left: 20px; color: var(--muted); font-size: 13px; }
 .team-insights-rest li { margin: 8px 0; overflow-wrap: anywhere; }
 @media (max-width: 1000px) {

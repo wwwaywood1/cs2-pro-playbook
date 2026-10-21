@@ -103,6 +103,8 @@ export interface TeamProfile {
   tactics?: { T: TTactics; CT: CTTactics };
   /** checked facts vs the other teams on this map (playbook/insights.py) */
   insights?: Insight[];
+  /** short analyst paragraph written from `insights` by an LLM, numbers checked (scripts/insight_text.py) */
+  summary?: { zh: string; en: string; facts: string[] };
 }
 
 export interface Share {

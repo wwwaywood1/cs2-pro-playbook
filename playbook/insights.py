@@ -10,7 +10,10 @@ sentences, but every claim must come from a fact here (DESIGN.md › Roadmap M4)
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
+from pathlib import Path
 
 import polars as pl
 
@@ -140,3 +143,24 @@ def team_insights(team: str, plans: pl.DataFrame, ct: pl.DataFrame, recipes: lis
                           int((rot_r["n_rotated"] > 0).sum()), rot_r.height,
                           "进攻开始后有人及时回防的回合", "Rounds where a CT rotated in time"))
     return [f for f in facts if f]
+
+
+def fingerprint(facts: list[dict]) -> str:
+    """Identity of a team's fact list; scripts/insight_text.py stamps written summaries with it."""
+    key = json.dumps([[f["id"], f["text"]["en"]] for f in facts], sort_keys=True, ensure_ascii=False)
+    return hashlib.sha1(key.encode()).hexdigest()[:12]
+
+
+def attach_summaries(teams: list[dict], path: Path) -> int:
+    """Add the checked LLM paragraph (config/insight_text/<map>.json) to each team whose facts
+    are unchanged since it was written. Stale or missing paragraphs are simply left out."""
+    if not path.exists():
+        return 0
+    written = json.loads(path.read_text())
+    n = 0
+    for p in teams:
+        w = written.get(p["slug"])
+        if w and p.get("insights") and w.get("fingerprint") == fingerprint(p["insights"]):
+            p["summary"] = {"zh": w["zh"], "en": w["en"], "facts": w["facts"]}
+            n += 1
+    return n

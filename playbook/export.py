@@ -27,9 +27,9 @@ import polars as pl
 
 from playbook.config import PARSED_DIR, SITE_DIR, MapMeta, load_map, team_slug
 from playbook.heatmap import build_heatmaps, roster_order
-from playbook.config import load_spot_names
+from playbook.config import ROOT, load_spot_names
 from playbook.tactics import DEFINITIONS, analyse_map, ct_summary, name_spots, site_spots, t_summary
-from playbook.insights import team_insights
+from playbook.insights import attach_summaries, team_insights
 from playbook.zones import make_summarizer, team_setup
 from playbook.store import read_all
 from playbook.semantics import round_plants
@@ -462,6 +462,7 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         })
         for p in teams:
             p["insights"] = team_insights(p["team"], res["plans"], res["ct"], res["recipes"], spot_names)
+        attach_summaries(teams, ROOT / "config" / "insight_text" / f"{map_name}.json")
         _add_team_tactics(mdir, teams, res, names)
         _add_player_tactics(mdir, players, res, sub["player_rounds"])
         hm = build_heatmaps(sub, mm, order, make_summarizer(mm, res["spots"], res["spot_assign"], nade_lineup))
