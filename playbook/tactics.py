@@ -44,7 +44,7 @@ import numpy as np
 import polars as pl
 
 from playbook.config import MapMeta
-from playbook.semantics import lane_shape
+from playbook.semantics import lane_shape, round_plants
 
 KEYS = ["demo_id", "round_num"]
 GUN_BUYS = ("full", "force")
@@ -92,22 +92,28 @@ ROTATE_AFTER_S = 15
 
 
 def _neighbours(pts: np.ndarray, radius: float, chunk: int = 512) -> list[np.ndarray]:
-    sq = (pts**2).sum(1)
     r2 = radius * radius
     out: list[np.ndarray] = []
     for s in range(0, len(pts), chunk):
-        d2 = sq[s : s + chunk, None] + sq[None, :] - 2.0 * pts[s : s + chunk] @ pts.T
+        # Subtract first: squared norms lose small distances at large offsets.
+        d2 = np.zeros((len(pts[s:s + chunk]), len(pts)))
+        for axis in range(pts.shape[1]):
+            delta = pts[s:s + chunk, axis, None] - pts[None, :, axis]
+            d2 += delta * delta
         out.extend(np.nonzero(row <= r2)[0] for row in d2)
     return out
 
 
-def density_clusters(pts: np.ndarray, radius: float, min_size: int) -> np.ndarray:
-    """Labels (-1 = noise). Seeds are taken in order of neighbour count, ties by index."""
+def density_clusters(pts: np.ndarray, radius: float, min_size: int,
+                     levels: np.ndarray | None = None) -> np.ndarray:
+    """Labels (-1 = noise). Seeds use neighbour count, then coordinates; levels never mix."""
     labels = np.full(len(pts), -1, dtype=np.int64)
     if len(pts) == 0:
         return labels
     neigh = _neighbours(pts.astype(np.float64), radius)
-    order = sorted(range(len(pts)), key=lambda i: (-len(neigh[i]), i))
+    if levels is not None:
+        neigh = [ns[levels[ns] == levels[i]] for i, ns in enumerate(neigh)]
+    order = sorted(range(len(pts)), key=lambda i: (-len(neigh[i]), tuple(pts[i]), i))
     k = 0
     for i in order:
         if labels[i] != -1:
@@ -123,7 +129,8 @@ def landing_spots(util: pl.DataFrame, mm: MapMeta) -> tuple[pl.DataFrame, pl.Dat
     """(spots, assignment). assignment maps (demo_id, nade_id) -> spot_id."""
     u = util.filter(
         ~pl.col("is_post_round") & pl.col("thrower_side").is_not_null()
-        & pl.col("type").is_in(SPOT_TYPES) & pl.col("land_x").is_not_null()
+        & pl.col("type").is_in(SPOT_TYPES)
+        & pl.all_horizontal(pl.col(c).is_finite() for c in ("land_x", "land_y", "land_z"))
     ).sort("demo_id", "nade_id")
     spots: list[dict] = []
     assign: list[dict] = []
@@ -133,14 +140,15 @@ def landing_spots(util: pl.DataFrame, mm: MapMeta) -> tuple[pl.DataFrame, pl.Dat
             if g.is_empty():
                 continue
             pts = g.select("land_x", "land_y", "land_z").to_numpy()
-            labels = density_clusters(pts, SPOT_RADIUS[typ], SPOT_MIN_THROWS)
+            levels = (pts[:, 2] < mm.radar["lower_level_max_z"]).astype(int) if "lower_level_max_z" in mm.radar else np.zeros(len(pts), dtype=int)
+            labels = density_clusters(pts, SPOT_RADIUS[typ], SPOT_MIN_THROWS, levels)
             g = g.with_columns(label=pl.Series(labels))
             found = []
             for lab, m in g.filter(pl.col("label") >= 0).group_by("label"):
                 if m["demo_id"].n_unique() < SPOT_MIN_MATCHES:
                     continue
                 found.append(m)
-            found.sort(key=lambda m: (-m.height, float(m["land_x"].mean()), float(m["land_y"].mean())))
+            found.sort(key=lambda m: (-m.height, float(m["land_x"].mean()), float(m["land_y"].mean()), float(m["land_z"].mean())))
             for m in found:
                 place = Counter(p for p in m["land_place"].to_list() if p).most_common(1)
                 place = place[0][0] if place else None
@@ -207,14 +215,15 @@ def _tempo(commit_s: float | None) -> str:
 
 def t_plans(sub: dict[str, pl.DataFrame], mm: MapMeta, spot_assign: pl.DataFrame,
             centres: dict[str, tuple[float, float, float]]) -> pl.DataFrame:
-    tr = sub["team_rounds"].filter(pl.col("side") == "T")
+    tr = sub["team_rounds"].filter(pl.col("side") == "T").drop("plant_site", "plant_t_s").join(
+        round_plants(sub), on=KEYS, how="left", validate="m:1")
     pos = sub["positions"]
 
     # first second with >= 2 living T players on each site core
     core = (
         pos.filter((pl.col("side") == "T") & pl.col("alive") & (pl.col("t_s") >= 0)
                    & pl.col("place").is_in(list(SITE_CORE.values())))
-        .group_by(*KEYS, "t_s", "place").agg(n=pl.len())
+        .group_by(*KEYS, "t_s", "place").agg(n=pl.col("steamid").n_unique())
         .filter(pl.col("n") >= COMMIT_MIN_PLAYERS)
         .group_by(*KEYS, "place").agg(core_s=pl.col("t_s").min())
         .with_columns(site=pl.col("place").str.slice(-1))
@@ -278,7 +287,7 @@ def t_plans(sub: dict[str, pl.DataFrame], mm: MapMeta, spot_assign: pl.DataFrame
     committed = plans.filter(pl.col("commit_s").is_not_null()).select(
         *KEYS, "target", t_split=(pl.col("commit_s").floor().cast(pl.Int32) - SPLIT_LOOKBACK_S).clip(lower_bound=0),
         t_commit=pl.col("commit_s").floor().cast(pl.Int32),
-        t_lurk=(pl.col("commit_s").floor().cast(pl.Int32) - LURK_LOOKBACK_S).clip(lower_bound=EARLY_UTIL_S),
+        t_lurk=(pl.col("commit_s").floor().cast(pl.Int32) - LURK_LOOKBACK_S).clip(lower_bound=0),
     )
     tpos = pos.filter((pl.col("side") == "T") & pl.col("alive")).select(
         *KEYS, "t_s", "steamid", "name", "x", "y", "region", "lane", "place")
@@ -323,7 +332,7 @@ def t_plans(sub: dict[str, pl.DataFrame], mm: MapMeta, spot_assign: pl.DataFrame
     lurk = (
         _with_dist(lurk_pos).with_columns(other_lane=pl.col("target").replace_strict(OTHER_SITE, default=None))
         .filter((pl.col("lane") == pl.col("other_lane")) | ((pl.col("dist") >= LURK_MIN_DIST) & (pl.col("lane") != "T_SPAWN")))
-        .sort("dist", descending=True)
+        .sort("dist", "steamid", "place", descending=[True, False, False])
         .group_by(KEYS, maintain_order=True)
         .agg(lurker_steamid=pl.col("steamid").first(), lurker_name=pl.col("name").first(), lurker_place=pl.col("place").first())
     )
@@ -618,8 +627,8 @@ def t_summary(plans: pl.DataFrame) -> dict:
         "fake_rate": _rate(int(hit["fake_from"].is_not_null().sum()), hit.height),
         "recipes": _ranked(g, "recipe_id", 8),
         "lurkers": [{"steamid": str(s), "name": n, "rounds": c} for s, n, c in
-                    hit.filter(pl.col("lurk")).group_by("lurker_steamid").agg(name=pl.col("lurker_name").mode().first(), c=pl.len())
-                    .sort("c", "name", descending=[True, False]).head(3).iter_rows()],
+                    hit.filter(pl.col("lurk")).group_by("lurker_steamid").agg(name=pl.col("lurker_name").mode().sort().first(), c=pl.len())
+                    .sort("c", "name", "lurker_steamid", descending=[True, False, False]).head(3).iter_rows()],
     }
 
 
@@ -627,7 +636,7 @@ def ct_summary(ct: pl.DataFrame, names: dict[int, str] | None = None) -> dict:
     g = ct.filter(pl.col("gun"))
     hit = g.filter(pl.col("t_target").is_not_null())
     fwd = g.select(*KEYS, "forward_steamids").explode("forward_steamids").drop_nulls("forward_steamids")
-    fwd_players = fwd.group_by("forward_steamids").agg(c=pl.col("round_num").len()).sort("c", descending=True).head(5)
+    fwd_players = fwd.group_by("forward_steamids").agg(c=pl.col("round_num").len()).sort("c", "forward_steamids", descending=[True, False]).head(5)
     return {
         "gun_rounds": g.height,
         "setups_20s": _ranked(g, "shape_20s", 6),

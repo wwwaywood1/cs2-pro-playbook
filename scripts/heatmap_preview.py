@@ -14,13 +14,7 @@ import json
 import sys
 from pathlib import Path
 
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
-from matplotlib.patches import Patch  # noqa: E402
-from scipy.ndimage import gaussian_filter  # noqa: E402
+import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -60,19 +54,54 @@ def player_rgba(grid: np.ndarray, color: int) -> np.ndarray:
     return np.dstack([rgb, alpha])
 
 
+def owner_rgba(stack: np.ndarray, colors: list[int]) -> np.ndarray:
+    """Choose the largest value relative to each player's own peak, as on the site."""
+    if not len(stack):
+        return np.zeros((*stack.shape[1:], 4))
+    peaks = stack.max(axis=(1, 2), keepdims=True)
+    relative = np.divide(stack, peaks, out=np.zeros_like(stack), where=peaks > 0)
+    owner = relative.argmax(0)
+    top = relative.max(0)
+    v = np.clip(top, 0, 1) ** GAMMA
+    rgba = np.zeros((*owner.shape, 4))
+    for i, color in enumerate(colors):
+        light, deep = (hex_rgb(c) for c in PALETTE[min(color, len(PALETTE) - 1)])
+        m = (owner == i) & (top > 0)
+        rgba[m, :3] = light * (1 - v[m, None]) + deep * v[m, None]
+    rgba[..., 3] = np.clip((v - ALPHA_FLOOR) * 1.6, 0, 0.85)
+    return rgba
+
+
+def blur_grid(grid: np.ndarray, sigma: float) -> np.ndarray:
+    from scipy.ndimage import gaussian_filter
+    if sigma <= 0:
+        return grid.copy()
+    return gaussian_filter(grid, sigma, mode="constant", radius=max(1, int(np.ceil(3 * sigma))))
+
+
 def main() -> None:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Patch
+
     ap = argparse.ArgumentParser()
     ap.add_argument("map")
     ap.add_argument("team")
     ap.add_argument("--side", choices=["T", "CT"], default="CT")
     ap.add_argument("--phase", choices=PHASES)
+    ap.add_argument("--level", type=int, choices=(0, 1), default=0)
     ap.add_argument("--sigma", type=float, default=1.0)
     ap.add_argument("--out", type=Path, default=ROOT / "data" / "heatmap_previews")
     a = ap.parse_args()
 
     entry = json.loads((ROOT / "data" / "site" / a.map / "heatmaps" / "teams" / f"{a.team}.json").read_text())
     phases = [a.phase] if a.phase else list(PHASES)
-    radar = plt.imread(RADARS / f"{a.map}.png")
+    baseline = json.loads((ROOT / "data" / "site" / a.map / "heatmaps" / "baseline.json").read_text())
+    levels = baseline["levels"]
+    if a.level >= levels:
+        ap.error("selected level is not available on this map")
+    radar = plt.imread(RADARS / f"{a.map}{'_lower' if a.level else ''}.png")
     roster = [r for r in entry["roster"] if r["rounds"][a.side]]
     plt.rcParams["font.sans-serif"] = ["Noto Sans CJK SC", "WenQuanYi Zen Hei", "DejaVu Sans"]
 
@@ -84,7 +113,7 @@ def main() -> None:
         ax.imshow(radar, extent=(0, 1024, 1024, 0))
         for r in reversed(roster):  # first colour on top
             layers = merge_phases(entry["players"][r["steamid"]], a.side, phases)
-            g = gaussian_filter(combine(layers, weights)[0], a.sigma)
+            g = blur_grid(combine(layers, weights, levels)[a.level], a.sigma)
             ax.imshow(player_rgba(g, r["color"]), extent=(0, 1024, 1024, 0), interpolation="bilinear")
         ax.set_title(title, fontsize=14)
         ax.axis("off")
@@ -92,17 +121,11 @@ def main() -> None:
     # who owns each area: the player with the largest share of presence there
     ax = axes[-1]
     ax.imshow(radar, extent=(0, 1024, 1024, 0))
-    stack = np.stack([gaussian_filter(combine(merge_phases(entry["players"][r["steamid"]], a.side, phases),
-                                              {"presence": 1})[0], a.sigma) for r in roster])
-    owner = stack.argmax(0)
-    top = stack.max(0)
-    v = np.clip(top / (top.max() or 1), 0, 1) ** GAMMA
-    rgba = np.zeros((*owner.shape, 4))
-    for i, r in enumerate(roster):
-        light, deep = (hex_rgb(c) for c in PALETTE[min(r["color"], len(PALETTE) - 1)])
-        m = owner == i
-        rgba[m, :3] = light * (1 - v[m, None]) + deep * v[m, None]
-    rgba[..., 3] = np.clip((v - ALPHA_FLOOR) * 1.6, 0, 0.85)
+    stack = np.array([blur_grid(combine(merge_phases(entry["players"][r["steamid"]], a.side, phases),
+                                              {"presence": 1}, levels)[a.level], a.sigma) for r in roster])
+    if not roster:
+        stack = np.zeros((0, baseline["grid"], baseline["grid"]))
+    rgba = owner_rgba(stack, [r["color"] for r in roster])
     ax.imshow(rgba, extent=(0, 1024, 1024, 0), interpolation="nearest")
     ax.set_title("区域归属（站位最多的选手）", fontsize=14)
     ax.axis("off")

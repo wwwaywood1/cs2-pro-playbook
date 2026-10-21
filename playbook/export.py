@@ -32,6 +32,7 @@ from playbook.tactics import DEFINITIONS, analyse_map, ct_summary, name_spots, s
 from playbook.insights import team_insights
 from playbook.zones import make_summarizer, team_setup
 from playbook.store import read_all
+from playbook.semantics import round_plants
 
 SCHEMA_VERSION = 1
 MIN_MATCHES_RELIABLE = 5
@@ -142,7 +143,7 @@ def team_profiles(sub: dict[str, pl.DataFrame], mm: MapMeta) -> list[dict]:
         demo_ids = d["demo_id"].unique().to_list()
         m = matches.filter(pl.col("demo_id").is_in(demo_ids))
         match_list = []
-        for row in m.iter_rows(named=True):
+        for row in m.sort("demo_id").iter_rows(named=True):
             me_a = row["team_a"] == team
             match_list.append({
                 "demo_id": row["demo_id"],
@@ -176,7 +177,7 @@ def team_profiles(sub: dict[str, pl.DataFrame], mm: MapMeta) -> list[dict]:
 def _lane_dist(values: list[str | None]) -> list[dict]:
     vals = [v for v in values if v]
     c = Counter(vals)
-    return [{"value": k, "share": _rate(n, len(vals))} for k, n in c.most_common(4)]
+    return [{"value": k, "share": _rate(n, len(vals))} for k, n in sorted(c.items(), key=lambda kv: (-kv[1], kv[0]))[:4]]
 
 
 def player_profiles(sub: dict[str, pl.DataFrame]) -> list[dict]:
@@ -190,8 +191,8 @@ def player_profiles(sub: dict[str, pl.DataFrame]) -> list[dict]:
         t_reached = t.filter(pl.col("site_entry_rank").is_not_null())
         out.append({
             "steamid": str(sid),
-            "name": d["name"].mode().first(),
-            "team": d["team"].mode().first(),
+            "name": d["name"].mode().sort().first(),
+            "team": d["team"].mode().sort().first(),
             "n_matches": d["demo_id"].n_unique(),
             "rounds": {"total": n, "T": t.height, "CT": ct.height},
             "kpr": _rate(int(d["kills"].sum()), n),
@@ -292,7 +293,7 @@ def build_lineups(sub: dict[str, pl.DataFrame], mm: MapMeta) -> tuple[list[dict]
         & pl.col("type").is_in(LINEUP_TYPES)
     )
     won = sub["team_rounds"].select("demo_id", "round_num", pl.col("team").alias("thrower_team"), "won")
-    u = u.join(won, on=["demo_id", "round_num", "thrower_team"], how="left").sort("throw_tick")
+    u = u.join(won, on=["demo_id", "round_num", "thrower_team"], how="left").sort("throw_tick", "demo_id", "nade_id")
     rows = u.to_dicts()
 
     # Greedy clustering: same side + type, close release point and close landing point.
@@ -381,19 +382,23 @@ def _add_team_tactics(mdir: Path, teams: list[dict], res: dict, names: dict) -> 
         _write(mdir / "teams" / f"{p['slug']}.json", p)
 
 
-def _add_player_tactics(mdir: Path, players: list[dict], res: dict) -> None:
+def _add_player_tactics(mdir: Path, players: list[dict], res: dict, player_rounds: pl.DataFrame) -> None:
     """Lurk share (T, rounds with a commit) and forward share (CT) per player, rewritten
     into players.json; inputs for the role hints."""
     hit = res["plans"].filter(pl.col("gun") & pl.col("commit_s").is_not_null())
     lurks = dict(hit.filter(pl.col("lurk")).group_by("lurker_steamid").agg(n=pl.len()).iter_rows())
-    team_hits = dict(hit.group_by("team").agg(n=pl.len()).iter_rows())
+    played = player_rounds.filter(pl.col("buy_type").is_in(GUN_BUYS)).select(
+        "demo_id", "round_num", "team", "side", "steamid").unique()
+    hit_rounds = dict(played.filter(pl.col("side") == "T").join(
+        hit.select("demo_id", "round_num", "team"), on=["demo_id", "round_num", "team"], how="semi"
+    ).group_by("steamid").agg(n=pl.len()).iter_rows())
     ct = res["ct"].filter(pl.col("gun"))
     fwd = dict(ct.select("forward_steamids").explode("forward_steamids").drop_nulls()
                .group_by("forward_steamids").agg(n=pl.len()).iter_rows())
-    ct_rounds = dict(ct.group_by("team").agg(n=pl.len()).iter_rows())
+    ct_rounds = dict(played.filter(pl.col("side") == "CT").group_by("steamid").agg(n=pl.len()).iter_rows())
     for p in players:
         sid = int(p["steamid"])
-        th, cr = team_hits.get(p["team"], 0), ct_rounds.get(p["team"], 0)
+        th, cr = hit_rounds.get(sid, 0), ct_rounds.get(sid, 0)
         p["T"]["lurk_share"] = _rate(lurks.get(sid, 0), th) if th else None
         p["CT"]["forward_share"] = _rate(fwd.get(sid, 0), cr) if cr else None
     _write(mdir / "players.json", players)
@@ -404,6 +409,12 @@ def _add_player_tactics(mdir: Path, players: list[dict], res: dict) -> None:
 
 def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None:
     t = read_all(parsed_dir)
+    # Old semantic tables may contain a post-round plant; keep every exported view
+    # consistent with the cleaned plant used by heatmaps and tactics.
+    plants = round_plants(t)
+    t["team_rounds"] = t["team_rounds"].drop("plant_site", "plant_t_s", "planted").join(
+        plants, on=["demo_id", "round_num"], how="left", validate="m:1"
+    ).with_columns(planted=pl.col("plant_site").is_not_null())
     matches = t["matches"]
     index = {
         "schema_version": SCHEMA_VERSION,
@@ -441,7 +452,7 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
             _filter_lineup_refs(r["options"], lineup_ids)
             for c in r["core"] + r["options"]:
                 c["name"] = spot_names.get(c["spot_id"])
-        names = {sid: n for sid, n in sub["player_rounds"].group_by("steamid").agg(pl.col("name").mode().first()).iter_rows()}
+        names = {sid: n for sid, n in sub["player_rounds"].group_by("steamid").agg(pl.col("name").mode().sort().first()).iter_rows()}
         spots = site_spots(res, spot_names, mm)
         _filter_lineup_refs(spots, lineup_ids)
         _write(mdir / "tactics.json", {
@@ -452,7 +463,7 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         for p in teams:
             p["insights"] = team_insights(p["team"], res["plans"], res["ct"], res["recipes"], spot_names)
         _add_team_tactics(mdir, teams, res, names)
-        _add_player_tactics(mdir, players, res)
+        _add_player_tactics(mdir, players, res, sub["player_rounds"])
         hm = build_heatmaps(sub, mm, order, make_summarizer(mm, res["spots"], res["spot_assign"], nade_lineup))
         _write_compact(mdir / "heatmaps" / "baseline.json", hm["baseline"])
         for slug, entry in hm["teams"].items():
@@ -482,7 +493,7 @@ def heatmap_team_index(player_rounds: pl.DataFrame, order: dict[str, list[str]],
     the team's players with their fixed colours (0 red, 1 blue, 2 purple, 3 green, 4 orange)."""
     names = (
         player_rounds.filter(pl.col("steamid").is_not_null() & pl.col("team").is_not_null())
-        .group_by("team", "steamid").agg(name=pl.col("name").mode().first(), rounds=pl.len())
+        .group_by("team", "steamid").agg(name=pl.col("name").mode().sort().first(), rounds=pl.len())
     )
     out = []
     for team, maps in team_maps.items():

@@ -61,6 +61,33 @@ def densest_window(times: list[float], lanes: list[str], width: float = EXEC_WIN
     return best
 
 
+def round_plants(t: dict[str, pl.DataFrame]) -> pl.DataFrame:
+    """One first live plant per round, also when re-exporting older parsed tables."""
+    bounds = t.get("rounds", t.get("team_rounds"))
+    plants = t.get("plants")
+    exact_bounds = False
+    if plants is not None and all(c in plants.columns for c in (*KEYS, "t_s", "site")):
+        if "tick" in plants.columns and bounds is not None and all(
+                c in bounds.columns for c in ("freeze_end_tick", "end_tick")):
+            plants = plants.join(bounds.select(*KEYS, "freeze_end_tick", "end_tick"), on=KEYS, validate="m:1").filter(
+                pl.col("tick").is_between(pl.col("freeze_end_tick"), pl.col("end_tick")))
+            exact_bounds = True
+        p = plants.select(*KEYS, plant_site="site", plant_t_s="t_s",
+                          _order="tick" if "tick" in plants.columns else "t_s")
+    else:
+        tr = t["team_rounds"].filter(pl.col("side") == "T")
+        if "plant_site" not in tr.columns:
+            tr = tr.with_columns(plant_site=pl.lit(None, dtype=pl.String))
+        p = tr.select(*KEYS, "plant_site", "plant_t_s", _order="plant_t_s")
+    p = p.filter(pl.col("plant_t_s").is_finite() & (pl.col("plant_t_s") >= 0))
+    if not exact_bounds and bounds is not None and "dur_s" in bounds.columns:
+        # dur_s is rounded to 0.1 s; plant_t_s to 0.01 s. Prefer tick bounds above.
+        p = p.join(bounds.select(*KEYS, "dur_s").unique(), on=KEYS, validate="m:1").filter(
+            pl.col("plant_t_s") <= pl.col("dur_s") + 0.05).drop("dur_s")
+    return p.sort(*KEYS, "_order", "plant_site").group_by(KEYS, maintain_order=True).agg(
+        pl.col("plant_site").first(), pl.col("plant_t_s").first())
+
+
 def build_team_rounds(t: dict[str, pl.DataFrame]) -> pl.DataFrame:
     r = t["rounds"]
     common = ["demo_id", "round_num", "half", "dur_s", "reason", "winner_team"]
@@ -101,9 +128,7 @@ def build_team_rounds(t: dict[str, pl.DataFrame]) -> pl.DataFrame:
     )
 
     # bomb plant (first plant of the round)
-    plants = t["plants"].sort("tick").group_by(KEYS, maintain_order=True).agg(
-        plant_site=pl.col("site").first(), plant_t_s=pl.col("t_s").first()
-    )
+    plants = round_plants(t)
     base = base.join(plants, on=KEYS, how="left").with_columns(planted=pl.col("plant_site").is_not_null())
 
     # utility usage + execute window

@@ -265,6 +265,7 @@ export interface HoldSpot {
 }
 
 export interface UtilitySpot {
+  level: number;
   spot_id: string;
   type: GrenadeType;
   place: string | null;

@@ -104,7 +104,7 @@ def team_insights(team: str, plans: pl.DataFrame, ct: pl.DataFrame, recipes: lis
             })
 
     lurks = mine.filter(pl.col("lurk").fill_null(False)).group_by("lurker_steamid").agg(
-        n=pl.len(), name=pl.col("lurker_name").mode().first()).sort("n", "name", descending=[True, False])
+        n=pl.len(), name=pl.col("lurker_name").mode().sort().first()).sort("n", "name", "lurker_steamid", descending=[True, False, False])
     if lurks.height and hits >= MIN_ROUNDS:
         sid, n, name = lurks.row(0)
         if n / hits >= MIN_SHARE * 0.5 and n >= 4:
