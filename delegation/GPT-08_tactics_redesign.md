@@ -59,3 +59,17 @@ They must read clearly at 16 px (in text lists) and at 28–32 px (on the map). 
 ## Deliverable
 
 Edit in place, then write `delegation/GPT-08_report.md`: the files changed, the design decisions you made, and anything you are unsure about.
+
+---
+
+## Round 2 (Claude's review of round 1 screenshots at 1440 px)
+
+Round 1 builds cleanly and works. Fix these:
+
+1. **Zoom is too tight.** With 2–3 core spots the map zooms into one corridor and the reader loses where on the map they are, and the 1024 px radar looks blurry when enlarged. Minimum zoom box: 60 % of the map width, centred on the selected spots but always containing the target bombsite centre. Never upscale the radar more than ~1.6× its native pixels.
+2. **The map must be fully visible without scrolling.** Size the radar as `min(column width, 100vh − sticky offset − 24px)`, square, sticky. Make the key-numbers row more compact (number 32 px, label + one line, less vertical padding) so the map starts higher on a 1440×900 screen.
+3. **Map markers are too busy**: icon in a dark disc inside the coverage disc. Drop the dark disc; draw the grenade icon (≈ 28 px) directly on the coverage area with a thin dark outline / drop shadow for contrast. The number badge stays small at the top right.
+4. The header (logo + nav) is aligned to a narrower container than the page content; use the same max-width and side padding for both.
+5. In the expanded recipe row, the meta grid (比赛记录、下包率、夹击率、平均闪光弹数) should be one compact row of 4 small stats, not a 2×2 block of large cells.
+
+Same rules as above. Append a "Round 2" section to `delegation/GPT-08_report.md` listing the changes.
