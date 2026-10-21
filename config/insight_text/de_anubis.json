@@ -1,0 +1,82 @@
+{
+ "aurora": {
+  "zh": "Aurora 的 CT 方默认站位为 A1 M1 B3，占 33% 的枪局，胜率 43%。进攻开始后及时回防占 19%，低于其他队伍的 50%，回防调度偏慢。",
+  "en": "Aurora's CT side defaults to A1 M1 B3, used in 33% of gun rounds with a 43% win rate. Only 19% of rounds saw a timely CT rotation, below the other teams' 50%, suggesting a slower defensive response.",
+  "facts": [
+   "ct_default_setup",
+   "ct_rotate"
+  ],
+  "fingerprint": "d23aabff208b"
+ },
+ "falcons": {
+  "zh": "Falcons 的 T 方最常用 B 点爆弹：B连接烟、警家烟和 B后点火，10 次进攻赢下 8 次。NiKo 是最常摸边的人，有 8 次进攻时在另一侧或远离进攻点。",
+  "en": "Falcons' T side most often executes B with Palace smoke, CT smoke and a Back site molotov, winning 8 of 10 attempts. NiKo is the usual lurker, hitting the other side or staying away from the entry on 8 attacks.",
+  "facts": [
+   "t_signature_recipe",
+   "t_main_lurker"
+  ],
+  "fingerprint": "bd5a2f237c80"
+ },
+ "flyquest": {
+  "zh": "FlyQuest 的 T 方最常用 A 点爆弹，以天堂烟、A连接烟、A连接火和 A包点火组合，4 次进攻赢下 3 次。jks 是最常摸边的人，有 4 次进攻时在另一侧或远离进攻点。",
+  "en": "FlyQuest's T side favors an A execute using Heaven smoke, A connector smoke, A connector molotov and A site molotov, winning 3 of 4 attempts. jks is the usual lurker, hitting the other side or staying away from the entry on 4 attacks.",
+  "facts": [
+   "t_signature_recipe",
+   "t_main_lurker"
+  ],
+  "fingerprint": "1eea1fb86fd0"
+ },
+ "fut-esports": {
+  "zh": "FUT Esports 的 T 方快攻占 33%，高于其他队伍的 13%；CT 方开局前压占 32%，也高于其他队伍的 15%。CT 默认站位 A1 M2 B2，占 27% 的枪局，胜率 67%。",
+  "en": "FUT Esports' T side fast-hits 33% of the time, above the other teams' 13%, while its CT side pushes early in 32% of rounds versus their 15%. The default CT setup A1 M2 B2 covers 27% of gun rounds with a 67% win rate.",
+  "facts": [
+   "t_tempo_fast",
+   "ct_forward",
+   "ct_default_setup"
+  ],
+  "fingerprint": "7c4aac06a556"
+ },
+ "g2": {
+  "zh": "G2 的 T 方快攻占 30%，高于其他队伍的 13%，但分兵进点仅占 29%，低于其他队伍的 59%，整体更偏向直接进入。CT 默认站位 A1 M2 B2，占 29% 的枪局，胜率 80%。",
+  "en": "G2's T side fast-hits 30% of the time, above the other teams' 13%, but only splits 29% of hits versus their 59%, showing a preference for direct entries. The default CT setup A1 M2 B2 covers 29% of gun rounds with an 80% win rate.",
+  "facts": [
+   "t_tempo_fast",
+   "t_split",
+   "ct_default_setup"
+  ],
+  "fingerprint": "ae65ab4834ac"
+ },
+ "mibr": {
+  "zh": "MIBR 的 CT 默认站位 A2 M1 B2 覆盖 52% 的枪局，胜率 91%，是队伍最常用且胜率很高的防守布局。",
+  "en": "MIBR's default CT setup A2 M1 B2 covers 52% of gun rounds with a 91% win rate, making it the team's most-used and highly effective defensive setup.",
+  "facts": [
+   "ct_default_setup"
+  ],
+  "fingerprint": "34f2fb47dd01"
+ },
+ "natus-vincere": {
+  "zh": "Natus Vincere 的 T 方拖后进攻占 62%，高于其他队伍的 36%，节奏明显偏慢，更多依靠延迟后的进攻创造空间。",
+  "en": "Natus Vincere's T side runs late hits 62% of the time, above the other teams' 36%, showing a clear preference for slower timing and creating space through delayed attacks.",
+  "facts": [
+   "t_tempo_late"
+  ],
+  "fingerprint": "5750eff20413"
+ },
+ "pain": {
+  "zh": "paiN 的 CT 默认站位 A1 M2 B2 占 37% 的枪局，胜率 57%，是队伍最常用的防守布局。",
+  "en": "paiN's default CT setup A1 M2 B2 is used in 37% of gun rounds with a 57% win rate, making it the team's most common defensive setup.",
+  "facts": [
+   "ct_default_setup"
+  ],
+  "fingerprint": "e39348bb4a47"
+ },
+ "spirit": {
+  "zh": "Spirit 的 T 方由 zont1x 负责最常见的摸边，6 次进攻时在另一侧或远离进攻点。CT 默认站位 A2 M1 B2，占 43% 的枪局，胜率 60%。",
+  "en": "Spirit's T side relies on zont1x as the usual lurker, hitting the other side or staying away from the entry on 6 attacks. The default CT setup A2 M1 B2 covers 43% of gun rounds with a 60% win rate.",
+  "facts": [
+   "t_main_lurker",
+   "ct_default_setup"
+  ],
+  "fingerprint": "82e163f98f02"
+ }
+}

@@ -36,6 +36,7 @@ Claude 通过 PAL MCP 直接派活、收结果、落盘、测试、合并，不�
 | [GPT-06](GPT-06_spot_names.md) | GPT（看图） | Mirage、Inferno 共 108 个道具落点的中英文名字，输出 `config/spots/*.toml` | 附件 `delegation/inputs/spots/`（1 个表 + 4 张图） | 中 | 完成 |
 | [DS-06](DS-06_heatmaps.md) | DeepSeek | 战队热力图页面：选战队 → 箭头切换地图 → T/CT → 勾选选手（五色），四种视图，选手总结卡片 | 无（数据、类型、计算函数已就绪） | 高 | 完成 |
 | [GPT-07](GPT-07_tactics_page.md) | Codex（PAL 自动派） | 战术套路页面：T/CT 概览、爆弹卡片（小雷达 + 点位名 + 跳转道具库）、队伍页显示统计事实 | 无 | 高 | 完成 |
+| M4 战队点评 | MiniMax（Anubis）+ Codex（其余 5 张图），PAL 自动派 | 把每队的统计事实改写成 1–3 句中英文点评，`scripts/insight_text.py check` 校验数字 | 无 | 中 | 完成 |
 
 ## 审核记录（Claude）
 
@@ -63,6 +64,8 @@ Claude 通过 PAL MCP 直接派活、收结果、落盘、测试、合并，不�
 - **GPT-06 续（Nuke、Dust2、Ancient、Anubis）**：ChatGPT 交付 230 个落点名字，其中 8 个标为低置信度。已写入 `config/spots/`，ID 无重复、中英文齐全，测试通过。
 
 - **GPT-07**：第一次经 PAL 自动派给 Codex。7 个文件原样采用：TypeScript 编译一次通过，用 Nuke 真实数据在浏览器里检查了卡片、雷达标记、A/B 筛选、排序、跳转道具库和 375px 宽度，24 项冒烟测试通过，控制台无报错。
+
+- **M4 战队点评**：105 支队伍（6 张图）的点评全部通过校验：每个数字都出自所引用的事实，引用的事实编号都存在，长度在限制内。点评带事实指纹，事实变了导出时自动丢弃旧点评。DeepSeek 当时在校园网连不上，Anubis 改由 MiniMax 写；为免逐条转存，其余 5 张图交给 Codex 在 Mac 上直接写稿并自跑校验。
 
 ## 为什么这样分
 

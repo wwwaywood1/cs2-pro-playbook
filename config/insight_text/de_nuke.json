@@ -1,0 +1,183 @@
+{
+ "9z": {
+  "zh": "T 方最常由 dgt 摸边，4 次进攻时他在另一侧或远离进攻点。",
+  "en": "The T side usually has dgt lurking, with him on the other side or away from the hit on 4 attacks.",
+  "facts": [
+   "t_main_lurker"
+  ],
+  "fingerprint": "7a36c60430c1"
+ },
+ "astralis": {
+  "zh": "Astralis 的 T 方拖后进攻仅占 5%，低于其他队伍的 27%，较少把进攻留到后段。",
+  "en": "Astralis' T side uses late hits in just 5% of rounds versus the other teams' 27%, showing less reliance on delayed attacks.",
+  "facts": [
+   "t_tempo_late"
+  ],
+  "fingerprint": "b8660533aa4b"
+ },
+ "aurora": {
+  "zh": "Aurora 的 T 方有摸边的进攻占 62%，高于其他队伍的 32%；CT 及时回防占 94%，高于其他队伍的 68%，防守支援更常及时到位。",
+  "en": "Aurora's T side includes a lurker on 62% of hits versus the other teams' 32%. Its CT side rotates in time in 94% of rounds versus their 68%, more often providing timely support.",
+  "facts": [
+   "t_lurk",
+   "ct_rotate"
+  ],
+  "fingerprint": "1349ccf37534"
+ },
+ "b8": {
+  "zh": "T 方拖后进攻占 55%，高于其他队伍的 25%，但先假打再转点仅占 5%，低于其他队伍的 26%。CT 开局前压占 45%，也低于其他队伍的 71%。",
+  "en": "The T side favors late hits at 55% versus the other teams' 25%, but rarely fakes before the hit: 5% versus their 26%. The CT side also pushes early less often, at 45% versus their 71%.",
+  "facts": [
+   "t_tempo_late",
+   "t_fake",
+   "ct_forward"
+  ],
+  "fingerprint": "c8edc37528fd"
+ },
+ "betboom": {
+  "zh": "BETBOOM 的 T 方分兵进点占 52%，低于其他队伍的 71%，进攻较少采用分兵合击。",
+  "en": "BETBOOM's T side splits on 52% of hits versus the other teams' 71%, showing less reliance on split entries.",
+  "facts": [
+   "t_split"
+  ],
+  "fingerprint": "c210b5f0debe"
+ },
+ "fut-esports": {
+  "zh": "FUT Esports 的 T 方快攻占 30%，高于其他队伍的 14%。CT 默认站位 A2 M2 B1 占 32% 的枪局，胜率 83%。",
+  "en": "FUT Esports' T side fast-hits in 30% of rounds versus the other teams' 14%. Its default CT setup A2 M2 B1 covers 32% of gun rounds with an 83% win rate.",
+  "facts": [
+   "t_tempo_fast",
+   "ct_default_setup"
+  ],
+  "fingerprint": "b8bb050b707f"
+ },
+ "gamerlegion": {
+  "zh": "GamerLegion 的 T 方拖后进攻占 45%，高于其他队伍的 26%；进攻 A 点占 82%，高于其他队伍的 57%。CT 默认 A2 M1 B2 占 27% 的枪局，胜率 0%。",
+  "en": "GamerLegion's T side favors late hits at 45% versus the other teams' 26% and attacks A in 82% of rounds versus their 57%. Its default CT setup A2 M1 B2 covers 27% of gun rounds with a 0% win rate.",
+  "facts": [
+   "t_tempo_late",
+   "t_site_A",
+   "ct_default_setup"
+  ],
+  "fingerprint": "7694d0f1347f"
+ },
+ "legacy": {
+  "zh": "Legacy 的 CT 默认站位 A2 M2 B1 占 30% 的枪局，胜率 83%。",
+  "en": "Legacy's default CT setup A2 M2 B1 covers 30% of gun rounds with an 83% win rate.",
+  "facts": [
+   "ct_default_setup"
+  ],
+  "fingerprint": "04e4ee9926ec"
+ },
+ "lgcy": {
+  "zh": "LGCY 的 CT 方开局前压占 47%，低于其他队伍的 70%。默认站位 A2 M2 B1 占 25% 的枪局，胜率 62%，防守较少向前展开。",
+  "en": "LGCY's CT side pushes early in 47% of rounds versus the other teams' 70%, taking a forward posture less often. Its default setup A2 M2 B1 covers 25% of gun rounds with a 62% win rate.",
+  "facts": [
+   "ct_forward",
+   "ct_default_setup"
+  ],
+  "fingerprint": "3da0ac7a56c5"
+ },
+ "liquid": {
+  "zh": "Liquid 的 T 方先假打再转点占 46%，高于其他队伍的 24%。CT 默认站位 A2 M2 B1 占 26% 的枪局，胜率 70%。",
+  "en": "Liquid's T side fakes before the hit in 46% of rounds versus the other teams' 24%. Its default CT setup A2 M2 B1 covers 26% of gun rounds with a 70% win rate.",
+  "facts": [
+   "t_fake",
+   "ct_default_setup"
+  ],
+  "fingerprint": "894345900aff"
+ },
+ "mibr": {
+  "zh": "MIBR 的 T 方最常用 A 点爆弹，以正门烟、小木屋顶火、A包点正门侧角落火配合，4 次进攻赢下 1 次。CT 默认站位 A3 M1 B1 占 34% 的枪局，胜率 73%。",
+  "en": "MIBR's T side favors an A execute with Mini smoke, Hut roof molotov and Mini-side A site molotov, winning 1 of 4 attempts. The default CT setup A3 M1 B1 covers 34% of gun rounds with a 73% win rate.",
+  "facts": [
+   "t_signature_recipe",
+   "ct_default_setup"
+  ],
+  "fingerprint": "42bf22a48e9b"
+ },
+ "mnglz": {
+  "zh": "MNGLZ 的 T 方最常由 Techno4K 摸边，5 次进攻时他在另一侧或远离进攻点。CT 默认站位 A2 M1 B2 占 28% 的枪局，胜率 44%。",
+  "en": "MNGLZ's T side usually has Techno4K lurking, with him on the other side or away from the hit on 5 attacks. The default CT setup A2 M1 B2 covers 28% of gun rounds with a 44% win rate.",
+  "facts": [
+   "t_main_lurker",
+   "ct_default_setup"
+  ],
+  "fingerprint": "a9f7e4dd4814"
+ },
+ "monte": {
+  "zh": "Monte 的 T 方最常用正门烟、小木屋顶火和 A包点正门侧角落火爆弹 A 点，5 次赢下 3 次。CT 开局前压占 50%，低于其他队伍的 71%。",
+  "en": "Monte's go-to T execute hits A with Mini smoke, a Hut roof molotov and a Mini-side A site molotov, winning 3 of 5 attempts. Its CT side pushes early in 50% of rounds versus the other teams' 71%.",
+  "facts": [
+   "t_signature_recipe",
+   "ct_forward"
+  ],
+  "fingerprint": "7069988131f6"
+ },
+ "mouz": {
+  "zh": "MOUZ 的 CT 默认站位 A3 M1 B1 占 31% 的枪局，胜率 80%。",
+  "en": "MOUZ's default CT setup A3 M1 B1 covers 31% of gun rounds with an 80% win rate.",
+  "facts": [
+   "ct_default_setup"
+  ],
+  "fingerprint": "63398a24c5db"
+ },
+ "nrg": {
+  "zh": "NRG 的 T 方分兵进点占 91%，高于其他队伍的 69%，偏重分兵合击。CT 默认站位 A2 M2 B1 占 41% 的枪局，胜率 69%。",
+  "en": "NRG's T side splits on 91% of hits versus the other teams' 69%, favoring split entries. Its default CT setup A2 M2 B1 covers 41% of gun rounds with a 69% win rate.",
+  "facts": [
+   "t_split",
+   "ct_default_setup"
+  ],
+  "fingerprint": "67058b9a596a"
+ },
+ "pain": {
+  "zh": "paiN 的 T 方最常用 A 点爆弹，以正门烟、小木屋顶火、A包点正门侧角落火配合，4 次进攻赢下 3 次。最常由 piriajr 摸边，5 次进攻时他在另一侧或远离进攻点。",
+  "en": "paiN's T side favors an A execute with Mini smoke, Hut roof molotov and Mini-side A site molotov, winning 3 of 4 attempts. The usual lurker is piriajr, with him on the other side or away from the hit on 5 attacks.",
+  "facts": [
+   "t_signature_recipe",
+   "t_main_lurker"
+  ],
+  "fingerprint": "f760e84857da"
+ },
+ "sharks": {
+  "zh": "Sharks 的 CT 默认站位 A3 M1 B1 占 31% 的枪局，胜率 60%。",
+  "en": "Sharks' default CT setup A3 M1 B1 covers 31% of gun rounds with a 60% win rate.",
+  "facts": [
+   "ct_default_setup"
+  ],
+  "fingerprint": "37578558b2dd"
+ },
+ "spirit": {
+  "zh": "Spirit 的 CT 默认站位 A3 M1 B1 占 44% 的枪局，胜率 71%。",
+  "en": "Spirit's default CT setup A3 M1 B1 covers 44% of gun rounds with a 71% win rate.",
+  "facts": [
+   "ct_default_setup"
+  ],
+  "fingerprint": "503da47641d1"
+ },
+ "the-mongolz": {
+  "zh": "The MongolZ 的 CT 默认站位 A2 M1 B2 占 26% 的枪局，胜率 80%。",
+  "en": "The MongolZ's default CT setup A2 M1 B2 covers 26% of gun rounds with an 80% win rate.",
+  "facts": [
+   "ct_default_setup"
+  ],
+  "fingerprint": "2f20d281e445"
+ },
+ "tyloo": {
+  "zh": "TYLOO 的 T 方最常用 A 点爆弹，以正门烟、小木屋顶火、A包点正门侧角落火配合，4 次进攻赢下 3 次。",
+  "en": "TYLOO's T side favors an A execute with Mini smoke, Hut roof molotov and Mini-side A site molotov, winning 3 of 4 attempts.",
+  "facts": [
+   "t_signature_recipe"
+  ],
+  "fingerprint": "9a6406915217"
+ },
+ "vitality": {
+  "zh": "Vitality 的 CT 方开局前压占 91%，高于其他队伍的 69%，防守频繁主动向前展开。",
+  "en": "Vitality's CT side pushes early in 91% of rounds versus the other teams' 69%, making forward aggression a frequent part of its defense.",
+  "facts": [
+   "ct_forward"
+  ],
+  "fingerprint": "0d5ed7a0e6ee"
+ }
+}
