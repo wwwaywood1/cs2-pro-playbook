@@ -3,7 +3,7 @@
     "app_title": "CS2 职业战术手册",
     "nav_maps": "地图",
     "nav_lineups": "道具库",
-    "nav_teams": "队伍",
+    "nav_teams": "战队",
     "nav_tactics": "战术",
     "nav_players": "选手",
     "low_sample_warning": "样本不足：目前只有 {n} 场比赛的数据，结论仅供参考。",

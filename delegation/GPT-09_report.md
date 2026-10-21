@@ -81,3 +81,24 @@ Claude's next verification: sync samples, build with the existing npm toolchain,
 - Frontend/browser validation and the fresh upstream Vercel guideline audit remain for the build-capable reviewer.
 
 No new npm dependencies. `.github`, `delegation/design-skills/`, and `data/raw` were not modified.
+
+
+## Round 2
+
+Applied only the three Round 2 review items:
+
+- **Viewport layout:** selecting a team replaces the large hero with a compact breadcrumb/title row. The player name and map share a row with Overall/T/CT; the bio column is 300 px with a 4:5 portrait and verse below. Four compact KPIs and layer/floor controls sit above the radar. Radar width is `min(column width, 100vh - measured document top - 24px)`, updated by ResizeObserver and viewport resize, with a full-width stacked mobile layout. Map help/legend is collapsed; low-sample and empty-layer notices remain visible. The team-on-map workspace places its compact overview/roster beside a radar using the existing round-weighted `team_grid` and the same sizing rule.
+- **Utility icons:** player landings use shared `GrenadeGlyph` silhouettes at approximately 24 CSS px, with `GRENADE_COLORS` and translucent coverage discs below. Smoke/molotov coverage uses existing radar scale metadata, matching the tactics page's 144/120 world-unit radii; other markers retain a small translucent disc. No colored-ring markers remain in the hub.
+- **Shared navigation:** every page exposes 战队 / Teams → 地图 / Maps → 战术 / Tactics → 道具库 / Lineups → 选手 / Players → 战队热力图 / Team heatmaps. Per-map links resolve the map route or validated `?map=` selection (including the heatmap page), retain that map across navigation, and otherwise default to the first index map. Chinese navigation now uses the requested 战队 label; existing English translations are reused.
+
+Changed files:
+
+- `web/src/pages/TeamsHub.tsx`
+- `web/src/teams-hub.css`
+- `web/src/components/Layout.tsx`
+- `web/src/i18n/zh.json`
+- `delegation/GPT-09_report.md`
+
+Validation: Python checks confirmed all 475 zh/en translation keys match, literal translation keys in the changed TSX resolve, and all six navigation entries are unconditional and ordered as requested. `tinycss2` parsed the stylesheet, nested rules, and declarations without errors. Manually reviewed strict TS props/imports, radar coordinate alignment, side/floor filtering, focus handling, mobile wrapping, and reduced-motion rules. No data/schema changes or new dependencies. No build or TypeScript compilation was run; node/npm are unavailable. This checkout has no `.git` directory, so changes were reviewed against temporary pre-edit file copies rather than Git.
+
+Pending reviewer check: verify the team-on-map and player workspaces at 1440×900 in both languages, including Nuke's floor selector and a supplied verse, plus 375 px wrapping and navigation through hub/map/heatmap routes. Browser rendering was not exercised here. The requested upstream Vercel guideline fetch again failed DNS resolution; local design guidance was used.

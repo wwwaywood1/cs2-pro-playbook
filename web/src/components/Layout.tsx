@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { getIndex, useData } from "../data";
 import { fmtDateTime } from "../format";
@@ -14,9 +15,15 @@ function navClass({ isActive }: { isActive: boolean }): string {
 
 export default function Layout() {
   const lang = useLang();
-  const { pathname } = useLocation();
-  const map = mapFromPath(pathname);
+  const { pathname, search } = useLocation();
   const { data: index } = useData(getIndex, []);
+  const requestedMap = mapFromPath(pathname) ?? new URLSearchParams(search).get("map");
+  const [lastMap, setLastMap] = useState<string | null>(null);
+  const selectedMap = index?.maps.find((entry) => entry.map === requestedMap)?.map;
+  const map = selectedMap ?? index?.maps.find((entry) => entry.map === lastMap)?.map ?? index?.maps[0]?.map;
+  useEffect(() => {
+    if (selectedMap) setLastMap(selectedMap);
+  }, [selectedMap]);
 
   return (
     <div className="shell">
@@ -37,22 +44,18 @@ export default function Layout() {
             <NavLink to="/" end className={navClass}>
               {t("ui.nav_maps")}
             </NavLink>
+            <NavLink to={map ? `/${map}/tactics` : "/"} className={navClass}>
+              {t("ui.nav_tactics")}
+            </NavLink>
+            <NavLink to={map ? `/${map}/lineups` : "/"} className={navClass}>
+              {t("ui.nav_lineups")}
+            </NavLink>
+            <NavLink to={map ? `/${map}/players` : "/"} className={navClass}>
+              {t("ui.nav_players")}
+            </NavLink>
             <NavLink to="/heatmaps" className={navClass}>
               {t("ui.nav_heatmaps")}
             </NavLink>
-            {map ? (
-              <>
-                <NavLink to={`/${map}/lineups`} className={navClass}>
-                  {t("ui.nav_lineups")}
-                </NavLink>
-                <NavLink to={`/${map}/tactics`} className={navClass}>
-                  {t("ui.nav_tactics")}
-                </NavLink>
-                <NavLink to={`/${map}/players`} className={navClass}>
-                  {t("ui.nav_players")}
-                </NavLink>
-              </>
-            ) : null}
           </nav>
 
           <button
