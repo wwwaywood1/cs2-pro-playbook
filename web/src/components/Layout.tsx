@@ -41,6 +41,9 @@ export default function Layout() {
                 <NavLink to={`/${map}/lineups`} className={navClass}>
                   {t("ui.nav_lineups")}
                 </NavLink>
+                <NavLink to={`/${map}/tactics`} className={navClass}>
+                  {t("ui.nav_tactics")}
+                </NavLink>
                 <NavLink to={`/${map}/teams`} className={navClass}>
                   {t("ui.nav_teams")}
                 </NavLink>

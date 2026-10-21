@@ -1,0 +1,45 @@
+.tactics-page { display: grid; gap: 24px; min-width: 0; }
+.tactics-page h2 { margin-bottom: 14px; font-size: 20px; }
+.tactics-page h4 { margin: 16px 0 8px; font-size: 14px; }
+.tactics-page h4:first-child { margin-top: 0; }
+.tactics-overviews > .panel, .tactics-recipes, .tactics-recipe-body > div { min-width: 0; }
+.tactics-page .stat-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 16px 0; }
+.tactics-page .stat { min-width: 0; }
+.tactics-page .ranked-head { flex-wrap: wrap; }
+.tactics-page .ranked-meta { margin-top: 4px; }
+.tactics-people, .tactics-spots { padding-left: 20px; }
+.tactics-people li { margin: 6px 0; overflow-wrap: anywhere; }
+.tactics-help { font-size: 12px; }
+.tactics-recipes { display: grid; gap: 16px; }
+.tactics-recipe .page-head { align-items: center; }
+.tactics-recipe .page-head h3 { margin: 0; overflow-wrap: anywhere; }
+.tactics-recipe-body { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 20px; }
+.tactics-radar-wrap { margin: 0 0 8px; }
+.tactics-radar { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; }
+.tactics-marker-hit { fill: transparent; }
+.tactics-marker { stroke: #0b1220; stroke-width: 4px; }
+.tactics-smoke { fill: #e0e0e0; }
+.tactics-molotov { fill: #ff6d00; }
+.tactics-marker:not(.is-core) .tactics-smoke, .tactics-marker:not(.is-core) .tactics-molotov { stroke-dasharray: 5 3; }
+.tactics-marker text { fill: #fff; stroke: #0b1220; stroke-width: 7px; paint-order: stroke; font-size: 30px; font-weight: 700; }
+.tactics-radar a { cursor: pointer; }
+.tactics-radar a:hover .tactics-marker-hit, .tactics-radar a:focus .tactics-marker-hit { fill: rgba(242, 177, 52, 0.3); stroke: var(--accent); }
+.tactics-spots { list-style: none; padding: 0; margin: 0; }
+.tactics-spots li { display: flex; align-items: baseline; gap: 8px; margin: 8px 0; overflow-wrap: anywhere; }
+.tactics-spots li > span:last-child { min-width: 0; }
+.tactics-spots a { text-decoration: underline; text-underline-offset: 3px; }
+.tactics-spots a:hover, .tactics-spots a:focus-visible { color: var(--accent); }
+.tactics-symbol { display: inline-block; flex: none; width: 10px; height: 10px; }
+.tactics-symbol-smoke { border-radius: 50%; background: #e0e0e0; }
+.tactics-symbol-molotov { background: #ff6d00; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.tactics-inline-list { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 0; margin: 0; list-style: none; font-size: 13px; }
+.tactics-inline-list li { overflow-wrap: anywhere; min-width: 0; }
+.tactics-page select { max-width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg-elev-2); }
+.team-insights li { margin: 8px 0; overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .tactics-overviews, .tactics-recipe-body { grid-template-columns: minmax(0, 1fr); }
+  .tactics-radar-wrap { max-width: 440px; margin-inline: auto; }
+}
+@media (max-width: 400px) {
+  .tactics-page .two-col { grid-template-columns: minmax(0, 1fr); }
+}

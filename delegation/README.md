@@ -35,6 +35,7 @@ Claude 通过 PAL MCP 直接派活、收结果、落盘、测试、合并，不�
 | [GPT-05](GPT-05_pro_roles.md) | GPT（联网） | 155 名选手的角色真值表（带出处），用来校准角色标签 | 附件 `delegation/inputs/players_roster.csv` | 高 | 完成 |
 | [GPT-06](GPT-06_spot_names.md) | GPT（看图） | Mirage、Inferno 共 108 个道具落点的中英文名字，输出 `config/spots/*.toml` | 附件 `delegation/inputs/spots/`（1 个表 + 4 张图） | 中 | 完成 |
 | [DS-06](DS-06_heatmaps.md) | DeepSeek | 战队热力图页面：选战队 → 箭头切换地图 → T/CT → 勾选选手（五色），四种视图，选手总结卡片 | 无（数据、类型、计算函数已就绪） | 高 | 完成 |
+| [GPT-07](GPT-07_tactics_page.md) | Codex（PAL 自动派） | 战术套路页面：T/CT 概览、爆弹卡片（小雷达 + 点位名 + 跳转道具库）、队伍页显示统计事实 | 无 | 高 | 完成 |
 
 ## 审核记录（Claude）
 
@@ -60,6 +61,8 @@ Claude 通过 PAL MCP 直接派活、收结果、落盘、测试、合并，不�
 - **GPT-06**：108 个落点名字写入 `config/spots/*.toml`（坐标取自原表，不手抄）。爆弹套路现在显示为"楼梯烟 + 丛林烟 + …"、"B区警家烟 + 棺材烟 + B包三箱火"。
 - **GPT-02**：PR #3 合并（121 项测试）。CI 失败的原因不在 PR #3：PR #2 新增的 `tests/test_tune_roles.py` 在干净环境里无法导入 `scripts`，Claude 在 `pyproject.toml` 加了 `pythonpath = ["."]` 后 CI 通过。
 - **GPT-06 续（Nuke、Dust2、Ancient、Anubis）**：ChatGPT 交付 230 个落点名字，其中 8 个标为低置信度。已写入 `config/spots/`，ID 无重复、中英文齐全，测试通过。
+
+- **GPT-07**：第一次经 PAL 自动派给 Codex。7 个文件原样采用：TypeScript 编译一次通过，用 Nuke 真实数据在浏览器里检查了卡片、雷达标记、A/B 筛选、排序、跳转道具库和 375px 宽度，24 项冒烟测试通过，控制台无报错。
 
 ## 为什么这样分
 

@@ -239,7 +239,7 @@ function EconomyTable({ rows }: { rows: TeamProfile["economy"] }) {
 }
 
 export default function Team() {
-  useLang();
+  const lang = useLang();
   const { map = "", slug = "" } = useParams<{ map: string; slug: string }>();
   const { data: team, error, loading } = useData(
     () => getTeam(map, slug),
@@ -274,6 +274,17 @@ export default function Team() {
           {t("ui.nav_teams")}
         </Link>
       </header>
+
+      {team.insights?.length ? (
+        <section className="panel team-insights">
+          <h3>{t("tactics.insights")}</h3>
+          <ul>
+            {team.insights.map((insight) => (
+              <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="panel">
         <h3>{t("ui.matches_title")}</h3>
