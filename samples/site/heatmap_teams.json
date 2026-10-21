@@ -18,6 +18,21 @@
      "76561198382173659",
      "76561198305036904",
      "76561199001538362"
+    ],
+    "map_win_rate": 0.0,
+    "round_win_rate": 0.278,
+    "win_rate_T": 0.167,
+    "win_rate_CT": 0.5,
+    "all_rounds": 18,
+    "low_sample": true,
+    "results": [
+     {
+      "demo_id": "hltv-de_mirage-2394170",
+      "hltv_match_id": null,
+      "opponent": "Vitality",
+      "score_for": 5,
+      "score_against": 13
+     }
     ]
    }
   ],
@@ -73,6 +88,21 @@
      "76561197973140692",
      "76561197991272318",
      "76561198113666193"
+    ],
+    "map_win_rate": 1.0,
+    "round_win_rate": 0.722,
+    "win_rate_T": 0.5,
+    "win_rate_CT": 0.833,
+    "all_rounds": 18,
+    "low_sample": true,
+    "results": [
+     {
+      "demo_id": "hltv-de_mirage-2394170",
+      "hltv_match_id": null,
+      "opponent": "B8",
+      "score_for": 13,
+      "score_against": 5
+     }
     ]
    }
   ],

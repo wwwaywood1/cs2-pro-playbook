@@ -369,6 +369,43 @@ def _filter_lineup_refs(spots: list[dict], lineup_ids: set[str]) -> None:
         spot["lineups"] = [l for l in spot["lineups"] if l["lineup_id"] in lineup_ids]
 
 
+def team_hub_map_stats(profile: dict) -> dict:
+    """Keep map wins distinct from round wins and heatmap gun-round samples."""
+    sides = profile["sides"]
+    rounds = sum(sides[s]["rounds"] for s in ("T", "CT"))
+    won = sum(sides[s]["won"] for s in ("T", "CT"))
+    matches = profile["matches"]
+    return {
+        "map_win_rate": _rate(sum(m["score_for"] > m["score_against"] for m in matches), len(matches)),
+        "round_win_rate": _rate(won, rounds),
+        "win_rate_T": sides["T"]["win_rate"],
+        "win_rate_CT": sides["CT"]["win_rate"],
+        "all_rounds": rounds,
+        "low_sample": profile["low_sample"],
+        # Source IDs are ordering hints, not match dates; the UI labels this explicitly.
+        "results": sorted(matches, key=lambda m: (m.get("hltv_match_id") or 0, m["demo_id"]), reverse=True)[:5],
+    }
+
+
+def export_player_quotes(source: Path, out_dir: Path) -> None:
+    """Owner-supplied text only; a missing optional file exports an empty registry."""
+    quotes = json.loads(source.read_text(encoding="utf-8")) if source.exists() else {}
+    if not isinstance(quotes, dict) or any(
+        not isinstance(value, dict) or any(not isinstance(value.get(key, ""), str) for key in ("name", "zh", "en"))
+        for value in quotes.values()
+    ):
+        raise ValueError(f"{source}: expected steamid -> {{name, zh, en}} text entries")
+    _write(out_dir / "player_quotes.json", quotes)
+
+
+def export_asset_slots(public_dir: Path, out_dir: Path) -> None:
+    """Only request supplied PNG slots, avoiding a 404 for every placeholder card."""
+    _write(out_dir / "asset_slots.json", {
+        "teams": sorted(p.stem for p in (public_dir / "logos" / "teams").glob("*.png") if p.is_file()),
+        "players": sorted(p.stem for p in (public_dir / "players").glob("*.png") if p.is_file()),
+    })
+
+
 # ------------------------------------------------------------------------- tactics
 
 
@@ -424,6 +461,8 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         "maps": [],
     }
     order = roster_order(t["player_rounds"])  # stable player colours across maps
+    export_player_quotes(ROOT / "config" / "player_quotes.json", out_dir)
+    export_asset_slots(ROOT / "web" / "public", out_dir)
     team_maps: dict[str, list[dict]] = {}
     for map_name in sorted(m for m in matches["map"].unique().to_list() if m in ACTIVE_POOL):
         mm = load_map(map_name)
@@ -466,6 +505,7 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         _add_team_tactics(mdir, teams, res, names)
         _add_player_tactics(mdir, players, res, sub["player_rounds"])
         hm = build_heatmaps(sub, mm, order, make_summarizer(mm, res["spots"], res["spot_assign"], nade_lineup))
+        profiles_by_slug = {p["slug"]: p for p in teams}
         _write_compact(mdir / "heatmaps" / "baseline.json", hm["baseline"])
         for slug, entry in hm["teams"].items():
             for by_side in entry["summary"].values():
@@ -476,6 +516,7 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
             team_maps.setdefault(entry["team"], []).append({
                 "map": map_name, "display_name": mm.display_name, "n_matches": entry["n_matches"],
                 "rounds": entry["rounds"], "players": [r["steamid"] for r in entry["roster"]],
+                **(team_hub_map_stats(profiles_by_slug[slug]) if slug in profiles_by_slug else {}),
             })
         index["maps"].append({
             "map": map_name, "display_name": mm.display_name, "n_matches": len(ids),

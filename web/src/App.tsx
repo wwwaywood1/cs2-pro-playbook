@@ -8,6 +8,7 @@ import Teams from "./pages/Teams";
 import Tactics from "./pages/Tactics";
 import HeatmapTeams from "./pages/HeatmapTeams";
 import TeamHeatmap from "./pages/TeamHeatmap";
+import TeamsHub from "./pages/TeamsHub";
 import { useLang } from "./i18n";
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Home />} />
+        <Route path="teams-hub" element={<TeamsHub />} />
         <Route path=":map/lineups" element={<Lineups />} />
         <Route path=":map/tactics" element={<Tactics />} />
         <Route path=":map/teams" element={<Teams />} />

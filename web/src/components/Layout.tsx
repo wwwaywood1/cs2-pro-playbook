@@ -5,7 +5,7 @@ import { setLang, t, useLang } from "../i18n";
 
 function mapFromPath(pathname: string): string | null {
   const first = pathname.split("/").filter(Boolean)[0];
-  return first && first !== "heatmaps" ? first : null;
+  return first?.startsWith("de_") ? first : null;
 }
 
 function navClass({ isActive }: { isActive: boolean }): string {
@@ -20,6 +20,7 @@ export default function Layout() {
 
   return (
     <div className="shell">
+      <button type="button" className="skip-link" onClick={() => document.getElementById("main-content")?.focus()}>{t("ui.skip_content")}</button>
       <header className="topbar">
         <div className="topbar-inner">
           <Link to="/" className="brand">
@@ -29,7 +30,10 @@ export default function Layout() {
             <span>{t("ui.app_title")}</span>
           </Link>
 
-          <nav className="main-nav" aria-label={t("ui.nav_maps")}>
+          <nav className="main-nav" aria-label={t("ui.primary_navigation")}>
+            <NavLink to="/teams-hub" className={navClass}>
+              {t("ui.nav_teams")}
+            </NavLink>
             <NavLink to="/" end className={navClass}>
               {t("ui.nav_maps")}
             </NavLink>
@@ -43,9 +47,6 @@ export default function Layout() {
                 </NavLink>
                 <NavLink to={`/${map}/tactics`} className={navClass}>
                   {t("ui.nav_tactics")}
-                </NavLink>
-                <NavLink to={`/${map}/teams`} className={navClass}>
-                  {t("ui.nav_teams")}
                 </NavLink>
                 <NavLink to={`/${map}/players`} className={navClass}>
                   {t("ui.nav_players")}
@@ -66,7 +67,7 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="main">
+      <main className="main" id="main-content" tabIndex={-1}>
         <Outlet />
       </main>
 

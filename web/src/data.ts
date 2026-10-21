@@ -5,6 +5,8 @@ import type {
   Lineup,
   MapMeta,
   PlayerProfile,
+  PlayerQuotes,
+  AssetSlots,
   SiteIndex,
   TacticsFile,
   TeamHeatmap,
@@ -62,6 +64,14 @@ export function getPlayers(map: string): Promise<PlayerProfile[]> {
   return cached(`players:${map}`, () =>
     fetchJson<PlayerProfile[]>(`data/${segment(map)}/players.json`),
   );
+}
+
+export function getPlayerQuotes(): Promise<PlayerQuotes> {
+  return cached("player-quotes", () => fetchJson<PlayerQuotes>("data/player_quotes.json"));
+}
+
+export function getAssetSlots(): Promise<AssetSlots> {
+  return cached("asset-slots", () => fetchJson<AssetSlots>("data/asset_slots.json"));
 }
 
 export function getLineups(map: string): Promise<Lineup[]> {
