@@ -129,6 +129,99 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     smoke.check(btn.inner_text() == label_before, "copy button label resets after 1.5s")
 
 
+@route('#/teams-hub', '.hub-team-card')
+def check_teams_hub(smoke: Smoke, page: Page) -> None:
+    page.locator('#hub-team-vitality').focus()
+    page.keyboard.press('Enter')
+    page.wait_for_selector('#hub-map-de_mirage')
+    smoke.check('team=vitality' in page.url, 'hub team selection is in URL')
+    smoke.check(page.locator('.hub-map-card strong .sr-only').first.inner_text() == '100%',
+                'sample Vitality map card shows map wins, not round wins')
+    page.wait_for_function("""() => [...document.querySelectorAll('.hub-map-card .hub-count')].every(
+        el => el.querySelector('.sr-only').textContent === el.querySelector('[aria-hidden]').textContent)""")
+    smoke.check(True, 'animated map rates settle on the exact exported values')
+    page.locator('#hub-map-de_mirage').click()
+    page.wait_for_selector('.hub-player-card')
+    smoke.check(page.locator('.hub-stage').get_attribute('data-direction') == 'forward',
+                'entering a map uses forward slide direction')
+    smoke.check(page.locator('.hub-player-card').count() == 5, 'map shows five portrait buttons')
+    steamid = page.locator('.hub-player-card').first.get_attribute('id').removeprefix('hub-player-')
+    page.locator('.hub-player-card').first.focus()
+    page.keyboard.press('Enter')
+    page.wait_for_selector('.hub-player-view')
+    smoke.check(f'player={steamid}' in page.url and 'map=de_mirage' in page.url,
+                'player and map selections are deep linked')
+    smoke.check(page.locator('.hub-verse').count() == 0, 'absent owner verse is hidden')
+    page.get_by_role('button', name='CT', exact=True).click()
+    page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('side') === 'CT'")
+    smoke.check(page.get_by_role('button', name='CT', exact=True).get_attribute('aria-pressed') == 'true',
+                'CT segment changes selected state and URL')
+    page.go_back()
+    page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('side') === 'all'")
+    smoke.check(page.get_by_role('button', name='CT', exact=True).get_attribute('aria-pressed') == 'false',
+                'Back restores overall side')
+    page.go_forward()
+    page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('side') === 'CT'")
+    page.reload()
+    page.wait_for_selector('.hub-player-view')
+    smoke.check(page.get_by_role('button', name='CT', exact=True).get_attribute('aria-pressed') == 'true',
+                'reload restores player and side')
+    page.keyboard.press('Escape')
+    page.wait_for_selector('.hub-player-card')
+    smoke.check(page.locator('.hub-stage').get_attribute('data-direction') == 'back',
+                'closing a player reverses slide direction')
+    page.wait_for_function('(id) => document.activeElement.id === id', arg=f'hub-player-{steamid}')
+    smoke.check('player=' not in page.url and 'map=de_mirage' in page.url,
+                'Escape closes player and restores portrait focus')
+    page.keyboard.press('Escape')
+    page.wait_for_selector('.hub-map-card')
+    page.keyboard.press('Escape')
+    page.wait_for_selector('.hub-team-card')
+    page.wait_for_function("document.activeElement.id === 'hub-team-vitality'")
+    smoke.check('team=' not in page.url, 'Escape closes map then team and restores team focus')
+
+
+@route('#/teams-hub?team=vitality', '.hub-map-card')
+def check_hub_team(smoke: Smoke, page: Page) -> None:
+    smoke.check(page.locator('.hub-results li').count() == 1, 'team panel shows the recorded sample result')
+
+
+@route('#/teams-hub?team=vitality&map=de_mirage', '.hub-player-card')
+def check_hub_map(smoke: Smoke, page: Page) -> None:
+    smoke.check(page.locator('.hub-kpis .stat').count() == 4, 'map overview shows four leading metrics')
+
+
+@route('#/teams-hub?team=vitality&map=de_mirage&player=76561198113666193&side=CT', '.hub-player-view')
+def check_hub_player(smoke: Smoke, page: Page) -> None:
+    smoke.check(page.locator('.hub-map-figure .hm-radar').count() == 1, 'deep-linked player has one primary radar')
+    smoke.check(page.locator('.hub-player-bio').count() == 1, 'deep-linked player has portrait column')
+    page.set_viewport_size({'width': 1920, 'height': 1080})
+    overflow = page.evaluate('document.documentElement.scrollWidth - document.documentElement.clientWidth')
+    smoke.check(overflow <= 0, '1920px player view has no horizontal overflow')
+    page.set_viewport_size({'width': 1280, 'height': 900})
+    page.emulate_media(reduced_motion='reduce')
+    page.wait_for_function("""() => [...document.querySelectorAll('.hub-count')].every(
+        el => el.querySelector('.sr-only').textContent === el.querySelector('[aria-hidden]').textContent)""")
+    page.get_by_role('button', name='T', exact=True).click()
+    page.wait_for_function("""() => document.querySelector('.hub-side-indicator') &&
+        getComputedStyle(document.querySelector('.hub-side-indicator')).transitionDuration === '0s' &&
+        !document.querySelector('.hub-stage').getAnimations({subtree: true}).some(a => a.playState === 'running')""")
+    smoke.check(page.locator('.hub-stage').evaluate('(el) => getComputedStyle(el).animationName') == 'none',
+                'reduced motion disables CSS motion and WAAPI count-ups during a side change')
+    page.wait_for_function("""() => [...document.querySelectorAll('.hub-count')].every(
+        el => el.querySelector('.sr-only').textContent === el.querySelector('[aria-hidden]').textContent)""")
+    smoke.check(True, 'reduced motion presents final numeric values immediately')
+    page.emulate_media(reduced_motion='no-preference')
+    page.wait_for_function("getComputedStyle(document.querySelector('.hub-side-indicator')).transitionDuration !== '0s'")
+    # Exercise interruption: a queued map exit must not override a newer team close.
+    page.keyboard.press('Escape')
+    page.keyboard.press('Escape')
+    page.wait_for_selector('.hub-map-card')
+    smoke.check('map=' not in page.url and 'player=' not in page.url,
+                'rapid Escape follows current URL depth without stale transition completion')
+    page.emulate_media(reduced_motion='no-preference')
+
+
 @route('#/de_mirage/teams/vitality', 'h1')
 def check_team(smoke: Smoke, page: Page) -> None:
     # Team page: low-sample banner
