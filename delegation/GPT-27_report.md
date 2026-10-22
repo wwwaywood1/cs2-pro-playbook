@@ -41,3 +41,37 @@ python3 web/e2e/smoke.py http://localhost:4173 --shots /tmp/gpt27-real-shots
 ```
 
 Confirm CT clicks and the initial screenshot finish within 10s, exercise tail `id`/large `landing` URLs and Show more, and rerun the desktop player geometry against both sample and real data at 1280×800 and 1440×900. Only the three known 375px failures are deferred.
+
+## Round 2 — desktop segmented-check visibility and diagnostics (2026-10-22)
+
+Scope: `web/e2e/smoke.py` and this appended section only. No `web/src` changes. The entire `run_route`/`run_routes`/`main` suffix, including every 375px mobile check, is byte-for-byte unchanged from the round-2 baseline at `/private/tmp/gpt27-round2/smoke-before.py`.
+
+### Diagnosis and track/state mapping
+
+The old `check_segmented_layout` only excluded tracks with no client rects. Layout boxes are insufficient to establish visibility under collapsed `<details>`: their descendant buttons can have measurable boxes while the hidden Segmented highlight has not received its visible-layout measurement. This is a test-visibility artefact; there is no demonstrated visible UI defect warranting a source change. All six failed cases reach the hub, including `command_palette`, whose test navigates from tactics to a team.
+
+Source inspection identifies the controls exposed to this false positive:
+
+- Team slide (`hub_team`, final `command_palette` state): `segmented hud-segmented match-time-filter`, pressed **全部 / All**, under closed `.hub-team-results` (`web/src/pages/TeamsHub.tsx::TeamPanel`/`Results`).
+- Map slide (`hub_map`, legacy `team`, `archive_replay`): `match-time-filter` (**全部 / All**) under `.hub-team-matches`; `tabs` (**T**) under `.hub-team-basis`; side (**T**), layer and phase tracks under `.hub-team-radar` (`web/src/components/TeamDetails.tsx`, `web/src/pages/TeamsHub.tsx::TeamMapView`/`MapControls`). Opening the match archive still leaves the basis/radar sections collapsed.
+- `match_dates` opens the team results and then navigates to a map match archive; the other collapsed map sections remain mounted. Its mocked date rows do not change those visibility rules.
+
+These are source-derived candidate mismatches, consistent with the lead's successful visible-track probe; this host could not collect the six routes' actual browser rectangles. The new runner explicitly prints the exact class, pressed label, closed ancestor/reason and signed x/y/width/height deltas for excluded hidden mismatches, so a subsequent run can confirm the offending tracks rather than infer them from a timeout.
+
+### Check changes
+
+- `SEGMENTED_LAYOUT` returns structured `mismatches`, `skipped`, and `labelMismatches`. Diagnostics include track index/class, pressed label, button/highlight rectangles, signed deltas and highlight animation state.
+- Exclude non-summary content of **any** closed ancestor `<details>`, CSS/content-visibility-hidden tracks, and zero-size tracks. Summary controls remain eligible; an outer collapsed details still hides an inner summary. Opening a section makes its controls eligible immediately.
+- Keep the **1.5px** tolerance on all four dimensions for rendered tracks, including offscreen and transformed tracks. A visible track with a missing highlight or zero-size selected button fails. Running/pending highlight transitions are polled until settled; they are never exempted.
+- The wait returns either an aligned report or the final failing report after 9 seconds, inside the 10-second outer limit. A real mismatch is recorded with JSON diagnostics instead of the former generic timeout, and later route assertions can continue.
+- Preserve nowrap/no-shrink/single-line/no-clipping label assertions, using the same rendered-track visibility policy.
+
+### Validation and remaining runner check
+
+- **PASS** `.venv/bin/python -m pytest -q`: **234 passed, 2 skipped, 1 warning**, 18.41s. Existing joblib physical-core fallback warning. Log: `/private/tmp/gpt27-round2/pytest.log`.
+- **PASS** `.venv/bin/python -m py_compile web/e2e/smoke.py`.
+- **PASS** execute the actual extracted `SEGMENTED_LAYOUT` JavaScript in Node against controlled DOM-interface fixtures: aligned rectangles; >1.5px failure in each dimension; diagnostic class/pressed/deltas; missing highlight; visible zero-size selection; closed/open/nested details and visible summaries; hidden/zero-size tracks; transformed alignment and misalignment; running/pending/finished highlight transitions; failing diagnostic return at the deadline. Harness: `/private/tmp/gpt27-round2/regression.cjs`. This checks predicate logic, not browser layout.
+- **PASS** byte comparison confirms the mobile/shared runner suffix is unchanged.
+- **BLOCKED locally** live Chromium: the installed headless shell exits at `bootstrap_check_in … MachPortRendezvousServer … Permission denied (1100)`. The native Chrome fallback is also unavailable to this session. No browser smoke pass or measured hidden-track deltas are claimed.
+
+Next runner check: rerun `python3 web/e2e/smoke.py http://localhost:4173` against sample and real bundles, retaining the new `info … excluded non-rendered segmented mismatches` output. Confirm the six desktop timeouts disappear, opened archive controls pass, and any remaining visible mismatch produces its class/pressed/deltas. Mobile overflow failures and the real-data sample-specific win assertion remain outside this round's scope.

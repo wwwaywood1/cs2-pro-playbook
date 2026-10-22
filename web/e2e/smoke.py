@@ -988,26 +988,90 @@ def check_players(smoke: Smoke, page: Page) -> None:
           "language switches to English and persists after reload")
 
 
+# Chromium can retain layout boxes below a closed <details>. Client rects alone
+# therefore do not establish that a track (or its unmeasured highlight) is shown.
+SEGMENTED_LAYOUT = r"""() => {
+    const mismatches = [], skipped = [], labelMismatches = [];
+    const rect = element => {
+        if (!element) return null;
+        const bounds = element.getBoundingClientRect();
+        return Object.fromEntries(['x', 'y', 'width', 'height'].map(key => [key, bounds[key]]));
+    };
+    for (const [index, track] of [...document.querySelectorAll('.hud-segmented')].entries()) {
+        const selected = track.querySelector('button[aria-pressed="true"], button[aria-selected="true"]');
+        const detail = {index, class: track.className, pressed: selected?.textContent.trim() ?? null};
+        let closed = null;
+        for (let ancestor = track.parentElement; ancestor; ancestor = ancestor.parentElement) {
+            if (ancestor.tagName !== 'DETAILS' || ancestor.open) continue;
+            const summary = [...ancestor.children].find(child => child.tagName === 'SUMMARY');
+            if (!summary?.contains(track)) { closed = ancestor; break; }
+        }
+        const highlight = track.querySelector('.segment-highlight');
+        const button = rect(selected), light = rect(highlight);
+        const deltas = button && light ? Object.fromEntries(
+            ['x', 'y', 'width', 'height'].map(key => [key, light[key] - button[key]])
+        ) : null;
+        const bounds = rect(track);
+        const reason = closed ? `closed details: ${closed.className}` :
+            !track.checkVisibility({visibilityProperty: true}) ? 'not rendered/visibility hidden' :
+            bounds.width <= 0 || bounds.height <= 0 ? 'zero-size track' : null;
+        if (reason) {
+            skipped.push({...detail, reason, button, highlight: light, deltas});
+            continue;
+        }
+        for (const button of track.querySelectorAll(':scope > button')) {
+            if (!button.checkVisibility({visibilityProperty: true})) continue;
+            const style = getComputedStyle(button);
+            const range = document.createRange(); range.selectNodeContents(button);
+            const lines = [...range.getClientRects()].filter(r => r.width > 0 && r.height > 0);
+            if (style.whiteSpace !== 'nowrap' || style.flexShrink !== '0' ||
+                !lines.every(r => Math.abs(r.top - lines[0].top) < 1) ||
+                button.scrollWidth > button.clientWidth + 1) {
+                labelMismatches.push({...detail, label: button.textContent.trim()});
+            }
+        }
+        if (!selected) continue;
+        const animating = highlight?.getAnimations().some(animation =>
+            animation.playState === 'running' || animation.pending) ?? false;
+        if (!light || button.width <= 0 || button.height <= 0 || animating ||
+            Object.values(deltas).some(delta => Math.abs(delta) > 1.5)) {
+            mismatches.push({...detail, button, highlight: light, deltas, animating});
+        }
+    }
+    return {mismatches, skipped, labelMismatches};
+}"""
+
+
 def check_segmented_layout(smoke: Smoke, page: Page) -> None:
     for width, height in [(1440, 900), (1280, 800)]:
         page.set_viewport_size({'width': width, 'height': height})
         page.evaluate('document.fonts.ready.then(() => undefined)')
-        page.wait_for_function("""() => [...document.querySelectorAll('.hud-segmented')].every(track => {
-            if (!track.getClientRects().length) return true;
-            const selected = track.querySelector('button[aria-pressed="true"], button[aria-selected="true"]');
-            if (!selected) return true;
-            const button = selected.getBoundingClientRect();
-            const highlight = track.querySelector('.segment-highlight').getBoundingClientRect();
-            return ['x', 'y', 'width', 'height'].every(key => Math.abs(button[key] - highlight[key]) <= 1.5);
-        })""")
-        smoke.check(True, f'{width}x{height}: segmented highlight matches the pressed button after fonts/resize')
-        smoke.check(page.locator('.hud-segmented > button:visible').evaluate_all("""buttons => buttons.every(button => {
-            const style = getComputedStyle(button);
-            const range = document.createRange(); range.selectNodeContents(button);
-            const lines = [...range.getClientRects()].filter(r => r.width > 0 && r.height > 0);
-            return style.whiteSpace === 'nowrap' && style.flexShrink === '0' &&
-                lines.every(r => Math.abs(r.top - lines[0].top) < 1) && button.scrollWidth <= button.clientWidth + 1;
-        })"""), f'{width}x{height}: segmented labels stay on one line at {page.url.split("#")[-1]}')
+        # Return the final mismatches before Playwright's outer timeout, instead
+        # of losing the offending track/state in a generic wait_for_function error.
+        # Poll through transitions; never exempt transformed/animating tracks.
+        report_handle = page.wait_for_function(f"""deadline => {{
+            const report = ({SEGMENTED_LAYOUT})();
+            return !report.mismatches.length || Date.now() >= deadline ? report : false;
+        }}""", arg=page.evaluate('Date.now()') + 9_000, timeout=10_000)
+        try:
+            report = report_handle.json_value()
+        finally:
+            report_handle.dispose()
+        diagnostics = json.dumps(report, ensure_ascii=False)
+        # Keep evidence for false positives too: identify the hidden tracks that
+        # the former client-rect-only check would have rejected.
+        excluded = [{key: track[key] for key in ('class', 'pressed', 'reason', 'deltas')}
+                    for track in report['skipped'] if track['deltas'] and
+                    any(abs(delta) > 1.5 for delta in track['deltas'].values())]
+        if excluded:
+            print(f'info {width}x{height}: excluded non-rendered segmented mismatches on {page.url}: '
+                  + json.dumps(excluded, ensure_ascii=False))
+        smoke.check(not report['mismatches'],
+                    f'{width}x{height}: segmented highlight matches the pressed button after fonts/resize'
+                    + (f' on {page.url}: {diagnostics}' if report['mismatches'] else ''))
+        smoke.check(not report['labelMismatches'],
+                    f'{width}x{height}: segmented labels stay on one line at {page.url.split("#")[-1]}'
+                    + (f': {diagnostics}' if report['labelMismatches'] else ''))
     page.set_viewport_size({'width': 1440, 'height': 900})
 
 
