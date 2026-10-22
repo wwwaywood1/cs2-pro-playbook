@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
+import RoundReplay from "./components/RoundReplay";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Lineups from "./pages/Lineups";
@@ -35,6 +36,6 @@ export default function App() {
         <Route path="heatmaps/:slug" element={<TeamHeatmap />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
-    </Routes></MapLinkProvider>
+    </Routes><RoundReplay /></MapLinkProvider>
   );
 }

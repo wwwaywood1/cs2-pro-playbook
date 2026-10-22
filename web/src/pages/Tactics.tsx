@@ -1,3 +1,4 @@
+import { ReplayButton } from "../components/RoundReplay";
 import CountUp from "../components/CountUp";
 import { Reveal } from "../components/Motion";
 import type { CSSProperties } from "react";
@@ -11,7 +12,7 @@ import Stat from "../components/Stat";
 import { ErrorNotice, Loading } from "../components/Status";
 import { getLineups, getMeta, getTactics, getTeams, useData } from "../data";
 import { fmtInt, fmtNum, fmtPct, fmtSeconds } from "../format";
-import { t, useLang, type Lang } from "../i18n";
+import { calloutLabel, t, useLang, type Lang } from "../i18n";
 import type { CTTactics, Lineup, Ranked, Recipe, Spot, SpotRef, TTactics } from "../types";
 import "../tactics.css";
 
@@ -114,7 +115,7 @@ function resolveSpot(map: string, ref: SpotRef, spot: Spot | undefined, core: bo
   return {
     lineup: mostThrown ? byLineup.get(mostThrown.lineup_id) : undefined,
     id: ref.spot_id, type: ref.type, spot, core, number: ref.order ?? number, share: ref.share,
-    thrower: ref.thrower, order: ref.order,
+    thrower: ref.thrower, throwerTeam: ref.thrower_team, throwPlace: calloutLabel(map, ref.throw_place), order: ref.order,
     name: ref.name?.[lang] || spot?.name?.[lang] || ref.label,
     to: mostThrown ? `/${encodeURIComponent(map)}/lineups?${new URLSearchParams({ id: mostThrown.lineup_id })}` : null,
   };
@@ -122,6 +123,7 @@ function resolveSpot(map: string, ref: SpotRef, spot: Spot | undefined, core: bo
 
 function recipeSpots(map: string, recipe: Recipe, byId: Map<string, Spot>, lang: Lang, byLineup: Map<string, Lineup>): RecipeSpot[] {
   return [...recipe.core.map((ref) => ({ ref, core: true })), ...recipe.options.map((ref) => ({ ref, core: false }))]
+    .sort((a, b) => (a.ref.order ?? Infinity) - (b.ref.order ?? Infinity))
     .map(({ ref, core }, index) => resolveSpot(map, ref, byId.get(ref.spot_id), core, index + 1, lang, byLineup));
 }
 
@@ -156,7 +158,7 @@ function RecipeDetails({ recipe, entries, splitDefinition, map, teams }: { recip
     <ul className="tactics-tempo-labels">{tempos.map((row) => <li key={row.value} data-tempo={row.value}>{t(`tactics.tempo.${row.value}`)} {total ? fmtPct(row.rounds / total) : "—"}</li>)}</ul>
     <details><summary>{t("tactics.teams")}</summary><ul className="tactics-inline-list">{[...recipe.teams].sort((a, b) => b.rounds - a.rounds).map((team) => <li key={team.team}>{teams.has(team.team) ? <Link to={`/teams-hub?${new URLSearchParams({ team: teams.get(team.team)!, map })}`}>{team.team}</Link> : team.team} · {t("tactics.round_count", { n: fmtInt(team.rounds) })}</li>)}</ul></details>
     <details><summary>{t("tactics.examples")}</summary>{recipe.examples.length ? <ul className="tactics-inline-list">{recipe.examples.map((example) => <li key={`${example.demo_id}:${example.round_num}:${example.team}`}>
-      {example.team} · {t("tactics.example_round", { n: example.round_num })} · <code>{example.demo_id}</code>
+      {example.team} · {t("tactics.example_round", { n: example.round_num })} · <code>{example.demo_id}</code> {example.replay ? <ReplayButton map={map} demoId={example.demo_id} round={example.round_num} /> : null}
     </li>)}</ul> : <p className="muted">{t("tactics.no_data")}</p>}</details>
   </div>;
 }

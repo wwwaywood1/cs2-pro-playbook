@@ -17,6 +17,8 @@ export interface RecipeSpot {
   to: string | null;
   lineup?: Lineup;
   thrower?: string | null;
+  throwerTeam?: string | null;
+  throwPlace?: string | null;
   order?: number | null;
 }
 
@@ -242,10 +244,11 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
 
 export function SpotList({ entries }: { entries: RecipeSpot[] }) {
   const { bind } = useMapLink();
-  return <ul className="tactics-spots">{entries.map((entry) => <li key={entry.id} {...bind(`spot:${entry.id}`)} tabIndex={0} className={entry.core ? "" : "is-optional"}>
+  return <ul className="tactics-spots">{[...entries].sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity)).map((entry) => <li key={entry.id} {...bind(`spot:${entry.id}`)} tabIndex={0} className={entry.core ? "" : "is-optional"}>
     <GrenadeIcon type={entry.type} /><span>{entry.number}. {entry.to ? <Link to={entry.to} title={t("tactics.open_lineup")}>{entry.name}</Link> : entry.name}
       <span className="muted"> · {t(`grenade.${entry.type}`)}{entry.share !== null ? ` · ${fmtPct(entry.share)}` : ""}</span>
-      <small className="recipe-assignment">{entry.order != null ? t("round2.recipe_order", { n: entry.order }) : null}{entry.order != null && entry.thrower ? " · " : ""}{entry.thrower ? t("round2.recipe_thrower", { name: entry.thrower }) : null}</small>
+      <small className="recipe-assignment muted">{t("round4.throw_from", { place: entry.throwPlace ?? entry.lineup?.throw_place ?? "—" })}</small>
+      {entry.thrower ? <small className="recipe-assignment muted">{t("round4.thrower_example", { name: entry.thrower, team: entry.throwerTeam || "—" })}</small> : null}
       {!entry.spot && <span className="muted"> · {t("tactics.position_missing")}</span>}
     </span>
   </li>)}</ul>;

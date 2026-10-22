@@ -1,4 +1,4 @@
-import { Fragment, useState, type CSSProperties } from "react";
+import { Fragment, useState, type ReactNode, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { Stagger } from "./Motion";
 import Stat from "./Stat";
@@ -238,12 +238,16 @@ function EconomyTable({ rows }: { rows: TeamProfile["economy"] }) {
 }
 
 /** The former team page's archive lives below the map's roster, closed by default. */
-export default function TeamDetails({ team }: { team: TeamProfile }) {
+export default function TeamDetails({ team, tacticsContent, heatmapContent, detailsOpen, onDetailsToggle }: {
+  team: TeamProfile; tacticsContent?: ReactNode; heatmapContent?: ReactNode; detailsOpen?: boolean; onDetailsToggle?: (open: boolean) => void;
+}) {
   const lang = useLang();
   const [side, setSide] = useState<Side>("T");
-  return <>
-    <details className="hub-details hub-team-matches">
-      <summary><strong>{t("round3.matches_title")}</strong> · {t("round3.matches_toggle", { n: team.matches.length })}</summary>
+  const wins = team.matches.filter((match) => match.score_for > match.score_against).length;
+  const losses = team.matches.filter((match) => match.score_for < match.score_against).length;
+  return <div className="hub-archive-cards">
+    <details className="hub-details hub-archive-card hub-team-matches">
+      <summary><strong>{t("round4.archive_matches", { n: team.matches.length, w: wins, l: losses })}</strong><small>{team.matches[0] ? `${team.matches[0].opponent ?? "—"} · ${team.matches[0].score_for} : ${team.matches[0].score_against}` : t("heatmap.no_data")}</small></summary>
       <p className="muted">{t("round3.round_bars_caption")}</p>
       <ul className="match-list">{team.matches.length ? team.matches.map((match) => {
         const outcome = match.score_for > match.score_against ? "win" : match.score_for < match.score_against ? "loss" : "draw";
@@ -255,9 +259,9 @@ export default function TeamDetails({ team }: { team: TeamProfile }) {
         </li>;
       }) : <li className="empty">{t("heatmap.no_data")}</li>}</ul>
     </details>
-    <details className="hub-details hub-team-basis">
-      <summary>{t("hub.team_details")} · {t("tactics.summary_basis", { n: fmtInt(team.insights?.length ?? 0) })}</summary>
-      <Link className="button button-ghost" to={`/heatmaps/${encodeURIComponent(team.slug)}?${new URLSearchParams({ map: team.map })}`}>{t("heatmap.title")}</Link>
+    <details className="hub-details hub-archive-card hub-team-basis" open={detailsOpen} onToggle={(event) => onDetailsToggle?.(event.currentTarget.open)}>
+      <summary><strong>{t("round4.archive_details")}</strong><small>{t("tactics.summary_basis", { n: fmtInt(team.insights?.length ?? 0) })} · CT {team.tactics?.CT.setups_20s[0]?.value ?? "—"}</small></summary>
+      {tacticsContent}
       <ul className="team-insights-rest">{(team.insights ?? []).map((insight) => <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>)}</ul>
       <div className="tabs" role="tablist" aria-label={t("ui.nav_teams")}>{SIDE_ORDER.map((value) => <button
         key={value} type="button" role="tab" id={`tab-${value}`} aria-selected={side === value} aria-controls="team-side-panel" tabIndex={side === value ? 0 : -1}
@@ -272,5 +276,10 @@ export default function TeamDetails({ team }: { team: TeamProfile }) {
       </div>
       <EconomyTable rows={team.economy} />
     </details>
-  </>;
+    <details className="hub-details hub-archive-card hub-team-radar">
+      <summary><strong>{t("round4.archive_heatmap")}</strong><small>{t("hub.sample", { matches: team.n_matches, maps: 1 })} · T / CT</small></summary>
+      <Link className="button button-ghost" to={`/heatmaps/${encodeURIComponent(team.slug)}?${new URLSearchParams({ map: team.map })}`}>{t("round4.archive_heatmap")} →</Link>
+      {heatmapContent}
+    </details>
+  </div>;
 }

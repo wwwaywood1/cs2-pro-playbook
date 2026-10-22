@@ -33,10 +33,29 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
       const middle = Math.floor(sorted.length / 2);
       return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
     };
-    return [...places.entries()].map(([key, rows]) => ({
+    const cells = [...places.entries()].map(([key, rows]) => ({
       key, rows, x: median(rows.map((row) => row.land.radar_x)), y: median(rows.map((row) => row.land.radar_y)),
-      weight: rows.reduce((sum, row) => sum + row.n_throws, 0),
-      lineup: [...rows].sort((a, b) => b.n_throws - a.n_throws || a.id.localeCompare(b.id))[0],
+    }));
+    // Merge colliding count bubbles; every filtered lineup belongs to exactly one bubble.
+    const radius = (count: number) => Math.min(52, 22 + Math.sqrt(count) * 3);
+    let merged = true;
+    while (merged) {
+      merged = false;
+      outer: for (let i = 0; i < cells.length; i++) for (let j = i + 1; j < cells.length; j++) {
+        const a = cells[i], b = cells[j];
+        if (Math.hypot(a.x - b.x, a.y - b.y) >= radius(a.rows.length) + radius(b.rows.length) + 12) continue;
+        const count = a.rows.length + b.rows.length;
+        a.x = (a.x * a.rows.length + b.x * b.rows.length) / count;
+        a.y = (a.y * a.rows.length + b.y * b.rows.length) / count;
+        a.rows = [...a.rows, ...b.rows];
+        a.key += `|${b.key}`;
+        cells.splice(j, 1);
+        merged = true;
+        break outer;
+      }
+    }
+    return cells.map((cell) => ({ ...cell, weight: cell.rows.length, radius: radius(cell.rows.length),
+      lineup: [...cell.rows].sort((a, b) => b.n_throws - a.n_throws || a.id.localeCompare(b.id))[0],
     }));
   }, [lineups]);
 
@@ -79,18 +98,18 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
         </defs>
 
         {clusters.filter((cell) => cell.key !== selectedPlace).map((cell) => {
-          const label = `${calloutLabel(map, cell.lineup.land_place)} · ${cell.weight}`;
+          const label = `${[...new Set(cell.rows.map((row) => calloutLabel(map, row.land_place)))].join(" / ")} · ${t("round4.cluster_count", { n: cell.weight })}`;
           const expand = () => { setSelectedPlace(cell.key); onSelect(cell.lineup.id); };
           return <g key={cell.key} className="landing-cluster" role="button" tabIndex={0}
             {...bind(`lineup:${cell.rows.find((row) => row.id === hoveredId)?.id ?? cell.lineup.id}`)}
             aria-label={label} onClick={expand} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); expand(); } }}>
-            <circle className="map-link-ring" cx={cell.x} cy={cell.y} r={Math.min(42, 14 + Math.sqrt(cell.weight)) + 6} />
+            <circle className="map-link-ring" cx={cell.x} cy={cell.y} r={cell.radius + 6} />
             <title>{label}</title>
-            <circle cx={cell.x} cy={cell.y} r={Math.min(42, 14 + Math.sqrt(cell.weight))} />
-            <text x={cell.x} y={cell.y + 5} textAnchor="middle">{cell.weight}</text>
+            <circle cx={cell.x} cy={cell.y} r={cell.radius} />
+            <text x={cell.x} y={cell.y + 7} textAnchor="middle" style={{ fontSize: 22, fontWeight: 800, fill: "#f5f8ff" }}>{cell.weight}</text>
           </g>;
         })}
-        {lineups.filter((lineup) => placeKey(lineup) === selectedPlace || lineup.id === activeId).map((lineup) => {
+        {lineups.filter((lineup) => clusters.find((cell) => cell.key === selectedPlace)?.rows.some((row) => row.id === lineup.id) || lineup.id === activeId).map((lineup) => {
           const selected = lineup.id === activeId;
           const dimmed = activeId != null && !selected;
           const x = lineup.throw.radar_x, y = lineup.throw.radar_y;

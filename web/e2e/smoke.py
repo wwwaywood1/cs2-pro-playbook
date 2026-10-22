@@ -77,6 +77,11 @@ def check_home(smoke: Smoke, page: Page) -> None:
     smoke.check("Mirage" in page.inner_text("body"), "home lists the Mirage map")
     smoke.check(page.locator('.map-card').filter(has_text='Cache').locator('.map-no-data').count() == 1,
                 'Cache has an explicit no-data state')
+    cache = page.locator('.map-card').filter(has_text='Cache')
+    smoke.check(cache.locator('a').count() == 0 and '即将上线' in cache.inner_text(), 'Cache is disabled with a coming-soon badge')
+    mirage = page.locator('.map-card').filter(has_text='Mirage')
+    expect(mirage.locator('.map-card-main')).to_have_attribute('href', '#/de_mirage/tactics')
+    expect(mirage.locator('.map-card-secondary')).to_have_attribute('href', '#/de_mirage/lineups')
 
 
 @route('#/de_mirage/lineups', '.lineup-card')
@@ -84,9 +89,13 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     # Lineups: default tier includes every exported lineup.
     n = page.locator(".lineup-card").count()
     smoke.check(n == smoke.expected_count(), f"default lineup list: {n} cards == {smoke.expected_count()} in data")
-    places = {row.get('land_place') or row.get('land_region') or row.get('land_lane') or '' for row in smoke.lineups}
-    smoke.check(page.locator(".radar .landing-cluster").count() == len(places),
-                "overview aggregates one landing marker per callout")
+    bubbles = page.locator(".radar .landing-cluster text").all_text_contents()
+    smoke.check(sum(int(value) for value in bubbles) == len(smoke.lineups),
+                "cluster counts include every filtered lineup exactly once")
+    smoke.check(page.locator(".radar .landing-cluster").evaluate_all("""rows => rows.every((a, i) => rows.slice(i + 1).every(b => {
+      const ca = a.querySelector('circle:not(.map-link-ring)'), cb = b.querySelector('circle:not(.map-link-ring)');
+      return Math.hypot(ca.cx.baseVal.value - cb.cx.baseVal.value, ca.cy.baseVal.value - cb.cy.baseVal.value) >= ca.r.baseVal.value + cb.r.baseVal.value;
+    }))"""), "cluster circles do not overlap")
     smoke.check(page.locator(".radar .arrow-group").count() <= 1,
                 "overview keeps individual routes collapsed")
     smoke.check(page.locator(".radar image").count() == 1, "radar image element present")
@@ -101,6 +110,8 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     # Side filter
     page.get_by_role("button", name="CT", exact=True).click()
     n_ct = page.locator(".lineup-card").count()
+    smoke.check(sum(int(value) for value in page.locator('.radar .landing-cluster text').all_text_contents()) == n_ct,
+                'cluster counts recompute after the side filter')
     smoke.check(n_ct == smoke.expected_count(side="CT"), f"CT filter: {n_ct} == {smoke.expected_count(side='CT')}")
     # Usage tiers replace the free-form count input.
     page.locator("#filter-tiers button").nth(1).click()
@@ -166,12 +177,13 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         'id': 'test-entry', 'site': 'A', 'core': [{**spot, 'share': 1}], 'options': [],
         'n_rounds': 20, 'n_matches': 2, 'teams': [{'team': 'Vitality', 'rounds': 20}],
         'win_rate': .6, 'plant_rate': .8, 'median_commit_s': 35,
-        'tempo': [{'value': 'mid', 'rounds': 20}], 'avg_flashes': 3, 'split_rate': .2, 'examples': [],
+        'tempo': [{'value': 'mid', 'rounds': 20}], 'avg_flashes': 3, 'split_rate': .2, 'examples': [{'demo_id': 'smoke-replay', 'round_num': 1, 'team': 'Vitality', 'replay': True}],
         'routes': [{'via': ['TSpawn', 'TRamp'], 'lane': 'A', 'n': 6, 'share': .6,
                     'points': [[900, 500], [800, 600], [700, 700], [600, 720]]}],
     }
     fixture['spots'] = [spot]
     fixture['recipes'] = [recipe, {**recipe, 'id': 'test-empty', 'n_rounds': 10, 'routes': []}]
+    page.route('**/data/de_mirage/replay/smoke-replay/1.json', lambda request: request.fulfill(json=replay_fixture()))
     page.route('**/data/de_mirage/tactics.json', lambda request: request.fulfill(json=fixture))
     try:
         page.reload()
@@ -194,9 +206,85 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         page.locator('.tactics-recipe-toggle').nth(1).click()
         expect(page.locator('.tactics-entry-path')).to_have_count(0)
         smoke.check('暂无路线' in page.locator('.tactics-routes-legend').inner_text(), 'empty recipe has a route-specific empty state')
+        selected = page.locator('.tactics-recipe.is-selected')
+        selected.locator('summary', has_text='示例回合').click()
+        selected.locator('.replay-open').click()
+        page.wait_for_selector('dialog[open] .replay-radar')
+        expect(page.locator('.round-replay .replay-scrubber')).to_have_value('0')
+        expect(page.get_by_role('button', name='播放', exact=True)).to_be_visible()
+        page.wait_for_timeout(150)
+        expect(page.locator('.round-replay .replay-scrubber')).to_have_value('0')
+        smoke.check(page.locator('.replay-player').count() == 10, 'replay shows ten players and reduced motion prevents auto-play')
+        scrubber = page.locator('.replay-scrubber')
+        scrubber.fill('5')
+        smoke.check(page.locator('.replay-player').count() == 9 and page.locator('.replay-kill').count() == 1,
+                    'scrubbing applies the exact kill time and removes the victim')
+        smoke.check(page.locator('.replay-plant').count() == 1, 'scrubbing reveals the plant')
+        page.get_by_role('button', name='4×', exact=True).click()
+        expect(page.get_by_role('button', name='4×', exact=True)).to_have_attribute('aria-pressed', 'true')
+        smoke.check('replay=' in page.url, 'recipe replay is represented in the URL')
+        page.go_back()
+        expect(page.locator('dialog[open]')).to_have_count(0)
+        page.go_forward()
+        page.wait_for_selector('dialog[open] .replay-radar')
+        page.keyboard.press('Escape')
+        expect(page.locator('dialog[open]')).to_have_count(0)
+        selected.locator('.replay-open').click()
+        page.wait_for_selector('dialog[open] .replay-radar')
+        page.locator('.replay-close').click()
+        expect(page.locator('dialog[open]')).to_have_count(0)
+        smoke.check('replay=' not in page.url, 'Back, Escape and close remove the replay overlay')
     finally:
         page.emulate_media(reduced_motion='no-preference')
         page.unroute('**/data/de_mirage/tactics.json')
+        page.unroute('**/data/de_mirage/replay/smoke-replay/1.json')
+
+
+def replay_fixture() -> dict:
+    return {
+        'demo_id': 'smoke-replay', 'round_num': 1, 'map': 'de_mirage',
+        'teams': {'T': 'Vitality', 'CT': 'B8'}, 'winner': 'T', 'duration': 10,
+        'players': [{'name': f'Player {i}', 'side': 'T' if i < 5 else 'CT',
+                     'team': 'Vitality' if i < 5 else 'B8'} for i in range(10)],
+        'frames': [[[100 + i * 50 + second * 5, 300 + i * 10] if i != 9 or second < 5 else None
+                    for i in range(10)] for second in range(11)],
+        'events': [{'t': 5, 'kind': 'kill', 'by': 0, 'victim': 9, 'at': [570, 390], 'weapon': 'ak47', 'headshot': True},
+                   {'t': 3, 'kind': 'util', 'nade': 'smoke', 'by': 0, 'at': [300, 300], 'from': [100, 300]},
+                   {'t': 4, 'kind': 'plant', 'site': 'A', 'at': [560, 760]}],
+        'wp_t': [.5 + i * .05 for i in range(11)],
+    }
+
+
+@route('#/teams-hub?team=vitality&map=de_mirage', '.hub-player-card')
+def check_archive_replay(smoke: Smoke, page: Page) -> None:
+    root = Path(__file__).resolve().parents[1]
+    team = json.loads((root / 'public/data/de_mirage/teams/vitality.json').read_text())
+    demo = team['matches'][0]['demo_id']
+    team['matches'][0]['winprob_available'] = True
+    page.route('**/data/de_mirage/teams/vitality.json', lambda request: request.fulfill(json=team))
+    page.route(f'**/data/de_mirage/winprob/{demo}.json', lambda request: request.fulfill(json={
+        'demo_id': demo, 'wp_t': {'1': [.5, .8], '2': [.5, .2]}, 'team_sides': {'vitality': {'1': 'T', '2': 'T'}}
+    }))
+    page.route('**/data/de_mirage/replay/index.json', lambda request: request.fulfill(json={demo: [1]}))
+    page.route(f'**/data/de_mirage/replay/{demo}/1.json', lambda request: request.fulfill(json={**replay_fixture(), 'demo_id': demo}))
+    try:
+        page.reload()
+        page.wait_for_selector('.hub-player-card')
+        page.locator('.hub-team-matches > summary').click()
+        button = page.locator('.winprob-round[role="button"]')
+        expect(button).to_have_count(1)
+        smoke.check(page.locator('.winprob-round[role="img"]').count() == 1, 'rounds absent from the replay index remain static')
+        button.focus()
+        page.keyboard.press('Enter')
+        page.wait_for_selector('dialog[open] .replay-radar')
+        page.keyboard.press('Escape')
+        expect(page.locator('dialog[open]')).to_have_count(0)
+        smoke.check('map=de_mirage' in page.url and 'team=vitality' in page.url,
+                    'closing the archive replay preserves the hub map slide')
+    finally:
+        for pattern in ['**/data/de_mirage/teams/vitality.json', f'**/data/de_mirage/winprob/{demo}.json',
+                        '**/data/de_mirage/replay/index.json', f'**/data/de_mirage/replay/{demo}/1.json']:
+            page.unroute(pattern)
 
 
 @route('#/heatmaps/vitality?map=de_mirage', '.hm-player-card')
@@ -297,7 +385,11 @@ def check_hub_map(smoke: Smoke, page: Page) -> None:
     basis = page.locator('.hub-team-basis')
     smoke.check(basis.get_attribute('open') is None, 'detailed stats and heatmap link start collapsed')
     basis.locator('summary').click()
-    smoke.check(basis.locator('a[href*="heatmaps/vitality"]').count() == 1, 'heatmap link moved into the hub archive')
+    smoke.check(page.locator('.hub-archive-card').count() == 3, 'map archive has three summary cards')
+    heatmap = page.locator('.hub-team-radar')
+    heatmap.locator('summary').click()
+    smoke.check(heatmap.locator('a[href*="heatmaps/vitality"]').count() == 1, 'heatmap summary card links to the heatmap tool')
+    heatmap.locator('summary').click()
     basis.locator('summary').click()
     archive.locator('summary').click()
 

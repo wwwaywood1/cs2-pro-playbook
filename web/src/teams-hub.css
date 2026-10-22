@@ -326,3 +326,15 @@
 
 .hub-utility-overlay { pointer-events: none; }
 .hub-utility-overlay [data-map-link] { pointer-events: all; }
+
+.hub-archive-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; align-items: start; }
+.hub-archive-card { min-width: 0; margin: 0; padding: 18px; border: 1px solid #34445a; border-radius: 14px; background: #101b2be6; }
+.hub-archive-card summary small { display: block; margin-top: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #9eafc3; font-weight: 400; }
+.hub-archive-card[open] { grid-column: 1 / -1; }
+.hub-player-card .hub-portrait-line { opacity: 0; font-size: .75rem; white-space: nowrap; transition: opacity .15s; }
+.hub-player-card:hover .hub-portrait-line, .hub-player-card:focus-visible .hub-portrait-line { opacity: 1; }
+.hub-util-trajectory { pointer-events: none; }
+.hub-util-trajectory path { fill: none; stroke-width: 3; vector-effect: non-scaling-stroke; stroke-dasharray: 6 4; }
+@media (max-width: 700px) { .hub-archive-cards { grid-template-columns: 1fr; } }
+.hub-player-card .hub-portrait-line { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.hub-utility-overlay [role="button"] { cursor: pointer; }

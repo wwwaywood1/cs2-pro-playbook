@@ -153,3 +153,4 @@
 .tactics-route-badge { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: #efad55; color: #0b1220; font-size: 10px; font-weight: 700; line-height: 1; }
 .tactics-entry-routes .is-active { opacity: 1; }
 .tactics-entry-routes .is-dimmed { opacity: .25; }
+.tactics-spots .recipe-assignment { display: block; font-size: .75rem; line-height: 1.6; color: var(--muted); }

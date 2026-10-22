@@ -13,6 +13,7 @@ import type {
   TeamProfile,
   TeamSummary,
   WinprobTimeline,
+  ReplayRound,
 } from "./types";
 
 const base = import.meta.env.BASE_URL;
@@ -152,4 +153,18 @@ export function useData<T>(load: () => Promise<T>, deps: DependencyList): DataSt
   }, deps);
 
   return state;
+}
+
+export function getReplayIndex(map: string): Promise<Record<string, number[]>> {
+  return cached(`replay-index:${map}`, async () => {
+    const response = await fetch(`${base}data/${segment(map)}/replay/index.json`);
+    if (response.status === 404 || !response.headers.get("content-type")?.includes("json")) return {};
+    if (!response.ok) throw new Error(`Could not load replay index (HTTP ${response.status}).`);
+    return response.json();
+  });
+}
+
+export function getReplay(map: string, demoId: string, round: number): Promise<ReplayRound> {
+  return cached(`replay:${map}:${demoId}:${round}`, () =>
+    fetchJson<ReplayRound>(`data/${segment(map)}/replay/${segment(demoId)}/${round}.json`));
 }

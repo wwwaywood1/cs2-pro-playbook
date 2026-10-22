@@ -12,8 +12,11 @@ const MAP_CATALOG = [
   ["de_inferno", "Inferno"], ["de_mirage", "Mirage"], ["de_nuke", "Nuke"], ["de_cache", "Cache"],
 ] as const;
 function MapTile({ map, available, children, className = "", style }: { map: string; available: boolean; children: ReactNode; className?: string; style?: CSSProperties }) {
-  const props = { className: `map-card ${className}`, style, "data-motion-tilt": true };
-  return available ? <Link {...props} to={`/${map}/lineups`}>{children}</Link> : <article {...props}>{children}</article>;
+  const props = { className: `map-card ${available ? "" : "is-unavailable"} ${className}`, style, "data-motion-tilt": true };
+  return <article {...props}>
+    {available ? <Link className="map-card-main" to={`/${map}/tactics`}>{children}</Link> : children}
+    {available ? <Link className="button button-ghost map-card-secondary" to={`/${map}/lineups`}>{t("round4.map_to_lineups")}</Link> : null}
+  </article>;
 }
 
 export default function Home() {
@@ -34,7 +37,7 @@ export default function Home() {
         <p className="eyebrow">{t("site.eyebrow")}</p>
         <div className="title-hud"><h1>{t("ui.app_title")}</h1>
           <MetricStrip items={[
-            { label: t("site.map_coverage"), value: data.maps.length },
+            { label: t("site.map_coverage"), value: data.maps.filter((item) => item.n_matches > 0).length },
             { label: t("ui.nav_lineups"), value: data.maps.reduce((n, item) => n + item.n_lineups, 0) },
           ]} />
         </div>
@@ -67,9 +70,9 @@ export default function Home() {
                   <div data-side="CT"><dt>{t("hub.ct_win")}</dt><dd><CountUp value={item.sample.win_rate_CT} format="percent" /></dd></div>
                 </dl>
                 <p className="map-top-recipe"><small>{t("tactics.recipes")}</small><strong>{item.sample.top_recipe?.name[lang] || t("tactics.no_recipes")}</strong></p>
-              </> : <p className="map-no-data">{t("round2.no_data")}</p>}
+              </> : <p className="map-no-data">{t("round4.coming_soon")}</p>}
 
-              {item.sample?.n_matches ? <span className="map-card-cta">{t("ui.nav_lineups")} →</span> : null}
+              {item.sample?.n_matches ? <span className="map-card-cta">{t("round4.map_to_tactics")} →</span> : null}
             </MapTile>
           ))}
         </Stagger>

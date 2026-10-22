@@ -1601,3 +1601,15 @@ input:focus-visible,
 .map-top-recipe small { color: var(--muted); }
 .map-top-recipe strong { font-size: .85rem; font-weight: 500; }
 .recipe-assignment { display: block; color: var(--muted); font-size: .8rem; margin-top: 4px; }
+
+.map-card { position: relative; }
+.map-card-main { display: flex; flex-direction: column; flex: 1; color: inherit; text-decoration: none; }
+.map-card-main::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.map-card-secondary { position: relative; z-index: 1; align-self: flex-start; margin-top: 12px; font-size: .8rem; }
+.map-card.is-unavailable { filter: grayscale(1); opacity: .48; }
+.map-card.is-unavailable .map-no-data { display: inline-block; align-self: flex-start; border: 1px solid currentColor; padding: 3px 9px; border-radius: 99px; }
+.map-card:has(.map-card-main:focus-visible) { outline: 2px solid #efad55; outline-offset: 3px; }
+.home .map-card > .map-card-main { position: static; z-index: auto; gap: 12px; }
+.map-card-main > :not(.map-card-radar) { position: relative; z-index: 1; }
+.map-card-main::after { z-index: 2; }
+.home .map-card > .map-card-secondary { z-index: 3; }
