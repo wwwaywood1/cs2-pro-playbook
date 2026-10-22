@@ -382,7 +382,12 @@ export interface CTTactics {
 }
 
 export interface SpotRef {
+  /** most frequent thrower in this recipe's rounds: an example only, recipes pool every team */
   thrower?: string | null;
+  thrower_team?: string | null;
+  /** callout it is usually thrown from, and how often (0-1) */
+  throw_place?: string | null;
+  throw_place_share?: number | null;
   order?: number | null;
   spot_id: string;
   type: "smoke" | "molotov";
@@ -408,7 +413,8 @@ export interface Recipe {
   tempo: { value: Tempo; rounds: number }[];
   avg_flashes: number;
   split_rate: number;
-  examples: { demo_id: string; round_num: number; team: string }[];
+  /** replay: a 2D replay file exists at <map>/replay/<demo_id>/<round_num>.json */
+  examples: { demo_id: string; round_num: number; team: string; replay?: boolean }[];
   /** mean T win probability 5 s before the commit and 10 s after (playbook/winprob.py); compare recipes, not absolute effect */
   wp?: { n: number; before: number; after: number; delta: number };
   /** typical T entry routes from round start to the commit (playbook/tactics.py recipe_routes); points in radar px */
@@ -484,3 +490,24 @@ export interface WinprobTimeline { demo_id: string; wp_t: Record<string, number[
 
 /** one entry route: medoid player path of a group sharing the same choke callouts */
 export interface RecipeRoute { via: string[]; lane: string; n: number; share: number; points: [number, number][] }
+
+// ----------------------------------------------------------------------------- 2D replays
+// playbook/replay.py: <map>/replay/<demo_id>/<round>.json, and <map>/replay/index.json = {demo_id: round[]}
+
+export type ReplayPoint = [number, number];
+export type ReplayEvent =
+  | { t: number; kind: "kill"; by: number | null; victim: number | null; at: ReplayPoint | null; weapon: string; headshot: boolean }
+  | { t: number; kind: "util"; nade: "smoke" | "flash" | "molotov" | "he"; by: number | null; at: ReplayPoint | null; from: ReplayPoint | null }
+  | { t: number; kind: "plant"; site: string; at: ReplayPoint | null };
+
+export interface ReplayRound {
+  demo_id: string; round_num: number; map: string;
+  teams: { T: string; CT: string }; winner: "T" | "CT"; reason?: string | null; duration: number;
+  /** index = column in frames */
+  players: { name: string; side: "T" | "CT"; team: string }[];
+  /** one row per second (index = seconds after freeze end); null = dead or not seen */
+  frames: (ReplayPoint | null)[][];
+  events: ReplayEvent[];
+  /** T win probability per second; may be empty */
+  wp_t: number[];
+}

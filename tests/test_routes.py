@@ -43,3 +43,18 @@ def test_routes_group_by_choke_and_drop_rare():
     routes = out["rec"]
     assert len(routes) == 1 and routes[0]["via"][-1] == "Site" and routes[0]["n"] == 24
     assert routes[0]["points"][0] == [0.0, 0.0] and routes[0]["points"][-1][0] == 90.0
+
+
+def test_halfway_players_join_the_full_route_and_lurks_are_dropped():
+    full = [(0, 0, "S"), (0, 0, "S"), (40, 0, "R"), (60, 0, "R"), (80, 0, "Site"), (90, 0, "Site")]
+    half = [(0, 0, "S"), (0, 0, "S"), (40, 0, "R"), (50, 0, "R"), (60, 0, "Mid"), (65, 0, "Mid")]
+    lurk = [(0, 0, "S"), (0, 0, "S"), (0, 300, "L"), (300, 300, "L"), (300, 0, "L2"), (300, 10, "L2")]
+    rows, plans = [], []
+    for r in range(1, 6):
+        players = {"p0": full, "p1": full, "p2": half, "p3": half, "p4": lurk}
+        rows += _round("d1", r, players)
+        plans.append({"demo_id": "d1", "round_num": r, "team": "Alpha", "recipe_id": "rec", "commit_s": 5.0})
+    pos = pl.DataFrame(rows).with_columns(pl.col("round_num").cast(pl.Int32), pl.col("t_s").cast(pl.Int32))
+    routes = recipe_routes(pl.DataFrame(plans).with_columns(pl.col("round_num").cast(pl.Int32)), pos, MM)["rec"]
+    assert len(routes) == 1                      # the lurk (20 %) is a detour, not an entry route
+    assert routes[0]["n"] == 20 and routes[0]["points"][-1][0] == 90.0   # half-way players counted in the full route

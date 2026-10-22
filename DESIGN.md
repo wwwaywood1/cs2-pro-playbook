@@ -357,9 +357,10 @@ Inspired by Szmida & Toka (MIT Sloan 2025, temporal heterogeneous GNN) and Xenop
 
 ## Entry routes (playbook/tactics.py `recipe_routes`)
 
-For every execute recipe, each T player alive at the commit contributes the path from round start to the commit (1 Hz positions). Paths are grouped by the callouts the player dwelt in for ≥ 2 s on the way (the last one before the final callout, plus the final callout), so routes to the same site through different chokes stay apart. Each group is drawn as its **medoid** — a real player path, so it never crosses walls — after resampling to 16 points; groups whose medoids are within 45 radar px are merged; groups under 12 % of the recipe's paths are dropped (max 4). Exported as `recipes[].routes` (`via`, `lane`, `n`, `share`, `points` in radar px). On Mirage all 23 recipes get routes and the drawn routes cover 71 % of player paths on average.
+For every execute recipe, each T player alive at the commit contributes the path from round start to the commit (1 Hz positions). Paths are grouped by the callouts the player dwelt in for ≥ 2 s on the way (the last one before the final callout, plus the final callout). Each group is drawn as its **medoid** — a real player path, so it never crosses walls — resampled to 16 points.
 
+- Groups are taken biggest first. A group whose path runs along an existing route (a player caught half-way at the commit) joins it; if the existing route is itself a stretch of the new path and the new path is at most 1.6× as long, the route takes the longer path (so "back alley → apartments" and "apartments → B site" become one route).
+- Rotations and lurks are dropped: a further route may be at most 1.7× the length of the main route and must not zig-zag (length / straight distance ≤ 2.6). Groups under 12 % of the paths are dropped; at most 4 routes.
+- Exported as `recipes[].routes` (`via`, `lane`, `n`, `share`, `points` in radar px). Mirage: 2.1 routes per recipe covering 86 % of player paths; Inferno 85 %; Nuke 94 %.
 
-### Map/text callout anchors
-
-`heatmaps/baseline.json` optionally exports `place_positions`: `{place, level, radar_x, radar_y}` entries, one per callout and floor. Coordinates are medians of the map's cleaned presence, kill and death observations, with spawn/live-time and gun-round filtering unchanged. These are representative callout anchors, not a navmesh or precise area boundaries. The optional schema-1 field lets zone/fight text highlight a real observed callout even when it has no exported hold cluster. Older exports fall back to observed hold/utility coordinates.
+Recipe spots also carry `throw_place` (most common callout the grenade is thrown from, with `throw_place_share`) and `thrower` / `thrower_team` (most frequent thrower, an example only: recipes pool every team). `core` and `options` stay in frequency order because recipe names and insight texts are built from them; the site sorts them by `order` (throw order).

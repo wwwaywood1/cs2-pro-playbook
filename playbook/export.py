@@ -34,7 +34,7 @@ from playbook.zones import make_summarizer, team_setup
 from playbook.store import read_all
 from playbook.semantics import round_plants
 from playbook.dedupe import deduplicate_tables, demo_events, hltv_demo_ids
-from playbook import winprob
+from playbook import replay, winprob
 
 SCHEMA_VERSION = 1
 MIN_MATCHES_RELIABLE = 5
@@ -488,6 +488,25 @@ def _add_winprob(mdir: Path, ids: list[str], teams: list[dict], players: list[di
             match["winprob_available"] = match["demo_id"] in lines
 
 
+def _write_replays(mdir: Path, sub: dict[str, pl.DataFrame], mm, res: dict, wpr: dict | None) -> None:
+    """2D replays for every round of the showcase teams and the example rounds of each recipe."""
+    show = sub["rounds"].filter(pl.col("t_team").is_in(list(SHOWCASE_TEAMS)) | pl.col("ct_team").is_in(list(SHOWCASE_TEAMS)))
+    wanted = {(d, int(r)) for d, r in show.select("demo_id", "round_num").iter_rows()}
+    for rec in res["recipes"]:
+        wanted |= {(e["demo_id"], int(e["round_num"])) for e in rec.get("examples", [])}
+    wp = replay.wp_by_round(wpr["states"], wpr["oof"], wanted) if wpr else {}
+    index: dict[str, list[int]] = {}
+    for demo, rnd in sorted(wanted):
+        data = replay.build_round(sub, mm, demo, rnd, wp.get((demo, rnd)))
+        if data:
+            _write_compact(mdir / "replay" / demo / f"{rnd}.json", data)
+            index.setdefault(demo, []).append(rnd)
+    _write_compact(mdir / "replay" / "index.json", index)
+    for rec in res["recipes"]:
+        for e in rec.get("examples", []):
+            e["replay"] = int(e["round_num"]) in index.get(e["demo_id"], [])
+
+
 def _add_player_tactics(mdir: Path, players: list[dict], res: dict, player_rounds: pl.DataFrame) -> None:
     """Lurk share (T, rounds with a commit) and forward share (CT) per player, rewritten
     into players.json; inputs for the role hints."""
@@ -576,6 +595,7 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         _filter_lineup_refs(spots, lineup_ids)
         if wpr:
             _add_winprob(mdir, ids, teams, players, res, sub, wpr)
+        _write_replays(mdir, sub, mm, res, wpr)
         _write(mdir / "tactics.json", {
             "map": map_name, "definitions": DEFINITIONS,
             "t_overview": t_summary(res["plans"]), "ct_overview": ct_summary(res["ct"], names),

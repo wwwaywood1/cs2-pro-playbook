@@ -82,7 +82,10 @@ RECIPE_OPTION_SHARE = 0.2
 ROUTE_POINTS = 16        # each path is resampled to this many points along its length
 ROUTE_MIN_SHARE = 0.12   # a route must carry this share of the recipe's player paths
 ROUTE_MAX = 4
-ROUTE_MERGE_PX = 45.0    # medoids closer than this (mean radar px) are the same route
+ROUTE_MERGE_PX = 45.0
+ROUTE_EXTEND_MAX = 1.6
+ROUTE_DETOUR_MAX = 1.7       # a further route may be at most this much longer than the main one
+ROUTE_TORTUOSITY_MAX = 2.6   # path length / straight distance above this is a wander, not a route   # a route may take over a shorter stretch of itself up to this length ratio    # medoids closer than this (mean radar px) are the same route
 ROUTE_MIN_DWELL_S = 2    # a callout counts as "via" when the player spent this long in it
 ROUTE_VIA = 1            # route key: the via-callout before the final one, plus the final one
 
@@ -477,18 +480,30 @@ def execute_recipes(plans: pl.DataFrame, spots: pl.DataFrame, spot_lineups: dict
                 )
                 for sid, group in used.group_by("spot_id"):
                     names = Counter(v for v in group["thrower_name"].to_list() if v)
+                    places = Counter(v for v in group["throw_place"].to_list() if v) if "throw_place" in group.columns else Counter()
+                    thrower = min(names, key=lambda name: (-names[name], name)) if names else None
+                    teams_of = Counter(t for n_, t in zip(group["thrower_name"].to_list(), group["thrower_team"].to_list())
+                                       if n_ == thrower and t) if "thrower_team" in group.columns else Counter()
                     participants[sid[0]] = {
-                        "thrower": min(names, key=lambda name: (-names[name], name)) if names else None,
+                        "thrower": thrower,
+                        "thrower_team": teams_of.most_common(1)[0][0] if teams_of else None,
+                        # where it is usually thrown from: the callout, for players who do not know the pros
+                        "throw_place": min(places, key=lambda pl_: (-places[pl_], pl_)) if places else None,
+                        "throw_place_share": round(max(places.values()) / sum(places.values()), 3) if places else None,
                         "median": float(group["pop_t_s"].median()),
                     }
             ordered = sorted(participants, key=lambda sid: (participants[sid]["median"], sid))
             entries = {sid: {**_spot_entry(sid, freq[sid] / n),
                              "thrower": participants.get(sid, {}).get("thrower"),
+                             "thrower_team": participants.get(sid, {}).get("thrower_team"),
+                             "throw_place": participants.get(sid, {}).get("throw_place"),
+                             "throw_place_share": participants.get(sid, {}).get("throw_place_share"),
                              "order": ordered.index(sid) + 1 if sid in participants else None}
                        for sid in visible}
             recipes.append({
                 "id": rid,
                 "site": site,
+                # kept in frequency order: recipe names and insight texts are built from it
                 "core": [entries[s] for s in core],
                 "options": [entries[s] for s, c in freq.most_common()
                             if s not in core and c / n >= RECIPE_OPTION_SHARE],
@@ -520,6 +535,17 @@ def _resample(xy: np.ndarray, n: int = ROUTE_POINTS) -> np.ndarray:
         return np.repeat(xy[:1], n, axis=0)
     at = np.linspace(0, seg[-1], n)
     return np.c_[np.interp(at, seg, xy[:, 0]), np.interp(at, seg, xy[:, 1])]
+
+
+def _length(path: np.ndarray) -> float:
+    return float(np.hypot(*np.diff(path, axis=0).T).sum())
+
+
+def _covered(path: np.ndarray, route: np.ndarray) -> bool:
+    """True when every stretch of `path` runs along `route` (same route, or a part of it)."""
+    dense = _resample(route, ROUTE_POINTS * 4)
+    d = np.linalg.norm(path[:, None] - dense[None], axis=-1).min(axis=1)
+    return float(d.mean()) < ROUTE_MERGE_PX and float(d.max()) < ROUTE_MERGE_PX * 2
 
 
 def _via(places: list[str | None]) -> tuple[str, ...]:
@@ -577,17 +603,37 @@ def recipe_routes(plans: pl.DataFrame, positions: pl.DataFrame, mm: MapMeta) -> 
             stack = np.stack([xy for _, xy in members])
             dist = np.linalg.norm(stack[:, None] - stack[None], axis=-1).mean(-1).mean(-1)
             cands.append({"key": key, "members": members, "medoid": stack[int(dist.argmin())]})
+        # Biggest groups first. A group whose path is a stretch of another route (players caught
+        # half-way at the commit) joins that route; when the bigger group is the stretch and the
+        # smaller one runs the whole way, the route is drawn with the longer path.
         merged: list[dict] = []
         for c in cands:
-            near = next((m for m in merged if np.linalg.norm(m["medoid"] - c["medoid"], axis=-1).mean() < ROUTE_MERGE_PX), None)
+            near = next((m for m in merged if _covered(c["medoid"], m["medoid"])), None)
             if near:
                 near["members"] += c["members"]
-            else:
-                merged.append({**c, "members": list(c["members"])})
+                if (_length(c["medoid"]) > _length(near["medoid"]) and _covered(near["medoid"], c["medoid"])
+                        and _length(c["medoid"]) <= ROUTE_EXTEND_MAX * _length(near["medoid"])):
+                    near["medoid"], near["key"] = c["medoid"], c["key"]   # draw the full way, not the stretch
+                continue
+            # only a plain extension (not a wandering lurk path that happens to pass along the route)
+            longer = next((m for m in merged if _covered(m["medoid"], c["medoid"])
+                           and _length(c["medoid"]) <= ROUTE_EXTEND_MAX * _length(m["medoid"])), None)
+            if longer:
+                longer["members"] += c["members"]
+                longer["medoid"], longer["key"] = c["medoid"], c["key"]
+                continue
+            merged.append({**c, "members": list(c["members"])})
         routes = []
-        for c in sorted(merged, key=lambda c: -len(c["members"])):
+        ranked = sorted(merged, key=lambda c: -len(c["members"]))
+        main_len = _length(ranked[0]["medoid"]) if ranked else 0.0
+        for c in ranked:
             share = len(c["members"]) / total
             if share < ROUTE_MIN_SHARE or len(routes) >= ROUTE_MAX:
+                continue
+            # rotations and lurks are not entry routes: far longer than the main route, or zig-zag
+            length = _length(c["medoid"])
+            straight = float(np.linalg.norm(c["medoid"][-1] - c["medoid"][0])) or 1.0
+            if routes and (length > ROUTE_DETOUR_MAX * main_len or length / straight > ROUTE_TORTUOSITY_MAX):
                 continue
             lanes = Counter(l for l, _ in c["members"])
             routes.append({"via": list(c["key"]), "lane": lanes.most_common(1)[0][0], "n": len(c["members"]),
