@@ -7,6 +7,7 @@ license = { text = "MIT" }
 authors = [{ name = "Zhiheng Cui" }]
 requires-python = ">=3.11"
 dependencies = [
+    "scikit-learn>=1.4",
     "awpy>=3.1,<4",
     "polars>=1.30",
     "pyarrow>=15",

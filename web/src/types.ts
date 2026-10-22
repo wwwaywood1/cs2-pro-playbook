@@ -142,12 +142,14 @@ export interface PlayerProfile {
     places_30s: Share[];
     /** share of the team's committed T gun rounds in which he was the lurker */
     lurk_share?: number | null;
+    wpa?: Wpa;
   };
   CT: {
     lanes_15s: Share[];
     places_30s: Share[];
     /** share of the team's CT gun rounds in which he stood forward (T territory) at 15 s */
     forward_share?: number | null;
+    wpa?: Wpa;
   };
   role_hints: RoleHint[];
 }
@@ -389,6 +391,8 @@ export interface Recipe {
   avg_flashes: number;
   split_rate: number;
   examples: { demo_id: string; round_num: number; team: string }[];
+  /** mean T win probability 5 s before the commit and 10 s after (playbook/winprob.py); compare recipes, not absolute effect */
+  wp?: { n: number; before: number; after: number; delta: number };
 }
 
 export interface Spot {
@@ -439,3 +443,12 @@ export interface Insight {
   won?: number;
   win_rate?: number;
 }
+
+// ----------------------------------------------------------------------------- win probability
+// playbook/winprob.py: out-of-fold T-side round win probability on 1 Hz states.
+
+/** win probability added per round on this side: duels = kills + deaths, utility = grenade pops */
+export interface Wpa { rounds: number; per_round: number; duels: number; utility: number }
+
+/** <map>/winprob/<demo_id>.json, showcase teams only: T win probability per second, per round */
+export interface WinprobTimeline { demo_id: string; wp_t: Record<string, number[]> }

@@ -34,6 +34,7 @@ from playbook.zones import make_summarizer, team_setup
 from playbook.store import read_all
 from playbook.semantics import round_plants
 from playbook.dedupe import deduplicate_tables, hltv_demo_ids
+from playbook import winprob
 
 SCHEMA_VERSION = 1
 MIN_MATCHES_RELIABLE = 5
@@ -420,6 +421,36 @@ def _add_team_tactics(mdir: Path, teams: list[dict], res: dict, names: dict) -> 
         _write(mdir / "teams" / f"{p['slug']}.json", p)
 
 
+SHOWCASE_TEAMS = {"Falcons"}  # teams that get per-round WP timelines (files stay small)
+
+
+def _add_winprob(mdir: Path, ids: list[str], teams: list[dict], players: list[dict], res: dict,
+                 sub: dict[str, pl.DataFrame], wpr: dict) -> None:
+    """Win probability added per player and side, recipe WP swing, showcase-team timelines."""
+    ev = wpr["events"].filter(pl.col("demo_id").is_in(ids))
+    played = sub["player_rounds"].with_columns(pl.col("steamid").cast(pl.Utf8)).group_by("steamid", "side").agg(
+        pl.len().alias("rounds"))
+    rows = {(sid, side): r for sid, side, *r in winprob.player_wpa(ev, played).select(
+        "steamid", "side", "rounds", "wpa_total_per_round", "wpa_duels_per_round", "wpa_utility_per_round").iter_rows()}
+    for p in players:
+        for side in ("T", "CT"):
+            r = rows.get((str(p["steamid"]), side))
+            if r and r[0]:
+                p[side]["wpa"] = {"rounds": int(r[0]), "per_round": r[1], "duels": r[2], "utility": r[3]}
+    wp_map = wpr["wp"].filter(pl.col("demo_id").is_in(ids))
+    swing = winprob.recipe_wp(res["plans"], wp_map)
+    for r in res["recipes"]:
+        if r["id"] in swing:
+            r["wp"] = swing[r["id"]]
+    show = sub["matches"].filter(pl.col("team_a").is_in(list(SHOWCASE_TEAMS)) | pl.col("team_b").is_in(list(SHOWCASE_TEAMS)))
+    keep = set(show["demo_id"].to_list())
+    if keep:
+        mask = wpr["states"]["demo_id"].is_in(list(keep)).to_numpy()
+        lines = winprob.round_timelines(wpr["states"].filter(mask), wpr["oof"][mask], keep)
+        for demo, by_round in lines.items():
+            _write_compact(mdir / "winprob" / f"{demo}.json", {"demo_id": demo, "wp_t": by_round})
+
+
 def _add_player_tactics(mdir: Path, players: list[dict], res: dict, player_rounds: pl.DataFrame) -> None:
     """Lurk share (T, rounds with a commit) and forward share (CT) per player, rewritten
     into players.json; inputs for the role hints."""
@@ -464,6 +495,12 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         "maps": [],
     }
     order = roster_order(t["player_rounds"])  # stable player colours across maps
+    wpr = winprob.run(t)
+    if wpr:
+        m = wpr["metrics"]
+        print(f"win probability: accuracy {m['model']['accuracy']:.3f} (baseline {m['baseline_alive_time']['accuracy']:.3f}),"
+              f" log loss {m['model']['log_loss']:.3f}, {m['matches']} matches")
+        _write(out_dir / "winprob_metrics.json", m)
     export_player_quotes(ROOT / "config" / "player_quotes.json", out_dir)
     export_asset_slots(ROOT / "web" / "public", out_dir)
     team_maps: dict[str, list[dict]] = {}
@@ -497,6 +534,8 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         names = {sid: n for sid, n in sub["player_rounds"].group_by("steamid").agg(pl.col("name").mode().sort().first()).iter_rows()}
         spots = site_spots(res, spot_names, mm)
         _filter_lineup_refs(spots, lineup_ids)
+        if wpr:
+            _add_winprob(mdir, ids, teams, players, res, sub, wpr)
         _write(mdir / "tactics.json", {
             "map": map_name, "definitions": DEFINITIONS,
             "t_overview": t_summary(res["plans"]), "ct_overview": ct_summary(res["ct"], names),

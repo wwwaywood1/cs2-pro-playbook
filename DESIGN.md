@@ -339,3 +339,16 @@ Verified by GPT-03 on MOUZ vs Legacy Nuke (2394905: 13-6, 19 rounds); B8 vs TYLO
 - DeepSeek: map callout configs, team alias table, i18n labels, frontend implementation
   to a fixed spec (see `delegation/`).
 - GPT: one robustness review of the parsing edge cases (GPT-01).
+
+
+## Round win probability and action value (playbook/winprob.py)
+
+Inspired by Szmida & Toka (MIT Sloan 2025, temporal heterogeneous GNN) and Xenopoulos et al. (arXiv 2011.01324), implemented as the simple reproducible version.
+
+- **States**: one per second of live play from `positions` (1 Hz), T-side view: alive and HP per side, equipment value of alive players (round buy ÷ players × alive), time left (round timer 115 s, then the 40 s bomb timer after the plant), planted / site A, score difference, alive players per lane per side, map one-hot. Label: T wins the round.
+- **Model**: `HistGradientBoostingClassifier`, 5-fold `GroupKFold` by match; isotonic calibration cross-fitted by match. Every exported probability is out-of-fold — no match is scored by a model that saw it. Baseline: logistic regression on alive counts, time left, planted.
+- **Current result** (289 de-duplicated matches, 576,886 states): accuracy 0.741 vs 0.697 baseline, log loss 0.469 vs 0.520, Brier 0.159 vs 0.179; calibration within ±0.02 in every decile. Most informative: HP T/CT, equipment difference, alive difference, planted. Metrics: `data/site/winprob_metrics.json`.
+- **Action value (ΔWP)**: WP 2 s after the event minus WP in the last full second before it, from the actor's team view. Kills credit the attacker, deaths debit the victim, utility credits the thrower at the pop. Per player and side in `players.json` (`T.wpa`, `CT.wpa`: per round, duels, utility). Utility values are small and noisy: a grenade's effect is often delayed beyond 2 s.
+- **Recipe swing**: mean WP 5 s before the commit vs 10 s after (`tactics.json` › `recipes[].wp`). Biased upward (rounds that reach a commit are already going well): use it to compare recipes, not as an absolute effect.
+- **Timelines**: `data/site/<map>/winprob/<demo_id>.json` for showcase teams (`SHOWCASE_TEAMS` in export.py, currently Falcons).
+- Export runs the model when scikit-learn is installed (≈1.5 min), otherwise prints a skip line.
