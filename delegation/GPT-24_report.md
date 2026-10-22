@@ -31,3 +31,28 @@ Every identified event has a configured date range. The sole undated demo is `hl
 - Indexed-output audit: **passed** for 566 team match rows, 566 hub rows, 297 recipe examples, 2,195 replays and all six map date ranges; metadata matches the canonical demo registry and lists are newest first. Counts exclude older unreferenced generated files already present in the output tree. [Audit](GPT-24_audit.json).
 - Added nine date tests covering interpolation, raw-inventory stability, series/alias sharing, overrides/conflicts, unknown events, complete archive ordering and frontend calendar boundaries. Replay schema test now checks date metadata.
 - `web/e2e/smoke.py` compiles and includes deterministic date/precision/filter/search/footer coverage that works with sample or full data. Browser smoke **not executed**: Chromium launch was denied by this sandbox (`bootstrap_check_in ... Permission denied (1100)`). Run it outside the sandbox with the repository's documented sample-data workflow to complete visual/interaction verification.
+
+## Round 2
+
+- Fixed the actual source of `Request is not JSON serializable` in `web/e2e/smoke.py:mock_json` / `check_match_dates`: Python Playwright invokes a two-argument handler with `(Route, Request)`, so `lambda request, payload=payload` replaced the captured fixture with a `Request`. JSON mocks now use a one-argument closure. The exception surfaced at `unroute`, but the handler signature caused it.
+- All seven checks that install routes now register them **inside** `try` and call `page.unroute_all(behavior='ignoreErrors')` in `finally`, including on partial setup failure. Replay pending-response cleanup has its own nested `finally`, so it cannot prevent route removal.
+- `run_routes` gives each desktop/mobile check a fresh page and closes it in `finally`. Unrouting alone does not clear `web/src/data.ts`'s promise cache or an open command-palette dialog; those states can otherwise contaminate later hash-route visits.
+- Added `tests/test_smoke_routes.py`: 14 browser-free regression cases exercise the real check functions with Playwright-compatible one-/two-argument callback dispatch and interrupted registration/assertions. They verify serializable fixture payloads and route removal. A fifteenth case verifies page isolation after a recorded UI failure.
+
+### Review of each supplied desktop failure
+
+| Check | Finding / action |
+| --- | --- |
+| `match_dates` | Confirmed handler binding bug; fixed and covered by regression tests for all three distinct JSON payloads. |
+| `command_palette` | Reviewed `web/src/components/CommandPalette.tsx`: map and lineup entries match `mirage`. Broken index mocking can prevent results, and an assertion leaves the modal open. Fixed mock binding and page isolation; no independently confirmed app defect. |
+| `team` | Reviewed `web/src/App.tsx:TeamRedirect` and `web/src/pages/TeamsHub.tsx:MapPanel`: redirect uses replacement history; hub readiness depends on the mocked index/bundle. Fresh-page isolation removes inherited mock/cache state; no independently confirmed app defect. |
+| `team_shields` | Reviewed `TeamsHub.tsx:Asset` and `web/src/components/TeamShield.tsx`: empty asset slots select the shared shield. Setup/removal protected; no independently confirmed app defect. |
+| `radar6` | Reviewed `TeamsHub.tsx:PlayerView` and `web/src/components/PlayerRadar6.tsx`: selected side drives percentiles; missing CT lurk displays an em dash. Setup/removal protected; no independently confirmed app defect. |
+| `players` | Reviewed `web/src/i18n.ts:setLang` and the header toggle: language updates and persists. A command-palette modal left by an earlier failure can intercept the click. Fresh pages prevent that cascade; no independently confirmed app defect. |
+
+### Validation and remaining browser check
+
+- `PATH="/Users/stephen/Library/Application Support/Codex/artifact-sessions/runtime-generations/generation-bev1yC/runtime/bin:$PATH" .venv/bin/python -m pytest -q`: **228 passed**, no skips, one existing joblib physical-core warning. [Log](GPT-24_round2_pytest.log).
+- Existing bundled Node: `node web/node_modules/typescript/bin/tsc -b web`: **passed**. Vite sample build in `/private/tmp/gpt24-r2-a4usu1ml/web`: **passed**. Source, public assets and `samples/site` were staged in isolation; repository production data and `web/dist` were preserved. [Build log](GPT-24_round2_build.log).
+- Attempted the final smoke script with the existing Playwright environment at `/Users/stephen/Documents/Codex/2026-10-19/cs2-pro-playbook-is-a-python/work/cs2-pro-playbook/.venv/bin/python`. Chromium fails before any check runs: macOS `bootstrap_check_in ... Permission denied (1100)`. A local HTTP server is also denied (`socket.bind: Operation not permitted`). [Smoke launch log](GPT-24_round2_smoke.log).
+- The supplied `GPT-24_smoke_failures.txt` includes the six desktop failures only; it omits the six mobile failure details. Their cause cannot be established from this excerpt, and a passing browser run is **not claimed**. Next check: outside this sandbox, serve `/private/tmp/gpt24-r2-a4usu1ml/web/dist` on port 4173 and run that workspace's `web/e2e/smoke.py` with the existing Playwright Python. This reruns every desktop and 375px mobile check independently with sample data.

@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Callable
 from urllib.parse import urlsplit
 
-from playwright.sync_api import Page, expect, sync_playwright
+from playwright.sync_api import BrowserContext, Page, expect, sync_playwright
 
 
 @dataclass
@@ -69,6 +69,15 @@ def route(path: str, ready: str):
         ROUTES.append(Route(path, ready, test))
         return test
     return register
+
+
+def mock_json(page: Page, pattern: str, payload: dict | list) -> None:
+    # Playwright supplies (Route, Request) to handlers accepting two arguments,
+    # including a lambda's default arguments. Capture JSON in a one-argument closure.
+    def fulfill(intercepted):
+        intercepted.fulfill(json=payload)
+
+    page.route(pattern, fulfill)
 
 
 @route('#/', 'text=Mirage')
@@ -216,9 +225,9 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
     fixture['spots'] = [spot]
     fixture['recipes'] = [recipe, {**recipe, 'id': 'test-empty', 'n_rounds': 10, 'routes': [],
                                    'entry_sync_sec': None, 'intent_badges': []}]
-    page.route('**/data/de_mirage/replay/smoke-replay/1.json', lambda request: request.fulfill(json=replay_fixture()))
-    page.route('**/data/de_mirage/tactics.json', lambda request: request.fulfill(json=fixture))
     try:
+        page.route('**/data/de_mirage/replay/smoke-replay/1.json', lambda request: request.fulfill(json=replay_fixture()))
+        mock_json(page, '**/data/de_mirage/tactics.json', fixture)
         page.reload()
         page.wait_for_selector('.tactics-entry-path')
         smoke.check(page.locator('.tactics-entry-path').count() == 1, 'selected recipe draws its player entry route')
@@ -351,9 +360,8 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         smoke.check(page.evaluate('document.body.style.overflow') == overflow, 'replay restores body scrolling and opener focus')
         smoke.check('replay=' not in page.url, 'Back, Escape and close remove the replay overlay')
     finally:
+        page.unroute_all(behavior='ignoreErrors')
         page.emulate_media(reduced_motion='no-preference')
-        page.unroute('**/data/de_mirage/tactics.json')
-        page.unroute('**/data/de_mirage/replay/smoke-replay/1.json')
 
 
 @route('#/de_mirage/tactics', '.tactics-page')
@@ -366,16 +374,16 @@ def check_replay_switching(smoke: Smoke, page: Page) -> None:
     tactics = json.loads((root / 'public/data/de_mirage/tactics.json').read_text())
     for recipe in tactics['recipes']:
         recipe.pop('median_commit_s', None)
-    page.route(tactics_url, lambda request: request.fulfill(json=tactics))
     pending = []
     late_url = '**/data/de_mirage/replay/smoke-late/1.json'
     fast_url = '**/data/de_mirage/replay/smoke-fast/*.json'
-    page.route(late_url, lambda request: pending.append(request))
-    page.route(fast_url, lambda request: request.fulfill(json={
-        **replay_fixture(), 'demo_id': 'smoke-fast',
-        'round_num': int(request.request.url.rsplit('/', 1)[1].split('.')[0]),
-    }))
     try:
+        mock_json(page, tactics_url, tactics)
+        page.route(late_url, lambda request: pending.append(request))
+        page.route(fast_url, lambda request: request.fulfill(json={
+            **replay_fixture(), 'demo_id': 'smoke-fast',
+            'round_num': int(request.request.url.rsplit('/', 1)[1].split('.')[0]),
+        }))
         page.emulate_media(reduced_motion='reduce')
         # Reload clears the application's cached tactics from the runner's initial visit.
         page.reload()
@@ -407,12 +415,12 @@ def check_replay_switching(smoke: Smoke, page: Page) -> None:
         page.keyboard.press('Escape')
         expect(page.locator('dialog[open]')).to_have_count(0)
     finally:
-        for request in pending:
-            request.fulfill(json=replay_fixture())
-        page.unroute(late_url)
-        page.unroute(fast_url)
-        page.unroute(tactics_url)
-        page.emulate_media(reduced_motion='no-preference')
+        try:
+            for request in pending:
+                request.fulfill(json=replay_fixture())
+        finally:
+            page.unroute_all(behavior='ignoreErrors')
+            page.emulate_media(reduced_motion='no-preference')
 
 
 def replay_fixture() -> dict:
@@ -437,13 +445,13 @@ def check_archive_replay(smoke: Smoke, page: Page) -> None:
     team = json.loads((root / 'public/data/de_mirage/teams/vitality.json').read_text())
     demo = team['matches'][0]['demo_id']
     team['matches'][0]['winprob_available'] = True
-    page.route('**/data/de_mirage/teams/vitality.json', lambda request: request.fulfill(json=team))
-    page.route(f'**/data/de_mirage/winprob/{demo}.json', lambda request: request.fulfill(json={
-        'demo_id': demo, 'wp_t': {'1': [.5, .8], '2': [.5, .2]}, 'team_sides': {'vitality': {'1': 'T', '2': 'T'}}
-    }))
-    page.route('**/data/de_mirage/replay/index.json', lambda request: request.fulfill(json={demo: [1]}))
-    page.route(f'**/data/de_mirage/replay/{demo}/1.json', lambda request: request.fulfill(json={**replay_fixture(), 'demo_id': demo}))
     try:
+        mock_json(page, '**/data/de_mirage/teams/vitality.json', team)
+        mock_json(page, f'**/data/de_mirage/winprob/{demo}.json', {
+            'demo_id': demo, 'wp_t': {'1': [.5, .8], '2': [.5, .2]}, 'team_sides': {'vitality': {'1': 'T', '2': 'T'}}
+        })
+        mock_json(page, '**/data/de_mirage/replay/index.json', {demo: [1]})
+        mock_json(page, f'**/data/de_mirage/replay/{demo}/1.json', {**replay_fixture(), 'demo_id': demo})
         page.reload()
         page.wait_for_selector('.hub-player-card')
         page.locator('.hub-team-matches > summary').click()
@@ -458,9 +466,7 @@ def check_archive_replay(smoke: Smoke, page: Page) -> None:
         smoke.check('map=de_mirage' in page.url and 'team=vitality' in page.url,
                     'closing the archive replay preserves the hub map slide')
     finally:
-        for pattern in ['**/data/de_mirage/teams/vitality.json', f'**/data/de_mirage/winprob/{demo}.json',
-                        '**/data/de_mirage/replay/index.json', f'**/data/de_mirage/replay/{demo}/1.json']:
-            page.unroute(pattern)
+        page.unroute_all(behavior='ignoreErrors')
 
 
 @route('#/heatmaps/vitality?map=de_mirage', '.hm-player-card')
@@ -631,10 +637,10 @@ def check_hub_entrance(smoke: Smoke, page: Page) -> None:
     # Test owner-style copy without modifying the sample registry or production data.
     player = '76561198113666193'
     smoke.check(page.locator('.hub-side-switch button').count() == 2, 'heatmap offers T and CT only')
-    page.route('**/data/player_quotes.json', lambda request: request.fulfill(json={
-        player: {'name': 'ZywOo', 'zh': '一箫一剑平生意，负尽狂名十五年', 'en': ''}
-    }))
     try:
+        mock_json(page, '**/data/player_quotes.json', {
+            player: {'name': 'ZywOo', 'zh': '一箫一剑平生意，负尽狂名十五年', 'en': ''}
+        })
         page.evaluate('(id) => sessionStorage.removeItem(`hub-intro:${id}`)', player)
         page.reload()
         page.wait_for_selector('.hub-player-view[data-entrance="full"]')
@@ -735,8 +741,8 @@ def check_hub_entrance(smoke: Smoke, page: Page) -> None:
         smoke.check(page.locator('.hub-intro-skip, .hub-portrait-transfer').count() == 0,
                     'live reduced motion finishes the title sequence and removes transfer layers')
     finally:
+        page.unroute_all(behavior='ignoreErrors')
         page.emulate_media(reduced_motion='no-preference')
-        page.unroute('**/data/player_quotes.json')
 
 
 
@@ -763,9 +769,9 @@ def check_match_dates(smoke: Smoke, page: Page) -> None:
         '**/data/heatmap_teams.json': teams,
         '**/data/de_mirage/teams/vitality.json': profile,
     }
-    for pattern, payload in patterns.items():
-        page.route(pattern, lambda request, payload=payload: request.fulfill(json=payload))
     try:
+        for pattern, payload in patterns.items():
+            mock_json(page, pattern, payload)
         page.reload()
         page.locator('.hub-team-results > summary').click()
         results = page.locator('.hub-results')
@@ -797,8 +803,7 @@ def check_match_dates(smoke: Smoke, page: Page) -> None:
         expect(archive.locator('.match')).to_have_count(1)
         smoke.check(True, 'team map archive has the same date window control')
     finally:
-        for pattern in patterns:
-            page.unroute(pattern)
+        page.unroute_all(behavior='ignoreErrors')
 
 
 @route('#/de_mirage/tactics', '.tactics-page')
@@ -854,8 +859,8 @@ def check_teams(smoke: Smoke, page: Page) -> None:
 @route('#/teams-hub', '.hub-team-card')
 def check_team_shields(smoke: Smoke, page: Page) -> None:
     pattern = '**/data/asset_slots.json'
-    page.route(pattern, lambda request: request.fulfill(json={'teams': [], 'players': []}))
     try:
+        mock_json(page, pattern, {'teams': [], 'players': []})
         page.reload()
         page.wait_for_selector('.hub-team-card .team-shield')
         badges = page.locator('.hub-team-card .hub-badge')
@@ -864,7 +869,7 @@ def check_team_shields(smoke: Smoke, page: Page) -> None:
         smoke.check(all(len(text.strip()) > 1 for text in page.locator('.team-shield text').all_text_contents()),
                     'shield placeholders show short team names rather than single letters')
     finally:
-        page.unroute(pattern)
+        page.unroute_all(behavior='ignoreErrors')
 
 
 @route('#/teams-hub?team=vitality&map=de_mirage&player=76561198113666193&side=T', '.hub-player-view')
@@ -881,8 +886,8 @@ def check_radar6(smoke: Smoke, page: Page) -> None:
             }
         player['CT']['radar_6d']['lurk_distance'] = {'raw': None, 'percentile': None, 'reference_players': 0}
     pattern = '**/data/de_mirage/players.json'
-    page.route(pattern, lambda request: request.fulfill(json=players))
     try:
+        mock_json(page, pattern, players)
         page.reload()
         chart = page.locator('.player-radar6')
         expect(chart).to_have_attribute('data-side', 'T')
@@ -896,7 +901,7 @@ def check_radar6(smoke: Smoke, page: Page) -> None:
         expect(chart.locator('[data-axis=lurk_distance]')).to_contain_text('—')
         smoke.check(True, 'side switch updates percentiles and CT lurk is unavailable')
     finally:
-        page.unroute(pattern)
+        page.unroute_all(behavior='ignoreErrors')
 
 
 @route('#/de_mirage/players', 'text=ZywOo')
@@ -940,6 +945,19 @@ def run_route(smoke: Smoke, case: Route, page: Page, *, mobile: bool = False) ->
                 smoke.check(False, f"could not capture {label}: {error}")
 
 
+def run_routes(smoke: Smoke, context: BrowserContext, *, mobile: bool = False) -> None:
+    for case in ROUTES:
+        # Removing network routes does not clear data.ts's in-memory fetch cache
+        # or close dialogs. A fresh document makes failures independent.
+        page = context.new_page()
+        try:
+            page.set_default_timeout(10_000)
+            smoke.watch(page)
+            run_route(smoke, case, page, mobile=mobile)
+        finally:
+            page.close()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("base", nargs="?", default="http://localhost:4173")
@@ -957,18 +975,10 @@ def main() -> int:
             desktop = browser.new_context(viewport={"width": 1440, "height": 900})
             desktop.grant_permissions(["clipboard-read", "clipboard-write"],
                                       origin=f"{origin.scheme}://{origin.netloc}")
-            page = desktop.new_page()
-            page.set_default_timeout(10_000)
-            smoke.watch(page)
-            for case in ROUTES:
-                run_route(smoke, case, page)
+            run_routes(smoke, desktop)
 
             mobile = browser.new_context(viewport={"width": 375, "height": 812})
-            page = mobile.new_page()
-            page.set_default_timeout(10_000)
-            smoke.watch(page)
-            for case in ROUTES:
-                run_route(smoke, case, page, mobile=True)
+            run_routes(smoke, mobile, mobile=True)
 
             smoke.check(not smoke.errors,
                         f"no console errors ({len(smoke.errors)}): {smoke.errors[:3]}")
