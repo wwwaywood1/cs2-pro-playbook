@@ -67,6 +67,8 @@ export default function Radar({ map, lineups, selectedId, onSelect, pickedIds, o
 
   return (
     <div className="radar-panel-inner">
+      <header className="radar-pick-head"><h2>雷达</h2>{pickedIds !== null ? <button type="button" className="button button-ghost radar-reset" onClick={() => onPick(null)}>{t("round6.map_pick_clear")}</button> : null}</header>
+      {pickedIds !== null ? <p className="radar-pick-status" role="status">{t("round6.map_pick_active", { n: fmtInt(lineups.filter((lineup) => pickedIds.has(lineup.id)).length) })}</p> : null}
 <div className="hud-radar-frame">      <svg className="radar" viewBox="0 0 1024 1024" role="group" aria-label={map}>
         <rect className="radar-bg" x="0" y="0" width="1024" height="1024" />
         {imageOk ? (
@@ -165,7 +167,6 @@ export default function Radar({ map, lineups, selectedId, onSelect, pickedIds, o
       </svg></div>
 
       <p className="radar-hint">{t("round5.map_pick_hint")}</p>
-      {pickedIds !== null ? <button type="button" className="button button-ghost radar-reset" onClick={() => onPick(null)}>{t("round2.tier_all")}</button> : null}
       <div className="radar-legend">
         {TYPES.map((type) => (
           <span key={type} className="grenade-label">

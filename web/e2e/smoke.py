@@ -145,7 +145,9 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     cluster = page.locator(".radar .landing-cluster").first
     expect(cluster).to_be_visible()
     cluster.locator("circle:not(.map-link-ring)").click()
-    expect(page.locator(".radar-reset")).to_have_count(1)
+    expect(page.locator('.radar-pick-head .radar-reset')).to_have_text('× 清除地图选点')
+    expect(page.locator('.radar-pick-status')).to_contain_text('已按地图选点筛选')
+    smoke.check(page.locator('.radar-reset').bounding_box()['y'] < page.locator('.radar').bounding_box()['y'], 'map-pick clear action is above the radar')
     expect(page.locator(".radar .landing-cluster")).to_have_count(0)
     smoke.check(True, "one click on a callout expands its routes")
     # URL navigation is transitioned independently of the immediate local pick.
@@ -167,7 +169,13 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
 
     page.keyboard.press('Escape')
     expect(page.locator('.lineup-card')).to_have_count(smoke.expected_count())
+    page.wait_for_function("!new URLSearchParams(location.hash.split('?')[1]).has('landing')")
     smoke.check('landing=' not in page.url, 'Escape clears the landing filter')
+    page.locator('.radar .landing-cluster').first.locator('circle:not(.map-link-ring)').click()
+    page.locator('.radar-reset').click()
+    expect(page.locator('.radar-pick-status')).to_have_count(0)
+    expect(page.locator('.lineup-card')).to_have_count(smoke.expected_count())
+    smoke.check(True, 'visible clear action restores all map results')
     card = page.locator('.lineup-card').first
     key = card.get_attribute('data-map-link')
     card.hover()
@@ -235,7 +243,12 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         expect(page.locator('.tactics-route-row').first).to_contain_text('A1主攻线')
         selected_intent = page.locator('.tactics-recipe.is-selected .recipe-intent')
         expect(selected_intent).to_contain_text('两路进点相差 2.5 秒')
-        smoke.check(selected_intent.locator('.recipe-intent-badge').count() == 3, 'recipe shows all three intent status badges')
+        badges = page.locator('.tactics-recipe.is-selected h3 .recipe-intent-badge')
+        smoke.check(badges.all_text_contents() == ['🎭 假打转点', '✂️ 多向夹击', '⚡ 一波流'], 'title shows all three localized intent badges')
+        page.locator('.tactics-recipe.is-selected .tactics-recipe-toggle').click()
+        expect(page.locator('.tactics-recipe.is-selected .tactics-recipe-toggle')).to_have_attribute('aria-expanded', 'false')
+        expect(badges).to_have_count(3)
+        page.locator('.tactics-recipe.is-selected .tactics-recipe-toggle').click()
         path = page.locator('.tactics-entry-path')
         smoke.check(path.get_attribute('marker-end') is not None, 'entry route has an arrowhead')
         row = page.locator('.tactics-recipe.is-selected .tactics-spots li').first
@@ -293,10 +306,17 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
                     'the entire WP chart fits in the modal at 1440x900')
         smoke.check(page.locator('.replay-player-abbr').count() == 10, 'every living dot has a short player name')
         expect(page.locator('.replay-clock')).to_contain_text('1:55')
-        smoke.check(page.locator('.replay-anchors button').count() == 3 and page.locator('.replay-wp [role=button]').count() == 3,
-                    'kill, smoke and plant have anchors on both timelines')
+        smoke.check(page.locator('.replay-anchors').count() == 0 and page.locator('.replay-wp [role=button]').count() == 3,
+                    'one set of kill, smoke and plant markers replaces the duplicate track')
+        smoke.check(page.locator('.replay-wp-marker text').all_text_contents() == ['☁', '💣', '×'], 'WP markers use the legend symbols')
+        smoke.check(page.locator('.replay-wp-marker text').evaluate_all('rows => rows.every(el => Math.abs(Number(el.getAttribute("y")) - (65 - (.5 + Number(el.parentElement.dataset.time) * .05) * 60)) < .01)'),
+                    'event symbols sit on the interpolated probability curve')
+        smoke.check(page.locator('.replay-player-abbr').evaluate_all('rows => rows.slice(0, 5).every((a, i, group) => group.slice(i + 1).every(b => Math.abs(a.getBoundingClientRect().y - b.getBoundingClientRect().y) >= 9.8))'),
+                    'five coincident spawn names stagger at least ten screen pixels')
         smoke.check(page.locator('.replay-player-name').count() == 0, 'replay does not label every player')
-        dot = page.locator('.replay-player').first
+        # The first five dots deliberately share a spawn position; use an isolated
+        # CT dot for pointer hit-testing after checking the staggered labels.
+        dot = page.locator('.replay-player').nth(5)
         diameter = dot.evaluate('el => el.r.baseVal.value * el.getScreenCTM().a * 2')
         smoke.check(8 <= diameter <= 10 and dot.evaluate('el => getComputedStyle(el).strokeWidth') == '1px',
                     'replay dots are 8–10px with a 1px outline')
@@ -324,7 +344,14 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         expect(page.locator('.replay-clock')).to_contain_text('0:39')
         expect(page.locator('.replay-killfeed')).to_contain_text('ak47')
         expect(page.locator('.replay-killfeed')).to_contain_text('爆头')
-        expect(page.locator('.replay-kill-wpa')).to_contain_text('+12.5%')
+        expect(page.locator('.replay-killfeed')).to_contain_text('0:39 [T] Player 0 击杀 Player 9（爆头）（胜率 +12.5%）')
+        expect(page.locator('.replay-events [data-kind=smoke]')).to_contain_text('1:52 [T] Player 0 投掷 VIP烟')
+        expect(page.locator('.replay-events [data-kind=plant]')).to_contain_text('0:40 [T] — 在 A 点下包')
+        expect(page.locator('.replay-events [data-kind=flash]')).to_have_count(0)
+        page.get_by_role('checkbox', name='全部事件（含闪光）').check()
+        expect(page.locator('.replay-events [data-kind=flash]')).to_contain_text('1:53 [CT] Player 6 投掷 闪光弹')
+        page.get_by_role('checkbox', name='全部事件（含闪光）').uncheck()
+        expect(page.locator('.replay-events [data-kind=flash]')).to_have_count(0)
         smoke.check(page.locator('.replay-kill-line').count() == 1 and page.locator('.replay-effect-smoke').count() == 1,
                     'kill line flashes for 1.5 seconds while smoke remains active')
         scrubber.fill('7')
@@ -337,7 +364,7 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         expect(scrubber).to_have_value('4')
         page.keyboard.press('g')
         expect(scrubber).to_have_value('10')  # recipe median 35 clamps to duration 10
-        page.locator('.replay-anchors button[data-kind=util]').click()
+        page.locator('.replay-wp-marker[data-kind=util]').click()
         expect(scrubber).to_have_value('3')
         page.locator('.replay-wp [role=button]').first.focus()
         page.keyboard.press('Enter')
@@ -429,10 +456,11 @@ def replay_fixture() -> dict:
         'teams': {'T': 'Vitality', 'CT': 'B8'}, 'winner': 'T', 'duration': 10,
         'players': [{'name': f'Player {i}', 'side': 'T' if i < 5 else 'CT',
                      'team': 'Vitality' if i < 5 else 'B8'} for i in range(10)],
-        'frames': [[[100 + i * 50 + second * 5, 300 + i * 10] if i != 9 or second < 5 else None
+        'frames': [[[100 + second * 5, 300] if i < 5 else [100 + i * 50 + second * 5, 300 + i * 10] if i != 9 or second < 5 else None
                     for i in range(10)] for second in range(11)],
         'events': [{'t': 5, 'kind': 'kill', 'by': 0, 'victim': 9, 'at': [570, 390], 'weapon': 'ak47', 'headshot': True, 'wpa': .125},
-                   {'t': 3, 'kind': 'util', 'nade': 'smoke', 'by': 0, 'at': [300, 300], 'from': [100, 300]},
+                   {'t': 3, 'kind': 'util', 'nade': 'smoke', 'by': 0, 'at': [300, 300], 'from': [100, 300], 'side': 'T', 'place': 'VIP'},
+                   {'t': 2, 'kind': 'util', 'nade': 'flash', 'by': 6, 'at': [450, 400], 'from': [400, 400]},
                    {'t': 4, 'kind': 'plant', 'site': 'A', 'at': [560, 760]}],
         'wp_t': [.5 + i * .05 for i in range(11)],
         't_control': [.4 + i * .02 for i in range(11)],
@@ -516,9 +544,13 @@ def check_teams_hub(smoke: Smoke, page: Page) -> None:
                 'entering a map uses forward slide direction')
     smoke.check(page.locator('.hub-player-card').count() == 5, 'map shows five portrait buttons')
     steamid = page.locator('.hub-player-card').first.get_attribute('id').removeprefix('hub-player-')
+    portrait_line = page.locator('.hub-player-card .hub-portrait-line').first.inner_text()
+    portrait_kpr = portrait_line.split('T 方每回合 ', 1)[1].split(' 杀', 1)[0]
     page.locator('.hub-player-card').first.focus()
     page.keyboard.press('Enter')
     page.wait_for_selector('.hub-player-view')
+    expect(page.locator('.hub-analysis-toolbar .hub-kpis .stat').first.locator('.sr-only')).to_have_text(portrait_kpr)
+    smoke.check(True, 'portrait T-side KPR matches the player-page heatmap KPR')
     smoke.check(f'player={steamid}' in page.url and 'map=de_mirage' in page.url,
                 'player and map selections are deep linked')
     smoke.check(page.locator('.hub-verse').count() == 0, 'absent owner verse is hidden')
@@ -889,7 +921,20 @@ def check_radar6(smoke: Smoke, page: Page) -> None:
     try:
         mock_json(page, pattern, players)
         page.reload()
-        chart = page.locator('.player-radar6')
+        page.emulate_media(reduced_motion='reduce')
+        for width, height in [(1440, 900), (1280, 800)]:
+            page.set_viewport_size({'width': width, 'height': height})
+            page.evaluate('window.scrollTo(0, 0)')
+            page.wait_for_timeout(100)
+            controls = page.locator('.hub-map-main .hub-map-controls').bounding_box()
+            radar = page.locator('.hub-map-main .hub-radar').bounding_box()
+            smoke.check(controls is not None and radar is not None and controls['y'] >= 0 and
+                        controls['y'] + controls['height'] <= radar['y'] + 1 and
+                        radar['width'] > 200 and radar['y'] + radar['height'] <= height,
+                        f'{width}x{height}: layer/phase controls and complete player radar fit without scrolling')
+            check_segmented_layout(smoke, page)
+        page.set_viewport_size({'width': 1440, 'height': 900})
+        chart = page.locator('.hub-player-analysis > .player-radar6')
         expect(chart).to_have_attribute('data-side', 'T')
         smoke.check(chart.locator('[data-axis]').count() == 6, 'player radar has six focusable axes')
         chart.locator('[data-axis=entry]').focus()
@@ -918,6 +963,19 @@ def check_players(smoke: Smoke, page: Page) -> None:
           "language switches to English and persists after reload")
 
 
+def check_segmented_layout(smoke: Smoke, page: Page) -> None:
+    for width, height in [(1440, 900), (1280, 800)]:
+        page.set_viewport_size({'width': width, 'height': height})
+        smoke.check(page.locator('.hud-segmented > button:visible').evaluate_all("""buttons => buttons.every(button => {
+            const style = getComputedStyle(button);
+            const range = document.createRange(); range.selectNodeContents(button);
+            const lines = [...range.getClientRects()].filter(r => r.width > 0 && r.height > 0);
+            return style.whiteSpace === 'nowrap' && style.flexShrink === '0' &&
+                lines.every(r => Math.abs(r.top - lines[0].top) < 1) && button.scrollWidth <= button.clientWidth + 1;
+        })"""), f'{width}x{height}: segmented labels stay on one line at {page.url.split("#")[-1]}')
+    page.set_viewport_size({'width': 1440, 'height': 900})
+
+
 def run_route(smoke: Smoke, case: Route, page: Page, *, mobile: bool = False) -> None:
     label = ("mobile-" if mobile else "") + case.test.__name__.removeprefix("check_")
     try:
@@ -931,7 +989,9 @@ def run_route(smoke: Smoke, case: Route, page: Page, *, mobile: bool = False) ->
             smoke.check(overflow <= 0,
                         f"375px no horizontal scroll on {case.path} (overflow {overflow}px)")
         else:
+            check_segmented_layout(smoke, page)
             case.test(smoke, page)
+            check_segmented_layout(smoke, page)
     except Exception as error:
         # Preserve the failing page and continue so one route cannot hide others.
         smoke.check(False, f"{label} ({case.path}): {error}")

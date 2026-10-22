@@ -33,11 +33,12 @@ import polars as pl
 
 from playbook.config import MapMeta, team_slug
 from playbook.semantics import round_plants
+from playbook.metrics import combat_totals
 
 GRID = 64
 CELL_PX = 1024 / GRID
 EARLY_S = 20
-SPAWN_SKIP_S = 5
+SPAWN_SKIP_S = 6
 HOLD_SPEED = 40.0
 GUN_BUYS = ("full", "force")
 MIN_RELIABLE_ROUNDS = 20  # per player and side; below this the site flags the player
@@ -133,6 +134,7 @@ def clean_frames(sub: dict[str, pl.DataFrame], mm: MapMeta) -> dict[str, pl.Data
     for name in out:
         out[name] = out[name].with_columns(pl.col("steamid").cast(pl.UInt64)).filter(
             pl.col("side").is_in(SIDES) & pl.col("team").is_not_null())
+    out["player_rounds"] = sub["player_rounds"]
     return out
 
 
@@ -224,6 +226,11 @@ def build_heatmaps(sub: dict[str, pl.DataFrame], mm: MapMeta, order: dict[str, l
             roster.append({"steamid": steamid, "name": d["name"].mode().sort().first(), "color": color, "rounds": rounds,
                            "low_sample": {s: rounds[s] < MIN_RELIABLE_ROUNDS for s in SIDES}})
             players[steamid] = grids(tev.filter(pl.col("steamid") == int(steamid)), rounds)
+            played = sub["player_rounds"].filter((pl.col("team") == team) & (pl.col("steamid") == int(steamid)))
+            players[steamid]["stats"] = {
+                **combat_totals(played),
+                "sides": {side: combat_totals(played.filter(pl.col("side") == side)) for side in SIDES},
+            }
             if summaries is not None:
                 summary[steamid] = {s: summaries(frames, team, int(steamid), s, rounds[s]) for s in SIDES if rounds[s]}
         roster.sort(key=lambda r: (r["color"], r["name"] or ""))
@@ -253,6 +260,7 @@ def build_heatmaps(sub: dict[str, pl.DataFrame], mm: MapMeta, order: dict[str, l
         "layers": list(LAYERS), "phases": list(PHASES), "sides": list(SIDES), "n_colors": N_COLORS,
         "early_s": EARLY_S, "spawn_skip_s": SPAWN_SKIP_S, "hold_speed": HOLD_SPEED, "gun_rounds_only": True,
         "min_reliable_rounds": MIN_RELIABLE_ROUNDS,
+        "kpr_definition": "kills / all rounds played on this map for this team; independent of gun-round spatial layers",
         "value": "per round on that side: seconds (presence, holding) or counts per cell",
         "cell_index": "level * grid * grid + row * grid + col",
         "rounds": all_rounds,

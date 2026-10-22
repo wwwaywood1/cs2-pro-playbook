@@ -27,6 +27,7 @@ import polars as pl
 
 from playbook.config import PARSED_DIR, SITE_DIR, MapMeta, load_map, team_slug
 from playbook.heatmap import build_heatmaps, roster_order
+from playbook.metrics import combat_totals
 from playbook.config import ROOT, load_spot_names
 from playbook.tactics import DEFINITIONS, analyse_map, ct_summary, name_spots, site_spots, t_summary
 from playbook.insights import attach_summaries, team_insights
@@ -188,8 +189,8 @@ def _lane_dist(values: list[str | None]) -> list[dict]:
 def player_profiles(sub: dict[str, pl.DataFrame]) -> list[dict]:
     pr = sub["player_rounds"]
     out = []
-    for sid, d in pr.group_by("steamid"):
-        sid = sid[0]
+    for (team, sid), d in pr.group_by("team", "steamid"):
+        combat = combat_totals(d)
         n = d.height
         t = d.filter(pl.col("side") == "T")
         ct = d.filter(pl.col("side") == "CT")
@@ -197,10 +198,11 @@ def player_profiles(sub: dict[str, pl.DataFrame]) -> list[dict]:
         out.append({
             "steamid": str(sid),
             "name": d["name"].mode().sort().first(),
-            "team": d["team"].mode().sort().first(),
+            "team": team,
             "n_matches": d["demo_id"].n_unique(),
             "rounds": {"total": n, "T": t.height, "CT": ct.height},
-            "kpr": _rate(int(d["kills"].sum()), n),
+            "kpr": combat["kpr"],
+            "kills": combat["kills"],
             "dpr": _rate(int(d["died"].sum()), n),
             "hs_pct": _rate(int(d["hs_kills"].sum()), int(d["kills"].sum())),
             "opening_kills_pr": _rate(int(d["opening_kill"].sum()), n),
@@ -502,9 +504,10 @@ def _write_replays(mdir: Path, sub: dict[str, pl.DataFrame], mm, res: dict, wpr:
         wanted |= {(e["demo_id"], int(e["round_num"])) for e in rec.get("examples", [])}
     wp = replay.wp_by_round(wpr["states"], wpr["oof"], wanted) if wpr else {}
     grid = replay.control_grid(sub["positions"])
+    place_index = replay.callout_index(sub["positions"])
     index: dict[str, list[int]] = {}
     for demo, rnd in sorted(wanted):
-        data = replay.build_round(sub, mm, demo, rnd, wp.get((demo, rnd)), grid)
+        data = replay.build_round(sub, mm, demo, rnd, wp.get((demo, rnd)), grid, place_index)
         if data:
             _write_compact(mdir / "replay" / demo / f"{rnd}.json", data)
             index.setdefault(demo, []).append(rnd)

@@ -540,6 +540,30 @@ def _resample(xy: np.ndarray, n: int = ROUTE_POINTS) -> np.ndarray:
     return np.c_[np.interp(at, seg, xy[:, 0]), np.interp(at, seg, xy[:, 1])]
 
 
+def _point_places(xy: np.ndarray, places: list[str | None]) -> list[str | None]:
+    """Own-player callouts nearest each drawn sample along the path's arc length.
+
+    Arc length preserves traversal order when a player doubles back. Spatial
+    nearest-neighbours could pick a label from a later visit to the same point.
+    """
+    arc = np.r_[0.0, np.cumsum(np.hypot(*np.diff(xy, axis=0).T))]
+    at = np.linspace(0, arc[-1], ROUTE_POINTS)
+    nearest = np.abs(arc[:, None] - at[None, :]).argmin(axis=0)
+    return [places[int(i)] for i in nearest]
+
+
+def _drawn_via(places: list[str | None]) -> list[str]:
+    """Sustained stretches on the drawn path, plus its final callout.
+
+    A one-point boundary label must not rename a whole approach. Unlike the
+    grouping key this uses distance-spaced samples, so utility dwell is irrelevant.
+    """
+    via = list(_via(places))
+    if places and places[-1] and (not via or via[-1] != places[-1]):
+        via.append(places[-1])
+    return via
+
+
 def _length(path: np.ndarray) -> float:
     return float(np.hypot(*np.diff(path, axis=0).T).sum())
 
@@ -588,7 +612,8 @@ def recipe_routes(plans: pl.DataFrame, positions: pl.DataFrame, mm: MapMeta,
     dwelt in on the way (the last ROUTE_VIA before the final one, plus the final one), so routes
     that end on the same site through different chokes stay apart. A route is drawn as the medoid
     path of its group (a real path, so it never cuts through walls); groups below ROUTE_MIN_SHARE
-    are dropped. Points are radar pixels.
+    are dropped. Naming uses the displayed medoid's own distance-spaced callouts,
+    never the grouping key or merged members' dwell time. Points are radar pixels.
     """
     hit = plans.filter(pl.col("recipe_id").is_not_null() & pl.col("commit_s").is_not_null()).select(
         *KEYS, "team", "recipe_id", "commit_s")
@@ -601,6 +626,7 @@ def recipe_routes(plans: pl.DataFrame, positions: pl.DataFrame, mm: MapMeta,
         pl.col("alive")).select(*KEYS, "steamid")
     pos = pos.join(alive_at_commit, on=[*KEYS, "steamid"], how="semi").sort(*KEYS, "steamid", "t_s")
     paths: dict[str, list[tuple[tuple[str, ...], str, np.ndarray, tuple]]] = {}
+    source_places: dict[tuple, list[str | None]] = {}
     for (rid, demo, rnd, sid), g in pos.group_by("recipe_id", *KEYS, "steamid", maintain_order=True):
         xs, ys = g["x"].to_numpy(), g["y"].to_numpy()
         if len(xs) < 3:
@@ -609,7 +635,9 @@ def recipe_routes(plans: pl.DataFrame, positions: pl.DataFrame, mm: MapMeta,
         key = via[-(ROUTE_VIA + 1):] if via else ("?",)
         lane = g["lane"][-1]
         xy = np.array([mm.to_radar(x, y) for x, y in zip(xs, ys)])
-        paths.setdefault(rid, []).append((key, lane, _resample(xy), (demo, rnd, sid)))
+        member = (demo, rnd, sid)
+        source_places[member] = _point_places(xy, g["place"].to_list())
+        paths.setdefault(rid, []).append((key, lane, _resample(xy), member))
     out: dict[str, list[dict]] = {}
     for rid, items in paths.items():
         total = len(items)
@@ -621,7 +649,9 @@ def recipe_routes(plans: pl.DataFrame, positions: pl.DataFrame, mm: MapMeta,
         for key, members in sorted(groups.items(), key=lambda kv: (-len(kv[1]), kv[0])):
             stack = np.stack([xy for _, xy, _ in members])
             dist = np.linalg.norm(stack[:, None] - stack[None], axis=-1).mean(-1).mean(-1)
-            cands.append({"key": key, "members": members, "medoid": stack[int(dist.argmin())]})
+            chosen = int(dist.argmin())
+            cands.append({"key": key, "members": members, "medoid": stack[chosen],
+                          "medoid_member": members[chosen][2]})
         # Biggest groups first. A group whose path is a stretch of another route (players caught
         # half-way at the commit) joins that route; when the bigger group is the stretch and the
         # smaller one runs the whole way, the route is drawn with the longer path.
@@ -632,14 +662,14 @@ def recipe_routes(plans: pl.DataFrame, positions: pl.DataFrame, mm: MapMeta,
                 near["members"] += c["members"]
                 if (_length(c["medoid"]) > _length(near["medoid"]) and _covered(near["medoid"], c["medoid"])
                         and _length(c["medoid"]) <= ROUTE_EXTEND_MAX * _length(near["medoid"])):
-                    near["medoid"], near["key"] = c["medoid"], c["key"]   # draw the full way, not the stretch
+                    near["medoid"], near["medoid_member"] = c["medoid"], c["medoid_member"]
                 continue
             # only a plain extension (not a wandering lurk path that happens to pass along the route)
             longer = next((m for m in merged if _covered(m["medoid"], c["medoid"])
                            and _length(c["medoid"]) <= ROUTE_EXTEND_MAX * _length(m["medoid"])), None)
             if longer:
                 longer["members"] += c["members"]
-                longer["medoid"], longer["key"] = c["medoid"], c["key"]
+                longer["medoid"], longer["medoid_member"] = c["medoid"], c["medoid_member"]
                 continue
             merged.append({**c, "members": list(c["members"])})
         routes = []
@@ -657,7 +687,12 @@ def recipe_routes(plans: pl.DataFrame, positions: pl.DataFrame, mm: MapMeta,
                 continue
             lanes = Counter(l for l, _, _ in c["members"])
             route_members.append({member for _, _, member in c["members"]})
-            routes.append({"via": list(c["key"]), "name": route_name(list(c["key"]), mm),
+            point_places = source_places[c["medoid_member"]]
+            via = _drawn_via(point_places)
+            demo, rnd, sid = c["medoid_member"]
+            routes.append({"via": via, "name": route_name(via, mm),
+                           "point_places": point_places,
+                           "medoid_member": {"demo_id": demo, "round_num": int(rnd), "steamid": str(sid)},
                            "lane": lanes.most_common(1)[0][0], "n": len(c["members"]),
                            "share": round(share, 3),
                            "points": [[round(float(x), 1), round(float(y), 1)] for x, y in c["medoid"]]})
@@ -672,8 +707,12 @@ def recipe_extras(recipe: dict, plans: pl.DataFrame, positions: pl.DataFrame,
     """Route-pair entry gaps and intent; definitions are in DESIGN.md."""
     rounds = plans.filter(pl.col("recipe_id") == recipe["id"])
     entries = positions.filter((pl.col("side") == "T") & pl.col("alive") & (pl.col("t_s") >= 0))
+    bounds = [c for c in ("plant_t_s", "dur_s") if c in rounds.columns]
     entries = entries.filter(pl.col("place") == SITE_CORE[recipe["site"]]).join(
-        rounds.select(*KEYS, "team"), on=[*KEYS, "team"], how="semi")
+        rounds.select(*KEYS, "team", *bounds), on=[*KEYS, "team"], how="inner", validate="m:1")
+    # Late exits after the plant are post-plant movement, not execute arrivals.
+    for bound in bounds:
+        entries = entries.filter(pl.col(bound).is_null() | (pl.col("t_s") <= pl.col(bound)))
     first = {tuple(row[:3]): row[3] for row in entries.group_by(*KEYS, "steamid").agg(
         pl.col("t_s").min()).select(*KEYS, "steamid", "t_s").iter_rows()}
     route_entries = []
@@ -697,11 +736,12 @@ def recipe_extras(recipe: dict, plans: pl.DataFrame, positions: pl.DataFrame,
     badges = []
     if other_rate >= .25:
         badges.append("fake")
-    if len(recipe.get("routes", [])) >= 2 and all(r["share"] >= .2 for r in recipe["routes"][:2]) and sync is not None and sync <= 3.5:
+    if len(recipe.get("routes", [])) >= 2 and all(r["share"] >= .2 for r in recipe["routes"][:2]) and sync is not None and sync <= 3:
         badges.append("sync_pinch")
     if latency is not None and latency <= 8:
         badges.append("rush")
     return {"entry_sync_sec": round(sync, 2) if sync is not None else None,
+            "entry_sync_rounds": len(gaps),
             "median_first_entry_delay_sec": round(latency, 2) if latency is not None else None,
             "other_site_plant_rate": round(other_rate, 3), "intent_badges": badges}
 
@@ -916,6 +956,7 @@ DEFINITIONS = {
     "split": "entry points onto the site >= 400 units apart, or bearings from the site centre >= 50 degrees apart",
     "lurk": "a living T on the other site's lane or >= 2200 units from the target, at the commit or 10 s before",
     "fake": ">= 2 smokes/molotovs or >= 3 grenades landing near the other site 30-5 s before the commit",
+    "entry_sync": "median paired gap between the two highest-share routes: first living member on the target site core, before plant; sync_pinch requires <= 3 s",
     "recipe": "gun rounds hitting one site with similar smoke+molotov spot sets (average linkage, Jaccard <= 0.6); "
               "core = spots in >= 50% of its rounds, options = 20-50%",
     "ct_setup": "lanes of living CT players at 20 s",

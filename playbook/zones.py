@@ -3,14 +3,15 @@
 These are the structured base that tactic analysis and teaching material build on:
 where a player plays in each phase, the spots he holds, where he fights, and where his
 utility lands (linked to the landing spots and lineups of the lineup library).
-All of it is computed from playbook.heatmap.clean_frames, so the same cleaning applies:
-gun rounds of his team only, living time only, no spawn walk-out, no post-round.
+Spatial summaries use playbook.heatmap.clean_frames: gun rounds of his team only,
+living time only, no spawn walk-out, no post-round. Combat rates use all played
+rounds for the same map/team/player/side and do not require spatial coordinates.
 
 zones     callouts by share of living seconds, per phase (top ZONES_TOP, >= ZONES_MIN_SHARE)
 main_lane the lane he spends most of each phase in, with its share
 holds     clusters of "holding" seconds (moving < 40 u/s) within HOLD_RADIUS units:
           seconds per round, share of his holding time, rounds held there, typical time
-fights    kills and deaths by callout, opening duels
+fights    all-round combat rates/opening duels; spatial callouts remain gun-round only
 utility   grenades per round by type; landing spots he uses most (with the lineups he
           throws them from)
 """
@@ -23,6 +24,7 @@ from collections import Counter
 import polars as pl
 
 from playbook.config import MapMeta
+from playbook.metrics import combat_totals
 from playbook.tactics import density_clusters
 
 ZONES_TOP = 5
@@ -83,16 +85,21 @@ def _holds(p: pl.DataFrame, rounds: int) -> list[dict]:
     return out[:HOLD_TOP]
 
 
-def _fights(k: pl.DataFrame, d: pl.DataFrame, rounds: int) -> dict:
+def _fights(k: pl.DataFrame, d: pl.DataFrame, played: pl.DataFrame) -> dict:
     by = (
         pl.concat([k.select("place", kills=pl.lit(1), deaths=pl.lit(0)), d.select("place", kills=pl.lit(0), deaths=pl.lit(1))])
         .filter(pl.col("place").is_not_null())
         .group_by("place").agg(pl.col("kills").sum(), pl.col("deaths").sum())
         .with_columns(n=pl.col("kills") + pl.col("deaths")).sort("n", "place", descending=[True, False])
     )
+    combat = combat_totals(played)
+    n = combat["rounds"]
     return {
-        "kills_pr": _r(k.height / rounds), "deaths_pr": _r(d.height / rounds),
-        "opening_kills": int(k["is_opening"].fill_null(False).sum()), "opening_deaths": int(d["is_opening"].fill_null(False).sum()),
+        "rounds": n, "kills": combat["kills"], "kills_pr": combat["kpr"],
+        "deaths_pr": _r(played["died"].sum() / n) if n else None,
+        "opening_kills": int(played["opening_kill"].fill_null(False).sum()),
+        "opening_deaths": int(played["opening_death"].fill_null(False).sum()),
+        "places_gun_rounds_only": True,
         "places": [{"place": p, "kills": int(a), "deaths": int(b)} for p, a, b, _ in by.head(FIGHT_TOP).iter_rows()],
     }
 
@@ -137,7 +144,7 @@ def make_summarizer(mm: MapMeta, spots: pl.DataFrame | None = None, spot_assign:
             "zones": zones,
             "main_lane": main_lane,
             "holds": _holds(p, rounds),
-            "fights": _fights(mine("kills"), mine("deaths"), rounds),
+            "fights": _fights(mine("kills"), mine("deaths"), mine("player_rounds")),
             "utility": util,
         }
 

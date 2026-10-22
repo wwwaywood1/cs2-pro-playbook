@@ -17,6 +17,7 @@ import numpy as np
 import polars as pl
 
 from playbook.config import MapMeta
+from playbook.utility import PlaceIndex
 
 KEYS = ["demo_id", "round_num"]
 UTIL_KINDS = {"smoke": "smoke", "flashbang": "flash", "flash": "flash", "molotov": "molotov",
@@ -66,8 +67,27 @@ def kill_wpa(at: float, side: str | None, wp: list, duration: float, winner: str
     return round((post - wp[before]) * (1 if side == "T" else -1), 4)
 
 
+def callout_index(positions: pl.DataFrame) -> PlaceIndex | None:
+    """Observed callouts, preserving floor height; shared by all replay rounds."""
+    if not {"x", "y", "z", "place"} <= set(positions.columns):
+        return None
+    valid = positions.filter(pl.all_horizontal(pl.col(c).is_finite() for c in ("x", "y", "z")))
+    return PlaceIndex.from_frame(valid)
+
+
+def event_place(row: dict, prefix: str, index: PlaceIndex | None) -> str | None:
+    place = row.get(f"{prefix}place")
+    if place:
+        return place
+    xyz = [row.get(f"{prefix}{axis}") for axis in ("x", "y", "z")]
+    if index is None or any(v is None or not np.isfinite(v) for v in xyz):
+        return None
+    return index.query(*[[v] for v in xyz])[0]
+
+
 def build_round(sub: dict[str, pl.DataFrame], mm: MapMeta, demo: str, rnd: int,
-                wp: list[float] | None = None, grid: np.ndarray | None = None) -> dict | None:
+                wp: list[float] | None = None, grid: np.ndarray | None = None,
+                place_index: PlaceIndex | None = None) -> dict | None:
     key = (pl.col("demo_id") == demo) & (pl.col("round_num") == rnd)
     r = sub["rounds"].filter(key)
     pos = sub["positions"].filter(key & (pl.col("t_s") >= 0)).sort("t_s")
@@ -91,6 +111,8 @@ def build_round(sub: dict[str, pl.DataFrame], mm: MapMeta, demo: str, rnd: int,
             controls[second] = t_control(g.filter(pl.col("side") == "T").select("x", "y").to_numpy(),
                                         g.filter(pl.col("side") == "CT").select("x", "y").to_numpy(), grid)
     sides = dict(roster.select("steamid", "side").iter_rows())
+    if place_index is None:
+        place_index = callout_index(sub["positions"])
     events: list[dict] = []
     k = sub["kills"].filter(key & ~pl.col("is_post_round"))
     for row in k.iter_rows(named=True):
@@ -98,7 +120,9 @@ def build_round(sub: dict[str, pl.DataFrame], mm: MapMeta, demo: str, rnd: int,
                        "by": index.get(row["attacker_steamid"]), "victim": index.get(row["victim_steamid"]),
                        "at": _px(mm, row["victim_x"], row["victim_y"]), "weapon": row["weapon"],
                        "headshot": bool(row.get("headshot")),
-                       "wpa": kill_wpa(float(row["t_s"]), sides.get(row["attacker_steamid"]), wp or [],
+                       "side": row.get("attacker_side") or sides.get(row["attacker_steamid"]),
+                       "place": event_place(row, "victim_", place_index),
+                       "wpa": kill_wpa(float(row["t_s"]), row.get("attacker_side") or sides.get(row["attacker_steamid"]), wp or [],
                                        float(r0["dur_s"]), r0["winner_side"])})
     u = sub["utility"].filter(key & ~pl.col("is_post_round") & pl.col("pop_t_s").is_not_null()
                               & pl.col("land_x").is_not_null())
@@ -107,11 +131,16 @@ def build_round(sub: dict[str, pl.DataFrame], mm: MapMeta, demo: str, rnd: int,
         if kind:
             events.append({"t": round(float(row["pop_t_s"]), 1), "kind": "util", "nade": kind,
                            "by": index.get(row["thrower_steamid"]), "at": _px(mm, row["land_x"], row["land_y"]),
-                           "from": _px(mm, row.get("throw_x"), row.get("throw_y"))})
+                           "from": _px(mm, row.get("throw_x"), row.get("throw_y")),
+                           "side": row.get("thrower_side") or sides.get(row["thrower_steamid"]),
+                           "place": event_place(row, "land_", place_index),
+                           "is_flash": kind == "flash"})
     p = sub["plants"].filter(key)
     for row in p.head(1).iter_rows(named=True):
         events.append({"t": round(float(row["t_s"]), 1), "kind": "plant", "site": row["site"],
-                       "at": _px(mm, row["x"], row["y"])})
+                       "at": _px(mm, row["x"], row["y"]),
+                       "by": index.get(row.get("steamid")), "side": "T",
+                       "place": event_place(row, "", place_index)})
     events.sort(key=lambda e: e["t"])
     match = sub.get("matches", pl.DataFrame())
     rows = match.filter(pl.col("demo_id") == demo).to_dicts() if "demo_id" in match.columns else []

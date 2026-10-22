@@ -5,8 +5,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getMeta, getReplay, getTactics, useData } from "../data";
-import { fmtInt, fmtNum, fmtSignedNum } from "../format";
-import { t, useLang } from "../i18n";
+import { fmtInt, fmtNum } from "../format";
+import { calloutLabel, t, useLang } from "../i18n";
 import { useReducedMotion } from "../motion";
 import type { ReplayRound } from "../types";
 import { Loading } from "./Status";
@@ -101,6 +101,7 @@ function ReplayViewer({ replay, commit }: { replay: ReplayRound; commit?: number
   const [speed, setSpeed] = useState(1);
   const [time, setTime] = useState(0);
   const [hovered, setHovered] = useState<number | null>(null);
+  const [allEvents, setAllEvents] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const radar = useRef<SVGSVGElement>(null);
   const [radarWidth, setRadarWidth] = useState(1024);
@@ -160,10 +161,38 @@ function ReplayViewer({ replay, commit }: { replay: ReplayRound; commit?: number
   const clock = roundClock(time, plant?.t);
   const unit = 1024 / radarWidth;
   const anchors = events.filter((event) => event.kind !== "util" || event.nade === "smoke");
-  const eventLabel = (event: typeof events[number]) => event.kind === "kill"
-    ? `${event.by == null ? "—" : replay.players[event.by]?.name ?? "—"} [${event.weapon}${event.headshot ? ` · ${t("round5.killfeed_hs")}` : ""}] ${event.victim == null ? "—" : replay.players[event.victim]?.name ?? "—"}`
-    : event.kind === "plant" ? `${t("round4.replay_legend_plant")} ${event.site}` : t(`grenade.${event.nade === "flash" ? "flashbang" : event.nade}`);
-  const eventSymbol = (event: typeof events[number]) => event.kind === "kill" ? "×" : event.kind === "plant" ? "▣" : "◌";
+  const playerName = (index: number | null | undefined) => index == null ? "—" : replay.players[index]?.name ?? "—";
+  const eventWpa = (event: typeof events[number]) => event.kind === "kill" && event.wpa != null && Number.isFinite(event.wpa)
+    ? t("round6.event_wpa", { sign: event.wpa >= 0 ? "+" : "−", p: fmtNum(Math.abs(event.wpa) * 100, 1) }) : "";
+  const eventLabel = (event: typeof events[number]) => {
+    const clock = roundClock(event.t, plant?.t);
+    const side = event.side ?? (event.by == null ? null : replay.players[event.by]?.side) ?? (event.kind === "plant" ? "T" : "—");
+    const place = event.place ? calloutLabel(replay.map, event.place) : "";
+    if (event.kind === "kill") return t("round6.event_kill", {
+      clock, side, attacker: playerName(event.by), victim: playerName(event.victim),
+      hs: event.headshot ? t("round6.event_kill_hs") : "", wpa: eventWpa(event),
+    }) + [event.weapon, place].filter(Boolean).map((text) => ` · ${text}`).join("");
+    if (event.kind === "plant") return t("round6.event_plant", { clock, player: playerName(event.by), site: event.site });
+    return place ? t("round6.event_util", { clock, side, player: playerName(event.by), place, nade: t(`round6.nade_${event.nade}`) })
+      : t("round6.event_util_noplace", { clock, side, player: playerName(event.by), nade_full: t(`grenade.${event.nade === "flash" ? "flashbang" : event.nade}`) });
+  };
+  const eventSymbol = (event: typeof events[number]) => event.kind === "kill" ? "×" : event.kind === "plant" ? "💣" : "☁";
+  // Resolve collisions in screen pixels, then convert to radar units. Alternate
+  // above/below in 10px steps, including when all five spawn dots coincide.
+  const living = replay.players.flatMap((player, index) => {
+    if (events.some((event) => event.kind === "kill" && event.victim === index && event.t <= time)) return [];
+    const point = framePosition(replay.frames, index, time);
+    return point ? [{ player, index, point, labelY: point[1] + 3 * unit }] : [];
+  });
+  for (let i = 0; i < living.length; i++) {
+    const row = living[i];
+    const nearby = living.slice(0, i).filter((other) => Math.hypot(row.point[0] - other.point[0], row.point[1] - other.point[1]) < 18 * unit);
+    for (let attempt = 0; attempt <= living.length * 2; attempt++) {
+      const offset = attempt === 0 ? 0 : Math.ceil(attempt / 2) * (attempt % 2 ? 10 : -10);
+      const y = Math.max(10 * unit, Math.min(1024 - 5 * unit, row.point[1] + (3 + offset) * unit));
+      if (nearby.every((other) => Math.abs(other.labelY - y) >= 9.9 * unit)) { row.labelY = y; break; }
+    }
+  }
   const wp = replay.wp_t.map((value, index) => ({ value, index })).filter(({ value }) => Number.isFinite(value));
   const control = (replay.t_control ?? []).map((value, index) => ({ value, index }));
   const xAt = (seconds: number) => Math.max(0, Math.min(600, seconds / Math.max(1, duration) * 600));
@@ -183,19 +212,14 @@ function ReplayViewer({ replay, commit }: { replay: ReplayRound; commit?: number
             : <g transform="translate(-16 -16)"><GrenadeGlyph type={event.nade} /></g>}
         </g>;
       })}</g>
-      {replay.players.map((player, index) => {
-        const death = events.find((event) => event.kind === "kill" && event.victim === index && event.t <= time);
-        if (death) return null;
-        const point = framePosition(replay.frames, index, time);
-        if (!point) return null;
-        const [x, y] = point;
+      {living.map(({ player, index, point: [x, y], labelY }) => {
         return <g key={index} className="replay-player-marker" onPointerEnter={() => setHovered(index)} onPointerLeave={() => setHovered(null)}>
           <circle className="replay-player" cx={x} cy={y} r={4.5 * unit} fill={player.side === "T" ? "#efad55" : "#62b5ff"}
             tabIndex={0} role="button" aria-pressed={selected === index} aria-label={`${player.name} · ${player.side}`}
             onFocus={() => setHovered(index)} onBlur={() => setHovered(null)} onClick={() => setSelected((previous) => previous === index ? null : index)}
             onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); setSelected((previous) => previous === index ? null : index); } }} />
-          <text className="replay-player-abbr" x={Math.min(970, x + 7 * unit)} y={y + 3 * unit} fontSize={10 * unit}>{player.name.slice(0, 4)}</text>
-          {hovered === index || selected === index ? <text className="replay-player-name" x={Math.max(100, Math.min(924, x))} y={y < 40 ? y + 30 : y - 18} textAnchor="middle">{player.name}</text> : null}
+          <text className="replay-player-abbr" x={Math.min(970, x + 7 * unit)} y={labelY} fontSize={10 * unit}>{player.name.slice(0, 4)}</text>
+          {hovered === index || selected === index ? <text className="replay-player-name" x={Math.max(100, Math.min(924, x))} y={labelY < 40 * unit ? labelY + 20 * unit : labelY - 20 * unit} textAnchor="middle">{player.name}</text> : null}
         </g>;
       })}
       {events.map((event, index) => {
@@ -214,19 +238,26 @@ function ReplayViewer({ replay, commit }: { replay: ReplayRound; commit?: number
       })}
     </svg></div>
     <div className="replay-sidebar">
-    <section className="replay-events" aria-label="回合事件"><h3>回合事件</h3><ol>{events.filter((event) => event.t <= time).slice().reverse().map((event, index) => <li className={event.kind === "kill" ? "replay-killfeed" : ""} key={`${event.t}:${index}`}><button type="button" onClick={() => seek(event.t)}><time>{fmtNum(event.t, 1)}s</time> {eventLabel(event)}{event.kind === "kill" && event.wpa != null && Number.isFinite(event.wpa) ? <span className="replay-kill-wpa" title="击杀者阵营的模型胜率变化（百分点）"> WPA {fmtSignedNum(event.wpa * 100, 1)}%</span> : null}</button></li>)}</ol></section>
+    <section className="replay-events" aria-label="回合事件"><h3>回合事件 · {t(allEvents ? "round6.event_filter_all" : "round6.event_filter_key")}</h3>
+      <label className="replay-event-filter"><input type="checkbox" checked={allEvents} onChange={(event) => setAllEvents(event.target.checked)} />{t("round6.event_filter_all")}</label>
+      <span className="visually-hidden" role="status">{t(allEvents ? "round6.event_filter_all" : "round6.event_filter_key")}</span>
+      <ol>{events.filter((event) => event.t <= time && (allEvents || event.kind !== "util" || event.nade !== "flash")).slice().reverse().map((event, index) => <li data-kind={event.kind === "util" ? event.nade : event.kind} className={event.kind === "kill" ? "replay-killfeed" : ""} key={`${event.t}:${index}`}><button type="button" onClick={() => seek(event.t)}>{eventLabel(event)}</button></li>)}</ol></section>
     <div className="replay-controls">
       <button type="button" className="button" onClick={togglePlayback}>{t(playing ? "round4.replay_pause" : "round4.replay_play")}</button>
       <Segmented className="segmented" role="group" aria-label="回放速度">{[1, 2, 4].map((value) => <button key={value} type="button" aria-pressed={speed === value} onClick={() => setSpeed(value)}>{t("round4.replay_speed", { x: value })}</button>)}</Segmented>
       <output className="replay-clock" aria-label={t("round5.clock_elapsed", { s: fmtNum(time, 1) })}>{t("round5.clock", { clock })}<small>{t("round5.clock_elapsed", { s: fmtNum(time, 1) })}</small></output>
     </div>
     <div className="replay-timeline"><input className="replay-scrubber" type="range" min="0" max={duration} step="0.1" value={time} aria-label={t("round5.clock_elapsed", { s: fmtNum(time, 1) })} onChange={(event) => seek(Number(event.target.value))} />
-      <div className="replay-anchors">{anchors.map((event, index) => <button type="button" key={index} data-kind={event.kind} style={{ left: `${xAt(event.t) / 6}%` }} aria-label={`${fmtNum(event.t, 1)}s · ${eventLabel(event)}`} title={eventLabel(event)} onClick={() => seek(event.t)}>{eventSymbol(event)}</button>)}</div>
     </div>
     <figure className="replay-wp"><figcaption>{t("round4.replay_wp")}</figcaption>{wp.length ? <svg viewBox="-8 -8 616 100" role="group" aria-label={t("round4.replay_wp")}>
       <line x1="0" x2="600" y1="35" y2="35" stroke="#526077" strokeDasharray="4 4" />
       <polyline points={wp.map(({ value, index }) => `${xAt(index)},${65 - Math.max(0, Math.min(1, value!)) * 60}`).join(" ")} fill="none" stroke="#efad55" strokeWidth="2" />
-      {anchors.map((event, index) => <g key={index} role="button" tabIndex={0} aria-label={`${fmtNum(event.t, 1)}s · ${eventLabel(event)}`} onClick={() => seek(event.t)} onKeyDown={(key) => { if (key.key === "Enter" || key.key === " ") { key.preventDefault(); seek(event.t); } }}><title>{eventLabel(event)}</title><circle cx={xAt(event.t)} cy="80" r="7" fill={event.kind === "kill" ? "#ff8b84" : event.kind === "plant" ? "#efad55" : "#a3b4c5"} /></g>)}
+      {anchors.map((event, index) => {
+        const before = [...wp].reverse().find((point) => point.index <= event.t) ?? wp[0];
+        const after = wp.find((point) => point.index >= event.t) ?? before;
+        const fraction = after.index === before.index ? 0 : (event.t - before.index) / (after.index - before.index);
+        const probability = before.value! + (after.value! - before.value!) * fraction;
+        return <g className="replay-wp-marker" data-kind={event.kind} data-time={event.t} key={index} role="button" tabIndex={0} aria-label={eventLabel(event)} onClick={() => seek(event.t)} onKeyDown={(key) => { if (key.key === "Enter" || key.key === " ") { key.preventDefault(); seek(event.t); } }}><title>{eventLabel(event)}</title><text x={xAt(event.t)} y={65 - Math.max(0, Math.min(1, probability)) * 60} textAnchor="middle" dominantBaseline="central">{eventSymbol(event)}</text></g>; })}
       <line className="replay-playhead" x1={xAt(time)} x2={xAt(time)} y1="0" y2="70" stroke="#fff" strokeWidth="2" />
     </svg> : <p className="muted">{t("heatmap.no_data")}</p>}</figure>
     {control.some(({ value }) => value != null) ? <figure className="replay-control"><figcaption>T 控图</figcaption><svg viewBox="-8 -4 616 34" role="img" aria-label="T 控图 · 存活双方到可行走格子的距离占比"><title>T 控图 · 按距离估算；不计墙体与视野</title>
@@ -234,7 +265,7 @@ function ReplayViewer({ replay, commit }: { replay: ReplayRound; commit?: number
       <path d={control.map(({ value, index }, i) => value == null || !Number.isFinite(value) ? "" : `${i === 0 || control[i - 1].value == null ? "M" : "L"}${xAt(index)},${25 - Math.max(0, Math.min(1, value)) * 24}`).join(" ")} fill="none" stroke="#9faebd" strokeWidth="1.25" />
       <line x1={xAt(time)} x2={xAt(time)} y1="0" y2="26" stroke="#fff" strokeWidth="1" />
     </svg></figure> : null}
-    <p className="muted replay-legend"><span style={{ color: "#efad55" }}>● T</span> · <span style={{ color: "#62b5ff" }}>● CT</span> · × {t("round4.replay_legend_kill")} · {t("round4.replay_legend_util")} · ▣ {t("round4.replay_legend_plant")}</p>
+    <p className="muted replay-legend"><span style={{ color: "#efad55" }}>● T</span> · <span style={{ color: "#62b5ff" }}>● CT</span> · {t("round6.wp_marker_legend")}</p>
     <div className="replay-jumps"><button className="button button-ghost" type="button" onClick={jumpNextKill} disabled={!events.some((event) => event.kind === "kill" && event.t > time + .05)}>{t("round5.next_kill")}</button><button className="button button-ghost" type="button" disabled={hitTime == null} onClick={() => hitTime != null && seek(hitTime)} title={commit == null ? "首个 T 方击杀时刻" : "本套路进点时间中位数"}>{t("round5.jump_hit")}</button><button className="button button-ghost" type="button" disabled={!plant} onClick={() => plant && seek(plant.t)}>{t("round5.jump_plant")}</button></div>
     <p className="muted replay-keys">{t("round5.keys_hint")}</p>
     </div></div>;

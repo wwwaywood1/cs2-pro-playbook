@@ -514,10 +514,10 @@ export interface RecipeRoute { name?: string; via: string[]; lane: string; n: nu
 // playbook/replay.py: <map>/replay/<demo_id>/<round>.json, and <map>/replay/index.json = {demo_id: round[]}
 
 type ReplayPoint = [number, number];
-type ReplayEvent =
+type ReplayEvent = { side?: Side | null; place?: string | null } & (
   | { t: number; kind: "kill"; by: number | null; victim: number | null; at: ReplayPoint | null; weapon: string; headshot: boolean; wpa?: number | null }
   | { t: number; kind: "util"; nade: "smoke" | "flash" | "molotov" | "he"; by: number | null; at: ReplayPoint | null; from: ReplayPoint | null }
-  | { t: number; kind: "plant"; site: string; at: ReplayPoint | null };
+  | { t: number; kind: "plant"; site: string; by?: number | null; at: ReplayPoint | null });
 
 export interface ReplayRound extends MatchDateInfo {
   demo_id: string; round_num: number; map: string;

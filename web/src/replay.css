@@ -35,9 +35,7 @@
 .replay-events button { width: 100%; text-align: left; border: 0; background: #080e1880; color: #d6dce5; padding: 7px; cursor: pointer; font: inherit; font-size: .8rem; }
 .replay-killfeed { border-right: 2px solid #f1b46e; margin-bottom: 4px; }
 .replay-events time { color: #8796aa; font-variant-numeric: tabular-nums; }
-.replay-timeline { padding-bottom: 24px; }
-.replay-anchors { position: relative; margin: 0 12px; }
-.replay-anchors button { position: absolute; transform: translateX(-50%); padding: 0; width: 20px; height: 22px; background: #152338; border: 0; border-radius: 4px; color: #efad55; cursor: pointer; }
+.replay-timeline { padding: 0; }
 .replay-wp [role=button] { cursor: pointer; }
 .replay-wp [role=button]:focus-visible { outline: none; stroke: white; stroke-width: 2; }
 .replay-jumps { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -48,3 +46,7 @@
 .replay-control figcaption { color: #9faebd; font-size: .67rem; }
 .replay-control svg { display: block; width: 100%; height: auto; }
 .replay-kill-wpa { white-space: nowrap; color: #bfcbd7; font: .68rem var(--mono); }
+
+.replay-event-filter { display: flex; gap: 6px; align-items: center; font-size: .75rem; margin-bottom: 6px; }
+.replay-wp-marker text { fill: #efad55; font: 16px system-ui, sans-serif; paint-order: stroke; stroke: #111b2c; stroke-width: 3px; }
+.replay-wp-marker:focus-visible text { stroke: #536575; }

@@ -24,7 +24,7 @@ def cell(x: float, y: float, level: int = 0) -> int:
 
 def tables(z: float = 0.0, buy: str = "full") -> dict[str, pl.DataFrame]:
     # One T player, one round, plant at 8 s. Still at (100, 924) for t=4..7, then moves.
-    # t=4 is dropped (first 5 s), t=5 has no "holding" credit unless t=4 was still: it was.
+    # t=4,5 are dropped (first 6 s); t=6 still has holding credit from t=5.
     ts = [4, 5, 6, 7, 8]
     xs = [100.0, 101.0, 102.0, 103.0, 400.0]
     pos = pl.DataFrame({
@@ -57,6 +57,7 @@ def tables(z: float = 0.0, buy: str = "full") -> dict[str, pl.DataFrame]:
     player_rounds = pl.DataFrame({
         "demo_id": ["d", "d"], "round_num": [1, 1], "steamid": [SID, SID + 1], "name": ["red1", "blue1"],
         "team": ["Red", "Blue"], "side": ["T", "CT"], "buy_type": [buy, "full"],
+        "kills": [1, 0], "died": [False, True], "opening_kill": [True, False], "opening_death": [False, True],
     }, schema_overrides={"round_num": pl.Int32, "steamid": pl.UInt64})
     return {"positions": pos, "shots": shots, "utility": util, "kills": kills,
             "team_rounds": team_rounds, "player_rounds": player_rounds}
@@ -70,9 +71,9 @@ def test_player_layers_cells_and_phases():
     hm = build_heatmaps(tables(), MM)
     red = hm["teams"]["red"]
     p = red["players"][str(SID)]["data"]["T"]
-    # t=4 dropped (spawn walk-out); t=5..7 in one cell; t=8 is the plant second -> post
-    assert as_dict(p["early"]["presence"]) == {cell(100, 924): 3.0}
-    assert as_dict(p["early"]["holding"]) == {cell(100, 924): 3.0}  # t=5 is still vs t=4
+    # t=4,5 dropped (spawn walk-out); t=6..7 in one cell; t=8 is the plant second -> post
+    assert as_dict(p["early"]["presence"]) == {cell(100, 924): 2.0}
+    assert as_dict(p["early"]["holding"]) == {cell(100, 924): 2.0}  # t=6 is still vs t=5
     assert as_dict(p["post"]["presence"]) == {cell(400, 924): 1.0}
     assert "holding" not in p["post"]  # moved 297 units in that second
     assert as_dict(p["early"]["shots"]) == {cell(100, 924): 1.0}  # post-round shot dropped
@@ -80,7 +81,7 @@ def test_player_layers_cells_and_phases():
     assert as_dict(p["post"]["kills"]) == {cell(400, 924): 1.0}
     blue = hm["teams"]["blue"]
     assert as_dict(blue["players"][str(SID + 1)]["data"]["CT"]["post"]["deaths"]) == {cell(500, 924): 1.0}
-    assert red["players"][str(SID)]["per_round"]["T"]["all"]["presence"] == 4.0
+    assert red["players"][str(SID)]["per_round"]["T"]["all"]["presence"] == 3.0
     assert red["roster"][0]["color"] == 0 and red["roster"][0]["rounds"] == {"T": 1, "CT": 0}
     assert red["roster"][0]["low_sample"]["T"] is True
 
@@ -94,7 +95,7 @@ def test_eco_rounds_are_excluded():
 def test_lower_level_goes_to_second_layer():
     hm = build_heatmaps(tables(z=-300.0), MM2)
     p = hm["teams"]["red"]["players"][str(SID)]["data"]["T"]
-    assert as_dict(p["early"]["presence"]) == {cell(100, 924, level=1): 3.0}
+    assert as_dict(p["early"]["presence"]) == {cell(100, 924, level=1): 2.0}
     assert hm["baseline"]["levels"] == 2
 
 
@@ -112,7 +113,7 @@ def test_summary_zones_holds_fights_utility():
     assert s["fights"]["places"] == [{"place": "Far", "kills": 1, "deaths": 0}]
     assert s["utility"]["per_round"]["smoke"] == 1.0
     assert s["utility"]["spots"][0]["spot_id"] == "s1" and s["utility"]["spots"][0]["lineups"] == [{"lineup_id": "L1", "n": 1}]
-    assert s["holds"] == []  # 3 held seconds: below the minimum cluster size
+    assert s["holds"] == []  # 2 held seconds: below the minimum cluster size
     red["setup"] = team_setup(red)
     assert red["setup"]["T"]["early"] == {"A": ["red1"]}
 
@@ -133,12 +134,12 @@ def test_combine_uses_shares_not_raw_units():
 
 
 def test_place_anchors_use_cleaned_observations_and_keep_floor():
-    # t=4 at x=100 is excluded; Spot's remaining x values are 101, 102, 103.
+    # t=4,5 are excluded; Spot's remaining x values are 102, 103.
     # Far includes the CT victim's coordinate even without CT presence frames.
     source = tables(z=-300.0)
     source["kills"] = source["kills"].with_columns(pl.col("attacker_x", "attacker_y", "victim_x", "victim_y").cast(pl.Float32))
     baseline = build_heatmaps(source, MM2)["baseline"]
     assert baseline["place_positions"] == [
         {"place": "Far", "level": 1, "radar_x": 400.0, "radar_y": 100.0},
-        {"place": "Spot", "level": 1, "radar_x": 102.0, "radar_y": 100.0},
+        {"place": "Spot", "level": 1, "radar_x": 102.5, "radar_y": 100.0},
     ]

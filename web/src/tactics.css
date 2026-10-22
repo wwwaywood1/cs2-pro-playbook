@@ -156,3 +156,7 @@
 .recipe-intent { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 0 12px 10px; }
 .recipe-intent-badge { padding: 2px 6px; border: 1px solid #46534c; border-radius: 4px; background: #1b2722; color: #b7c9bc; font-size: .67rem; line-height: 1.5; }
 .recipe-intent small { color: #a5b0bd; font-size: .69rem; }
+
+.tactics-recipe-heading { flex-wrap: wrap; }
+.recipe-intent-badges { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.recipe-intent-badge { white-space: nowrap; }

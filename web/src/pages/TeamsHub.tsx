@@ -188,13 +188,13 @@ function MapTacticsSummary({ profile, tactics }: { profile: TeamProfile; tactics
       </section></div>;
 }
 
-function PlayerCards({ roster, heatmap, profiles, change }: { roster: RosterEntry[]; heatmap: TeamHeatmap; profiles: PlayerProfile[]; change: Change }) {
+function PlayerCards({ roster, heatmap, change }: { roster: RosterEntry[]; heatmap: TeamHeatmap; change: Change }) {
   const reduced = useContext(ReducedMotion);
   const ordered = [...roster].sort((a, b) => (b.rounds.T + b.rounds.CT) - (a.rounds.T + a.rounds.CT) || a.color - b.color);
   function cards(players: RosterEntry[]) {
     return <div className="hub-player-cards" data-hub-parallax>{players.map((player, index) => <button type="button" className="hub-player-card hub-primary" style={{ "--stagger": `${index * 75}ms` } as CSSProperties} key={player.steamid} id={`hub-player-${player.steamid}`} onClick={(event) => { rememberPortrait(event.currentTarget, reduced); change({ player: player.steamid, side: "T" }); }}>
       <span className="hub-roster-light" aria-hidden="true" /><span className="hub-card-portrait-depth"><Asset path={`players/${player.steamid}.png`} name={player.name} /></span><strong>{player.name}</strong>
-      <small className="hub-portrait-line">{t("round5.portrait_place", { place: calloutLabel(heatmap.map, [...(heatmap.summary[player.steamid]?.T?.zones.early ?? [])].filter((zone) => zone.share != null).sort((a, b) => (b.share ?? 0) - (a.share ?? 0))[0]?.place) })} · 每回合 {fmtNum(profiles.find((profile) => profile.steamid === player.steamid && profile.team === heatmap.team)?.kpr, 2)} 杀</small>
+      <small className="hub-portrait-line">{t("round5.portrait_place", { place: calloutLabel(heatmap.map, [...(heatmap.summary[player.steamid]?.T?.zones.early ?? [])].filter((zone) => zone.share != null).sort((a, b) => (b.share ?? 0) - (a.share ?? 0))[0]?.place) })} · T 方每回合 {fmtNum(summaryRate(heatmap, player.steamid, "T", (summary) => summary.fights.kills_pr), 2)} 杀</small>
       <small>{t("heatmap.rounds", { n: fmtInt(player.rounds.T + player.rounds.CT) })}</small>
     </button>)}</div>;
   }
@@ -282,8 +282,8 @@ function MapControls({ view, level, levels, setView, setLevel, phase, setPhase }
   </div>;
 }
 
-function TeamMapView({ profile, tactics, heatmap, baseline, profiles, change }: {
-  profile: TeamProfile; tactics: TacticsFile; heatmap: TeamHeatmap; baseline: HeatmapBaseline; profiles: PlayerProfile[]; change: Change;
+function TeamMapView({ profile, tactics, heatmap, baseline, change }: {
+  profile: TeamProfile; tactics: TacticsFile; heatmap: TeamHeatmap; baseline: HeatmapBaseline; change: Change;
 }) {
   const lang = useLang();
   const { activeId } = useMapLink();
@@ -322,7 +322,7 @@ function TeamMapView({ profile, tactics, heatmap, baseline, profiles, change }: 
   return <div className="hub-team-map-view">
     <img className="hub-map-backdrop" src={`${import.meta.env.BASE_URL}radars/${heatmap.map}.png`} alt="" aria-hidden="true" />
     <div className="hub-map-context"><MapOverview profile={profile} tactics={tactics} /></div>
-    <PlayerCards roster={heatmap.roster} heatmap={heatmap} profiles={profiles} change={change} />
+    <PlayerCards roster={heatmap.roster} heatmap={heatmap} change={change} />
     <TeamDetails team={profile} detailsOpen={summaryOpen} onDetailsToggle={setSummaryOpen} tacticsContent={<><MapTacticsSummary profile={profile} tactics={tactics} />
     {signature ? <section className="hub-summary-radar">
       <RecipeRadar map={profile.map} spots={signatureSpots} scale={meta.data?.radar.scale} title={t("tactics.selected_utility")} site={signature.site} routes={signature.routes ?? []} routeKey={signature.id} />
@@ -458,15 +458,15 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
       </div></div>
       <LowSampleBanner low_sample={selectedSides.some((s) => player.low_sample[s])} />
       {!rounds || !overlays.length ? <p className="hub-low" role="status">{t(ghost ? "round5.ghost_empty" : "hub.no_layer")}</p> : null}
-      <div className="hub-map-stage"><figure className="hub-map-figure"><HubRadar map={heatmap.map} level={level} overlays={view === "utility" && !ghost ? [] : overlays} markers={view === "utility" ? [] : places.filter((place) => place.level === level)} spots={view === "utility" ? landingSpots : []} />
+      <div className="hub-map-stage"><div className="hub-map-main"><MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} phase={phase} setPhase={setPhase} /><figure className="hub-map-figure"><HubRadar map={heatmap.map} level={level} overlays={view === "utility" && !ghost ? [] : overlays} markers={view === "utility" ? [] : places.filter((place) => place.level === level)} spots={view === "utility" ? landingSpots : []} />
         <figcaption>
           {view === "utility" ? <div className="hub-mini-legend hub-util-legend">{(["smoke", "flashbang", "molotov", "he"] as const).map((kind) => <span className="grenade-label" key={kind}><GrenadeIcon type={kind} />{t(`grenade.${kind}`)}</span>)}<span>{t("round4.util_legend")}</span></div> : <div className="hub-mini-legend" aria-label={t(`heatmap.view.${view}`)}><span>{t(`side.${side}`)}</span><span className="hub-heat-scale" style={{ background: `linear-gradient(90deg, transparent, ${SIDE_COLORS[side].light}, ${SIDE_COLORS[side].deep})` }} /><span>{t(`heatmap.view.${view}`)} · {t(`round2.time_${phase}`)}</span></div>}
           <details className="hub-map-notes"><summary>{t(`heatmap.view.${view}`)} · {t(`side.${side}`)}</summary><p>{t("round2.time_help")}</p>
         </details></figcaption>
-      </figure>
+      </figure></div>
       <aside className="hub-map-side"><label className="ghost-toggle" title="比较本侧、本阶段的归一化站位分布；全部楼层共用同一色阶"><input type="checkbox" checked={ghost} onChange={(event) => toggleGhost(event.target.checked)} />{t("round5.ghost_toggle")}</label>{ghost ? <p className="ghost-legend" role="status">{t("round5.ghost_legend")}</p> : null}<PlayerWpa player={profile} side={side} />
-        <PlayerRadar6 player={profile} side={side} />
-        <MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} phase={phase} setPhase={setPhase} /></aside></div>
+      </aside></div>
+      <PlayerRadar6 player={profile} side={side} />
       <details ref={details} className="hub-details"><summary>{t("hub.player_details")}</summary>
         <h3>{t("heatmap.zones")}</h3>
         <ul className="hub-data-list">{(summaries[0]?.zones[phase] ?? []).slice(0, 5).map((zone) => <li key={zone.place} {...bind(`place:${zone.place}`)} tabIndex={0}><span>{calloutLabel(heatmap.map, zone.place)}</span><strong>{fmtPct(zone.share)}</strong></li>)}</ul>
@@ -497,7 +497,7 @@ function MapPanel({ team, map, playerId, side, change }: { team: TeamEntry; map:
   return <section className="hub-panel hub-map-panel" aria-labelledby="hub-heading">
     {!playerId || (!bundle.loading && !player) ? <header className="hub-section-head"><Heading>{playerId ? `${t("hub.player")} · ${displayName}` : `${team.team} · ${displayName}`}</Heading></header> : null}
     {bundle.loading || (playerId && quotes.loading) ? <Loading /> : bundle.error ? <Failure /> : bundle.data ? <>
-      {!playerId ? <TeamMapView profiles={bundle.data[1]} profile={bundle.data[0]} tactics={bundle.data[4]} heatmap={bundle.data[2]} baseline={bundle.data[3]} change={change} /> : player ? <PlayerView key={player.steamid} displayName={displayName} player={player} profile={bundle.data[1].find((p) => p.steamid === player.steamid && p.team === team.team)} heatmap={bundle.data[2]} baseline={bundle.data[3]} side={side} quote={quotes.data?.[player.steamid]} change={change} /> : <p className="notice" role="alert">{t("hub.player_not_found")}</p>}
+      {!playerId ? <TeamMapView profile={bundle.data[0]} tactics={bundle.data[4]} heatmap={bundle.data[2]} baseline={bundle.data[3]} change={change} /> : player ? <PlayerView key={player.steamid} displayName={displayName} player={player} profile={bundle.data[1].find((p) => p.steamid === player.steamid && p.team === team.team)} heatmap={bundle.data[2]} baseline={bundle.data[3]} side={side} quote={quotes.data?.[player.steamid]} change={change} /> : <p className="notice" role="alert">{t("hub.player_not_found")}</p>}
     </> : null}
   </section>;
 }

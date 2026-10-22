@@ -571,5 +571,26 @@
     "route_name": "{via} · {p}% 的队员",
     "portrait_place": "T 开局最常在{place}",
     "ghost_empty": "本侧本阶段暂无可显示的分布差异"
+  },
+  "round6": {
+    "event_kill": "{clock} [{side}] {attacker} 击杀 {victim}{hs}{wpa}",
+    "event_kill_hs": "（爆头）",
+    "event_wpa": "（胜率 {sign}{p}%）",
+    "event_util": "{clock} [{side}] {player} 投掷 {place}{nade}",
+    "nade_smoke": "烟",
+    "nade_molotov": "火",
+    "nade_he": "雷",
+    "nade_flash": "闪",
+    "event_util_noplace": "{clock} [{side}] {player} 投掷 {nade_full}",
+    "event_plant": "{clock} [T] {player} 在 {site} 点下包",
+    "event_filter_key": "关键事件",
+    "event_filter_all": "全部事件（含闪光）",
+    "wp_marker_legend": "× 击杀 · ☁ 烟雾 · 💣 下包",
+    "entry_gap": "两路进点相差 {s} 秒",
+    "badge_sync_pinch": "✂️ 多向夹击",
+    "badge_rush": "⚡ 一波流",
+    "badge_fake": "🎭 假打转点",
+    "map_pick_clear": "× 清除地图选点",
+    "map_pick_active": "已按地图选点筛选：{n} 颗道具"
   }
 }

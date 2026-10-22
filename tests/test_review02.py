@@ -56,7 +56,7 @@ def test_transferred_player_has_separate_grids_denominators_and_index_entries():
     hm = build_heatmaps(sub, MM, order)
     for slug in ("red", "green"):
         assert hm["teams"][slug]["roster"][0]["rounds"]["T"] == 1
-        assert hm["teams"][slug]["players"][str(SID)]["per_round"]["T"]["all"]["presence"] == 4
+        assert hm["teams"][slug]["players"][str(SID)]["per_round"]["T"]["all"]["presence"] == 3
     assert hm["teams"]["red"]["players"][str(SID)]["data"] != hm["teams"]["green"]["players"][str(SID)]["data"]
     index = heatmap_team_index(sub["player_rounds"], order, {t: [] for t in order})
     assert {r["team"] for r in index if str(SID) in [p["steamid"] for p in r["roster"]]} == {"Red", "Green"}
@@ -69,18 +69,19 @@ def test_first_live_plant_ignores_preround_postround_and_second_plant():
                                   "site": ["A", "B", "A", "B"], "t_s": [-1., 8., 10., 15.]},
                                  schema_overrides={"round_num": pl.Int32})
     assert round_plants(sub).select("plant_site", "plant_t_s").rows() == [("B", 8.)]
-    assert clean_frames(sub, MM)["presence"]["phase"].to_list() == ["early"]*3+["post"]
+    assert clean_frames(sub, MM)["presence"]["phase"].to_list() == ["early"]*2+["post"]
     sub["plants"] = sub["plants"].filter(pl.col("t_s") > 12)
     assert round_plants(sub).is_empty()
-    assert clean_frames(sub, MM)["presence"]["phase"].to_list() == ["early"]*4
+    assert clean_frames(sub, MM)["presence"]["phase"].to_list() == ["early"]*3
 
 
 def test_holding_counts_vertical_motion_and_does_not_bridge_dead_sample():
     sub = tables()
-    sub["positions"] = sub["positions"].with_columns(z=pl.Series([0., 100., 100., 100., 100.]),
+    sub["positions"] = sub["positions"].with_columns(t_s=pl.Series([5, 6, 7, 8, 9], dtype=pl.Int32),
+                                                    z=pl.Series([0., 100., 100., 100., 100.]),
                                                     alive=pl.Series([True, True, False, True, True]))
     p = clean_frames(sub, MM)["presence"]
-    assert p.filter(pl.col("t_s").is_in([5, 7]))["holding"].to_list() == [False, False]
+    assert p.filter(pl.col("t_s").is_in([6, 8]))["holding"].to_list() == [False, False]
 
 
 @pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf"), None])
@@ -104,7 +105,7 @@ def test_holds_and_landing_spots_never_merge_across_floors():
     p = pl.concat([upper, lower, upper, lower])
     holds = _holds(p, 1)
     assert {h["level"] for h in holds} == {0, 1}
-    assert all(h["seconds_per_round"] == 6 for h in holds)
+    assert all(h["seconds_per_round"] == 4 for h in holds)
     util = pl.DataFrame([dict(demo_id=f"d{i%2}", nade_id=i, is_post_round=False, thrower_side="T", type="smoke",
                               land_x=100., land_y=924., land_z=z, land_place="Spot", pop_t_s=10.)
                          for i,z in enumerate([-99.]*4+[-101.]*4)], schema_overrides={"nade_id": pl.UInt32})

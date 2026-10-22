@@ -1591,3 +1591,9 @@ input:focus-visible,
 .match-time-filter button:disabled { opacity: .45; cursor: default; }
 .footer-data-through { font-variant-numeric: tabular-nums; }
 .match:target, .match.is-selected { outline: 1px solid currentColor; outline-offset: 2px; }
+
+.filter-group:has(.hud-segmented) { flex-shrink: 0; width: max-content; max-width: 100%; }
+.radar-pick-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.radar-pick-head h2 { margin: 0 auto 0 0; font-size: 1rem; }
+.radar-pick-head .radar-reset { margin: 0; font-size: .75rem; }
+.radar-pick-status { margin: 0 0 8px; font-size: .8rem; color: var(--muted); }
