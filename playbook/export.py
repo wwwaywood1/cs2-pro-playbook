@@ -490,6 +490,10 @@ def _add_winprob(mdir: Path, ids: list[str], teams: list[dict], players: list[di
 
 def _write_replays(mdir: Path, sub: dict[str, pl.DataFrame], mm, res: dict, wpr: dict | None) -> None:
     """2D replays for every round of the showcase teams and the example rounds of each recipe."""
+    need = {"rounds": {"t_team", "ct_team", "dur_s", "winner_side"}, "positions": {"x", "y", "alive", "t_s"},
+            "kills": {"victim_x", "victim_y"}, "utility": {"pop_t_s", "land_x", "land_y"}, "plants": {"t_s"}}
+    if any(k not in sub or not cols <= set(sub[k].columns) for k, cols in need.items()):
+        return
     show = sub["rounds"].filter(pl.col("t_team").is_in(list(SHOWCASE_TEAMS)) | pl.col("ct_team").is_in(list(SHOWCASE_TEAMS)))
     wanted = {(d, int(r)) for d, r in show.select("demo_id", "round_num").iter_rows()}
     for rec in res["recipes"]:
