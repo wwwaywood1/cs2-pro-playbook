@@ -30,12 +30,15 @@ export function usePlayerEntrance(id: string, reduced: boolean, host: RefObject<
     if (reduced) { setEntrance("settled"); return; }
     if (entrance === "settled") return;
     const timer = window.setTimeout(skip, entrance === "full" ? 2500 : 600);
-    window.addEventListener("click", skip, true);
-    window.addEventListener("keydown", skip, true);
+    // Let React's delegated control handlers run before settling the entrance.
+    // Capture-phase setState can restore a controlled checkbox's old checked
+    // value after native click pre-activation but before React sees onChange.
+    window.addEventListener("click", skip);
+    window.addEventListener("keydown", skip);
     return () => {
       window.clearTimeout(timer);
-      window.removeEventListener("click", skip, true);
-      window.removeEventListener("keydown", skip, true);
+      window.removeEventListener("click", skip);
+      window.removeEventListener("keydown", skip);
     };
   }, [id, entrance, reduced]);
   // Refresh the native-pixel cap after zoom or moving between different-DPR screens.

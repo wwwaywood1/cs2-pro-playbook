@@ -132,8 +132,15 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     smoke.check(page.locator(".lineup-card.is-selected").count() == 1, "clicking a card selects exactly one card")
     smoke.check(page.locator(".radar .arrow-group.is-selected").count() == 1, "the radar highlights exactly one arrow")
     # Radar -> card selection
-    page.locator(".radar .landing-cluster").first.dispatch_event("click")
-    smoke.check(page.locator(".radar-reset").count() == 1, "clicking a callout expands its routes")
+    # Exercise hit testing too: a hovered route must not cover the callout.
+    cluster = page.locator(".radar .landing-cluster").first
+    expect(cluster).to_be_visible()
+    cluster.locator("circle:not(.map-link-ring)").click()
+    expect(page.locator(".radar-reset")).to_have_count(1)
+    expect(page.locator(".radar .landing-cluster")).to_have_count(0)
+    smoke.check(True, "one click on a callout expands its routes")
+    # URL navigation is transitioned independently of the immediate local pick.
+    page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).has('landing')")
     picked = page.evaluate("new URLSearchParams(location.hash.split('?')[1]).get('landing').split(',')")
     expect(page.locator('.lineup-card')).to_have_count(len(picked))
     smoke.check(page.locator('.radar .throw-dot').count() == len(picked), 'landing pick filters cards and shows every remaining throw position')
@@ -142,7 +149,8 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     target.focus()
     page.keyboard.press('Enter')
     expect(page.locator('.lineup-card.is-selected')).to_have_attribute('data-map-link', f'lineup:{target_id}')
-    smoke.check('id=' in page.url and 'landing=' in page.url, 'map selection is shareable in the URL')
+    page.wait_for_function("(() => { const q = new URLSearchParams(location.hash.split('?')[1]); return q.has('id') && q.has('landing'); })()")
+    smoke.check(True, 'map selection is shareable in the URL')
     sel_card = page.locator(".lineup-card.is-selected .practice-cmd").inner_text()
     smoke.check(sel_card.startswith("setpos "), "clicking a callout selects its most-used lineup")
     smoke.check(page.locator(".radar .throw-direction").count() == 1,
@@ -678,11 +686,27 @@ def check_hub_entrance(smoke: Smoke, page: Page) -> None:
         page.wait_for_function("!document.querySelector('.hub-count[data-rolling=\"true\"]')")
         smoke.check(page.locator('.hub-layer-in image').first.get_attribute('href') != before_heat,
                     'CT changes the heat texture and side hue independently of team palette')
-        # A pointer action must also skip the entrance and operate the input.
+        # Full entrances must also preserve keyboard activation and input identity.
         page.evaluate('(id) => sessionStorage.removeItem(`hub-intro:${id}`)', player)
         page.reload()
         page.wait_for_selector('.hub-player-view[data-entrance="full"]')
-        ghost.check()
+        ghost.focus()
+        expect(page.locator('.hub-player-view')).to_have_attribute('data-entrance', 'full')
+        page.keyboard.press('Space')
+        expect(ghost).to_be_checked()
+        expect(ghost).to_be_focused()
+        expect(page.locator('.hub-player-view')).to_have_attribute('data-entrance', 'settled')
+        page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('ghost') === '1'")
+        smoke.check(True, 'Space during the full entrance toggles the focused checkbox and skips the intro')
+        ghost.uncheck()
+        page.wait_for_function("!new URLSearchParams(location.hash.split('?')[1]).has('ghost')")
+        # Force one physical click without waiting out the entrance transform.
+        page.evaluate('(id) => sessionStorage.removeItem(`hub-intro:${id}`)', player)
+        page.reload()
+        page.wait_for_selector('.hub-player-view[data-entrance="full"]')
+        expect(ghost).not_to_be_checked()
+        expect(page.locator('.hub-player-view')).to_have_attribute('data-entrance', 'full')
+        ghost.click(force=True)
         expect(ghost).to_be_checked()
         expect(page.locator('.hub-player-view')).to_have_attribute('data-entrance', 'settled')
         page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('ghost') === '1'")

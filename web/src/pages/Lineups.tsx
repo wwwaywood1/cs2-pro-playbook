@@ -34,10 +34,17 @@ export default function Lineups() {
   );
   const lineups = lineupData?.map === map ? lineupData.rows : null;
 
-  const clusterIds = useMemo(() => {
-    const value = searchParams.get("landing");
-    return value ? new Set(value.split(",")) : null;
-  }, [searchParams]);
+  const urlLanding = searchParams.get("landing");
+  // Expand/filter immediately; HashRouter commits the shareable URL in a transition.
+  // Track the last URL separately so unrelated renders cannot undo a local pick,
+  // while Back/Forward and map changes still restore the requested landing filter.
+  const [landingPick, setLandingPick] = useState({ map, url: urlLanding, value: urlLanding });
+  let landing = landingPick.value;
+  if (landingPick.map !== map || landingPick.url !== urlLanding) {
+    landing = urlLanding;
+    setLandingPick({ map, url: urlLanding, value: urlLanding });
+  }
+  const clusterIds = useMemo(() => landing ? new Set(landing.split(",")) : null, [landing]);
   const [side, setSide] = useState<Side | "ALL">("ALL");
   const [types, setTypes] = useState<GrenadeType[]>(ALL_TYPES);
   const [lane, setLane] = useState<Lane | "ALL">("ALL");
@@ -74,6 +81,8 @@ export default function Lineups() {
 
   const filtered = useMemo(() => candidates.filter((lineup) => !clusterIds || clusterIds.has(lineup.id)), [candidates, clusterIds]);
   const pickCluster = (ids: string[] | null) => {
+    setLandingPick({ map, url: urlLanding, value: ids?.length ? ids.join(",") : null });
+    if (ids?.length) setSelectedId(ids[0]);
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
       if (ids?.length) { next.set("landing", ids.join(",")); next.set("id", ids[0]); }

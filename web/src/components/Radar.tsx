@@ -98,18 +98,6 @@ export default function Radar({ map, lineups, selectedId, onSelect, pickedIds, o
           ))}
         </defs>
 
-        {clusters.filter(() => !pickedIds).map((cell) => {
-          const label = `${[...new Set(cell.rows.map((row) => calloutLabel(map, row.land_place)))].join(" / ")} · ${t("round4.cluster_count", { n: fmtInt(cell.weight) })}`;
-          const expand = () => { onPick([...cell.rows].sort((a, b) => b.n_throws - a.n_throws || a.id.localeCompare(b.id)).map((row) => row.id)); };
-          return <g key={cell.key} className="landing-cluster" role="button" tabIndex={0}
-            {...bind(`lineup:${cell.rows.find((row) => row.id === hoveredId)?.id ?? cell.lineup.id}`)}
-            aria-label={label} onClick={expand} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); expand(); } }}>
-            <circle className="map-link-ring" cx={cell.x} cy={cell.y} r={cell.radius + 6} />
-            <title>{label}</title>
-            <circle cx={cell.x} cy={cell.y} r={cell.radius} />
-            <text x={cell.x} y={cell.y + 7} textAnchor="middle" style={{ fontSize: 22, fontWeight: 800, fill: "#f5f8ff" }}>{fmtInt(cell.weight)}</text>
-          </g>;
-        })}
         {lineups.filter((lineup) => (pickedIds ? pickedIds.has(lineup.id) : lineup.id === activeId)).map((lineup) => {
           const selected = lineup.id === activeId;
           const dimmed = activeId != null && !selected;
@@ -160,6 +148,19 @@ export default function Radar({ map, lineups, selectedId, onSelect, pickedIds, o
               </svg>
             </g>
           );
+        })}
+        {/* Keep callouts above the hovered route so its hit area cannot steal the first click. */}
+        {clusters.filter(() => !pickedIds).map((cell) => {
+          const label = `${[...new Set(cell.rows.map((row) => calloutLabel(map, row.land_place)))].join(" / ")} · ${t("round4.cluster_count", { n: fmtInt(cell.weight) })}`;
+          const expand = () => { onPick([...cell.rows].sort((a, b) => b.n_throws - a.n_throws || a.id.localeCompare(b.id)).map((row) => row.id)); };
+          return <g key={cell.key} className="landing-cluster" role="button" tabIndex={0}
+            {...bind(`lineup:${cell.rows.find((row) => row.id === hoveredId)?.id ?? cell.lineup.id}`)}
+            aria-label={label} onClick={expand} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); expand(); } }}>
+            <circle className="map-link-ring" cx={cell.x} cy={cell.y} r={cell.radius + 6} />
+            <title>{label}</title>
+            <circle cx={cell.x} cy={cell.y} r={cell.radius} />
+            <text x={cell.x} y={cell.y + 7} textAnchor="middle" style={{ fontSize: 22, fontWeight: 800, fill: "#f5f8ff" }}>{fmtInt(cell.weight)}</text>
+          </g>;
         })}
       </svg></div>
 
