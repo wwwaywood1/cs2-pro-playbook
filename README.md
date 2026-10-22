@@ -29,6 +29,28 @@ python -m playbook run                 # parse + export -> data/site/*.json
 pytest -q                              # tests (end-to-end ones need the test demo, see below)
 ```
 
+## 从 HLTV 补录像
+
+在 HLTV 比赛页面点击 **GOTV Demo**，手动下载压缩包，放到 `data/raw/hltv/`
+（目录不存在时先创建）。支持直接放入 `.rar`、`.zip`、单个 demo 的 `.gz` / `.bz2`
+或未压缩的 `.dem`；只读取该目录第一层的下载文件。
+
+```bash
+.venv/bin/python scripts/import_hltv.py
+.venv/bin/python -m playbook parse
+.venv/bin/python -m playbook export
+```
+
+导入器依次尝试 `bsdtar`、`unar`、`7z`（或 `7zz`），ZIP 最后可用 Python 自带的 `zipfile`；
+若 RAR 无法打开，可运行 `brew install sevenzip`。压缩包解到
+`data/raw/hltv/<压缩包主名>/`，只保留当前地图池中的新 demo；`-p1`、`-p2`
+保留在同一目录，解析时自动拼接。已解析或已导入的相同 demo identity 会跳过。
+原压缩包默认保留，`--delete-archives` 仅在该包没有导入失败时删除；可先用
+`--dry-run` 查看计划（不解压，包内地图与重复检查留到正式导入时）。自定义下载目录可用
+`--src DIR`；若目录不在 `data/raw/` 下，第二条命令须加上该目录作为输入。
+散装 `.dem` 原地登记，重复或池外文件也不会删除；这些原文件仍会被 `parse`
+递归发现，如需排除请自行移到 `data/raw/` 之外。统计按整场地图计数，多段录像只计一次。
+
 ## Website
 
 The v1 frontend lives in [`web/`](web/): Vite + React + TypeScript with a `HashRouter`, no

@@ -31,7 +31,7 @@ from playbook.multipart import PART_RE, ordered_paths
 SOURCES = {
     "cs2povarchive": "cs2povarchive/cs2-demos",
 }
-KNOWN_MAPS = ("mirage", "inferno", "nuke", "dust2", "ancient", "anubis", "overpass", "cache", "train", "vertigo")
+KNOWN_MAPS = ("mirage", "inferno", "nuke", "dust2", "ancient", "anubis", "overpass", "train", "vertigo")
 PATH_RE = re.compile(
     r"^(?P<event>[^/]+)/(?P<match_id>\d+)-[^/]+/"
     r"(?P<team1>.+?)-vs-(?P<team2>.+?)(?:-m(?P<map_no>\d+))?-(?P<map>" + "|".join(KNOWN_MAPS) + r")"

@@ -33,6 +33,7 @@ from playbook.insights import attach_summaries, team_insights
 from playbook.zones import make_summarizer, team_setup
 from playbook.store import read_all
 from playbook.semantics import round_plants
+from playbook.dedupe import deduplicate_tables, hltv_demo_ids
 
 SCHEMA_VERSION = 1
 MIN_MATCHES_RELIABLE = 5
@@ -446,6 +447,8 @@ def _add_player_tactics(mdir: Path, players: list[dict], res: dict, player_round
 
 def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None:
     t = read_all(parsed_dir)
+    t, duplicates = deduplicate_tables(t, preferred_ids=hltv_demo_ids())
+    print(f"deduplicated {len(duplicates)} duplicate demos")
     # Old semantic tables may contain a post-round plant; keep every exported view
     # consistent with the cleaned plant used by heatmaps and tactics.
     plants = round_plants(t)

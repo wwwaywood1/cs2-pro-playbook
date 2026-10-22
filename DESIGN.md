@@ -220,13 +220,20 @@ index.json                      { schema_version, generated_at, min_matches_reli
 <map>/teams.json                [{ team, slug, n_matches, low_sample, win_rate_T, win_rate_CT }]
 <map>/teams/<slug>.json         { team, slug, map, n_matches, low_sample, matches[], sides{T,CT}, economy[] }
 <map>/players.json              [{ steamid, name, team, rounds{total,T,CT}, kpr, dpr, hs_pct, opening_*, awp_share, util_pr, T{...}, CT{...}, role_hints[] }]
-heatmap_teams.json              [{ team, slug, n_matches, maps: [{ map, display_name, n_matches, rounds{T,CT}, players[] }] (most played first), roster: [{ steamid, name, color, rounds }] }]
+player_quotes.json              { "<steamid>": { name, zh, en } } (owner text from config/player_quotes.json; empty by default)
+asset_slots.json                { teams: [slug], players: [steamid] } (supplied web/public PNG files only)
+heatmap_teams.json              [{ team, slug, n_matches, maps: [{ map, display_name, n_matches, rounds{T,CT}, players[], map_win_rate?, round_win_rate?, win_rate_T?, win_rate_CT?, all_rounds?, low_sample?, results?[] }] (most played first), roster: [{ steamid, name, color, rounds }] }]
 <map>/heatmaps/baseline.json    { map, grid, cell_px, levels, layers[], phases[], sides[], n_colors, early_s, spawn_skip_s, hold_speed, min_reliable_rounds, rounds{T,CT}, per_round, data }
 <map>/heatmaps/teams/<slug>.json { team, slug, map, n_matches, rounds{T,CT}, roster: [{ steamid, name, color, rounds, low_sample }], team_grid, players{steamid: { per_round, data }}, summary{steamid: {side: { zones, main_lane, holds, fights, utility }}}, setup{side: {phase: {lane: [names]}}} }
 <map>/tactics.json              { map, definitions, t_overview: TTactics, ct_overview: CTTactics, recipes: [{ id, site, core[], options[], n_rounds, n_matches, teams[], won, win_rate, plant_rate, median_commit_s, tempo[], avg_flashes, split_rate, examples[] }], spots: [{ spot_id, side, type, place, label, name, radar_x, radar_y, level, n_throws, lineups[], in_recipes, ... }] }
 <map>/lineups.json              [{ id, side, type, throw_place, land_place, land_region, land_lane, n_throws, n_matches, teams[], throwers[], round_win_rate, median_pop_t_s, technique, jump_share, throw{x,y,z,pitch,yaw,radar_x,radar_y}, land{x,y,z,radar_x,radar_y}, practice_cmd, example{demo_id,round_num,throw_tick} }]
 ```
 
+- Hub metadata is additive within schema 1. `map_win_rate` counts maps won / maps played;
+  `round_win_rate` counts rounds won / all rounds (not the mean of T/CT rates).
+  Existing `rounds{T,CT}` in the heatmap index remains the gun-round sample; `all_rounds`
+  is the separate all-buy sample. `results` contains up to five match records per map,
+  ordered by source match ID; dates are not available.
 - `sides.T` includes `plant_sites`, `execute_timing` (`fast` before 35s,
   `default_then_execute` 35 to 65s, `late`, `no_clear_execute`), `execute_lane`,
   `setups_15s`, `setups_30s`.
