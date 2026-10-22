@@ -7,10 +7,10 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import GrenadeIcon, { GrenadeGlyph } from "../components/GrenadeIcon";
 import Stat from "../components/Stat";
 import { ErrorNotice, Loading } from "../components/Status";
-import { getMeta, getTactics, useData } from "../data";
+import { getLineups, getMeta, getTactics, useData } from "../data";
 import { fmtInt, fmtNum, fmtPct, fmtSeconds } from "../format";
-import { t, useLang, type Lang } from "../i18n";
-import type { CTTactics, Ranked, Recipe, Spot, SpotRef, TTactics } from "../types";
+import { calloutLabel, t, useLang, type Lang } from "../i18n";
+import type { CTTactics, Lineup, Ranked, Recipe, Spot, SpotRef, TTactics } from "../types";
 import "../tactics.css";
 
 function siteLabel(site: string): string {
@@ -54,7 +54,7 @@ function TOverview({ data }: { data: TTactics }) {
       </div>
       <div className="stat-row">
         <Stat label={t("tactics.avg_commit")} value={fmtSeconds(data.avg_commit_s)} />
-        <Stat label={t("tactics.split_rate")} value={fmtPct(data.split_rate)} />
+        <Stat label="多方向进点率" title="进点位置相距至少 400 游戏单位，或相对包点中心的方位角相差至少 50°；不限定中路。" value={fmtPct(data.split_rate)} />
         <Stat label={t("tactics.lurk_rate")} value={fmtPct(data.lurk_rate)} />
         <Stat label={t("tactics.fake_rate")} value={fmtPct(data.fake_rate)} />
       </div>
@@ -115,21 +115,23 @@ interface RecipeSpot {
   name: string;
   share: number | null;
   to: string | null;
+  lineup?: Lineup;
 }
 
-function resolveSpot(map: string, ref: SpotRef, spot: Spot | undefined, core: boolean, number: number, lang: Lang): RecipeSpot {
-  const lineups = spot?.lineups.length ? spot.lineups : ref.lineups;
+function resolveSpot(map: string, ref: SpotRef, spot: Spot | undefined, core: boolean, number: number, lang: Lang, byLineup: Map<string, Lineup>): RecipeSpot {
+  const lineups = ref.lineups.length ? ref.lineups : spot?.lineups ?? [];
   const mostThrown = [...lineups].sort((a, b) => b.n_throws - a.n_throws)[0];
   return {
+    lineup: mostThrown ? byLineup.get(mostThrown.lineup_id) : undefined,
     id: ref.spot_id, type: ref.type, spot, core, number, share: ref.share,
     name: ref.name?.[lang] || spot?.name?.[lang] || ref.label,
     to: mostThrown ? `/${encodeURIComponent(map)}/lineups?${new URLSearchParams({ id: mostThrown.lineup_id })}` : null,
   };
 }
 
-function recipeSpots(map: string, recipe: Recipe, byId: Map<string, Spot>, lang: Lang): RecipeSpot[] {
+function recipeSpots(map: string, recipe: Recipe, byId: Map<string, Spot>, lang: Lang, byLineup: Map<string, Lineup>): RecipeSpot[] {
   return [...recipe.core.map((ref) => ({ ref, core: true })), ...recipe.options.map((ref) => ({ ref, core: false }))]
-    .map(({ ref, core }, index) => resolveSpot(map, ref, byId.get(ref.spot_id), core, index + 1, lang));
+    .map(({ ref, core }, index) => resolveSpot(map, ref, byId.get(ref.spot_id), core, index + 1, lang, byLineup));
 }
 
 interface ViewBox { x: number; y: number; size: number }
@@ -150,6 +152,10 @@ const SITE_CENTRES: Record<string, Record<Recipe["site"], RadarPoint> | undefine
 function fitSpots(entries: RecipeSpot[], scale: number | undefined, siteCentre?: RadarPoint): ViewBox {
   const points = entries.flatMap(({ spot, type }) => spot && Number.isFinite(spot.radar_x) && Number.isFinite(spot.radar_y)
     ? [{ x: spot.radar_x, y: spot.radar_y, radius: scale ? (type === "smoke" ? 144 : type === "molotov" ? 120 : 0) / scale : 0 }] : []);
+  for (const { lineup } of entries) if (lineup && Number.isFinite(lineup.throw.radar_x) && Number.isFinite(lineup.throw.radar_y)) {
+    points.push({ x: lineup.throw.radar_x, y: lineup.throw.radar_y, radius: 12 });
+    points.push({ x: lineup.land.radar_x, y: lineup.land.radar_y, radius: 12 });
+  }
   if (!points.length) return FULL_VIEW;
   const left = Math.min(...points.map((p) => p.x - p.radius));
   const right = Math.max(...points.map((p) => p.x + p.radius));
@@ -258,6 +264,14 @@ function RecipeRadar({ map, spots, scale, site, title, selectionLabel }: { map: 
       <rect className="radar-bg" width="1024" height="1024" />
       {failedSource !== source && <image href={source} width="1024" height="1024" onError={() => setFailedSource(source)} />}
       <rect width="1024" height="1024" fill="#060b12" opacity="0.55" mask={`url(#${maskId})`} pointerEvents="none" />
+      {visible.filter((entry) => entry.lineup).map((entry) => {
+        const lineup = entry.lineup!;
+        return <g className="tactics-throw-route" key={`route-${entry.id}`} opacity={entry.core ? .85 : .4}>
+          <title>{`${entry.number}. ${calloutLabel(map, lineup.throw_place)} → ${entry.name} · 最常用起投点`}</title>
+          <line x1={lineup.throw.radar_x} y1={lineup.throw.radar_y} x2={lineup.land.radar_x} y2={lineup.land.radar_y} vectorEffect="non-scaling-stroke" />
+          <circle cx={lineup.throw.radar_x} cy={lineup.throw.radar_y} r={4 * unit} />
+        </g>;
+      })}
       {visible.map((entry) => {
         const spot = entry.spot;
         if (!spot || !Number.isFinite(spot.radar_x) || !Number.isFinite(spot.radar_y)) return null;
@@ -278,7 +292,7 @@ function RecipeRadar({ map, spots, scale, site, title, selectionLabel }: { map: 
     {!visible.length && <p className="muted">{t("tactics.no_spots")}</p>}
     {failedSource === source && <p className="muted">{t("tactics.radar_unavailable")}</p>}
     {!scale && <p className="muted">{t("tactics.no_scale")}</p>}
-    <p className="tactics-help muted">{t("tactics.radar_help")}</p>
+    <p className="tactics-help muted">{t("tactics.radar_help")} · 细线：最常用起投点 → 落点；非队员移动路线</p>
     {!!visible.length && <details className="tactics-map-spots"><summary>{t("tactics.spot_index", { n: visible.length })}</summary><SpotList entries={visible} /></details>}
   </figure>;
 }
@@ -298,17 +312,29 @@ function RecipeTitle({ entries }: { entries: RecipeSpot[] }) {
   </span>) : t("tactics.no_spots")}</span>;
 }
 
-function RecipeDetails({ recipe, entries }: { recipe: Recipe; entries: RecipeSpot[] }) {
+function RecipeDetails({ recipe, entries, splitDefinition }: { recipe: Recipe; entries: RecipeSpot[]; splitDefinition: string }) {
+  const tempos = (["fast", "mid", "late"] as const).map((value) => ({ value, rounds: recipe.tempo.find((row) => row.value === value)?.rounds ?? 0 }));
+  const total = tempos.reduce((n, row) => n + row.rounds, 0);
   return <div className="tactics-recipe-details">
-    <h4>{t("tactics.core")}</h4><SpotList entries={entries.filter((entry) => entry.core)} />
-    <h4>{t("tactics.optional")}</h4>{entries.some((entry) => !entry.core) ? <SpotList entries={entries.filter((entry) => !entry.core)} /> : <p className="muted">{t("tactics.no_data")}</p>}
     <dl className="tactics-detail-stats">
       <div><dt>{t("ui.matches_title")}</dt><dd>{fmtInt(recipe.n_matches)}</dd></div>
       <div><dt>{t("tactics.plant_rate")}</dt><dd>{fmtPct(recipe.plant_rate)}</dd></div>
-      <div><dt>{t("tactics.split_rate")}</dt><dd>{fmtPct(recipe.split_rate)}</dd></div>
+      <div><dt tabIndex={0} title={splitDefinition}>多方向进点率 ⓘ</dt><dd>{fmtPct(recipe.split_rate)}</dd></div>
       <div><dt>{t("tactics.avg_flashes")}</dt><dd>{fmtNum(recipe.avg_flashes)}</dd></div>
     </dl>
-    <h4>{t("tactics.tempo_title")}</h4><ul className="tactics-inline-list">{recipe.tempo.map((row) => <li key={row.value}>{t(`tactics.tempo.${row.value}`)} · {t("tactics.round_count", { n: fmtInt(row.rounds) })}</li>)}</ul>
+    {recipe.wp && recipe.wp.n > 0 && Number.isFinite(recipe.wp.before) && Number.isFinite(recipe.wp.after) ? <p className="recipe-wp">
+      胜率变化 <strong>{fmtPct(recipe.wp.before)} → {fmtPct(recipe.wp.after)}</strong>{" "}
+      <span className="data-tooltip" tabIndex={0} role="note" aria-label="胜率变化说明">ⓘ<span role="tooltip">T 方模型胜率：进点前 5 秒与进点后 10 秒的均值（{recipe.wp.n} 回合）。能推进到进点的回合本就较顺利，因此估计偏高；用于套路之间的比较，不代表这套道具的绝对或因果效果。</span></span>
+    </p> : null}
+    <div className="tactics-spot-columns">
+      <section><h4>{t("tactics.core")}</h4><SpotList entries={entries.filter((entry) => entry.core)} /></section>
+      <section><h4>{t("tactics.optional")}</h4>{entries.some((entry) => !entry.core) ? <SpotList entries={entries.filter((entry) => !entry.core)} /> : <p className="muted">{t("tactics.no_data")}</p>}</section>
+    </div>
+    <h4>{t("tactics.tempo_title")}</h4>
+    {total ? <div className="tactics-tempo-bar" role="img" aria-label={tempos.map((row) => `${t(`tactics.tempo.${row.value}`)} ${fmtPct(row.rounds / total)}`).join(" · ")}>
+      {tempos.map((row) => <span key={row.value} data-tempo={row.value} style={{ flexGrow: row.rounds }} title={`${t(`tactics.tempo.${row.value}`)} · ${row.rounds} 回合`} />)}
+    </div> : <p className="muted">{t("tactics.no_data")}</p>}
+    <ul className="tactics-tempo-labels">{tempos.map((row) => <li key={row.value} data-tempo={row.value}>{t(`tactics.tempo.${row.value}`)} {total ? fmtPct(row.rounds / total) : "—"}</li>)}</ul>
     <details><summary>{t("tactics.teams")}</summary><ul className="tactics-inline-list">{[...recipe.teams].sort((a, b) => b.rounds - a.rounds).map((team) => <li key={team.team}>{team.team} · {t("tactics.round_count", { n: fmtInt(team.rounds) })}</li>)}</ul></details>
     <details><summary>{t("tactics.examples")}</summary>{recipe.examples.length ? <ul className="tactics-inline-list">{recipe.examples.map((example) => <li key={`${example.demo_id}:${example.round_num}:${example.team}`}>
       {example.team} · {t("tactics.example_round", { n: example.round_num })} · <code>{example.demo_id}</code>
@@ -328,6 +354,8 @@ export default function Tactics() {
   const site = params.get("site") === "A" ? "A" : params.get("site") === "B" ? "B" : "all";
   const sort = params.get("sort") === "win_rate" ? "win_rate" : "rounds";
   const { data, loading, error } = useData(() => getTactics(map), [map]);
+  const { data: lineupData } = useData(() => getLineups(map), [map]);
+  const byLineup = useMemo(() => new Map((lineupData ?? []).map((lineup) => [lineup.id, lineup])), [lineupData]);
   const { data: meta } = useData(() => getMeta(map), [map]);
   const [preview, setPreview] = useState<string | null>(null);
   const [collapsedRecipe, setCollapsedRecipe] = useState<string | null>(null);
@@ -339,14 +367,14 @@ export default function Tactics() {
       || b.n_rounds - a.n_rounds || a.id.localeCompare(b.id)), [data, site, sort]);
   const selected = recipes.find((recipe) => recipe.id === params.get("recipe")) ?? recipes[0];
   const shown = recipes.find((recipe) => recipe.id === preview) ?? selected;
-  const entries = useMemo(() => shown ? recipeSpots(map, shown, spotsById, lang) : [], [shown, map, spotsById, lang]);
+  const entries = useMemo(() => shown ? recipeSpots(map, shown, spotsById, lang, byLineup) : [], [shown, map, spotsById, lang, byLineup]);
   const ctSpots = useMemo<RecipeSpot[]>(() => (data?.spots ?? []).filter((spot) => spot.side === "CT" && (site === "all" || spot.lane === site))
     .sort((a, b) => b.n_throws - a.n_throws || a.spot_id.localeCompare(b.spot_id)).slice(0, 6).map((spot, index) => {
       const mostThrown = [...spot.lineups].sort((a, b) => b.n_throws - a.n_throws)[0];
-      return { id: spot.spot_id, spot, type: spot.type, core: true, number: index + 1, share: null,
+      return { lineup: mostThrown ? byLineup.get(mostThrown.lineup_id) : undefined, id: spot.spot_id, spot, type: spot.type, core: true, number: index + 1, share: null,
         name: spot.name?.[lang] || spot.label,
         to: mostThrown ? `/${encodeURIComponent(map)}/lineups?${new URLSearchParams({ id: mostThrown.lineup_id })}` : null };
-    }), [data, map, site, lang]);
+    }), [data, map, site, lang, byLineup]);
   const setups = useMemo(() => [...(data?.ct_overview.setups_20s ?? [])].sort((a, b) => b.rounds - a.rounds || a.value.localeCompare(b.value)), [data]);
   const currentSetup = setups.find((setup) => setup.value === setupChoice) ?? setups[0];
   const currentQuery = params.toString();
@@ -363,7 +391,7 @@ export default function Tactics() {
   if (error || !data) return <ErrorNotice error={error ?? new Error(t("tactics.no_data"))} />;
   const topTarget = [...data.t_overview.target].filter((row) => row.value !== "none").sort((a, b) => b.rounds - a.rounds)[0];
   const topRecipe = [...data.recipes].sort((a, b) => b.n_rounds - a.n_rounds || a.id.localeCompare(b.id))[0];
-  const topRecipeName = topRecipe ? recipeSpots(map, topRecipe, spotsById, lang).filter((entry) => entry.core).map((entry) => entry.name).join(" + ") : t("tactics.no_data");
+  const topRecipeName = topRecipe ? recipeSpots(map, topRecipe, spotsById, lang, byLineup).filter((entry) => entry.core).map((entry) => entry.name).join(" + ") : t("tactics.no_data");
   const scale = meta && Number.isFinite(meta.radar.scale) && meta.radar.scale > 0 ? meta.radar.scale : undefined;
   return <PageSurface className="tactics-page" data-side={side}>
     <header className="page-head">
@@ -401,7 +429,7 @@ export default function Tactics() {
         {side === "T" ? <div className="tactics-recipes" onMouseLeave={() => setPreview(null)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setPreview(null); }}>
           <p className="muted tactics-help">{t("tactics.recipe_count", { n: fmtInt(recipes.length) })} · {t("tactics.preview_hint")}</p>
           {recipes.length ? recipes.map((recipe, index) => {
-            const rowEntries = recipeSpots(map, recipe, spotsById, lang);
+            const rowEntries = recipeSpots(map, recipe, spotsById, lang, byLineup);
             const active = recipe.id === selected?.id;
             const open = active && collapsedRecipe !== recipe.id;
             return <article className={`tactics-recipe motion-reveal${active ? " is-selected" : ""}`} data-motion-tilt={active || undefined} style={{ "--stagger": `${Math.min(index * 55, 385)}ms` } as CSSProperties} key={recipe.id} onMouseEnter={() => setPreview(recipe.id)} onFocus={() => setPreview(recipe.id)}>
@@ -410,7 +438,7 @@ export default function Tactics() {
               }}><span className="tactics-recipe-heading"><span className="tactics-chevron" aria-hidden="true">{open ? "▾" : "▸"}</span><span className="tactics-site">{siteLabel(recipe.site)}</span><RecipeTitle entries={rowEntries.filter((entry) => entry.core)} /></span>
                 <span className="tactics-row-meta">{t("tactics.recipe_meta", { rounds: fmtInt(recipe.n_rounds), win: fmtPct(recipe.win_rate), time: fmtSeconds(recipe.median_commit_s) })}</span>
               </button></h3>
-              <div id={`details-${recipe.id}`} hidden={!open}>{open && <RecipeDetails recipe={recipe} entries={rowEntries} />}</div>
+              <div id={`details-${recipe.id}`} hidden={!open}>{open && <RecipeDetails recipe={recipe} entries={rowEntries} splitDefinition={`进点位置相距至少 400 游戏单位，或相对包点中心的方位角相差至少 50°。不限定中路。导出定义：${String(data.definitions.split ?? "未提供")}`} />}</div>
             </article>;
           }) : <p className="muted">{t("tactics.no_recipes")}</p>}
         </div> : <>

@@ -3,6 +3,7 @@ import { PageContext, PageSurface, MetricStrip } from "../components/Page";
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import Stat from "../components/Stat";
+import PlayerWpa from "../components/PlayerWpa";
 import { ErrorNotice, Loading } from "../components/Status";
 import { getMeta, getPlayers, useData } from "../data";
 import { fmtInt, fmtMetric, fmtNum, fmtPct } from "../format";
@@ -108,6 +109,8 @@ export default function Players() {
                       value={fmtNum(player.util_pr, 2)}
                     />
                   </div>
+
+                  <div className="player-wpa-sides"><PlayerWpa player={player} side="T" /><PlayerWpa player={player} side="CT" /></div>
 
                   <div className="player-roles">
                     <span className="section-label">{t("ui.roles_title")}</span>

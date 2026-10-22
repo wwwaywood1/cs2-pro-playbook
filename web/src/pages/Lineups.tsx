@@ -75,6 +75,7 @@ export default function Lineups() {
   const [minThrows, setMinThrows] = useState(2);
   const [technique, setTechnique] = useState<Technique | "ALL">("ALL");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const cardRefs = useRef(new Map<string, HTMLElement>());
@@ -190,12 +191,8 @@ export default function Lineups() {
           </h1>
           <PageContext>{t("site.lineups_context")}</PageContext>
         </div>
-        <p className="result-count">
-          {loading ? "…" : `${filtered.length} / ${lineups?.length ?? 0}`}
-        </p>
+        {lineups ? <MetricStrip items={[{ label: t("site.results"), value: filtered.length }, { label: t("ui.nav_lineups"), value: lineups.length }]} /> : null}
       </header>
-      {lineups ? <MetricStrip items={[{ label: t("site.results"), value: filtered.length }, { label: t("ui.nav_lineups"), value: lineups.length }]} /> : null}
-
       <section className="filters">
         <div className="filter-group" role="group" aria-label={t("ui.filter_side")}>
           <span className="filter-label">{t("ui.filter_side")}</span>
@@ -318,6 +315,7 @@ export default function Lineups() {
               map={map}
               lineups={filtered}
               selectedId={selectedId}
+              hoveredId={hoveredId}
               onSelect={selectFromRadar}
             /></Reveal>
           </aside>
@@ -344,6 +342,10 @@ export default function Lineups() {
                         setSelectedId(lineup.id);
                       }
                     }}
+                    onMouseEnter={() => setHoveredId(lineup.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    onFocus={() => setHoveredId(lineup.id)}
+                    onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setHoveredId(null); }}
                     onClick={() => setSelectedId(lineup.id)}
                   >
                     <div className="lineup-top">
@@ -385,7 +387,7 @@ export default function Lineups() {
                         <dd>{fmtPct(lineup.round_win_rate)}</dd>
                       </div>
                       <div>
-                        <dt>{t("metric.median_pop_t_s")}</dt>
+                        <dt tabIndex={0} title={lineup.median_pop_t_s == null ? "暂无生效时间数据" : `回合开始后平均第 ${lineup.median_pop_t_s} 秒爆开`}>{t("metric.median_pop_t_s")} ⓘ</dt>
                         <dd>{fmtSeconds(lineup.median_pop_t_s)}</dd>
                       </div>
                     </dl>

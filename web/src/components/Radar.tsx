@@ -1,5 +1,5 @@
 import GrenadeIcon, { GrenadeGlyph } from "./GrenadeIcon";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { calloutLabel, t } from "../i18n";
 import type { GrenadeType, Lineup } from "../types";
 
@@ -9,11 +9,29 @@ interface RadarProps {
   map: string;
   lineups: Lineup[];
   selectedId: string | null;
+  hoveredId?: string | null;
   onSelect: (id: string) => void;
 }
 
-export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps) {
+export default function Radar({ map, lineups, selectedId, hoveredId, onSelect }: RadarProps) {
   const [imageOk, setImageOk] = useState(true);
+  const activeId = lineups.some((lineup) => lineup.id === hoveredId) ? hoveredId : selectedId;
+  const clustered = lineups.length > 50;
+  const clusters = useMemo(() => {
+    const cells = new Map<string, { x: number; y: number; weight: number; count: number; lineup: Lineup }>();
+    for (const lineup of lineups) {
+      const { radar_x: x, radar_y: y } = lineup.land;
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      const key = `${Math.floor(x / 64)}:${Math.floor(y / 64)}`;
+      const weight = Math.max(1, lineup.n_throws);
+      const cell = cells.get(key);
+      if (cell) {
+        cell.x += x * weight; cell.y += y * weight; cell.weight += weight; cell.count++;
+        if (lineup.n_throws > cell.lineup.n_throws) cell.lineup = lineup;
+      } else cells.set(key, { x: x * weight, y: y * weight, weight, count: 1, lineup });
+    }
+    return [...cells.entries()];
+  }, [lineups]);
 
   useEffect(() => {
     setImageOk(true);
@@ -52,9 +70,19 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
           ))}
         </defs>
 
-        {lineups.map((lineup) => {
-          const selected = lineup.id === selectedId;
-          const dimmed = selectedId !== null && !selected;
+        {clustered ? clusters.map(([key, cell]) => <g key={key} className="landing-cluster" role="button" tabIndex={0}
+          aria-label={`落点聚合 · ${cell.count} 组 · ${cell.weight} 次投掷；查看最常用道具`}
+          onClick={() => onSelect(cell.lineup.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(cell.lineup.id); } }}>
+          <title>{`${cell.count} 组道具 · ${cell.weight} 次投掷；点击查看最常用道具`}</title>
+          <circle cx={cell.x / cell.weight} cy={cell.y / cell.weight} r={Math.min(36, 12 + Math.sqrt(cell.weight))} />
+          <text x={cell.x / cell.weight} y={cell.y / cell.weight + 5} textAnchor="middle">{cell.count}</text>
+        </g>) : null}
+        {lineups.filter((lineup) => !clustered || lineup.id === activeId).map((lineup) => {
+          const selected = lineup.id === activeId;
+          const dimmed = activeId != null && !selected;
+          const x = lineup.throw.radar_x, y = lineup.throw.radar_y;
+          const dx = lineup.land.radar_x - x, dy = lineup.land.radar_y - y;
+          const arc = `M ${x} ${y} Q ${x + dx / 2 - dy * .16} ${y + dy / 2 + dx * .16} ${x + dx} ${y + dy}`;
           const className = [
             "arrow-group",
             `arrow-${lineup.type}`,
@@ -79,21 +107,9 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
                 map,
                 lineup.land_place,
               )}`}</title>
-              <line
-                className="arrow-hit"
-                x1={lineup.throw.radar_x}
-                y1={lineup.throw.radar_y}
-                x2={lineup.land.radar_x}
-                y2={lineup.land.radar_y}
-              />
-              <line
-                className="arrow-line"
-                markerEnd={`url(#arrowhead-${lineup.type})`}
-                x1={lineup.throw.radar_x}
-                y1={lineup.throw.radar_y}
-                x2={lineup.land.radar_x}
-                y2={lineup.land.radar_y}
-              />
+              <path className="arrow-hit" d={arc} />
+              <path className="arrow-line" d={arc} pathLength={1} markerEnd={`url(#arrowhead-${lineup.type})`} />
+              <circle className="land-dot" cx={lineup.land.radar_x} cy={lineup.land.radar_y} r={selected ? 17 : 9} />
               <circle
                 className="throw-dot"
                 cx={lineup.throw.radar_x}
@@ -108,6 +124,7 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
         })}
       </svg>
 
+      <p className="radar-hint">{clustered ? "落点聚合（数字为道具组数） · 悬停 / 聚焦卡片查看轨迹" : "悬停 / 聚焦卡片查看轨迹"} · 圆点：起投点 · 图标：爆开点</p>
       <div className="radar-legend">
         {TYPES.map((type) => (
           <span key={type} className="grenade-label">

@@ -61,6 +61,8 @@ export function useMotionPointer(host: RefObject<HTMLElement>, reduced: boolean)
     let card: HTMLElement | null = null;
     let stage: HTMLElement | null = null;
     let panel: HTMLElement | null = null;
+    let pointerFrame = 0;
+    let pointer: { target: Element | null; x: number; y: number } | null = null;
     const tick = (time: number) => {
       const dt = Math.min((time - (last || time - 16)) / 1000, .032);
       last = time;
@@ -93,36 +95,52 @@ export function useMotionPointer(host: RefObject<HTMLElement>, reduced: boolean)
     const resetCard = () => set(card, { "--tilt-h": 0, "--tilt-v": 0, "--magnet-h": 0, "--magnet-v": 0, "--shine-alpha": 0 });
     const resetStage = () => set(stage, { "--depth-h": 0, "--depth-v": 0 });
     const leave = () => {
+      cancelAnimationFrame(pointerFrame);
+      pointerFrame = 0;
+      pointer = null;
       resetCard(); resetStage(); set(panel, { "--spot-alpha": 0 });
       card = stage = panel = null;
     };
-    const move = (event: PointerEvent) => {
-      if (!fine.matches || event.pointerType !== "mouse") return;
-      const target = event.target instanceof Element ? event.target : null;
+    const updatePointer = () => {
+      pointerFrame = 0;
+      if (!pointer) return;
+      const { target, x: clientX, y: clientY } = pointer;
+      pointer = null;
+      if (!target?.isConnected) { leave(); return; }
       const nextCard = target?.closest<HTMLElement>("[data-motion-tilt], .hub-map-card, .hub-player-card, .hub-kpis .stat, .hub-primary") ?? null;
       const nextStage = target?.closest<HTMLElement>("[data-motion-parallax], [data-hub-parallax]") ?? null;
       const nextPanel = target?.closest<HTMLElement>("[data-motion-spotlight], .hub-player-bio, .hub-panel") ?? null;
+      // Read each box once, together, before changing any style or spring target.
+      const rects = new Map<HTMLElement, DOMRect>();
+      for (const element of [nextCard, nextStage, nextPanel]) {
+        if (element && !rects.has(element)) rects.set(element, element.getBoundingClientRect());
+      }
       if (nextCard !== card) { resetCard(); card = nextCard; }
       if (nextStage !== stage) { resetStage(); stage = nextStage; }
       if (nextPanel !== panel) { set(panel, { "--spot-alpha": 0 }); panel = nextPanel; }
       if (card) {
-        const rect = card.getBoundingClientRect();
-        const x = Math.max(-1, Math.min(1, (event.clientX - rect.left) / rect.width * 2 - 1));
-        const y = Math.max(-1, Math.min(1, (event.clientY - rect.top) / rect.height * 2 - 1));
+        const rect = rects.get(card)!;
+        const x = Math.max(-1, Math.min(1, (clientX - rect.left) / (rect.width || 1) * 2 - 1));
+        const y = Math.max(-1, Math.min(1, (clientY - rect.top) / (rect.height || 1) * 2 - 1));
         const magnetic = card.classList.contains("hub-primary");
         set(card, { "--tilt-h": x * 4, "--tilt-v": -y * 4, "--shine-x": (x + 1) * 50, "--shine-y": (y + 1) * 50,
           "--shine-alpha": 1, "--magnet-h": magnetic ? x * 8 : 0, "--magnet-v": magnetic ? y * 8 : 0 });
       }
       if (stage) {
-        const rect = stage.getBoundingClientRect();
-        set(stage, { "--depth-h": ((event.clientX - rect.left) / rect.width * 2 - 1) * 12,
-          "--depth-v": ((event.clientY - rect.top) / rect.height * 2 - 1) * 12 });
+        const rect = rects.get(stage)!;
+        set(stage, { "--depth-h": ((clientX - rect.left) / (rect.width || 1) * 2 - 1) * 12,
+          "--depth-v": ((clientY - rect.top) / (rect.height || 1) * 2 - 1) * 12 });
       }
       if (panel) {
-        const rect = panel.getBoundingClientRect();
-        set(panel, { "--spot-x": (event.clientX - rect.left) / rect.width * 100,
-          "--spot-y": (event.clientY - rect.top) / rect.height * 100, "--spot-alpha": 1 });
+        const rect = rects.get(panel)!;
+        set(panel, { "--spot-x": (clientX - rect.left) / (rect.width || 1) * 100,
+          "--spot-y": (clientY - rect.top) / (rect.height || 1) * 100, "--spot-alpha": 1 });
       }
+    };
+    const move = (event: PointerEvent) => {
+      if (!fine.matches || event.pointerType !== "mouse") return;
+      pointer = { target: event.target instanceof Element ? event.target : null, x: event.clientX, y: event.clientY };
+      if (!pointerFrame) pointerFrame = requestAnimationFrame(updatePointer);
     };
     const visibility = () => { if (document.hidden) leave(); };
     root.addEventListener("pointermove", move, { passive: true });
@@ -133,6 +151,7 @@ export function useMotionPointer(host: RefObject<HTMLElement>, reduced: boolean)
     fine.addEventListener("change", leave);
     return () => {
       cancelAnimationFrame(frame);
+      cancelAnimationFrame(pointerFrame);
       root.removeEventListener("pointermove", move);
       root.removeEventListener("pointerleave", leave);
       root.removeEventListener("pointercancel", leave);

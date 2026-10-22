@@ -12,6 +12,7 @@ import type {
   TeamHeatmap,
   TeamProfile,
   TeamSummary,
+  WinprobTimeline,
 } from "./types";
 
 const base = import.meta.env.BASE_URL;
@@ -82,6 +83,18 @@ export function getLineups(map: string): Promise<Lineup[]> {
 
 export function getTactics(map: string): Promise<TacticsFile> {
   return cached(`tactics:${map}`, () => fetchJson<TacticsFile>(`data/${segment(map)}/tactics.json`));
+}
+
+/** Optional showcase export. Older/static sites may return an HTML fallback for missing files. */
+export function getWinprob(map: string, demoId: string): Promise<WinprobTimeline | null> {
+  return cached(`winprob:${map}:${demoId}`, async () => {
+    const response = await fetch(`${base}data/${segment(map)}/winprob/${segment(demoId)}.json`);
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(`Could not load win probability (HTTP ${response.status}).`);
+    if (!response.headers.get("content-type")?.includes("json")) return null;
+    const timeline = await response.json() as WinprobTimeline;
+    return timeline?.demo_id === demoId && timeline.wp_t && typeof timeline.wp_t === "object" ? timeline : null;
+  });
 }
 
 export function getHeatmapTeams(): Promise<HeatmapTeamIndexEntry[]> {

@@ -3,10 +3,12 @@ import { teamTheme } from "../theme";
 import { PageContext, PageSurface, SampleStrip } from "../components/Page";
 import { Fragment, useState, type CSSProperties } from "react";
 import { Link, useParams } from "react-router-dom";
+import TeamSummaryLinks from "../components/TeamSummaryLinks";
+import MatchWinprob from "../components/MatchWinprob";
 import LowSampleBanner from "../components/LowSampleBanner";
 import Stat from "../components/Stat";
 import { ErrorNotice, Loading } from "../components/Status";
-import { getTeam, useData } from "../data";
+import { getTactics, getTeam, useData } from "../data";
 import { fmtInt, fmtPct, fmtSeconds } from "../format";
 import { t, useLang } from "../i18n";
 import "../tactics.css";
@@ -249,6 +251,7 @@ export default function Team() {
     () => getTeam(map, slug),
     [map, slug],
   );
+  const { data: tactics } = useData(() => getTactics(map), [map]);
   const [side, setSide] = useState<Side>("T");
 
   if (loading) return <Loading />;
@@ -266,6 +269,7 @@ export default function Team() {
           <h1>{team.team}</h1>
           <PageContext>{t("site.team_context")}</PageContext>
         </div>
+        <SampleStrip matches={team.n_matches} />
         <Link
           to={`/heatmaps/${encodeURIComponent(slug)}?${new URLSearchParams({ map })}`}
           className="button button-ghost"
@@ -276,32 +280,18 @@ export default function Team() {
           {t("ui.nav_teams")}
         </Link>
       </header>
-      <SampleStrip matches={team.n_matches} />
-
-      {team.insights?.length ? (
+      {team.insights?.length || team.summary || team.tactics?.T.recipes.length ? (
         <section className="panel team-insights motion-reveal" data-motion-spotlight>
           <h3>{t("tactics.insights")}</h3>
-          {team.summary ? <>
-            <p className="team-summary">{team.summary[lang]}</p>
+          <p className="team-summary"><TeamSummaryLinks profile={team} tactics={tactics} /></p>
+          {team.insights?.length ? <>
             <details>
-              <summary>{t("tactics.summary_basis", { n: fmtInt(team.insights.length) })}</summary>
-              <ul className="team-insights-rest">{team.insights.map((insight) => (
+              <summary>{t("tactics.summary_basis", { n: fmtInt((team.insights?.length ?? 0)) })}</summary>
+              <ul className="team-insights-rest">{(team.insights ?? []).map((insight) => (
                 <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>
               ))}</ul>
             </details>
-          </> : <>
-            <ul className="team-insights-top">
-              {team.insights.slice(0, 3).map((insight) => (
-                <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>
-              ))}
-            </ul>
-            {team.insights.length > 3 && <details>
-              <summary>{t("tactics.expand_insights", { n: fmtInt(team.insights.length - 3) })}</summary>
-              <ul className="team-insights-rest">{team.insights.slice(3).map((insight) => (
-                <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>
-              ))}</ul>
-            </details>}
-          </>}
+          </> : null}
         </section>
       ) : null}
 
@@ -324,10 +314,12 @@ export default function Team() {
                   className={`match${outcome}`}
                   title={match.demo_id}
                 >
-                  <span className="match-opponent">{match.opponent ?? "—"}</span>
+                  <span className="match-outcome" aria-label={outcome === " is-win" ? "胜" : outcome === " is-loss" ? "负" : "平"}>{outcome === " is-win" ? "W" : outcome === " is-loss" ? "L" : "D"}</span>
+                  <span className="match-opponent">{match.opponent ?? "—"}<small className="match-context">{[match.event_name || match.event, match.date].filter(Boolean).join(" · ") || "赛事 / 日期未提供"}</small></span>
                   <span className="match-score">
                     {match.score_for} : {match.score_against}
                   </span>
+                  {slug === "falcons" ? <MatchWinprob key={`${map}:${match.demo_id}`} map={map} demoId={match.demo_id} /> : null}
                 </li>
               );
             })

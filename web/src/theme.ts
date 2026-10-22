@@ -11,11 +11,11 @@ export const TEAM_PALETTES: Record<string, TeamPalette> = {
   "the-mongolz": { primary: "#75c9e8", secondary: "#e8b75a", tertiary: "#b4b9cd" },
 };
 export const DEFAULT_PALETTE: TeamPalette = { primary: "#f2b134", secondary: "#e8b75a", tertiary: "#a6b7c9" };
-// Preserve the hub's existing fallback for teams outside its curated table.
-const UNKNOWN_TEAM_PALETTE: TeamPalette = { ...DEFAULT_PALETTE, secondary: "#a8ccf0" };
+const UNKNOWN_TEAM_PALETTE: TeamPalette = { primary: "#d4e4f4", secondary: "#e2e8ee", tertiary: "#a6b7c9" };
 
 export function teamTheme(slug: string): CSSProperties {
   const palette = TEAM_PALETTES[slug] ?? (slug ? UNKNOWN_TEAM_PALETTE : DEFAULT_PALETTE);
-  return { "--accent": palette.primary, "--primary": palette.primary, "--secondary": palette.secondary,
-    "--tertiary": palette.tertiary } as CSSProperties;
+  return { "--accent": palette.primary, "--primary": palette.primary, "--secondary": slug ? "#e2e8ee" : palette.secondary,
+    "--tertiary": slug ? "#a6b7c9" : palette.tertiary,
+    ...(slug ? { "--side-t": "#e2e8ee", "--side-ct": "#a6b7c9", "--ct": "#a6b7c9" } : {}) } as CSSProperties;
 }

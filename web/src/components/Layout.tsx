@@ -4,6 +4,7 @@ import RouteTransition from "./RouteTransition";
 import { getIndex, useData } from "../data";
 import { fmtDateTime } from "../format";
 import { setLang, t, useLang } from "../i18n";
+import { teamTheme } from "../theme";
 
 function mapFromPath(pathname: string): string | null {
   const first = pathname.split("/").filter(Boolean)[0];
@@ -17,6 +18,8 @@ function navClass({ isActive }: { isActive: boolean }): string {
 export default function Layout() {
   const lang = useLang();
   const { pathname, search } = useLocation();
+  const teamSlug = pathname === "/teams-hub" ? new URLSearchParams(search).get("team") ?? ""
+    : pathname.match(/^\/[^/]+\/teams\/([^/]+)\/?$/)?.[1] ?? "";
   const { data: index } = useData(getIndex, []);
   const requestedMap = mapFromPath(pathname) ?? new URLSearchParams(search).get("map");
   const [lastMap, setLastMap] = useState<string | null>(null);
@@ -27,7 +30,7 @@ export default function Layout() {
   }, [selectedMap]);
 
   return (
-    <div className="shell">
+    <div className="shell" data-team={teamSlug || undefined} style={teamSlug ? teamTheme(teamSlug) : undefined}>
       <button type="button" className="skip-link" onClick={() => document.getElementById("main-content")?.focus()}>{t("ui.skip_content")}</button>
       <header className="topbar">
         <div className="topbar-inner">

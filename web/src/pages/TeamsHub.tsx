@@ -2,8 +2,10 @@ import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef,
 import { Link, useSearchParams } from "react-router-dom";
 import HeatmapCanvas from "../components/HeatmapCanvas";
 import GrenadeIcon, { GrenadeGlyph, GRENADE_COLORS } from "../components/GrenadeIcon";
+import TeamSummaryLinks from "../components/TeamSummaryLinks";
 import LowSampleBanner from "../components/LowSampleBanner";
 import Stat from "../components/Stat";
+import PlayerWpa from "../components/PlayerWpa";
 import { Loading } from "../components/Status";
 import { getAssetSlots, getHeatmapBaseline, getHeatmapTeams, getMeta, getPlayerQuotes, getPlayers, getTactics, getTeam, getTeamHeatmap, useData } from "../data";
 import { fmtInt, fmtPct } from "../format";
@@ -114,7 +116,7 @@ function Results({ team }: { team: TeamEntry }) {
       <span className={`hub-result ${result.score_for > result.score_against ? "is-win" : ""}`}>
         {t(result.score_for === result.score_against ? "hub.draw" : result.score_for > result.score_against ? "hub.win" : "hub.loss")}
       </span>
-      <span>{result.opponent ?? t("hub.unknown_opponent")}<small>{result.map}</small></span>
+      <span>{result.opponent ?? t("hub.unknown_opponent")}<small>{[result.map, result.event_name || result.event, result.date].filter(Boolean).join(" · ")}</small></span>
       <strong>{result.score_for} : {result.score_against}</strong>
     </li>)}</ul> : <p className="muted">{t("heatmap.no_data")}</p>}
   </section>;
@@ -155,7 +157,7 @@ function MapOverview({ profile, tactics }: { profile: TeamProfile; tactics: Tact
       <div className="hub-side-stat" data-side="CT"><AnimatedStat label={t("hub.ct_win")} value={CT.win_rate} format="percent" sub={t("heatmap.rounds", { n: fmtInt(CT.rounds) })} /></div>
       <AnimatedStat label={t("tactics.avg_commit")} value={profile.tactics?.T.avg_commit_s} format="seconds" />
     </div>
-    {profile.summary?.[lang] ? <p className="hub-summary">{profile.summary[lang]}</p> : null}
+    {profile.summary?.[lang] || profile.insights?.length || profile.tactics?.T.recipes.length ? <p className="hub-summary"><TeamSummaryLinks profile={profile} tactics={tactics} /></p> : null}
     <details className="hub-details"><summary>{t("hub.team_details")}</summary>
       <div className="hub-team-layout"><section><h3>{t("tactics.tempo_title")}</h3>
         <ul className="hub-data-list">{(profile.tactics?.T.tempo ?? []).map((row) => <li key={row.value}><span>{t(`tactics.tempo.${row.value}`)}</span><strong>{fmtPct(row.share)}</strong></li>)}</ul>
@@ -164,7 +166,7 @@ function MapOverview({ profile, tactics }: { profile: TeamProfile; tactics: Tact
       </section><section><h3>{t("hub.top_recipes")}</h3>
         {recipes.length ? <ul className="hub-data-list">{recipes.map((rank) => {
           const recipe = tactics.recipes.find((item) => item.id === rank.value);
-          return <li key={rank.value}><Link to={`/${profile.map}/tactics?recipe=${encodeURIComponent(rank.value)}`}>{recipe ? `${t(`region.${recipe.site}_SITE`)} · ` : ""}{rank.value}<small>{t("tactics.round_count", { n: rank.rounds })} · {t("ui.round_win_rate")} {fmtPct(rank.win_rate)}</small></Link></li>;
+          return <li key={rank.value}><Link to={`/${profile.map}/tactics?recipe=${encodeURIComponent(rank.value)}`}>{recipe ? `${t(`region.${recipe.site}_SITE`)} · ` : ""}{recipe ? recipe.core.map((spot) => spot.name?.[lang] || spot.label).join(" + ") : rank.value}<small>{t("tactics.round_count", { n: rank.rounds })} · {t("ui.round_win_rate")} {fmtPct(rank.win_rate)}</small></Link></li>;
         })}</ul> : <p className="muted">{t("tactics.no_recipes")}</p>}
         <Link className="hub-text-link" to={`/${profile.map}/teams/${profile.slug}`}>{t("hub.full_profile")}</Link>
       </section></div>
@@ -219,17 +221,20 @@ function HubRadar({ map, level, overlays, spots = [] }: {
   const scale = meta.data?.radar.scale;
   return <div className="hub-radar" ref={host}>
     <HeatmapCanvas map={map} level={level} overlays={[]} />
-    <HeatLayers overlays={overlays} />
-    {spots.length ? <svg className="hub-utility-overlay" viewBox="0 0 1024 1024" role="img" aria-label={t("heatmap.util_spots")}>
+    {overlays.length ? <HeatLayers overlays={overlays} /> : null}
+    {spots.length ? <svg className="hub-utility-overlay" viewBox="0 0 1024 1024" role="group" aria-label={t("heatmap.util_spots")}>
       {spots.map((spot) => {
         if (spot.radar_x === null || spot.radar_y === null) return null;
         const kind = spot.type === "flashbang" ? "flash" : spot.type;
         const radius = scale && scale > 0 && (kind === "smoke" || kind === "molotov") ? (kind === "smoke" ? 144 : 120) / scale : 16 * unit;
-        return <g key={spot.spot_id} transform={`translate(${spot.radar_x} ${spot.radar_y})`}>
+        const id = [...spot.lineups].sort((a, b) => b.n - a.n)[0]?.lineup_id;
+        const label = `${t(`grenade.${spot.type}`)} · ${calloutLabel(map, spot.place)} · ${fmtInt(spot.n)}`;
+        const marker = <g transform={`translate(${spot.radar_x} ${spot.radar_y})`}>
           <title>{`${t(`grenade.${spot.type}`)} · ${calloutLabel(map, spot.place)} · ${fmtInt(spot.n)}`}</title>
           <circle r={radius} fill={GRENADE_COLORS[kind]} fillOpacity={0.16} />
           <g transform={`scale(${unit})`}><g transform="translate(-12 -12) scale(0.75)"><GrenadeGlyph type={spot.type} /></g></g>
         </g>;
+        return id ? <a key={spot.spot_id} href={`#/${map}/lineups?id=${encodeURIComponent(id)}`} aria-label={`${label} · 查看道具`}>{marker}</a> : <g key={spot.spot_id}>{marker}</g>;
       })}
     </svg> : null}
   </div>;
@@ -249,6 +254,7 @@ function TeamMapView({ profile, tactics, heatmap, baseline, change }: {
   const [view, setView] = useState<HeatView>("presence");
   const [level, setLevel] = useState(0);
   const overlays = useMemo(() => {
+    if (view === "utility") return [];
     const shape = { grid: baseline.grid, levels: baseline.levels };
     const layers: Partial<Record<HeatLayer, Dense>> = {};
     const total = heatmap.rounds.T + heatmap.rounds.CT;
@@ -271,10 +277,24 @@ function TeamMapView({ profile, tactics, heatmap, baseline, change }: {
     <PlayerCards roster={heatmap.roster} change={change} />
     <details className="hub-details hub-team-radar"><summary>{t("ui.nav_heatmaps")}</summary><section aria-label={t("ui.nav_heatmaps")}>
       <MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} />
-      <HubRadar map={heatmap.map} level={level} overlays={overlays} />
+      <HubRadar map={heatmap.map} level={level} overlays={overlays} spots={view === "utility" ? Object.values(heatmap.summary).flatMap((sides) => Object.values(sides).flatMap((summary) => summary.utility.spots)).filter((spot, index, all) => spot.level === level && all.findIndex((item) => item.spot_id === spot.spot_id) === index) : []} />
       {!overlays.length ? <p className="muted" role="status">{t("hub.no_layer")}</p> : null}
     </section></details>
   </div>;
+}
+
+function summaryRate(heatmap: TeamHeatmap, steamid: string, side: HubSide, metric: (summary: PlayerSideSummary) => number | null): number | null {
+  const sides: Side[] = side === "all" ? ["T", "CT"] : [side];
+  const known = sides.flatMap((s) => {
+    const summary = heatmap.summary[steamid]?.[s];
+    return summary && summary.rounds > 0 && metric(summary) !== null ? [summary] : [];
+  });
+  const rounds = known.reduce((n, summary) => n + summary.rounds, 0);
+  return rounds ? known.reduce((n, summary) => n + (metric(summary) ?? 0) * summary.rounds, 0) / rounds : null;
+}
+function utilityRate(summary: PlayerSideSummary): number | null {
+  const values = Object.values(summary.utility.per_round);
+  return values.some((value) => value !== null) ? values.reduce<number>((n, value) => n + (value ?? 0), 0) : null;
 }
 
 function PlayerView({ player, profile, heatmap, baseline, side, quote, change, displayName }: {
@@ -292,14 +312,19 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
     return summary ? [summary] : [];
   });
   const rounds = summaries.reduce((sum, s) => sum + s.rounds, 0);
-  function rate(metric: (summary: PlayerSideSummary) => number | null): number | null {
-    const known = summaries.filter((s) => metric(s) !== null && s.rounds > 0);
-    const n = known.reduce((sum, s) => sum + s.rounds, 0);
-    return n ? known.reduce((sum, s) => sum + (metric(s) ?? 0) * s.rounds, 0) / n : null;
+  const rate = (metric: (summary: PlayerSideSummary) => number | null) => summaryRate(heatmap, player.steamid, side, metric);
+  function comparison(metric: (summary: PlayerSideSummary) => number | null, lower = false): string {
+    const value = rate(metric);
+    const cohort = heatmap.roster.map((entry) => summaryRate(heatmap, entry.steamid, side, metric)).filter((n): n is number => n !== null);
+    if (value === null || cohort.length < 2) return "队内同图同侧：无可比样本";
+    const rank = 1 + cohort.filter((n) => lower ? n < value : n > value).length;
+    return `队内第 ${rank} / ${cohort.length} · 同图${side === "all" ? "总览" : side + "方"}长枪局${lower ? " · 越低越前" : ""}`;
   }
+  const sampleComparison = `队内样本量第 ${1 + heatmap.roster.filter((entry) => selectedSides.reduce((n, s) => n + (heatmap.summary[entry.steamid]?.[s]?.rounds ?? 0), 0) > rounds).length} / ${heatmap.roster.length} · 同图同侧长枪局`;
   const overlays = useMemo(() => {
     const grid = heatmap.players[player.steamid];
     if (!grid) return [];
+    if (view === "utility") return [];
     const shape = { grid: baseline.grid, levels: baseline.levels };
     const layers: Partial<Record<HeatLayer, Dense>> = {};
     const sides: Side[] = side === "all" ? ["T", "CT"] : [side];
@@ -348,17 +373,19 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
         <div style={{ "--side-index": SIDES.indexOf(side) } as CSSProperties}><span className="hub-side-indicator" aria-hidden="true" />{SIDES.map((s) => <button type="button" key={s} aria-pressed={side === s} onClick={() => change({ side: s })}>{s === "all" ? t("hub.overall") : t(`side.${s}`)}</button>)}</div>
       </fieldset></header>
       <div className="hub-analysis-toolbar"><div className="hub-kpis">
-        <AnimatedStat label={t("heatmap.kpr")} value={rate((s) => s.fights.kills_pr)} />
-        <AnimatedStat label={t("heatmap.dpr")} value={rate((s) => s.fights.deaths_pr)} />
-        <AnimatedStat label={t("hub.utility_pr")} value={rate((s) => Object.values(s.utility.per_round).some((v) => v !== null) ? Object.values(s.utility.per_round).reduce<number>((n, v) => n + (v ?? 0), 0) : null)} />
-        <AnimatedStat label={t("hub.sample_rounds")} value={rounds} format="integer" />
+        <AnimatedStat label={t("heatmap.kpr")} value={rate((s) => s.fights.kills_pr)} sub={comparison((s) => s.fights.kills_pr)} />
+        <AnimatedStat label={t("heatmap.dpr")} value={rate((s) => s.fights.deaths_pr)} sub={comparison((s) => s.fights.deaths_pr, true)} />
+        <AnimatedStat label={t("hub.utility_pr")} value={rate(utilityRate)} sub={comparison(utilityRate)} />
+        <AnimatedStat label={t("hub.sample_rounds")} value={rounds} format="integer" sub={sampleComparison} />
       </div>
+      <PlayerWpa player={profile} side={side} />
       <MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} /></div>
       {selectedSides.some((s) => player.low_sample[s]) ? <p className="hub-low">{t("hub.player_low", { n: baseline.min_reliable_rounds })}</p> : null}
-      {!rounds || !overlays.length ? <p className="hub-low" role="status">{t("hub.no_layer")}</p> : null}
-      <figure className="hub-map-figure"><HubRadar map={heatmap.map} level={level} overlays={overlays} spots={landingSpots} />
-        <figcaption><details className="hub-map-notes"><summary>{t(`heatmap.view.${view}`)} · {side === "all" ? t("hub.overall") : t(`side.${side}`)}</summary><p>{t("hub.map_help")}</p>
-          <div className="hub-legend">{GRENADES.map((type) => <span className="grenade-label" key={type}><GrenadeIcon type={type} />{t(`heatmap.util.${type}`)}</span>)}</div>
+      {!rounds || (view === "utility" ? !landingSpots.length : !overlays.length) ? <p className="hub-low" role="status">{t("hub.no_layer")}</p> : null}
+      <figure className="hub-map-figure"><HubRadar map={heatmap.map} level={level} overlays={overlays} spots={view === "utility" ? landingSpots : []} />
+        <figcaption>
+          <div className="hub-mini-legend" aria-label="地图图例">{view === "utility" ? <><span>图标 = 道具爆开落点 · 点击查看常用投掷</span>{GRENADES.map((type) => <span className="grenade-label" key={type}><GrenadeIcon type={type} />{t(`heatmap.util.${type}`)}</span>)}</> : <><span>低频</span><span className="hub-heat-scale" style={{ background: `linear-gradient(90deg, transparent, ${SIDE_COLORS[side].light}, ${SIDE_COLORS[side].deep})` }} /><span>高频 · {t(`heatmap.view.${view}`)}</span></>}</div>
+          <details className="hub-map-notes"><summary>{t(`heatmap.view.${view}`)} · {side === "all" ? t("hub.overall") : t(`side.${side}`)}</summary><p>{view === "utility" ? "图标表示爆开落点；点击后查看最常用的投掷方法。" : "仅显示所选行为的热力分布；低频到高频为同一图层内的相对强度。"}</p>
         </details></figcaption>
       </figure>
       <details className="hub-details"><summary>{t("hub.player_details")}</summary>

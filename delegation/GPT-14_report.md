@@ -1,0 +1,41 @@
+# GPT-14 round 1 completion report
+
+Completed in place, 2026-10-21. Read `GPT-14_review_round1.md`, `inputs/review_round1.txt`, the existing frontend edits, `DESIGN.md` (Round win probability), and the exporter/model definitions. Preserved the previous session's work. This checkout has no `.git` directory; reviewed files directly and recorded hashes before editing.
+
+## Brief, item by item
+
+| Item | Status | Implementation |
+| --- | --- | --- |
+| A1 — compact title HUD | Done | Finished the missing CSS for Home's `title-hud` and the title-row `MetricStrip` / `SampleStrip` in Lineups and Team. Smaller figures and reduced Home hero padding release space for content. |
+| A2 — portrait focus / height | Done | Roster portraits use 40% opacity plus grayscale when inactive, full colour on hover or keyboard focus. Removed inactive blur; portrait width reduced from 155% to 132% (about 15%) and row spacing reduced. Names remain in normal layout below portraits. |
+| A3 — recipe hierarchy | Done | Completed compact stat pills, two columns for core / optional spots, and a three-segment fast / mid / late bar with matching percentage labels. |
+| A4 — match list | Done | Two-column grid with W/L/D tags, opponent, score, event/date when exported, and an explicit unavailable-context fallback. |
+| B5 — team palette | Done | Applied `teamTheme` to the surrounding layout as well as Team / TeamsHub. Rings and key highlights use the team accent; supporting accents are silver/white, unknown teams have a neutral fallback, and fixed amber backgrounds were removed from team summaries/help and the surrounding page. Semantic T/CT heatmap hues remain identified by their legend. |
+| B6 — verse | Done | Transparent, unboxed white serif verse with wider spacing and a thin team-colour rule; preserved brush reveal, translation, skip behaviour and reduced motion. |
+| B7 — portrait / logo lighting | Done | Removed contour-following portrait shadows. Added blurred 80px team-colour light behind portraits with edge darkening. Team logos have no plate/border and use a broad 15% radial team-colour glow. No assets edited. |
+| B8 — dense lineups | Done | Above 50 results, radar renders weighted landing clusters and only the hovered/focused or selected arc. Added cluster styling and a finite arc reveal; reduced motion disables it. |
+| C9 — card / radar relationship | Done | Card hover/focus highlights both endpoints and the arc; mouse leave/blur restores selection. Clusters and arcs support Enter/Space. 生效时间 explains “回合开始后平均第 X 秒爆开”, with an unavailable-data fallback. |
+| C10 — player layers / comparisons | Done | Presence / holding / fights render heat only; utility renders only landing icons with links to lineups. Added relative low-to-high and grenade legends. Leading player metrics have same-map, same-side team ranks from existing heatmap summaries, including sample-size rank and lower-is-better death rank. No new export needed. |
+| C11 — recipe throw positions / split definition | Done | Recipes resolve each spot's most-used linked lineup and draw thin throw-to-landing lines; radar fit includes endpoints. Corrected the missing `calloutLabel` import in `Tactics.tsx`. Renamed the metric 多方向进点率, explaining ≥400-unit separation or ≥50° bearings, without implying a required mid split; recipe tooltip includes the exported definition. |
+| C12 — actionable team summaries | Done | Summary spot names and signature-recipe core names link to the exact recipe query, plus 查看该套路落点 →. Existing insights provide a fallback when no generated summary exists; supporting facts remain expandable. |
+
+## Additional requested work
+
+- **Player WPA:** added shared `components/PlayerWpa.tsx` to the TeamsHub player slide and Players cards. Hub T/CT follows selection; 总览 weights rates by `wpa.rounds`. Players shows T and CT separately. Displays signed one-decimal percentages, duel/utility splits, side and sample count. Keyboard/hover tooltip explains actor-team perspective, the pre-event / +2-second window, deaths, noisy/delayed utility and percentage-point semantics. Missing or invalid exports stay hidden instead of becoming zero.
+- **Recipe win probability:** optional `recipe.wp` renders 胜率变化 53% → 78% using the exported values, with a keyboard/hover explanation of commit −5s / +10s, sample count, upward selection bias and recipe-comparison-only interpretation.
+- **Falcons match timelines:** added optional cached `getWinprob` and `components/MatchWinprob.tsx`. Each available match has a visible compact sparkline with separate round traces and expandable individual-round charts. Both explicitly label **T-side probability**, including after Falcons changes sides; the export cannot establish Falcons' own per-round side. Numeric round order, 50% guide, finite coordinates and SVG accessible labels are provided. Missing files, HTML fallbacks, mismatched demos or absent/invalid traces render no chart; fetch failures do not replace the team page with an error.
+- **MiniMax pointer review:** `motion.ts::useMotionPointer` now stores the latest pointer coordinates and schedules one input RAF. That callback reads each distinct card/stage/panel box once, before updating spring targets. Pointer leave/cancel, blur, visibility/preference change and unmount cancel queued input; no geometry reads occur in `pointermove`.
+
+## Validation and limits
+
+- **Passed:** TypeScript **5.6.3**, using the installed `web/node_modules/typescript/lib/typescript.js` through macOS JavaScriptCore with an in-memory filesystem/compiler host. `ts.getPreEmitDiagnostics(ts.createProgram(...))` used the existing `web/tsconfig.json` options and all source files plus `vite.config.ts`: **zero diagnostics**, including strict types, imports/exports, unused symbols and side-effect imports. No emitted files or build.
+- **Passed:** **25 focused JavaScriptCore checks** with mocked hooks/DOM/fetch: side weighting, signed rounding, zero/missing WPA, optional timelines/cache/404/HTML/mismatched demos, timeline ordering/geometry, recipe swing and missing-WP handling, three tempo segments, >50 cluster/one-arc rendering, hover endpoint selection, and pointer batching/cancellation/cleanup/reduced motion. A 200-event burst made zero synchronous layout reads and one read for a shared card/stage/panel in the queued frame. These are component/logic checks, not a browser rendering test.
+- **Passed:** `tinycss2` parsed all `web/src/*.css` without parse errors.
+- **Smoke compatibility:** left `web/e2e/smoke.py` unchanged, as explicitly requested for Python files. Its documented `samples/site/de_mirage/lineups.json` fixture has **45 lineups**, so the existing one-arrow-per-card assertion and fifth-arrow interaction remain applicable; the focused check confirms 45 arrows. Production exports over 50 intentionally use clustering; the old smoke assertions are not appropriate for those datasets. URL state, Escape/focus restoration and reduced-motion paths were retained in source.
+- **Not run:** build and Playwright browser smoke / visual verification at 1440×900. Node/npm are unavailable, builds were prohibited, and neither system Python nor `.venv` has Playwright. Do not infer browser-smoke success from the checks above. When tooling is available, use the documented sample smoke workflow in an isolated copy so existing data stays untouched, then inspect the desktop portrait names and tooltip placement.
+- **Data availability:** current `web/public/data` has no player WPA fields or timeline JSON files; inspected Mirage recipes also lack `wp`. Optional displays therefore remain hidden until exports containing those fields are supplied. Their populated behaviour was checked using in-memory fixtures; no data was generated or changed.
+- **Scope:** edited only `web/src` and this report; no repository Python, data, `.github`, images, `delegation/design-skills`, npm dependencies, lockfiles, or built assets changed.
+
+## Files changed in this continuation
+
+`web/src/{data.ts,motion.ts,theme.ts,styles.css,teams-hub.css,tactics.css}`; `web/src/components/{Layout.tsx,TeamSummaryLinks.tsx,PlayerWpa.tsx,MatchWinprob.tsx}`; `web/src/pages/{TeamsHub.tsx,Players.tsx,Tactics.tsx,Team.tsx}`; this report. Prior edits in Home, Lineups, Radar and types were inspected and retained.

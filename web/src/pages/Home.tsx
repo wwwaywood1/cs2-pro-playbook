@@ -32,14 +32,15 @@ export default function Home() {
       <section className="hero" data-motion-parallax>
         <ParallaxLayer className="cover-light" />
         <p className="eyebrow">{t("site.eyebrow")}</p>
-        <h1>{t("ui.app_title")}</h1>
+        <div className="title-hud"><h1>{t("ui.app_title")}</h1>
+          <MetricStrip items={[
+            { label: t("site.map_coverage"), value: data.maps.length },
+            { label: t("ui.nav_lineups"), value: data.maps.reduce((n, item) => n + item.n_lineups, 0) },
+          ]} />
+        </div>
         <PageContext>{t("site.home_context")}</PageContext>
       </section>
 
-      <MetricStrip items={[
-        { label: t("site.map_coverage"), value: data.maps.length },
-        { label: t("ui.nav_lineups"), value: data.maps.reduce((n, item) => n + item.n_lineups, 0) },
-      ]} />
       <section className="cover-maps">
         <h2 className="section-title">{t("ui.nav_maps")}</h2>
         <Stagger className="map-grid">

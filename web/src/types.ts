@@ -97,6 +97,9 @@ export interface TeamProfile {
     opponent: string | null;
     score_for: number;
     score_against: number;
+    event?: string | null;
+    event_name?: string | null;
+    date?: string | null;
   }[];
   sides: { T: TSide; CT: CTSide };
   economy: { side: Side; buy_type: BuyType; rounds: number; won: number; win_rate: number | null }[];
