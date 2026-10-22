@@ -158,25 +158,26 @@ def _pretty_event(slug: str) -> str:
     return " ".join(out)
 
 
-def demo_events(raw_dir: Path = RAW_DIR) -> dict[str, str]:
-    """Event name per demo_id, read from where the file sits:
+def demo_event_slug(path: Path, raw_dir: Path = RAW_DIR) -> str | None:
+    """Shared source-path event identity for display names and date lookup."""
+    rel = path.relative_to(raw_dir).parts
+    if rel[0] == "cs2povarchive" and len(rel) >= 3:
+        return rel[1]
+    if rel[0] == "hltv" and len(rel) >= 3:
+        team1 = path.stem.split("-vs-")[0]
+        marker = f"-{team1}-vs-"
+        if marker in rel[1]:
+            return rel[1].split(marker)[0]
+    return None
 
-    - ``cs2povarchive/<event>/<match>/<file>.dem``      -> ``<event>``
-    - ``hltv/<event>-<team1>-vs-<team2>-bo3-<hash>/<team1>-vs-<team2>-mN-<map>.dem`` -> archive prefix
-    """
+
+def demo_events(raw_dir: Path = RAW_DIR) -> dict[str, str]:
+    """Event name per demo_id, derived from the archive/dataset directory."""
     from playbook.parse import demo_identity
 
     out: dict[str, str] = {}
-    for p in raw_dir.rglob("*.dem"):
-        rel = p.relative_to(raw_dir).parts
-        event = None
-        if rel[0] == "cs2povarchive" and len(rel) >= 3:
-            event = rel[1]
-        elif rel[0] == "hltv" and len(rel) >= 3:
-            team1 = p.stem.split("-vs-")[0]
-            prefix = rel[1].split(f"-{team1}-vs-")[0] if f"-{team1}-vs-" in rel[1] else None
-            if prefix and prefix != rel[1]:
-                event = prefix
-        if event:
-            out.setdefault(demo_identity(p)["demo_id"], _pretty_event(event))
+    for path in sorted(raw_dir.rglob("*.dem")):
+        slug = demo_event_slug(path, raw_dir)
+        if slug:
+            out.setdefault(demo_identity(path)["demo_id"], _pretty_event(slug))
     return out

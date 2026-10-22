@@ -1,3 +1,5 @@
+import MatchDate, { MatchTimeFilter } from "../components/MatchDate";
+import { inTimeRange, newestMatch, type TimeRange } from "../matchDates";
 import Segmented from "../components/Segmented";
 import { ctSetupLabel } from "../labels";
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -16,7 +18,7 @@ import PlayerWpa from "../components/PlayerWpa";
 import PlayerRadar6 from "../components/PlayerRadar6";
 import TeamShield from "../components/TeamShield";
 import { Loading } from "../components/Status";
-import { getAssetSlots, getHeatmapBaseline, getHeatmapTeams, getLineups, getMeta, getPlayerQuotes, getPlayers, getTactics, getTeam, getTeamHeatmap, useData } from "../data";
+import { getIndex, getAssetSlots, getHeatmapBaseline, getHeatmapTeams, getLineups, getMeta, getPlayerQuotes, getPlayers, getTactics, getTeam, getTeamHeatmap, useData } from "../data";
 import { fmtInt, fmtNum, fmtPct } from "../format";
 import { blur, combine, denseLayers, differenceRgba, HEAT_PHASES, playerRgba, toDataUrl, VIEW_WEIGHTS, type Dense, type HeatView } from "../heatmap";
 import { calloutLabel, t, useLang } from "../i18n";
@@ -109,16 +111,19 @@ function Heading({ children }: { children: string }) {
 }
 
 function Results({ team }: { team: TeamEntry }) {
+  const [range, setRange] = useState<TimeRange>("all");
+  const index = useData(getIndex, []);
   const results = team.maps.flatMap((map) => (map.results ?? []).map((match) => ({ ...match, map: map.display_name })));
-  results.sort((a, b) => (b.hltv_match_id ?? 0) - (a.hltv_match_id ?? 0) || b.demo_id.localeCompare(a.demo_id));
+  results.sort(newestMatch);
+  const visible = results.filter((match) => inTimeRange(match, range, index.data?.data_through));
   return <section className="hub-results" aria-label={t("hub.results")}>
     <h3>{t("hub.results")}</h3>
-    <p className="muted">{t("hub.results_order")}</p>
-    {results.length ? <ul>{results.slice(0, 5).map((result) => <li key={result.demo_id}>
+    <MatchTimeFilter value={range} onChange={setRange} />
+    {visible.length ? <ul>{visible.map((result) => <li key={result.demo_id} data-date={result.date ?? ""}>
       <span className={`hub-result ${result.score_for > result.score_against ? "is-win" : ""}`}>
         {t(result.score_for === result.score_against ? "hub.draw" : result.score_for > result.score_against ? "hub.win" : "hub.loss")}
       </span>
-      <span>{result.opponent ?? t("hub.unknown_opponent")}<small>{[result.map, result.event_name || result.event, result.date].filter(Boolean).join(" · ")}</small></span>
+      <span>{result.opponent ?? t("hub.unknown_opponent")}<small>{result.map} · <MatchDate match={result} /></small></span>
       <strong>{fmtInt(result.score_for)} : {fmtInt(result.score_against)}</strong>
     </li>)}</ul> : <p className="muted">{t("heatmap.no_data")}</p>}
   </section>;
@@ -520,6 +525,7 @@ export default function TeamsHub() {
   const validMap = team?.maps.some((entry) => entry.map === map);
   function change(patch: Partial<Selection>) {
     const next = currentHubParams();
+    if ("team" in patch || "map" in patch || "player" in patch) next.delete("match");
     for (const [key, value] of Object.entries(patch)) value ? next.set(key, value) : next.delete(key);
     if (!next.get("team")) for (const key of ["map", "player", "side"]) next.delete(key);
     else if (!next.get("map")) for (const key of ["player", "side"]) next.delete(key);
@@ -538,19 +544,21 @@ export default function TeamsHub() {
     document.addEventListener("keydown", escape);
     return () => document.removeEventListener("keydown", escape);
   }, [params, requested.team]);
+  const matchId = params.get("match");
   const previous = useRef({ teamSlug, map, player });
   useEffect(() => {
     if (teams.loading) return;
     const prev = previous.current;
     const isClose = (prev.player && !player) || (prev.map && !map) || (prev.teamSlug && !teamSlug);
     if (!teamSlug && !isClose) return;
-    const target = isClose ? !teamSlug ? `hub-team-${prev.teamSlug}` : !map ? `hub-map-${prev.map}` : `hub-player-${prev.player}` : "hub-heading";
+    const target = matchId ? `match-${matchId}` : isClose ? !teamSlug ? `hub-team-${prev.teamSlug}` : !map ? `hub-map-${prev.map}` : `hub-player-${prev.player}` : "hub-heading";
     let frame = 0;
     const focus = () => {
       const node = document.getElementById(target);
       if (!node) return false;
       const details = node.closest("details");
       if (details) details.open = true;
+      if (matchId) node.tabIndex = -1;
       node.focus();
       return true;
     };
@@ -562,7 +570,7 @@ export default function TeamsHub() {
     });
     previous.current = { teamSlug, map, player };
     return () => { cancelAnimationFrame(frame); observer.disconnect(); };
-  }, [teamSlug, map, player, teams.loading]);
+  }, [teamSlug, map, player, matchId, teams.loading]);
   const filtered = (teams.data ?? []).filter((entry) => entry.team.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
   return <ReducedMotion.Provider value={reduced}><Assets.Provider value={assets.data ?? EMPTY_ASSETS}><div className={`hub-page${teamSlug ? " hub-page-selected" : ""}`} ref={page} style={teamTheme(teamSlug)}>
     {!teamSlug ? <header className="page-head"><div><p className="hub-eyebrow">{t("hub.eyebrow")}</p><h1>{t("hub.title")}</h1><p className="muted">{t("hub.description")}</p></div></header> : null}

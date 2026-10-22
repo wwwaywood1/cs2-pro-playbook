@@ -19,9 +19,16 @@ export interface Ranked<V = string> {
   win_rate: number | null;
 }
 
+export interface MatchDateInfo {
+  date?: string | null;
+  date_precision?: "day" | "event" | "exact" | null;
+  event?: string | null;
+}
+
 export interface SiteIndex {
   schema_version: 1;
   generated_at: string;
+  data_through?: string | null;
   min_matches_reliable: number;
   data_source: string;
   maps: {
@@ -33,6 +40,8 @@ export interface SiteIndex {
     n_lineups: number;
     /** true when <map>/heatmaps/ exists */
     heatmaps?: boolean;
+    min_date?: string | null;
+    max_date?: string | null;
     win_rate_T?: number | null;
     win_rate_CT?: number | null;
     top_recipe?: { id: string; name: { zh: string; en: string } } | null;
@@ -104,6 +113,7 @@ export interface TeamProfile {
     event?: string | null;
     event_name?: string | null;
     date?: string | null;
+    date_precision?: MatchDateInfo["date_precision"];
   }[];
   sides: { T: TSide; CT: CTSide };
   economy: { side: Side; buy_type: BuyType; rounds: number; won: number; win_rate: number | null }[];
@@ -418,7 +428,7 @@ export interface Recipe {
   avg_flashes: number;
   split_rate: number;
   /** replay: a 2D replay file exists at <map>/replay/<demo_id>/<round_num>.json */
-  examples: { demo_id: string; round_num: number; team: string; replay?: boolean }[];
+  examples: (MatchDateInfo & { demo_id: string; round_num: number; team: string; replay?: boolean })[];
   /** mean T win probability 5 s before the commit and 10 s after (playbook/winprob.py); compare recipes, not absolute effect */
   wp?: { n: number; before: number; after: number; delta: number };
   /** typical T entry routes from round start to the commit (playbook/tactics.py recipe_routes); points in radar px */
@@ -509,7 +519,7 @@ type ReplayEvent =
   | { t: number; kind: "util"; nade: "smoke" | "flash" | "molotov" | "he"; by: number | null; at: ReplayPoint | null; from: ReplayPoint | null }
   | { t: number; kind: "plant"; site: string; at: ReplayPoint | null };
 
-export interface ReplayRound {
+export interface ReplayRound extends MatchDateInfo {
   demo_id: string; round_num: number; map: string;
   teams: { T: string; CT: string }; winner: "T" | "CT"; reason?: string | null; duration: number;
   /** index = column in frames */

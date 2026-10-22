@@ -1,3 +1,4 @@
+import MatchDate from "./MatchDate";
 import { framePosition, lastPosition, roundClock, utilityEffect } from "../replayMath";
 import Segmented from "./Segmented";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -88,7 +89,7 @@ function ReplayContent({ map, demoId, round }: { map: string; demoId: string; ro
   const { data, loading, error } = useData(() => demoId && round > 0
     ? getReplay(map, demoId, round) : Promise.reject(new Error("回合地址无效")), [map, demoId, round]);
   return loading ? <Loading /> : error || !data ? <p role="alert">{t("hub.load_error")}</p> : <>
-    <p className="replay-title-match">{data.teams.T}（T） · {data.teams.CT}（CT） · 第 {fmtInt(data.round_num)} 回合 · 胜方：{data.teams[data.winner]}</p>
+    <p className="replay-title-match">{data.teams.T}（T） · {data.teams.CT}（CT） · 第 {fmtInt(data.round_num)} 回合 · 胜方：{data.teams[data.winner]} · <MatchDate match={data} /></p>
     <ReplayViewer replay={data} commit={commit} />
   </>;
 }

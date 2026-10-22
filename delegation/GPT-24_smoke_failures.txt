@@ -1,0 +1,35 @@
+223:FAIL match_dates (#/teams-hub?team=vitality): Page.unroute: Object of type Request is not JSON serializable
+224:FAIL command_palette (#/de_mirage/tactics): Locator expected to be visible
+225-Actual value: None
+226-Error: element(s) not found 
+227-Call log:
+228-  - Expect "to_be_visible" with timeout 5000ms
+229-  - waiting for locator(".palette-results [role=option]").first
+230-
+231:FAIL team (#/de_mirage/teams/vitality): Page.wait_for_selector: Timeout 10000ms exceeded.
+232-Call log:
+233-  - waiting for locator(".hub-player-card") to be visible
+234-
+235-ok   teams page lists both teams
+236:FAIL team_shields (#/teams-hub): Page.wait_for_selector: Timeout 10000ms exceeded.
+237-Call log:
+238-  - waiting for locator(".hub-team-card") to be visible
+239-
+240:FAIL radar6 (#/teams-hub?team=vitality&map=de_mirage&player=76561198113666193&side=T): Page.wait_for_selector: Timeout 10000ms exceeded.
+241-Call log:
+242-  - waiting for locator(".hub-player-view") to be visible
+243-
+244-ok   players page shows role hints (ZywOo AWPer)
+245:FAIL players (#/de_mirage/players): Locator.click: Timeout 10000ms exceeded.
+246-Call log:
+247-  - waiting for locator("header button").filter(has_text="EN").first
+248-    - locator resolved to <button title="语言" type="button" aria-label="语言" class="lang-toggle">EN</button>
+249-  - attempting click action
+250-    2 × waiting for element to be visible, enabled and stable
+251-      - element is visible, enabled and stable
+252-      - scrolling into view if needed
+253-      - done scrolling
+--
+290-ok   no console errors (0): []
+291-
+292:FAIL: 137 checks, 12 failure(s)

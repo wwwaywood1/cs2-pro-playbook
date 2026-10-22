@@ -1,3 +1,5 @@
+import MatchDate from "../components/MatchDate";
+import { newestMatch } from "../matchDates";
 import PracticeCopy from "../components/PracticeCopy";
 import { recipeBind } from "../practice";
 import Num from "../components/Num";
@@ -163,8 +165,8 @@ function RecipeDetails({ recipe, entries, splitDefinition, map, teams }: { recip
     </div> : <p className="muted">{t("tactics.no_data")}</p>}
     <ul className="tactics-tempo-labels">{tempos.map((row) => <li key={row.value} data-tempo={row.value}>{t(`tactics.tempo.${row.value}`)} {total ? fmtPct(row.rounds / total) : "—"}</li>)}</ul>
     <details><summary>{t("tactics.teams")}</summary><ul className="tactics-inline-list">{[...recipe.teams].sort((a, b) => b.rounds - a.rounds).map((team) => <li key={team.team}>{teams.has(team.team) ? <Link to={`/teams-hub?${new URLSearchParams({ team: teams.get(team.team)!, map })}`}>{team.team}</Link> : team.team} · {t("tactics.round_count", { n: fmtInt(team.rounds) })}</li>)}</ul></details>
-    <details><summary>{t("tactics.examples")}</summary>{recipe.examples.length ? <ul className="tactics-inline-list">{recipe.examples.map((example) => <li key={`${example.demo_id}:${example.round_num}:${example.team}`}>
-      {example.team} · {t("tactics.example_round", { n: fmtInt(example.round_num) })} · <code>{example.demo_id}</code> {example.replay ? <ReplayButton map={map} demoId={example.demo_id} round={example.round_num} /> : null}
+    <details><summary>{t("tactics.examples")}</summary>{recipe.examples.length ? <ul className="tactics-inline-list">{[...recipe.examples].sort(newestMatch).map((example) => <li key={`${example.demo_id}:${example.round_num}:${example.team}`}>
+      {example.team} · {t("tactics.example_round", { n: fmtInt(example.round_num) })} · <MatchDate match={example} /> · <code>{example.demo_id}</code> {example.replay ? <ReplayButton map={map} demoId={example.demo_id} round={example.round_num} /> : null}
     </li>)}</ul> : <p className="muted">{t("tactics.no_data")}</p>}</details>
   </div>;
 }

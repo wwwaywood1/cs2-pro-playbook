@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { getHeatmapTeams, getIndex, getLineups, getPlayers, getTactics, useData } from "../data";
+import { matchDateLabel, newestMatch } from "../matchDates";
 import { calloutLabel, t, useLang } from "../i18n";
 
 interface Entry { id: string; label: string; terms: string; to: string; kind: string }
@@ -91,6 +92,10 @@ function PaletteContent({ currentMap, close, opener }: { currentMap?: string; cl
     const all: Entry[] = [
       ...(index.data?.maps.filter((map) => map.n_matches > 0).map((map) => ({ id: `map:${map.map}`, label: map.display_name, terms: `${map.map} ${map.display_name}`, kind: t("ui.nav_maps"), to: `/${map.map}/tactics` })) ?? []),
       ...(teams.data?.map((team) => ({ id: `team:${team.slug}`, label: team.team, terms: `${team.team} ${team.slug}`, kind: t("ui.nav_teams"), to: `/teams-hub?${new URLSearchParams({ team: team.slug })}` })) ?? []),
+      ...(teams.data?.flatMap((team) => team.maps.flatMap((map) => [...(map.results ?? [])].sort(newestMatch).map((match) => {
+        const label = `${team.team} vs ${match.opponent ?? "—"} · ${map.display_name} · ${matchDateLabel(match)}`;
+        return { id: `match:${map.map}:${team.slug}:${match.demo_id}`, label, terms: `${label} ${match.date ?? ""} ${match.event ?? ""} ${match.demo_id}`, kind: t("ui.matches_title"), to: `/teams-hub?${new URLSearchParams({ team: team.slug, map: map.map, match: match.demo_id })}` };
+      }))) ?? []),
       ...Object.values(mapEntries).flat(),
     ];
     return all.filter((entry) => tokens.every((token) => compact(entry.terms).includes(compact(token)))).slice(0, 80);

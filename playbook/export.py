@@ -33,7 +33,8 @@ from playbook.insights import attach_summaries, team_insights
 from playbook.zones import make_summarizer, team_setup
 from playbook.store import read_all
 from playbook.semantics import round_plants
-from playbook.dedupe import deduplicate_tables, demo_events, hltv_demo_ids
+from playbook.dedupe import deduplicate_tables, hltv_demo_ids
+from playbook.dates import DATE_FIELDS, attach_dates, attach_example_dates, match_date_key
 from playbook import replay, winprob
 from playbook.radar6 import player_radar
 
@@ -154,7 +155,7 @@ def team_profiles(sub: dict[str, pl.DataFrame], mm: MapMeta) -> list[dict]:
                 "opponent": row["team_b"] if me_a else row["team_a"],
                 "score_for": row["score_a"] if me_a else row["score_b"],
                 "score_against": row["score_b"] if me_a else row["score_a"],
-                "event": row.get("event"),
+                **{field: row.get(field) for field in DATE_FIELDS},
             })
         eco = (
             d.group_by("side", "buy_type").agg(rounds=pl.len(), won=pl.col("won").sum()).sort("side", "buy_type")
@@ -165,7 +166,7 @@ def team_profiles(sub: dict[str, pl.DataFrame], mm: MapMeta) -> list[dict]:
             "map": mm.name,
             "n_matches": len(demo_ids),
             "low_sample": len(demo_ids) < MIN_MATCHES_RELIABLE,
-            "matches": match_list,
+            "matches": sorted(match_list, key=match_date_key, reverse=True),
             "sides": {s: _side_summary(d.filter(pl.col("side") == s), s) for s in ("T", "CT")},
             "economy": [
                 {"side": s, "buy_type": b, "rounds": n, "won": w, "win_rate": _rate(w, n)}
@@ -386,8 +387,8 @@ def team_hub_map_stats(profile: dict) -> dict:
         "win_rate_CT": sides["CT"]["win_rate"],
         "all_rounds": rounds,
         "low_sample": profile["low_sample"],
-        # Source IDs are ordering hints, not match dates; the UI labels this explicitly.
-        "results": sorted(matches, key=lambda m: (m.get("hltv_match_id") or 0, m["demo_id"]), reverse=True)[:5],
+        # Preserve the complete archive so calendar filters run before any UI limit.
+        "results": sorted(matches, key=match_date_key, reverse=True),
     }
 
 
@@ -540,6 +541,7 @@ def _add_player_tactics(mdir: Path, players: list[dict], res: dict, player_round
 
 def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None:
     t = read_all(parsed_dir)
+    t["matches"] = attach_dates(t["matches"])
     t, duplicates = deduplicate_tables(t, preferred_ids=hltv_demo_ids())
     print(f"deduplicated {len(duplicates)} duplicate demos")
     # Old semantic tables may contain a post-round plant; keep every exported view
@@ -548,12 +550,10 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
     t["team_rounds"] = t["team_rounds"].drop("plant_site", "plant_t_s", "planted").join(
         plants, on=["demo_id", "round_num"], how="left", validate="m:1"
     ).with_columns(planted=pl.col("plant_site").is_not_null())
-    events = demo_events()
-    t["matches"] = t["matches"].with_columns(
-        pl.col("demo_id").replace_strict(events, default=None, return_dtype=pl.Utf8).alias("event"))
     matches = t["matches"]
     index = {
         "schema_version": SCHEMA_VERSION,
+        "data_through": matches["date"].drop_nulls().max(),
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "min_matches_reliable": MIN_MATCHES_RELIABLE,
         "data_source": "Professional CS2 match demos (provenance per demo in matches; see DESIGN.md, Data sources)",
@@ -594,6 +594,7 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         ])
         _write(mdir / "lineups.json", lineups)
         res = analyse_map(sub, mm, nade_lineup)
+        attach_example_dates(res["recipes"], sub["matches"])
         spot_names = name_spots(res["spots"], load_spot_names(map_name))
         for r in res["recipes"]:
             _filter_lineup_refs(r["core"], lineup_ids)
@@ -634,6 +635,8 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
             "map": map_name, "display_name": mm.display_name, "n_matches": len(ids),
             "teams": [p["slug"] for p in teams], "n_players": len(players), "n_lineups": len(lineups),
             "heatmaps": True,
+            "min_date": sub["matches"]["date"].drop_nulls().min(),
+            "max_date": sub["matches"]["date"].drop_nulls().max(),
             **map_card_summary(sub["team_rounds"], res["recipes"]),
         })
         print(f"  {map_name}: {len(ids)} matches, {len(teams)} teams, {len(players)} players, {len(lineups)} lineups")

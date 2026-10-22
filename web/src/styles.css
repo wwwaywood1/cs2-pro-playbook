@@ -1583,3 +1583,11 @@ input:focus-visible,
 
 .low-sample-inline { display: inline-flex; align-items: baseline; gap: .35em; color: var(--muted); font-size: .75rem; font-weight: 400; line-height: 1.5; }
 .low-sample-inline .low-sample-mark { flex: none; }
+
+/* Match dates and the shared calendar window control. */
+.match-date { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.match-time-filter { margin-block: .75rem; max-width: 100%; flex-wrap: wrap; }
+.match-time-filter button { white-space: nowrap; }
+.match-time-filter button:disabled { opacity: .45; cursor: default; }
+.footer-data-through { font-variant-numeric: tabular-nums; }
+.match:target, .match.is-selected { outline: 1px solid currentColor; outline-offset: 2px; }

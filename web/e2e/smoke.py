@@ -740,6 +740,67 @@ def check_hub_entrance(smoke: Smoke, page: Page) -> None:
 
 
 
+@route('#/teams-hub?team=vitality', '.hub-team-panel')
+def check_match_dates(smoke: Smoke, page: Page) -> None:
+    """Deterministic dates exercise the real controls with sample or full exports."""
+    root = Path(__file__).resolve().parents[1] / 'public/data'
+    index = json.loads((root / 'index.json').read_text())
+    index['data_through'] = '2026-08-01'
+    teams = json.loads((root / 'heatmap_teams.json').read_text())
+    team = next(team for team in teams if team['slug'] == 'vitality')
+    profile = json.loads((root / 'de_mirage/teams/vitality.json').read_text())
+    base = dict(profile['matches'][0], opponent='Date Test Opponent', event='Date Test Event')
+    rows = [dict(base, demo_id=f'date-test-{i}', hltv_match_id=9000 + i,
+                 date=value, date_precision=precision) for i, (value, precision) in enumerate([
+                     ('2026-05-12', 'day'), ('2026-06-01', 'event'),
+                     ('2026-07-20', 'exact'), (None, None)])]
+    profile['matches'] = rows
+    map_entry = next(item for item in team['maps'] if item['map'] == 'de_mirage')
+    map_entry['results'] = rows
+    team['maps'] = [map_entry]
+    patterns = {
+        '**/data/index.json': index,
+        '**/data/heatmap_teams.json': teams,
+        '**/data/de_mirage/teams/vitality.json': profile,
+    }
+    for pattern, payload in patterns.items():
+        page.route(pattern, lambda request, payload=payload: request.fulfill(json=payload))
+    try:
+        page.reload()
+        page.locator('.hub-team-results > summary').click()
+        results = page.locator('.hub-results')
+        expect(results.locator('li')).to_have_count(4)
+        smoke.check(results.locator('li').evaluate_all('(rows) => rows.map(row => row.dataset.date)') ==
+                    ['2026-07-20', '2026-06-01', '2026-05-12', ''],
+                    'archive sorts by date with unknown dates last')
+        expect(results.locator('[data-precision=event]')).to_have_text('2026-06 · Date Test Event')
+        smoke.check('估算' in results.locator('[data-precision=day]').get_attribute('title'),
+                    'estimated day explains its precision in the tooltip')
+        results.get_by_role('button', name='近 3 个月', exact=True).click()
+        expect(results.locator('li')).to_have_count(3)
+        results.get_by_role('button', name='近 1 个月', exact=True).click()
+        expect(results.locator('li')).to_have_count(1)
+        results.get_by_role('button', name='全部', exact=True).click()
+        expect(results.locator('li')).to_have_count(4)
+        expect(page.locator('.footer-data-through')).to_contain_text('2026-08-01')
+        smoke.check(True, 'calendar windows use data_through and All restores undated matches')
+        page.keyboard.press('Control+k')
+        page.locator('#palette-query').fill('Date Test Opponent Date Test Event 2026-07-20')
+        option = page.locator('.palette-results [role=option]').filter(has_text='2026-07-20').first
+        expect(option).to_be_visible()
+        option.click()
+        archive = page.locator('.hub-team-matches')
+        expect(archive).to_have_attribute('open', '')
+        expect(archive.locator('.match')).to_have_count(4)
+        smoke.check('match=date-test-2' in page.url, 'match search by opponent, event and date opens its archive')
+        archive.get_by_role('button', name='近 1 个月', exact=True).click()
+        expect(archive.locator('.match')).to_have_count(1)
+        smoke.check(True, 'team map archive has the same date window control')
+    finally:
+        for pattern in patterns:
+            page.unroute(pattern)
+
+
 @route('#/de_mirage/tactics', '.tactics-page')
 def check_command_palette(smoke: Smoke, page: Page) -> None:
     page.locator('.palette-trigger').focus()

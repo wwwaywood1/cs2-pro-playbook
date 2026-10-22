@@ -15,6 +15,7 @@ def test_build_round():
         pos.append({"demo_id": "d", "round_num": 1, "t_s": t, "steamid": "b", "name": "Bob", "side": "CT", "team": "Y",
                     "x": 50.0, "y": 50.0, "alive": t < 2})
     sub = {
+        "matches": pl.DataFrame([{"demo_id": "d", "date": "2026-05-09", "date_precision": "day", "event": "Test Event"}]),
         "positions": pl.DataFrame(pos),
         "rounds": pl.DataFrame([{"demo_id": "d", "round_num": 1, "dur_s": 3.2, "t_team": "X", "ct_team": "Y",
                                  "winner_side": "T", "reason": "ct_killed"}]),
@@ -27,6 +28,7 @@ def test_build_round():
                                        "x": pl.Float64, "y": pl.Float64}),
     }
     r = build_round(sub, MM, "d", 1, [0.5, 0.6, 0.8, 0.9])
+    assert (r["date"], r["date_precision"], r["event"]) == ("2026-05-09", "day", "Test Event")
     assert r["duration"] == 4 and len(r["frames"]) == 5
     names = [p["name"] for p in r["players"]]
     assert names == ["Ann", "Bob"]                           # T first

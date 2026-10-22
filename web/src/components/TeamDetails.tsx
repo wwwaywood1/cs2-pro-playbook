@@ -1,7 +1,10 @@
+import MatchDate, { MatchTimeFilter } from "./MatchDate";
+import { getIndex, useData } from "../data";
+import { inTimeRange, newestMatch, type TimeRange } from "../matchDates";
 import Segmented from "./Segmented";
 import { ctSetupLabel } from "../labels";
-import { Fragment, useState, type ReactNode, type CSSProperties } from "react";
-import { Link } from "react-router-dom";
+import { Fragment, useEffect, useState, type ReactNode, type CSSProperties } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Stagger } from "./Motion";
 import Stat from "./Stat";
 import MatchWinprob from "./MatchWinprob";
@@ -245,17 +248,25 @@ export default function TeamDetails({ team, tacticsContent, heatmapContent, deta
 }) {
   const lang = useLang();
   const [side, setSide] = useState<Side>("T");
+  const [range, setRange] = useState<TimeRange>("all");
+  const index = useData(getIndex, []);
+  const [params] = useSearchParams();
+  const matchId = params.get("match");
+  useEffect(() => { if (matchId) setRange("all"); }, [matchId]);
+  const matches = [...team.matches].sort(newestMatch);
+  const visible = matches.filter((match) => inTimeRange(match, range, index.data?.data_through));
   const wins = team.matches.filter((match) => match.score_for > match.score_against).length;
   const losses = team.matches.filter((match) => match.score_for < match.score_against).length;
   return <div className="hub-archive-cards">
-    <details className="hub-details hub-archive-card hub-team-matches">
-      <summary><strong>{t("round4.archive_matches", { n: fmtInt(team.matches.length), w: fmtInt(wins), l: fmtInt(losses) })}</strong><small>{team.matches[0] ? `${team.matches[0].opponent ?? "—"} · ${fmtInt(team.matches[0].score_for)} : ${fmtInt(team.matches[0].score_against)}` : t("heatmap.no_data")}</small></summary>
+    <details className="hub-details hub-archive-card hub-team-matches" open={params.has("match") ? true : undefined}>
+      <summary><strong>{t("round4.archive_matches", { n: fmtInt(team.matches.length), w: fmtInt(wins), l: fmtInt(losses) })}</strong><small>{matches[0] ? `${matches[0].opponent ?? "—"} · ${fmtInt(matches[0].score_for)} : ${fmtInt(matches[0].score_against)}` : t("heatmap.no_data")}</small></summary>
       <p className="muted">{t("round3.round_bars_caption")}</p>
-      <ul className="match-list">{team.matches.length ? team.matches.map((match) => {
+      <MatchTimeFilter value={range} onChange={setRange} />
+      <ul className="match-list">{visible.length ? visible.map((match) => {
         const outcome = match.score_for > match.score_against ? "win" : match.score_for < match.score_against ? "loss" : "draw";
-        return <li key={match.demo_id} className={`match is-${outcome}`} title={match.demo_id}>
+        return <li key={match.demo_id} className={`match is-${outcome}${params.get("match") === match.demo_id ? " is-selected" : ""}`} data-date={match.date ?? ""} id={`match-${match.demo_id}`} title={match.demo_id}>
           <span className="match-outcome" aria-label={t(`hub.${outcome}`)}>{outcome === "win" ? "W" : outcome === "loss" ? "L" : "D"}</span>
-          <span className="match-opponent">{match.opponent ?? "—"}<small className="match-context">{[match.event_name || match.event, match.date].filter(Boolean).join(" · ")}</small></span>
+          <span className="match-opponent">{match.opponent ?? "—"}<small className="match-context"><MatchDate match={match} /></small></span>
           <span className="match-score">{fmtInt(match.score_for)} : {fmtInt(match.score_against)}</span>
           {match.winprob_available ? <MatchWinprob map={team.map} demoId={match.demo_id} teamSlug={team.slug} /> : null}
         </li>;

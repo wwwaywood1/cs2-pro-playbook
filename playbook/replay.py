@@ -113,7 +113,10 @@ def build_round(sub: dict[str, pl.DataFrame], mm: MapMeta, demo: str, rnd: int,
         events.append({"t": round(float(row["t_s"]), 1), "kind": "plant", "site": row["site"],
                        "at": _px(mm, row["x"], row["y"])})
     events.sort(key=lambda e: e["t"])
-    return {
+    match = sub.get("matches", pl.DataFrame())
+    rows = match.filter(pl.col("demo_id") == demo).to_dicts() if "demo_id" in match.columns else []
+    metadata = {field: rows[0].get(field) if rows else None for field in ("date", "date_precision", "event")}
+    return {**metadata,
         "demo_id": demo, "round_num": int(rnd), "map": mm.name,
         "teams": {"T": r0["t_team"], "CT": r0["ct_team"]}, "winner": r0["winner_side"],
         "reason": r0.get("reason"), "duration": dur,

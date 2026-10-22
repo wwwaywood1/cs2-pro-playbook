@@ -83,6 +83,7 @@ export default function Layout() {
       <footer className="footer">
         <div className="footer-inner">
           <span>{t("ui.data_source_note")}</span>
+          <span className="footer-data-through">{lang === "zh" ? "数据截至" : "Data through"} {index?.data_through ?? "—"}</span>
           <span className="footer-generated">
             {t("ui.generated_at")}: {fmtDateTime(index?.generated_at, lang)}
           </span>
