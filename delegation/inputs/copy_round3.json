@@ -1,0 +1,13 @@
+{
+  "matches_title": "本图比赛记录",
+  "matches_toggle": "展开 {n} 场比赛",
+  "round_bars_caption": "每回合胜率变化：绿色上升，红色下降",
+  "team_page_moved": "战队详情已并入战队总览",
+  "team_page_go": "前往战队总览 →",
+  "routes_title": "进点路线",
+  "route_label": "{via}：{p}% 的队员",
+  "routes_tip": "从回合开始到进点那一刻，T 方队员最常走的路径，按途经的位置分组；线越细，走的人越少",
+  "routes_none": "回合数不足，暂无路线",
+  "hover_hint": "悬停任意一行，地图上同步高亮",
+  "spot_on_map": "在地图上显示 {name}"
+}
