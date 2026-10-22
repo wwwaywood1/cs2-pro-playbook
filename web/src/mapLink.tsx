@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type FocusEvent, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type FocusEvent, type ReactNode } from "react";
 import { t } from "./i18n";
 import "./map-link.css";
 
@@ -25,7 +25,14 @@ export function MapLinkProvider({ scope, initialId = null, children }: { scope: 
   const pointerId = pointer?.scope === scope ? pointer.id : null;
   const focusId = focus?.scope === scope ? focus.id : null;
   const activeId = (latest === "focus" ? focusId ?? pointerId : pointerId ?? focusId) ?? initialId;
-  const bind: MapLink["bind"] = (id) => ({
+  // a hovered/focused row that unmounts (filter change, list swap) never fires leave/blur:
+  // drop its id so the rest of the list does not stay dimmed
+  useEffect(() => {
+    for (const [id, clear] of [[pointerId, () => setPointer(null)], [focusId, () => setFocus(null)]] as const) {
+      if (id && !document.querySelector(`[data-map-link="${CSS.escape(id)}"]`)) clear();
+    }
+  });
+  const bind = useCallback<MapLink["bind"]>((id) => ({
     "data-map-link": id,
     "data-map-state": activeId ? activeId === id ? "active" : "dimmed" : undefined,
     onMouseEnter: () => { setPointer({ scope, id }); setLatest("pointer"); },
@@ -35,8 +42,9 @@ export function MapLinkProvider({ scope, initialId = null, children }: { scope: 
       if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) return;
       setFocus((current) => current?.scope === scope && current.id === id ? null : current);
     },
-  });
-  return <MapLinks.Provider value={{ activeId, bind }}>{children}</MapLinks.Provider>;
+  }), [scope, activeId]);
+  const value = useMemo(() => ({ activeId, bind }), [activeId, bind]);
+  return <MapLinks.Provider value={value}>{children}</MapLinks.Provider>;
 }
 
 export function useMapLink() {
