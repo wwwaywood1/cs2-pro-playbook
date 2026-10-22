@@ -78,7 +78,7 @@ def run():
             safe("card", lambda: (to(cards.nth(i), 15), wait(0.9)))
         cap("点击 NiKo：出场动画 + 定场诗", "定场诗自上而下逐列展开，全亮度保留")
         cards.nth(3).click(); wait(6)
-        cap("选手页：每回合胜率贡献（WPA）和同图同阵营排名"); wait(3)
+        cap("v3.1：图层 / 阶段按钮移到地图正上方，一屏内就能切换并看到完整地图", "悬停与选手页的每回合击杀统一为同一口径"); wait(3.5)
         def radar6():
             fig = pg.locator(".player-radar6").first; to(fig); wait(1)
             cap("新：6 维风格画像", "首杀倾向、道具投入、补枪、残局、站位深度等；悬停看百分位和定义")
@@ -104,26 +104,28 @@ def run():
             to(summ); summ.click(); wait(1.2); pg.mouse.wheel(0, 500); wait(3)
             bar = pg.locator("g.winprob-round[role=button]").nth(8)
             cap("点击任意一根柱子：打开这一回合的 2D 回放"); to(bar, 20); wait(1); bar.click(); wait(2)
-            cap("升级后的 2D 回放：CS2 倒计时（下包后切换为 C4 40 秒）", "名字缩写、死亡位置留灰色 ×、右侧击杀栏、烟雾按真实半径和剩余时间绘制")
+            cap("v3.1 回放：出生点名字自动错开，事件列表改为倒计时 + 阵营 + 谁 → 做了什么 → 在哪", "例：1:31 [CT] NiKo 投掷 警家火；击杀附胜率变化；闪光默认隐藏")
             play = pg.locator("button", has_text="播放").first
             if play.count(): to(play); play.click()
             wait(6)
             sp = pg.locator("button", has_text="4×").first
-            if sp.count(): cap("4 倍速；胜率曲线和进度条上标出击杀 / 烟雾 / 下包"); to(sp, 15); sp.click()
+            if sp.count(): cap("4 倍速；× 击杀 / ☁ 烟雾 / 💣 下包 直接标在 T 方胜率曲线上"); to(sp, 15); sp.click()
             wait(5)
             cap("快捷键：K 跳到下一次击杀，P 跳到下包，空格暂停"); pg.keyboard.press("Space"); wait(0.6)
+            ev = pg.locator("label", has_text="全部事件").first
+            if ev.count(): cap("勾选「全部事件（含闪光）」显示完整流水"); to(ev, 15); ev.click(); wait(2); ev.click(); wait(0.5)
             pg.keyboard.press("k"); wait(2); pg.keyboard.press("k"); wait(2); pg.keyboard.press("p"); wait(2.5)
             cap("按 Esc 关闭回放"); pg.keyboard.press("Escape"); wait(2)
         safe("replay", replay_from_archive)
         # 4 tactics
         cap("进入「战术」页：Mirage 的 T 方进攻套路"); pg.goto(BASE + "#/de_mirage/tactics"); wait(3.5)
-        cap("选中的套路：道具按投掷顺序排列，注明投掷位置", "新：意图标签（假打转点 / 多向夹击 / 一波流）和进点同步时间"); wait(4)
+        cap("选中的套路：道具按投掷顺序排列，注明投掷位置", "v3.1：意图标签（⚡ 一波流 / ✂️ 多向夹击）显示在卡片标题旁，折叠时也可见"); wait(4)
         def intent():
             b_ = pg.locator(".recipe-intent").first; to(b_); wait(2)
         safe("intent", intent)
         rows = pg.locator(".tactics-route-row")
         for i in range(min(3, rows.count())):
-            safe("route", lambda: (cap(f"新：路线用标准点位名命名（经过的主要卡点 · 走这条路的队员比例）", "悬停只高亮这一条"), to(rows.nth(i), 15), wait(1.8)))
+            safe("route", lambda: (cap("v3.1：路线名按实际画出的路径命名 —— a = A1 斜坡主攻线，b = A二楼线", "悬停只高亮这一条"), to(rows.nth(i), 15), wait(1.8)))
         links = pg.locator(".tactics-recipe-details [data-map-link]")
         for i in range(min(3, links.count())):
             safe("link", lambda: (cap("悬停道具行：地图上对应道具同步高亮"), to(links.nth(i), 15), wait(1.3)))
@@ -145,22 +147,24 @@ def run():
             t3 = toggles.nth(3); cap("换一套爆弹：左侧地图、标题、路线同步切换"); to(t3); t3.click(); wait(3.5)
         safe("other", other)
         # 5 lineups
-        cap("进入「道具库」：所有职业选手用过的道具"); pg.keyboard.press("Escape"); pg.keyboard.press("Escape"); pg.goto(BASE + "#/de_mirage/lineups"); wait(6); pg.set_default_timeout(15000)
+        cap("进入「道具库」：分段按钮不再竖排折行；列表每次加载 60 颗，Mirage 共 2,443 颗"); pg.keyboard.press("Escape"); pg.keyboard.press("Escape"); pg.goto(BASE + "#/de_mirage/lineups"); wait(6); pg.set_default_timeout(15000)
         safe("must", lambda: (cap("只看「必学」：职业比赛里用过 50 次以上的道具"), to(pg.locator("button", has_text="必学").first), pg.locator("button", has_text="必学").first.click(), wait(2.5)))
         def pick():
             cl = pg.locator("g.landing-cluster").first
             cap("新：直接在地图上点选", "先点落点，地图随即显示扔到这里的所有投掷位置"); to(cl); wait(0.8); cl.click(); wait(2.5)
             cand = pg.locator("g.arrow-group").nth(2)
-            cap("再点一个投掷位置，直接选中这颗道具"); to(cand); wait(0.8); cand.click(force=True); wait(2.5)
+            cap("再点一个投掷位置，直接选中；地图上方出现「× 清除地图选点」"); to(cand); wait(0.8); cand.click(force=True); wait(2.5)
         safe("pick", pick)
         def bind():
             btn = pg.locator("button", has_text="复制练习绑定").first; to(btn); wait(0.6)
             cap("一键复制练习绑定（setpos + setang）", "粘贴到控制台，按小键盘回车即可回到投掷位置重练"); btn.click(); wait(3)
-            pg.keyboard.press("Escape"); wait(1)
         safe("bind", bind)
+        def clear():
+            c = pg.locator("button", has_text="清除地图选点").first; cap("点「× 清除地图选点」回到全部道具"); to(c); wait(0.6); c.click(); wait(2)
+        safe("clear", clear)
         arts = pg.locator("article[data-map-link]")
         for i in range(min(2, arts.count())):
             safe("art", lambda: (cap("悬停卡片：地图画出站位、朝向和落点"), to(arts.nth(i), 20), wait(1.8)))
-        cap("演示结束", "CS2 职业战术手册 v3 · 样板战队 Falcons"); wait(3)
+        cap("演示结束", "CS2 职业战术手册 v3.1 · 样板战队 Falcons"); wait(3)
         ctx.close(); b.close()
 run()
