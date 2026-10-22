@@ -346,7 +346,19 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
   side: HubSide; quote?: PlayerQuotes[string]; change: Change; displayName: string;
 }) {
   const [params, setParams] = useSearchParams();
-  const ghost = params.get("ghost") === "1";
+  // HashRouter transitions URL updates. Keep the controlled input urgent so React
+  // does not restore its old checked value before that navigation commits.
+  // Local state is the source of truth after mount (the URL only mirrors it for sharing):
+  // re-reading params here raced with HashRouter's transitioned navigation and undid the click.
+  const [ghost, setGhost] = useState(() => params.get("ghost") === "1");
+  function toggleGhost(checked: boolean) {
+    setGhost(checked);
+    setParams((current) => {
+      const next = new URLSearchParams(current);
+      if (checked) next.set("ghost", "1"); else next.delete("ghost");
+      return next;
+    }, { replace: true });
+  }
   const { activeId, bind } = useMapLink();
   const reduced = useContext(ReducedMotion);
   const details = useRef<HTMLDetailsElement>(null);
@@ -445,7 +457,7 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
           <details className="hub-map-notes"><summary>{t(`heatmap.view.${view}`)} · {t(`side.${side}`)}</summary><p>{t("round2.time_help")}</p>
         </details></figcaption>
       </figure>
-      <aside className="hub-map-side"><label className="ghost-toggle" title="比较本侧、本阶段的归一化站位分布；全部楼层共用同一色阶"><input type="checkbox" checked={ghost} onChange={(event) => { const checked = event.target.checked; setParams((current) => { const next = new URLSearchParams(current); if (checked) next.set("ghost", "1"); else next.delete("ghost"); return next; }, { replace: true }); }} />{t("round5.ghost_toggle")}</label>{ghost ? <p className="ghost-legend" role="status">{t("round5.ghost_legend")}</p> : null}<PlayerWpa player={profile} side={side} />
+      <aside className="hub-map-side"><label className="ghost-toggle" title="比较本侧、本阶段的归一化站位分布；全部楼层共用同一色阶"><input type="checkbox" checked={ghost} onChange={(event) => toggleGhost(event.target.checked)} />{t("round5.ghost_toggle")}</label>{ghost ? <p className="ghost-legend" role="status">{t("round5.ghost_legend")}</p> : null}<PlayerWpa player={profile} side={side} />
         <MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} phase={phase} setPhase={setPhase} /></aside></div>
       <details ref={details} className="hub-details"><summary>{t("hub.player_details")}</summary>
         <h3>{t("heatmap.zones")}</h3>

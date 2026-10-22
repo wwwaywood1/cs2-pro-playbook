@@ -1,0 +1,35 @@
+28:FAIL lineups (#/de_mirage/lineups): Locator.inner_text: Timeout 10000ms exceeded.
+29-Call log:
+30-  - waiting for locator(".lineup-card").first.locator(".practice-row button").first
+31-
+32-ok   selected recipe draws its player entry route
+33-ok   entry route label includes its share
+34-ok   route names use the first non-spawn choke
+35-ok   entry route has an arrowhead
+36-ok   tactics has one shared hover hint
+--
+60:FAIL replay_switching (#/de_mirage/tactics): Locator expected to have Value '5'
+61-Actual value: 10 
+62-Call log:
+63-  - Expect "to_have_value" with timeout 5000ms
+64-  - waiting for locator(".replay-scrubber")
+65-    9 × locator resolved to <input min="0" max="10" step="0.1" value="10" type="range" aria-label="已进行 10.0s" class="replay-scrubber"/>
+66-      - unexpected value "10"
+67-
+68-ok   rounds absent from the replay index remain static
+--
+100:FAIL hub_player (#/teams-hub?team=vitality&map=de_mirage&player=76561198113666193&side=CT): Page.wait_for_function: Timeout 10000ms exceeded.
+101-ok   heatmap offers T and CT only
+102:FAIL hub_entrance (#/teams-hub?team=vitality&map=de_mirage&player=76561198113666193&side=all): Page.wait_for_selector: Timeout 10000ms exceeded.
+103-Call log:
+104-  - waiting for locator(".hub-player-view[data-entrance=\"full\"]") to be visible
+105-
+106-ok   palette supports keyboard result selection
+107-ok   palette Enter opens the matched team
+108-ok   team match metadata omits missing fields
+109-ok   legacy team URL redirects to the matching hub slide
+110-ok   legacy team page is removed
+--
+131-ok   no console errors (0): []
+132-
+133:FAIL: 118 checks, 9 failure(s)

@@ -1,0 +1,25 @@
+56:FAIL replay_switching (#/de_mirage/tactics): Page.wait_for_selector: Timeout 10000ms exceeded.
+57-Call log:
+58-  - waiting for locator(".tactics-recipe.is-selected") to be visible
+59-
+60-ok   rounds absent from the replay index remain static
+61-ok   closing the archive replay preserves the hub map slide
+62-ok   heatmaps has one shared hover hint
+63-ok   heatmap team navigation points to the merged hub
+64-ok   hub team selection is in URL
+65-ok   sample Vitality map card shows map wins, not round wins
+66-ok   animated map rates settle on the exact exported values
+103:FAIL hub_entrance (#/teams-hub?team=vitality&map=de_mirage&player=76561198113666193&side=all): Locator.check: Clicking the checkbox did not change its state
+104-Call log:
+105-  - waiting for get_by_role("checkbox", name="对比本图同阵营职业平均", exact=True)
+106-    - locator resolved to <input type="checkbox"/>
+107-  - attempting click action
+108-    - waiting for element to be visible, enabled and stable
+109-    - element is visible, enabled and stable
+110-    - scrolling into view if needed
+111-    - done scrolling
+112-    - performing click action
+113-    - click action done
+142-ok   no console errors (0): []
+143-
+144:FAIL: 126 checks, 7 failure(s)

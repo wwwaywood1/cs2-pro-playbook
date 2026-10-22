@@ -330,7 +330,13 @@
 .hub-utility-overlay [role="button"] { cursor: pointer; }
 
 /* Plain vertical text has one shaping/layout owner: no transformed glyph boxes. */
-.hub-page .hub-verse { opacity: .28; animation: none !important; }
+/* Verse: plain text columns (no per-glyph transforms, so glyphs can never overlap), revealed
+   column by column with a top-down wipe on the entrance; full strength afterwards (owner's call). */
+.hub-page .hub-verse { opacity: 1; animation: none !important; }
+.hub-player-view:not([data-entrance="settled"]) .hub-verse-column { animation: hub-verse-wipe var(--verse-duration, 400ms) var(--hub-ease) both; animation-delay: calc(var(--verse-delay, 820ms) + var(--col, 0) * 260ms); }
+.hub-verse-column:nth-child(2) { --col: 1; }
+@keyframes hub-verse-wipe { from { clip-path: inset(0 0 100% 0); opacity: .2; filter: blur(4px); } to { clip-path: inset(0 0 0 0); opacity: 1; filter: blur(0); } }
+@media (prefers-reduced-motion: reduce) { .hub-verse-column { animation: none !important; } }
 .hub-page .hub-verse-columns::after { content: none !important; animation: none !important; }
 .hub-player-analysis > .hub-details { margin-top: 32px; }
 .hub-player-analysis > .hub-details > summary { min-height: 42px; }

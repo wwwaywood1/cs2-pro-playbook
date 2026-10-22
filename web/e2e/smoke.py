@@ -173,13 +173,16 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     first.get_by_role('button', name='复制练习绑定', exact=True).click()
     bound = page.evaluate("navigator.clipboard.readText()")
     smoke.check(bound.startswith('bind "KP_ENTER" "setpos ') and ';setang ' in bound, 'lineup practice bind copies position and angles under KP_ENTER')
+    # Check feedback while its card is still mounted. The sample has no >=10-throw
+    # lineups, so exercising the next tier below deliberately removes this button.
+    expect(btn).to_have_text(label_before, timeout=3000)
+    smoke.check(True, "copy button label resets after 1.5s")
     tiers = page.locator('#filter-tiers')
     tiers.locator('button').first.focus()
     page.keyboard.press('ArrowRight')
     expect(tiers.locator('button').nth(1)).to_have_attribute('aria-pressed', 'true')
     smoke.check(tiers.locator('.segment-highlight').evaluate('el => el.getBoundingClientRect().width') > 0, 'shared segmented control supports arrows and positions its highlight')
-    page.wait_for_timeout(1700)
-    smoke.check(btn.inner_text() == label_before, "copy button label resets after 1.5s")
+    expect(page.locator('.lineup-card')).to_have_count(smoke.expected_count(min_throws=10))
 
 
 @route('#/de_mirage/tactics', '.tactics-page')
@@ -340,6 +343,14 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
 @route('#/de_mirage/tactics', '.tactics-page')
 def check_replay_switching(smoke: Smoke, page: Page) -> None:
     """An obsolete response and playback state must not replace the selected round."""
+    # G prefers the selected recipe's median (covered in check_tactics_linking).
+    # Explicitly omit it here so this case exercises the first-entry-kill fallback.
+    root = Path(__file__).resolve().parents[1]
+    tactics_url = '**/data/de_mirage/tactics.json'
+    tactics = json.loads((root / 'public/data/de_mirage/tactics.json').read_text())
+    for recipe in tactics['recipes']:
+        recipe.pop('median_commit_s', None)
+    page.route(tactics_url, lambda request: request.fulfill(json=tactics))
     pending = []
     late_url = '**/data/de_mirage/replay/smoke-late/1.json'
     fast_url = '**/data/de_mirage/replay/smoke-fast/*.json'
@@ -350,6 +361,11 @@ def check_replay_switching(smoke: Smoke, page: Page) -> None:
     }))
     try:
         page.emulate_media(reduced_motion='reduce')
+        # Reload clears the application's cached tactics from the runner's initial visit.
+        page.reload()
+        # samples/site has no recipes. Page readiness must also work for that
+        # valid empty state; populated exports still exercise missing medians.
+        page.wait_for_selector('.tactics-page')
         with page.expect_request('**/data/de_mirage/replay/smoke-late/1.json'):
             page.goto(f'{smoke.base}/#/de_mirage/tactics?replay=smoke-late:1')
         page.wait_for_selector('dialog[open]')
@@ -361,6 +377,7 @@ def check_replay_switching(smoke: Smoke, page: Page) -> None:
         smoke.check(True, 'late replay response cannot replace the selected round')
         page.keyboard.press('g')
         expect(page.locator('.replay-scrubber')).to_have_value('5')
+        smoke.check(True, 'G falls back to the first entry kill when no recipe commit time is available')
         page.locator('.replay-scrubber').fill('3')
         page.get_by_role('button', name='4×', exact=True).click()
         page.locator('.replay-player').first.focus()
@@ -378,6 +395,7 @@ def check_replay_switching(smoke: Smoke, page: Page) -> None:
             request.fulfill(json=replay_fixture())
         page.unroute(late_url)
         page.unroute(fast_url)
+        page.unroute(tactics_url)
         page.emulate_media(reduced_motion='no-preference')
 
 
@@ -430,14 +448,28 @@ def check_archive_replay(smoke: Smoke, page: Page) -> None:
 
 @route('#/heatmaps/vitality?map=de_mirage', '.hm-player-card')
 def check_heatmap_linking(smoke: Smoke, page: Page) -> None:
+    # The first render canonicalizes defaults into the URL. Wait for that render
+    # before focusing: MapLinkProvider deliberately invalidates links on URL changes.
+    page.wait_for_function("""() => {
+        const query = new URLSearchParams(location.hash.split('?')[1]);
+        return ['side', 'players', 'view', 'phases', 'mode', 'sigma', 'level'].every(key => query.has(key));
+    }""")
+    # HashRouter may publish history before committing React. A reload at the
+    # canonical URL makes those defaults the initial scope, with no pending rewrite.
+    page.reload()
+    page.wait_for_selector('.hm-player-card')
+    # Keep auto-scrolling focused rows from putting another marker under the pointer.
+    page.mouse.move(0, 0)
     keys = page.locator('.hm-player-card [data-map-link^="place:"]').evaluate_all(
         'rows => [...new Set(rows.map(row => row.dataset.mapLink))]')
     key = next(key for key in keys if page.locator(f'.hm-radar [data-map-link="{key}"]').count())
     row = page.locator(f'.hm-player-card [data-map-link="{key}"]').first
     marker = page.locator(f'.hm-radar [data-map-link="{key}"]').first
     row.focus()
+    expect(row).to_be_focused()
     expect(marker).to_have_attribute('data-map-state', 'active')
     marker.focus()
+    expect(marker).to_be_focused()
     expect(row).to_have_attribute('data-map-state', 'active')
     smoke.check(page.locator('.map-link-hint').count() == 1, 'heatmaps has one shared hover hint')
     smoke.check(page.locator('a[href*="teams-hub"][href*="team=vitality"]').count() == 1,
@@ -556,8 +588,8 @@ def check_hub_player(smoke: Smoke, page: Page) -> None:
     page.wait_for_function("""() => [...document.querySelectorAll('.hub-count')].every(
         el => el.dataset.rolling === 'false' && el.querySelector('.sr-only').textContent === el.querySelector('.hub-number-final').textContent)""")
     page.get_by_role('button', name='T', exact=True).click()
-    page.wait_for_function("""() => document.querySelector('.hub-side-indicator') &&
-        getComputedStyle(document.querySelector('.hub-side-indicator')).transitionDuration === '0s' &&
+    page.wait_for_function("""() => document.querySelector('.hub-side-switch .segment-highlight') &&
+        getComputedStyle(document.querySelector('.hub-side-switch .segment-highlight')).transitionDuration === '0s' &&
         !document.querySelector('.hub-stage').getAnimations({subtree: true}).some(a => a.playState === 'running')""")
     smoke.check(page.locator('.hub-stage').evaluate('(el) => getComputedStyle(el).animationName') == 'none',
                 'reduced motion disables CSS motion and WAAPI count-ups during a side change')
@@ -565,7 +597,7 @@ def check_hub_player(smoke: Smoke, page: Page) -> None:
         el => el.dataset.rolling === 'false' && el.querySelector('.sr-only').textContent === el.querySelector('.hub-number-final').textContent)""")
     smoke.check(True, 'reduced motion presents final numeric values immediately')
     page.emulate_media(reduced_motion='no-preference')
-    page.wait_for_function("getComputedStyle(document.querySelector('.hub-side-indicator')).transitionDuration !== '0s'")
+    page.wait_for_function("getComputedStyle(document.querySelector('.hub-side-switch .segment-highlight')).transitionDuration !== '0s'")
     # Exercise interruption: a queued map exit must not override a newer team close.
     page.keyboard.press('Escape')
     page.keyboard.press('Escape')
@@ -577,6 +609,8 @@ def check_hub_player(smoke: Smoke, page: Page) -> None:
 
 @route('#/teams-hub?team=vitality&map=de_mirage&player=76561198113666193&side=all', '.hub-player-view')
 def check_hub_entrance(smoke: Smoke, page: Page) -> None:
+    # Entrance coverage must not inherit reduced motion from a failed previous case.
+    page.emulate_media(reduced_motion='no-preference')
     # Test owner-style copy without modifying the sample registry or production data.
     player = '76561198113666193'
     smoke.check(page.locator('.hub-side-switch button').count() == 2, 'heatmap offers T and CT only')
@@ -601,22 +635,38 @@ def check_hub_entrance(smoke: Smoke, page: Page) -> None:
             page.get_by_role('button', name=button, exact=True).click()
         smoke.check(page.locator('.hub-verse-columns').inner_text() == verse and page.locator('.hub-verse').evaluate('el => getComputedStyle(el).animationName') == 'none',
                     'layer rerenders preserve the verse and never restart its animation')
-        smoke.check(page.locator('.hub-verse').evaluate('el => Number(getComputedStyle(el).opacity)') < .3, 'verse opacity stays below 0.3')
+        smoke.check(page.locator('.hub-verse').evaluate('el => Number(getComputedStyle(el).opacity)') == 1, 'verse stays at full strength after the entrance')
         details = page.locator('.hub-player-analysis > details')
         smoke.check(details.evaluate("el => Boolean(el.querySelector('h3').compareDocumentPosition(el.querySelector('.hub-kpis')) & Node.DOCUMENT_POSITION_FOLLOWING)"),
                     'player details begin with a section heading before the large role statistics')
         ghost = page.get_by_role('checkbox', name='对比本图同阵营职业平均', exact=True)
-        ghost.check()
+        if not ghost.is_checked():
+            ghost.click()
+        expect(ghost).to_be_checked()
         expect(page.locator('.ghost-legend')).to_contain_text('琥珀色')
+        page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('ghost') === '1'")
         smoke.check('ghost=1' in page.url and page.locator('.hub-layer-in image').count() > 0, 'ghost comparison is rendered and represented in the URL')
         ghost.uncheck()
+        expect(ghost).not_to_be_checked()
+        page.wait_for_function("!new URLSearchParams(location.hash.split('?')[1]).has('ghost')")
+        expect(page.locator('.ghost-legend')).to_have_count(0)
         page.keyboard.press('Escape')
         page.wait_for_selector(f'#hub-player-{player}')
         page.locator(f'#hub-player-{player}').click()
         expect(page.locator('.hub-player-view')).to_have_attribute('data-entrance', 'short')
-        page.keyboard.press('Shift')
+        ghost.focus()
+        page.keyboard.press('Space')
+        expect(ghost).to_be_checked()
+        expect(ghost).to_be_focused()
+        expect(page.locator('.ghost-legend')).to_be_visible()
+        page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('ghost') === '1'")
         expect(page.locator('.hub-player-view')).to_have_attribute('data-entrance', 'settled')
-        smoke.check('player=' in page.url, 'any key skips the shortened entrance without changing route')
+        smoke.check('player=' in page.url, 'Space skips the shortened entrance and toggles the focused ghost checkbox')
+        page.keyboard.press('Space')
+        expect(ghost).not_to_be_checked()
+        page.wait_for_function("!new URLSearchParams(location.hash.split('?')[1]).has('ghost')")
+        expect(page.locator('.ghost-legend')).to_have_count(0)
+        smoke.check(True, 'Space toggles ghost comparison off and removes its URL state and legend')
         counts = page.locator('.hub-sample-inline .hub-count')
         t_rounds = counts.last.get_attribute('data-value')
         before_heat = page.locator('.hub-layer-in image').first.get_attribute('href')
@@ -628,12 +678,26 @@ def check_hub_entrance(smoke: Smoke, page: Page) -> None:
         page.wait_for_function("!document.querySelector('.hub-count[data-rolling=\"true\"]')")
         smoke.check(page.locator('.hub-layer-in image').first.get_attribute('href') != before_heat,
                     'CT changes the heat texture and side hue independently of team palette')
+        # A pointer action must also skip the entrance and operate the input.
+        page.evaluate('(id) => sessionStorage.removeItem(`hub-intro:${id}`)', player)
+        page.reload()
+        page.wait_for_selector('.hub-player-view[data-entrance="full"]')
+        ghost.check()
+        expect(ghost).to_be_checked()
+        expect(page.locator('.hub-player-view')).to_have_attribute('data-entrance', 'settled')
+        page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('ghost') === '1'")
+        smoke.check(True, 'clicking the ghost checkbox during the full entrance toggles it and skips the intro')
+        # Reload must restore ghost from the URL, including under reduced motion.
         # Start another full entrance, then change the accessibility preference mid-flight.
         page.evaluate('(id) => sessionStorage.removeItem(`hub-intro:${id}`)', player)
         page.reload()
         page.wait_for_selector('.hub-player-view[data-entrance="full"]')
         page.emulate_media(reduced_motion='reduce')
         expect(page.locator('.hub-player-view')).to_have_attribute('data-entrance', 'settled')
+        expect(ghost).to_be_checked()
+        ghost.uncheck()
+        expect(ghost).not_to_be_checked()
+        page.wait_for_function("!new URLSearchParams(location.hash.split('?')[1]).has('ghost')")
         page.wait_for_function("!document.querySelector('.hub-stage').getAnimations({subtree: true}).some(a => a.playState === 'running')")
         smoke.check(page.locator('.hub-intro-skip, .hub-portrait-transfer').count() == 0,
                     'live reduced motion finishes the title sequence and removes transfer layers')
@@ -725,6 +789,8 @@ def run_route(smoke: Smoke, case: Route, page: Page, *, mobile: bool = False) ->
         # Preserve the failing page and continue so one route cannot hide others.
         smoke.check(False, f"{label} ({case.path}): {error}")
     finally:
+        # A failed assertion must not disable motion in every subsequent route.
+        page.emulate_media(reduced_motion='no-preference')
         if smoke.shots:
             try:
                 page.screenshot(path=str(smoke.shots / f"{label}.png"), full_page=True)

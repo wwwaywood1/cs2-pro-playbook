@@ -75,3 +75,42 @@ Additional checks:
 - **Not verified in-game:** CS2 console acceptance of the generated practice scripts; aliases and numeric command order were checked locally.
 
 Next in an environment with Node and browser tooling: run `cd web && npm run build`, serve `web/dist`, then `.venv/bin/python web/e2e/smoke.py http://localhost:4173` from the repository root. Inspect NiKo at 1440×900 after hovering map markers and switching layers/sides, and verify the entire replay WP chart remains visible. No data regeneration is required for these frontend changes.
+
+
+## Round 2
+
+Reviewed `delegation/GPT-21_smoke_failures.txt`, the five reported cases, `delegation/GPT-21_round5.md`, and the current source against the Vitality sample data. The corrections are in `web/e2e/smoke.py`; no production behavior or sample exports were changed. The supplied failure excerpt contains four desktop traces, but does not include the reported `heatmap_linking` trace; its diagnosis below follows the source lifecycle and remains subject to browser confirmation. The 375px cases were left outside this round's scope.
+
+| Failure | Code or test? | Cause and fix |
+| --- | --- | --- |
+| `lineups`: missing `.practice-row button` | **Test** | The button exists in `Lineups.tsx`. The timeout occurs at the **last** read of the same locator, after the new segmented-control keyboard check selects the common (≥10 throws) tier. All 45 sample lineups have 2–9 throws, so that action removes every card. Check the copy-label reset with a retrying assertion **before** changing the tier; then assert the filtered card count separately. Clipboard and bind assertions remain. |
+| `replay_switching`: G seeks to 10 instead of 5 | **Test fixture** | `Tactics` canonicalizes the selected recipe into the URL. Its real sample `median_commit_s` exceeds the ten-second replay fixture, so `ReplayViewer` correctly prioritizes the recipe commit and clamps it to 10, as required by brief B. Mock tactics without commit timestamps and reload to clear the data cache before testing the first-entry-kill fallback at 5. Keep the existing recipe-median/clamping coverage in `check_tactics_linking`, delayed-response protection, and round-reset assertions. |
+| `heatmap_linking`: no active state | **Test readiness / pointer isolation** (source diagnosis; browser confirmation pending) | `TeamHeatmap.HeatmapView` renders cards before its effect writes default filters into the URL. `App` scopes `MapLinkProvider` to the full query, so focusing during that rewrite can immediately invalidate the old focus target. The shared test page also retains its previous pointer position, which can activate a different link when focus scrolls the page. Wait for canonical defaults, reload at that URL to make them the initial React scope, and park the pointer outside the workspace. Retain both reciprocal `data-map-state="active"` checks and additionally assert actual row/marker focus. |
+| `hub_player`: CT deep-link timeout | **Test selector** | The player slide loads; the later reduced-motion check waits for `.hub-side-indicator`, removed from the DOM by brief C's shared segmented control. Use `.hub-side-switch .segment-highlight` for both reduced-motion and restored-transition checks. Keep the deep-link, phase, count, and rapid-Escape checks. |
+| `hub_entrance`: full entrance never visible | **Test state leak** | The preceding `hub_player` timeout leaves `prefers-reduced-motion: reduce` enabled on the shared page. `usePlayerEntrance` correctly initializes as `settled` under that preference. Explicitly select normal motion for entrance coverage and restore normal motion in `run_route`'s `finally`, even after failed cases. Keep the fresh-session full intro, repeat short intro, skip, verse stability, and ghost checks. |
+
+Verification:
+
+- **PASS:** `.venv/bin/python -m pytest -q` — **196 passed, 1 skipped, 1 warning in 18.60s**. Log: `delegation/GPT-21_pytest_round2.log`. The warning is the existing joblib physical-core fallback.
+- **PASS:** `.venv/bin/python -m py_compile web/e2e/smoke.py`.
+- **PASS:** `.venv/bin/python delegation/outputs/GPT-21_verify.py` — **22 runtime checks**.
+- **PASS:** Standard TypeScript build check and Vite production build using the bundled Node discovered at `/Users/stephen/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node`: `node web/node_modules/typescript/bin/tsc -b web` and `node web/node_modules/vite/bin/vite.js build web --outDir /tmp/gpt21-round2-dist` — 85 modules transformed, build succeeded.
+- **BLOCKED in this execution environment:** full Playwright smoke rerun. Repository/system Python has no Playwright module; the installed Node Playwright was tried directly, but Chromium closes during launch. A localhost server attempt also fails with `PermissionError: [Errno 1] Operation not permitted`. No browser pass is claimed. Immediate follow-up in the browser-capable environment: rebuild with sample data and run `python web/e2e/smoke.py http://localhost:4173`; review the five desktop cases, particularly the heatmap lifecycle diagnosis.
+
+
+## Round 3
+
+Reviewed `delegation/GPT-21_smoke_failures_r2.txt` and corrected the two remaining desktop failures.
+
+| Failure | Cause | Fix |
+| --- | --- | --- |
+| `replay_switching` | **Test readiness assumption.** Selected recipe articles still use `.tactics-recipe.is-selected` (`web/src/pages/Tactics.tsx`); `web/src/hud.css` styles that same class. The supplied `samples/site/de_mirage/tactics.json` has **zero recipes**, whereas the current `web/public` export has 23. Waiting for a selected recipe therefore cannot succeed against the sample build. | `web/e2e/smoke.py:check_replay_switching` waits for `.tactics-page`, which renders after tactics loading, including the valid empty state. Retained delayed-response isolation, G's first-entry-kill fallback, time/speed reset and modal focus assertions. Existing `check_tactics_linking` uses explicit recipe fixtures to retain selection and median-commit coverage. |
+| `hub_entrance` ghost checkbox | **Controlled-input scheduling bug (source diagnosis).** `PlayerView` derived `checked` entirely from `useSearchParams`; `onChange` only navigated. `web/src/main.tsx` enables `HashRouter`'s `v7_startTransition`, so the URL-derived checked value can remain old when React restores a controlled checkbox after a native click. The existing handler did update the URL; decorative entrance/transfer overlays already have `pointer-events: none`. | `web/src/pages/TeamsHub.tsx:PlayerView` now updates local checkbox/overlay state synchronously in `toggleGhost`, then replaces the `ghost` URL parameter. An effect synchronizes local state when URL parameters change; initial state reads the URL on reload. Native checkbox semantics provide Tab focus and Space activation. Added smoke coverage for checked/unchecked state, URL and legend removal, Space activation/deactivation with retained focus during the short entrance, pointer activation during the full entrance, reload restoration, and reduced-motion deactivation. URL assertions explicitly await the deferred navigation. |
+
+Verification:
+
+- **PASS:** `.venv/bin/python -m pytest -q` — **196 passed, 1 skipped, 1 warning in 20.63s**. Log: `delegation/GPT-21_pytest_round3.log`. Existing joblib physical-core fallback warning only.
+- **PASS:** `.venv/bin/python -m py_compile web/e2e/smoke.py`.
+- **PASS:** `/Users/stephen/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node web/node_modules/typescript/bin/tsc -b web`.
+- **PASS:** Same Node executable with `web/node_modules/vite/bin/vite.js build web --outDir /tmp/gpt21-round3-dist` — 85 modules transformed. Log: `delegation/GPT-21_build_round3.log`.
+- **Browser verification pending:** localhost socket binding still fails with `PermissionError: [Errno 1] Operation not permitted`; explicitly launching the installed Chromium headless shell through Node Playwright closes during launch. No browser pass is claimed. Next check in the browser-capable environment: rebuild with sample data, rerun `web/e2e/smoke.py`, and confirm both desktop cases plus the new pointer/keyboard assertions. Mobile failures remain outside this round's scope.
