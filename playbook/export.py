@@ -33,7 +33,7 @@ from playbook.insights import attach_summaries, team_insights
 from playbook.zones import make_summarizer, team_setup
 from playbook.store import read_all
 from playbook.semantics import round_plants
-from playbook.dedupe import deduplicate_tables, hltv_demo_ids
+from playbook.dedupe import deduplicate_tables, demo_events, hltv_demo_ids
 from playbook import winprob
 
 SCHEMA_VERSION = 1
@@ -153,6 +153,7 @@ def team_profiles(sub: dict[str, pl.DataFrame], mm: MapMeta) -> list[dict]:
                 "opponent": row["team_b"] if me_a else row["team_a"],
                 "score_for": row["score_a"] if me_a else row["score_b"],
                 "score_against": row["score_b"] if me_a else row["score_a"],
+                "event": row.get("event"),
             })
         eco = (
             d.group_by("side", "buy_type").agg(rounds=pl.len(), won=pl.col("won").sum()).sort("side", "buy_type")
@@ -421,6 +422,7 @@ def _add_team_tactics(mdir: Path, teams: list[dict], res: dict, names: dict) -> 
         _write(mdir / "teams" / f"{p['slug']}.json", p)
 
 
+WPA_MIN_ROUNDS = 50  # sample needed to rank a player's WPA among peers
 SHOWCASE_TEAMS = {"Falcons"}  # teams that get per-round WP timelines (files stay small)
 
 
@@ -432,11 +434,19 @@ def _add_winprob(mdir: Path, ids: list[str], teams: list[dict], players: list[di
         pl.len().alias("rounds"))
     rows = {(sid, side): r for sid, side, *r in winprob.player_wpa(ev, played).select(
         "steamid", "side", "rounds", "wpa_total_per_round", "wpa_duels_per_round", "wpa_utility_per_round").iter_rows()}
+    # percentile among players of this map and side with a reliable sample
+    pool = {side: sorted(v[1] for (sid, sd), v in rows.items() if sd == side and v[0] and v[0] >= WPA_MIN_ROUNDS)
+            for side in ("T", "CT")}
     for p in players:
         for side in ("T", "CT"):
             r = rows.get((str(p["steamid"]), side))
             if r and r[0]:
-                p[side]["wpa"] = {"rounds": int(r[0]), "per_round": r[1], "duels": r[2], "utility": r[3]}
+                ref = pool[side]
+                pct = (sum(1 for v in ref if v <= r[1]) / len(ref)) if (ref and r[0] >= WPA_MIN_ROUNDS) else None
+                p[side]["wpa"] = {"rounds": int(r[0]), "per_round": r[1], "duels": r[2], "utility": r[3],
+                                  "rounds_per_match": round(r[1] * 24, 2),
+                                  "percentile": round(pct, 2) if pct is not None else None,
+                                  "peers": len(ref)}
     wp_map = wpr["wp"].filter(pl.col("demo_id").is_in(ids))
     swing = winprob.recipe_wp(res["plans"], wp_map)
     for r in res["recipes"]:
@@ -486,6 +496,9 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
     t["team_rounds"] = t["team_rounds"].drop("plant_site", "plant_t_s", "planted").join(
         plants, on=["demo_id", "round_num"], how="left", validate="m:1"
     ).with_columns(planted=pl.col("plant_site").is_not_null())
+    events = demo_events()
+    t["matches"] = t["matches"].with_columns(
+        pl.col("demo_id").replace_strict(events, default=None, return_dtype=pl.Utf8).alias("event"))
     matches = t["matches"]
     index = {
         "schema_version": SCHEMA_VERSION,

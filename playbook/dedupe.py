@@ -8,6 +8,7 @@ the final score alone. Parsed files are never changed or removed.
 from __future__ import annotations
 
 import math
+import re
 from collections import Counter
 from pathlib import Path
 
@@ -117,3 +118,41 @@ def deduplicate_tables(tables: dict[str, pl.DataFrame], *,
         return dict(tables), duplicates
     return {name: df.filter(~pl.col("demo_id").is_in(sorted(dropped)))
             if "demo_id" in df.columns else df for name, df in tables.items()}, duplicates
+
+
+def _pretty_event(slug: str) -> str:
+    words = re.split(r"[-_]+", slug)
+    keep_upper = {"iem", "pgl", "esl", "blast", "cct", "esea", "fissure", "ewc", "hltv", "cac", "bc"}
+    out = []
+    for w in words:
+        if w.lower() in keep_upper:
+            out.append(w.upper())
+        elif w.isdigit():
+            out.append(w)
+        else:
+            out.append(w.capitalize())
+    return " ".join(out)
+
+
+def demo_events(raw_dir: Path = RAW_DIR) -> dict[str, str]:
+    """Event name per demo_id, read from where the file sits:
+
+    - ``cs2povarchive/<event>/<match>/<file>.dem``      -> ``<event>``
+    - ``hltv/<event>-<team1>-vs-<team2>-bo3-<hash>/<team1>-vs-<team2>-mN-<map>.dem`` -> archive prefix
+    """
+    from playbook.parse import demo_identity
+
+    out: dict[str, str] = {}
+    for p in raw_dir.rglob("*.dem"):
+        rel = p.relative_to(raw_dir).parts
+        event = None
+        if rel[0] == "cs2povarchive" and len(rel) >= 3:
+            event = rel[1]
+        elif rel[0] == "hltv" and len(rel) >= 3:
+            team1 = p.stem.split("-vs-")[0]
+            prefix = rel[1].split(f"-{team1}-vs-")[0] if f"-{team1}-vs-" in rel[1] else None
+            if prefix and prefix != rel[1]:
+                event = prefix
+        if event:
+            out.setdefault(demo_identity(p)["demo_id"], _pretty_event(event))
+    return out

@@ -177,3 +177,16 @@ def test_export_deduplicates_before_all_aggregation(tmp_path, monkeypatch, capsy
     assert json.loads((site / "index.json").read_text())["maps"][0]["n_matches"] == 1
     assert json.loads((site / "de_test/lineups.json").read_text()) == lineups
     assert pl.read_parquet(parsed / "matches/synthetic.parquet").height == 2
+
+
+def test_demo_events_from_paths(tmp_path):
+    from playbook.dedupe import demo_events
+    a = tmp_path / "cs2povarchive" / "iem_cologne_major_2026" / "2394905-mouz-vs-legacy-iem-cologne-major"
+    a.mkdir(parents=True)
+    (a / "mouz-vs-legacy-m2-nuke.dem").write_bytes(b"")
+    h = tmp_path / "hltv" / "pgl-astana-2026-falcons-vs-9z-bo3-rfKW"
+    h.mkdir(parents=True)
+    (h / "falcons-vs-9z-m1-dust2.dem").write_bytes(b"")
+    ev = demo_events(tmp_path)
+    assert ev["2394905_mouz-vs-legacy-m2-nuke"] == "IEM Cologne Major 2026"
+    assert ev["falcons-vs-9z-m1-dust2"] == "PGL Astana 2026"

@@ -451,7 +451,16 @@ export interface Insight {
 // playbook/winprob.py: out-of-fold T-side round win probability on 1 Hz states.
 
 /** win probability added per round on this side: duels = kills + deaths, utility = grenade pops */
-export interface Wpa { rounds: number; per_round: number; duels: number; utility: number }
+export interface Wpa {
+  rounds: number; per_round: number; duels: number;
+  /** grenade pops, 2 s window: noisy, delayed effects are missed — do not headline it */
+  utility: number;
+  /** per_round × 24: extra rounds won per full match */
+  rounds_per_match?: number;
+  /** share of players on this map and side (≥ 50 rounds) at or below this value; null when the sample is small */
+  percentile?: number | null;
+  peers?: number;
+}
 
 /** <map>/winprob/<demo_id>.json, showcase teams only: T win probability per second, per round */
 export interface WinprobTimeline { demo_id: string; wp_t: Record<string, number[]> }
