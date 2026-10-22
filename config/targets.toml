@@ -5,16 +5,18 @@
 # Team names are matched against the slugs in the file names (e.g. "the-mongolz").
 
 source = "cs2povarchive"
-events = ["iem_cologne_major_2026"]
+# Empty = every event in the archive (newest first). Dedupe at export drops overlaps with HLTV imports.
+events = []
 
-# MVP scope (M1): Mirage + Inferno. Newest games first.
-maps = ["mirage", "inferno"]
+# Active-pool maps with site support. Newest games first.
+maps = ["mirage", "inferno", "nuke", "dust2", "ancient", "anubis"]
 
 # Empty = every team. Fill to restrict, e.g. ["vitality", "mouz", "spirit"].
-teams = []
+# 2026-10 data push: HLTV top 10 (Sep 28 ranking) except Falcons, which is already complete.
+teams = ["spirit", "vitality", "furia", "mouz", "legacy", "fut", "fut-esports", "g2", "aurora", "natus-vincere", "navi"]
 require_both_teams = false
 
-max_demos = 60
+max_demos = 600
 
 # One extra game per map, used to list each map's callouts for config/maps/<map>.toml.
-extra_one_per_map = ["nuke", "dust2", "ancient", "anubis", "overpass"]
+extra_one_per_map = []
