@@ -28,3 +28,4 @@ web/public/players/
 
 # local static build for previewing the site (python3 -m http.server -d site-preview)
 site-preview/
+data/models/
