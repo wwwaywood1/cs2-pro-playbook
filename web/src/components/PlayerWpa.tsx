@@ -23,7 +23,7 @@ export default function PlayerWpa({ player, side = "T" }: { player?: PlayerProfi
     <span className="stat-label">{t("round2.wpa_title")} <span className="data-tooltip" tabIndex={0} role="note" aria-label={t("round2.wpa_tip")}>ⓘ<span role="tooltip">{t("round2.wpa_tip")}</span></span></span>
     <strong className="wpa-value">{t("round2.wpa_match", { n: `${contribution >= 0 ? "+" : ""}${contribution.toFixed(2)}` })}</strong>
     <span className="wpa-rank">{top === null ? t("round2.wpa_small") : t("round2.wpa_pct", { p: top })}</span>
-    <span className="stat-sub">{t("heatmap.view.fights")} {signedWpa(wpa.duels)}</span>
+    <span className="stat-sub">{t("round2.wpa_duels_match", { n: `${wpa.duels >= 0 ? "+" : ""}${(wpa.duels * 24).toFixed(2)}` })}</span>
     <small>{t(`side.${side}`)} · {t("heatmap.rounds", { n: wpa.rounds })}</small>
   </div>;
 }

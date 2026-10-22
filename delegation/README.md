@@ -9,10 +9,12 @@ Claude 通过 PAL MCP 直接派活、收结果、落盘、测试、合并，不�
 
 | 任务类型 | 派给 | 通道 | 不可用时 |
 |---|---|---|---|
-| 固定格式的文案、配置、命名、翻译、数据整理、第二意见 | deepseek-flash（只用这个 DeepSeek 型号） | PAL `chat` | 在 VT 校园网时 PAL 自动隐藏 DeepSeek，改用 MiniMax-M3.1-Flash |
-| 读代码、改代码、跑测试、开 PR | Codex CLI | PAL `clink`（cli_name=codex） | 退回手动：把任务书发给 Codex 网页版 |
+| **默认先派这两个**：文案、提示语、点评、翻译、命名、别名表、配置、数据核查（读导出 JSON 找矛盾）、代码审查、单个小文件的补丁草稿、测试用例草稿、第二意见 | deepseek-flash（在家）/ MiniMax-M3.1-Flash（VT 校园网，PAL 自动切换） | PAL `chat`，每次只给少量文件、`thinking_mode` minimal/low、要求简短输出（约 60 秒内返回） | 两个都不通时再给 Codex |
+| 只有 Codex 能做：一次改多个文件、需要在 Mac 上跑命令（导出、pytest、解析）、长时间连续修改 | Codex CLI | PAL `clink`（cli_name=codex） | 退回手动：Codex 网页版 |
+| Claude 自己做：数据模型和算法（如胜率模型）、合并验收、编译、浏览器截图、图片处理 | Claude | — | — |
 | 需要联网查证、带出处 | ChatGPT 网页版 | 手动 | — |
-| 看图任务（雷达图标注等） | ChatGPT 网页版 | 手动 | 先试 MiniMax 看图，不行再手动 |
+
+规则（2026-10-21 起，按用户要求）：**Codex 只做 DeepSeek / MiniMax 做不了的事。** 一个大任务先拆：文案、检查、补丁草稿给 DeepSeek / MiniMax；Codex 只负责最后的多文件落地和在 Mac 上运行。
 
 规则：
 1. 每次派活前，Claude 先调用 `listmodels`，按当时能用的模型选通道。

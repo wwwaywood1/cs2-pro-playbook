@@ -1154,7 +1154,7 @@ input:focus-visible,
 .player-wpa .data-tooltip { position: static; }
 .player-wpa-sides { position: relative; }
 .player-wpa-sides .player-wpa { position: static; }
-.player-wpa .wpa-value { color: var(--accent); font: 700 1.4rem/1.2 var(--mono); }
+.player-wpa .wpa-value { color: var(--accent); font: 700 1.15rem/1.3 var(--sans, inherit); }
 .player-wpa :is(.stat-sub, small) { color: var(--muted); font-size: .75rem; }
 .player-wpa-sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
 .player-wpa-sides:empty { display: none; }

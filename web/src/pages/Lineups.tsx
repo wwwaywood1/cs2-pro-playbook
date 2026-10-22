@@ -277,8 +277,11 @@ export default function Lineups() {
           </select>
         </div>
 
-        <div className="filter-group segmented" id="filter-tiers" role="group" aria-label={t("ui.filter_min_throws")}>
-          {([0, 10, 50] as const).map((minimum, index) => <button key={minimum} type="button" aria-pressed={minThrows === minimum} className={minThrows === minimum ? "is-active" : ""} onClick={() => setMinThrows(minimum)}>{t(`round2.${["tier_all", "tier_common", "tier_must"][index]}`)}</button>)}
+        <div className="filter-group" role="group" aria-label={t("ui.filter_min_throws")}>
+          <span className="filter-label">{t("ui.filter_min_throws")}</span>
+          <div className="segmented" id="filter-tiers">
+            {([0, 10, 50] as const).map((minimum, index) => <button key={minimum} type="button" aria-pressed={minThrows === minimum} className={minThrows === minimum ? "is-active" : ""} onClick={() => setMinThrows(minimum)}>{t(`round2.${["tier_all", "tier_common", "tier_must"][index]}`)}</button>)}
+          </div>
         </div>
 
         <div className="filter-group filter-actions">
