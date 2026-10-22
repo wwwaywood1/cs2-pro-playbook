@@ -1,32 +1,29 @@
+import { t, useLang } from "../i18n";
 import type { PlayerProfile, Side, Wpa } from "../types";
-
-export const WPA_HELP = "从选手所在队伍视角，统计事件前最后一整秒到事件后 2 秒的模型胜率变化，再除以该侧回合数。交火包含击杀与死亡，道具在爆开时记给投掷者；不含下包。道具作用可能延迟，估计较小且有噪声；这是关联估计，不是因果贡献。总览按 T / CT 的样本回合数加权。百分数表示胜率百分点。";
 
 export function signedWpa(value: number): string {
   const rounded = Math.round(value * 1000) / 10;
   return `${rounded >= 0 ? "+" : ""}${rounded.toFixed(1)}%`;
 }
 
-/** Never silently treat a missing side's export as zero contribution. */
-export function playerWpa(player: PlayerProfile | undefined, side: Side | "all"): Wpa | undefined {
-  if (!player) return undefined;
-  const sides: Side[] = side === "all" ? ["T", "CT"] : [side];
-  const rows = sides.map((s) => player[s].wpa);
-  if (rows.some((row) => !row || !Number.isFinite(row.rounds) || row.rounds <= 0
-    || ![row.per_round, row.duels, row.utility].every(Number.isFinite))) return undefined;
-  const valid = rows as Wpa[];
-  const rounds = valid.reduce((sum, row) => sum + row.rounds, 0);
-  const rate = (key: "per_round" | "duels" | "utility") => valid.reduce((sum, row) => sum + row[key] * row.rounds, 0) / rounds;
-  return { rounds, per_round: rate("per_round"), duels: rate("duels"), utility: rate("utility") };
+export function playerWpa(player: PlayerProfile | undefined, side: Side): Wpa | undefined {
+  const row = player?.[side].wpa;
+  return row && row.rounds > 0 && [row.per_round, row.duels].every(Number.isFinite) ? row : undefined;
 }
 
-export default function PlayerWpa({ player, side = "all" }: { player?: PlayerProfile; side?: Side | "all" }) {
+export default function PlayerWpa({ player, side = "T" }: { player?: PlayerProfile; side?: Side }) {
+  useLang();
   const wpa = playerWpa(player, side);
   if (!wpa) return null;
-  return <div className="player-wpa">
-    <span className="stat-label">每回合胜率贡献 <span className="data-tooltip" tabIndex={0} role="note" aria-label={WPA_HELP}>ⓘ<span role="tooltip">{WPA_HELP}</span></span></span>
-    <strong className="wpa-value">{signedWpa(wpa.per_round)}</strong>
-    <span className="stat-sub">交火 {signedWpa(wpa.duels)} · 道具 {signedWpa(wpa.utility)}</span>
-    <small>{side === "all" ? "T / CT 加权" : `${side} 方`} · {wpa.rounds} 回合</small>
+  const contribution = wpa.rounds_per_match ?? wpa.per_round * 24;
+  const percentile = wpa.percentile;
+  // Exported percentile is the fraction at or below this player, UI asks for top p%.
+  const top = percentile == null ? null : Math.max(1, Math.ceil((1 - percentile) * 100));
+  return <div className="player-wpa" data-side={side} data-sign={contribution >= 0 ? "positive" : "negative"}>
+    <span className="stat-label">{t("round2.wpa_title")} <span className="data-tooltip" tabIndex={0} role="note" aria-label={t("round2.wpa_tip")}>ⓘ<span role="tooltip">{t("round2.wpa_tip")}</span></span></span>
+    <strong className="wpa-value">{t("round2.wpa_match", { n: `${contribution >= 0 ? "+" : ""}${contribution.toFixed(2)}` })}</strong>
+    <span className="wpa-rank">{top === null ? t("round2.wpa_small") : t("round2.wpa_pct", { p: top })}</span>
+    <span className="stat-sub">{t("heatmap.view.fights")} {signedWpa(wpa.duels)}</span>
+    <small>{t(`side.${side}`)} · {t("heatmap.rounds", { n: wpa.rounds })}</small>
   </div>;
 }

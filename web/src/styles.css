@@ -1570,3 +1570,34 @@ input:focus-visible,
 .site-page .role-chip { align-items: center; }
 .site-page .segmented button[data-side="T"].is-active, .team-page .tabs #tab-T[aria-selected="true"] { background: var(--side-t); border-color: var(--side-t); color: var(--ink-on-accent); }
 .site-page .segmented button[data-side="CT"].is-active, .team-page .tabs #tab-CT[aria-selected="true"] { background: var(--side-ct); border-color: var(--side-ct); color: var(--ink-on-accent); }
+
+/* Brand navigation is independent of team identity; data colours carry meaning. */
+.nav-link.is-active { background: var(--brand); }
+.team-page.site-page .side-t .stat-value { color: var(--side-t); }
+.team-page.site-page .side-ct .stat-value { color: var(--side-ct); }
+.team-page :is(.side-t) .bar-fill { background: var(--side-t); }
+.team-page :is(.side-ct) .bar-fill { background: var(--side-ct); }
+.player-wpa { border-left-color: var(--positive); }
+.player-wpa[data-sign="negative"] { border-left-color: var(--negative); }
+.player-wpa[data-sign="positive"] .wpa-value { color: var(--positive); }
+.player-wpa[data-sign="negative"] .wpa-value { color: var(--negative); }
+.player-wpa .wpa-value { font-size: 1.1rem; line-height: 1.5; }
+.wpa-rank { color: var(--text); font-size: .8rem; }
+.match-winprob { margin: 8px 0 0; }
+.match-winprob figcaption { color: var(--muted); font-size: .75rem; }
+.winprob-overview { overflow: visible; }
+.winprob-bar.is-positive { fill: var(--positive); }
+.winprob-bar.is-negative { fill: var(--negative); }
+.winprob-round text { fill: var(--muted); font: 5px var(--mono); }
+.winprob-round:focus-visible { outline: none; }
+.winprob-round:focus-visible rect:first-of-type { stroke: var(--text); stroke-width: 1; }
+.winprob-halftime { stroke: var(--text); stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; }
+.throw-direction line { stroke: var(--text); stroke-width: 3; vector-effect: non-scaling-stroke; }
+.map-side-split { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.map-side-split [data-side="T"] dd { color: var(--side-t); }
+.map-side-split [data-side="CT"] dd { color: var(--side-ct); }
+.map-top-recipe { min-height: 3.5em; }
+.map-top-recipe > * { display: block; }
+.map-top-recipe small { color: var(--muted); }
+.map-top-recipe strong { font-size: .85rem; font-weight: 500; }
+.recipe-assignment { display: block; color: var(--muted); font-size: .8rem; margin-top: 4px; }

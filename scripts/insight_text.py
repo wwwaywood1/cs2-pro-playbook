@@ -82,7 +82,9 @@ def check(m: str, reply_path: str) -> int:
             if not text:
                 errs.append(f"{lang} missing")
                 continue
-            extra = [n for n in NUM.findall(text) if n not in ok]
+            # team names such as "9z" or "B8" carry digits of their own
+            scrubbed = text.replace(d["team"], " ")
+            extra = [n for n in NUM.findall(scrubbed) if n not in ok]
             if extra:
                 errs.append(f"{lang} numbers not in facts: {extra}")
             if len(text) > MAX_CHARS[lang]:

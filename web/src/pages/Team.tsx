@@ -315,11 +315,11 @@ export default function Team() {
                   title={match.demo_id}
                 >
                   <span className="match-outcome" aria-label={outcome === " is-win" ? "胜" : outcome === " is-loss" ? "负" : "平"}>{outcome === " is-win" ? "W" : outcome === " is-loss" ? "L" : "D"}</span>
-                  <span className="match-opponent">{match.opponent ?? "—"}<small className="match-context">{[match.event_name || match.event, match.date].filter(Boolean).join(" · ") || "赛事 / 日期未提供"}</small></span>
+                  <span className="match-opponent">{match.opponent ?? "—"}{(match.event_name || match.event || match.date) ? <small className="match-context">{[match.event_name || match.event, match.date].filter(Boolean).join(" · ")}</small> : null}</span>
                   <span className="match-score">
                     {match.score_for} : {match.score_against}
                   </span>
-                  {slug === "falcons" ? <MatchWinprob key={`${map}:${match.demo_id}`} map={map} demoId={match.demo_id} /> : null}
+                  {match.winprob_available ? <MatchWinprob key={`${map}:${match.demo_id}`} map={map} demoId={match.demo_id} teamSlug={slug} /> : null}
                 </li>
               );
             })

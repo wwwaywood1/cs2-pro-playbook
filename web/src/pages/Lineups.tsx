@@ -6,7 +6,7 @@ import GrenadeIcon from "../components/GrenadeIcon";
 import Radar from "../components/Radar";
 import { ErrorNotice, Loading } from "../components/Status";
 import { getLineups, getMeta, useData } from "../data";
-import { fmtPct, fmtSeconds } from "../format";
+import { fmtPct } from "../format";
 import { motionScrollBehavior } from "../motion";
 import { calloutLabel, t, useLang } from "../i18n";
 import type { GrenadeType, Lane, Lineup, Side, Technique } from "../types";
@@ -72,7 +72,7 @@ export default function Lineups() {
   const [side, setSide] = useState<Side | "ALL">("ALL");
   const [types, setTypes] = useState<GrenadeType[]>(ALL_TYPES);
   const [lane, setLane] = useState<Lane | "ALL">("ALL");
-  const [minThrows, setMinThrows] = useState(2);
+  const [minThrows, setMinThrows] = useState(0);
   const [technique, setTechnique] = useState<Technique | "ALL">("ALL");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -153,13 +153,8 @@ export default function Lineups() {
     setSide("ALL");
     setTypes(ALL_TYPES);
     setLane("ALL");
-    setMinThrows(2);
+    setMinThrows(0);
     setTechnique("ALL");
-  };
-
-  const updateMinThrows = (raw: string) => {
-    const parsed = Number.parseInt(raw, 10);
-    setMinThrows(Number.isFinite(parsed) ? Math.min(9999, Math.max(0, parsed)) : 0);
   };
 
   const selectFromRadar = (id: string) => {
@@ -276,25 +271,14 @@ export default function Lineups() {
             <option value="ALL">{t("ui.filter_all")}</option>
             {TECHNIQUES.map((value) => (
               <option key={value} value={value}>
-                {t(`technique.${value}`)}
+                {t(`round2.throw_${value}`)}
               </option>
             ))}
           </select>
         </div>
 
-        <div className="filter-group">
-          <label className="filter-label" htmlFor="filter-min-throws">
-            {t("ui.filter_min_throws")}
-          </label>
-          <input
-            id="filter-min-throws"
-            type="number"
-            min={0}
-            max={9999}
-            inputMode="numeric"
-            value={minThrows}
-            onChange={(event) => updateMinThrows(event.target.value)}
-          />
+        <div className="filter-group segmented" id="filter-tiers" role="group" aria-label={t("ui.filter_min_throws")}>
+          {([0, 10, 50] as const).map((minimum, index) => <button key={minimum} type="button" aria-pressed={minThrows === minimum} className={minThrows === minimum ? "is-active" : ""} onClick={() => setMinThrows(minimum)}>{t(`round2.${["tier_all", "tier_common", "tier_must"][index]}`)}</button>)}
         </div>
 
         <div className="filter-group filter-actions">
@@ -355,7 +339,7 @@ export default function Lineups() {
                       <span className={`chip chip-side-${lineup.side.toLowerCase()}`}>
                         {t(`side.${lineup.side}`)}
                       </span>
-                      <span className="chip">{t(`technique.${lineup.technique}`)}</span>
+                      <span className="chip">{t(`round2.throw_${lineup.technique}`)}</span>
                     </div>
 
                     <h3 className="lineup-route">
@@ -387,8 +371,8 @@ export default function Lineups() {
                         <dd>{fmtPct(lineup.round_win_rate)}</dd>
                       </div>
                       <div>
-                        <dt tabIndex={0} title={lineup.median_pop_t_s == null ? "暂无生效时间数据" : `回合开始后平均第 ${lineup.median_pop_t_s} 秒爆开`}>{t("metric.median_pop_t_s")} ⓘ</dt>
-                        <dd>{fmtSeconds(lineup.median_pop_t_s)}</dd>
+                        <dt tabIndex={0} title={t("round2.pop_tip")}>{t("round2.pop_tip")} ⓘ</dt>
+                        <dd>{lineup.median_pop_t_s == null ? "—" : t("round2.pop_time", { s: lineup.median_pop_t_s.toFixed(1) })}</dd>
                       </div>
                     </dl>
 

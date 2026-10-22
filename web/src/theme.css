@@ -7,8 +7,14 @@
   --line: #63788e;
   --text: #f1f6fa;
   --muted: #b6c5d2;
-  --primary: #f2b134;
-  --secondary: #e8b75a;
+  --brand: #2ecc71;
+  --positive: #52d795;
+  --negative: #a74c52;
+  --primary: var(--brand);
+  --team-primary: var(--brand);
+  --team-secondary: #e8b75a;
+  --team-tertiary: #a6b7c9;
+  --secondary: #e2e8ee;
   --tertiary: #a6b7c9;
   --accent: var(--primary);
   --side-t: #ffb46b;

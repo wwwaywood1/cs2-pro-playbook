@@ -406,7 +406,7 @@ def average_linkage(dist: np.ndarray, cut: float) -> np.ndarray:
 
 
 def execute_recipes(plans: pl.DataFrame, spots: pl.DataFrame, spot_lineups: dict[str, list[dict]],
-                    mm: MapMeta) -> tuple[list[dict], pl.DataFrame]:
+                    mm: MapMeta, utility: pl.DataFrame | None = None) -> tuple[list[dict], pl.DataFrame]:
     """(recipes, plan -> recipe_id). Gun rounds with a target and >= 2 smoke/molotov spots."""
     spot_info = {r["spot_id"]: r for r in spots.iter_rows(named=True)}
 
@@ -456,11 +456,34 @@ def execute_recipes(plans: pl.DataFrame, spots: pl.DataFrame, spot_lineups: dict
             won = int(m["won"].sum())
             teams = Counter(m["team"].to_list())
             tempos = Counter(m["tempo"].to_list())
+            # Attribute only execute-window throws in this recipe's rounds and T team.
+            participants: dict[str, dict] = {}
+            visible = [s for s, c in freq.items() if s in core or c / n >= RECIPE_OPTION_SHARE]
+            if utility is not None and not utility.is_empty():
+                used = utility.join(m.select(*KEYS, "team", "commit_s", "target"), on=KEYS).filter(
+                    (pl.col("thrower_side") == "T") & ~pl.col("is_post_round")
+                    & (pl.col("thrower_team") == pl.col("team"))
+                    & pl.col("spot_id").is_in(visible)
+                    & (pl.col("pop_t_s") >= pl.col("commit_s") - EXEC_BEFORE_S)
+                    & (pl.col("pop_t_s") <= pl.col("commit_s") + EXEC_AFTER_S)
+                    & (pl.col("land_lane") != pl.col("target").replace_strict(OTHER_SITE, default=None))
+                )
+                for sid, group in used.group_by("spot_id"):
+                    names = Counter(v for v in group["thrower_name"].to_list() if v)
+                    participants[sid[0]] = {
+                        "thrower": min(names, key=lambda name: (-names[name], name)) if names else None,
+                        "median": float(group["pop_t_s"].median()),
+                    }
+            ordered = sorted(participants, key=lambda sid: (participants[sid]["median"], sid))
+            entries = {sid: {**_spot_entry(sid, freq[sid] / n),
+                             "thrower": participants.get(sid, {}).get("thrower"),
+                             "order": ordered.index(sid) + 1 if sid in participants else None}
+                       for sid in visible}
             recipes.append({
                 "id": rid,
                 "site": site,
-                "core": [_spot_entry(s, freq[s] / n) for s in core],
-                "options": [_spot_entry(s, c / n) for s, c in freq.most_common()
+                "core": [entries[s] for s in core],
+                "options": [entries[s] for s, c in freq.most_common()
                             if s not in core and c / n >= RECIPE_OPTION_SHARE],
                 "n_rounds": n,
                 "n_matches": m["demo_id"].n_unique(),
@@ -567,7 +590,8 @@ def analyse_map(sub: dict[str, pl.DataFrame], mm: MapMeta, nade_lineup: pl.DataF
             spot_lineups[sid[0]] = [{"lineup_id": l, "n_throws": n} for l, n in g.select("lineup_id", "n").iter_rows()]
     centres = site_centres(sub["plants"], sub["positions"])
     plans = t_plans(sub, mm, spot_assign, centres)
-    recipes, recipe_assign = execute_recipes(plans, spots, spot_lineups, mm)
+    recipe_utility = sub["utility"].join(spot_assign, on=["demo_id", "nade_id"], how="inner")
+    recipes, recipe_assign = execute_recipes(plans, spots, spot_lineups, mm, recipe_utility)
     plans = plans.join(recipe_assign, on=KEYS, how="left")
     territory = t_territory(sub["positions"])
     ct = ct_setups(sub, plans, territory)

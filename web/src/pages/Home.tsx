@@ -17,7 +17,7 @@ function MapTile({ map, available, children, className = "", style }: { map: str
 }
 
 export default function Home() {
-  useLang();
+  const lang = useLang();
   const { data, error, loading } = useData(getIndex, []);
 
   if (loading) return <Loading />;
@@ -45,7 +45,7 @@ export default function Home() {
         <h2 className="section-title">{t("ui.nav_maps")}</h2>
         <Stagger className="map-grid">
           {maps.map((item) => (
-            <MapTile key={item.map} map={item.map} available={!!item.sample}>
+            <MapTile key={item.map} map={item.map} available={!!item.sample?.n_matches}>
               <img className="map-card-radar" src={`${import.meta.env.BASE_URL}radars/${item.map}.png`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />
               <div className="map-card-head">
                 <h2>{item.display_name}</h2>
@@ -61,24 +61,15 @@ export default function Home() {
               </div>
               <p className="map-code">{item.map}</p>
 
-              <dl className="mini-stats">
-                <div>
-                  <dt>{t("ui.matches_title")}</dt>
-                  <dd><CountUp value={item.sample?.n_matches} format="integer" /></dd>
-                </div>
-                <div>
-                  <dt>{t("ui.nav_lineups")}</dt>
-                  <dd><CountUp value={item.sample?.n_lineups} format="integer" /></dd>
-                </div>
-                <div>
-                  <dt>{t("ui.nav_players")}</dt>
-                  <dd><CountUp value={item.sample?.n_players} format="integer" /></dd>
-                </div>
-              </dl>
+              {item.sample?.n_matches ? <>
+                <dl className="mini-stats map-side-split">
+                  <div data-side="T"><dt>{t("hub.t_win")}</dt><dd><CountUp value={item.sample.win_rate_T} format="percent" /></dd></div>
+                  <div data-side="CT"><dt>{t("hub.ct_win")}</dt><dd><CountUp value={item.sample.win_rate_CT} format="percent" /></dd></div>
+                </dl>
+                <p className="map-top-recipe"><small>{t("tactics.recipes")}</small><strong>{item.sample.top_recipe?.name[lang] || t("tactics.no_recipes")}</strong></p>
+              </> : <p className="map-no-data">{t("round2.no_data")}</p>}
 
-              <span className="map-card-cta">
-                {item.sample ? `${t("ui.nav_lineups")} →` : t("site.awaiting_sample")}
-              </span>
+              {item.sample?.n_matches ? <span className="map-card-cta">{t("ui.nav_lineups")} →</span> : null}
             </MapTile>
           ))}
         </Stagger>

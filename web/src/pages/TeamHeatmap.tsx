@@ -30,18 +30,19 @@ function choice<T extends string>(raw: string | null, options: readonly T[], fal
 }
 
 function PlayerCard({
-  player, summary, map, phases, showHolds, onShowHolds, className = "", style,
+  player, summary, map, side, phases, showHolds, onShowHolds, className = "", style,
 }: {
   className?: string;
   style?: CSSProperties;
   player: RosterEntry;
   summary: PlayerSideSummary | undefined;
   map: string;
+  side: Side;
   phases: HeatPhase[];
   showHolds: boolean;
   onShowHolds: (checked: boolean) => void;
 }) {
-  const color = playerColor(player.color).deep;
+  const color = playerColor(player.color, side).deep;
   return (
     <article className={`hm-player-card ${className}`} data-motion-tilt style={{ ...style, borderColor: color }}>
       <h2><span className="hm-swatch" style={{ backgroundColor: color }} aria-hidden="true" />{player.name}</h2>
@@ -115,7 +116,7 @@ function HeatmapView({ entry, team, baseline }: {
   baseline: HeatmapBaseline;
 }) {
   const [params, setParams] = useSearchParams();
-  const side = choice<Side>(params.get("side"), ["T", "CT"], "CT");
+  const side = choice<Side>(params.get("side"), ["T", "CT"], "T");
   const view = choice(params.get("view"), VIEWS, "presence");
   const util = view === "utility" ? choice(params.get("util"), UTILS, "all") : "all";
   const mode = choice(params.get("mode"), ["stack", "owner"], "stack");
@@ -128,7 +129,7 @@ function HeatmapView({ entry, team, baseline }: {
   const phases = useMemo(() => {
     const requested = phasesRaw?.split(",") ?? [];
     return requested.length && requested.every((phase) => HEAT_PHASES.some((value) => value === phase))
-      ? HEAT_PHASES.filter((phase) => requested.includes(phase)) : [...HEAT_PHASES];
+      ? HEAT_PHASES.filter((phase) => requested.includes(phase)) : ["early" as HeatPhase];
   }, [phasesRaw]);
   const playersRaw = params.get("players");
   const selectedIds = useMemo(() => {
@@ -181,19 +182,19 @@ function HeatmapView({ entry, team, baseline }: {
   }), [team, side, phases, shape, weights, sigma]);
   const images = useMemo(() => computed.map((player) => ({
     key: player.steamid, color: player.color,
-    url: player.values ? toDataUrl(playerRgba(player.values, shape, level, playerColor(player.color)), shape.grid) : "",
-  })), [computed, shape, level]);
+    url: player.values ? toDataUrl(playerRgba(player.values, shape, level, playerColor(player.color, side)), shape.grid) : "",
+  })), [computed, shape, level, side]);
   const selected = useMemo(() => computed.filter((player) => selectedIds.includes(player.steamid)), [computed, selectedIds]);
   const overlays = useMemo(() => {
     if (mode === "stack") return images.filter((image) => selectedIds.includes(image.key) && image.url)
       .sort((a, b) => b.color - a.color).map(({ key, url }) => ({ key, url }));
-    const owners = selected.flatMap((player) => player.values ? [{ values: player.values, color: playerColor(player.color) }] : []);
+    const owners = selected.flatMap((player) => player.values ? [{ values: player.values, color: playerColor(player.color, side) }] : []);
     return owners.length ? [{ key: "owner", url: toDataUrl(ownerRgba(owners, shape, level), shape.grid) }] : [];
-  }, [mode, images, selectedIds, selected, shape, level]);
+  }, [mode, images, selectedIds, selected, shape, level, side]);
   const markers = selected.flatMap((player) => holdsIds.includes(player.steamid)
     ? (team.summary[player.steamid]?.[side]?.holds ?? []).slice(0, 3)
       .filter((hold) => hold.level === level && Number.isFinite(hold.radar_x) && Number.isFinite(hold.radar_y))
-      .map((hold) => ({ x: hold.radar_x, y: hold.radar_y, color: playerColor(player.color).deep, title: `${player.name} · ${calloutLabel(team.map, hold.place)}` }))
+      .map((hold) => ({ x: hold.radar_x, y: hold.radar_y, color: playerColor(player.color, side).deep, title: `${player.name} · ${calloutLabel(team.map, hold.place)}` }))
     : []);
   const setup = team.setup[side]?.early;
   const setupLanes = LANES.filter((lane) => setup?.[lane]?.length);
@@ -228,15 +229,8 @@ function HeatmapView({ entry, team, baseline }: {
           </div>}
           <fieldset className="hm-field">
             <legend>{t("heatmap.phases")}</legend>
-            <div className="hm-checks">{HEAT_PHASES.map((phase) => (
-              <label key={phase} className="hm-check">
-                <input type="checkbox" checked={phases.includes(phase)} disabled={phases.length === 1 && phases.includes(phase)} onChange={(event) => {
-                  const next = event.target.checked ? [...phases, phase] : phases.filter((value) => value !== phase);
-                  if (next.length) update({ phases: HEAT_PHASES.filter((value) => next.includes(value)).join(",") });
-                }} />
-                {t(`heatmap.phase.${phase}`)}
-              </label>
-            ))}</div>
+            <div className="hm-buttons">{HEAT_PHASES.map((phase) => <button type="button" key={phase} aria-pressed={phases.length === 1 && phases[0] === phase} onClick={() => update({ phases: phase })}>{t(`round2.time_${phase}`)}</button>)}</div>
+            <p className="muted">{t("round2.time_help")}</p>
           </fieldset>
           <div className="hm-buttons" role="group" aria-label={t("heatmap.mode.owner")}>
             {(["stack", "owner"] as const).map((value) => (
@@ -259,7 +253,7 @@ function HeatmapView({ entry, team, baseline }: {
           <figcaption>
             {selected.length ? selected.map((player) => (
               <div key={player.steamid} className="hm-caption">
-                <span className="hm-swatch" style={{ backgroundColor: playerColor(player.color).deep }} aria-hidden="true" />
+                <span className="hm-swatch" style={{ backgroundColor: playerColor(player.color, side).deep }} aria-hidden="true" />
                 <span>{player.name} · {captionLabel} {fmtNum(team.players[player.steamid] ? perRound(team.players[player.steamid], side, phases, layers) : null, 1)} {t(view === "presence" || view === "holding" ? "heatmap.unit.seconds" : "heatmap.unit.count")} / {t("heatmap.per_round")}</span>
               </div>
             )) : <p>{t("heatmap.no_data")}</p>}
@@ -274,14 +268,14 @@ function HeatmapView({ entry, team, baseline }: {
             {setup?.[lane]?.map((nameOrId, playerIndex) => {
               const player = team.roster.find((item) => item.steamid === nameOrId)
                 ?? team.roster.find((item) => item.name === nameOrId);
-              return <Fragment key={`${nameOrId}:${playerIndex}`}>{playerIndex > 0 && ", "}<span style={player ? { color: playerColor(player.color).deep } : undefined}>{player?.name ?? nameOrId}</span></Fragment>;
+              return <Fragment key={`${nameOrId}:${playerIndex}`}>{playerIndex > 0 && ", "}<span style={player ? { color: playerColor(player.color, side).deep } : undefined}>{player?.name ?? nameOrId}</span></Fragment>;
             })}
           </Fragment>
         )) : <p>{t("heatmap.no_data")}</p>}
       </section>
       <Stagger className="hm-player-grid">
         {selected.map((player) => (
-          <PlayerCard key={player.steamid} player={player} summary={team.summary[player.steamid]?.[side]} map={team.map} phases={phases}
+          <PlayerCard key={player.steamid} player={player} summary={team.summary[player.steamid]?.[side]} map={team.map} side={side} phases={phases}
             showHolds={holdsIds.includes(player.steamid)} onShowHolds={(checked) => update({ holds: (checked ? [...holdsIds, player.steamid] : holdsIds.filter((id) => id !== player.steamid)).join(",") })} />
         ))}
       </Stagger>

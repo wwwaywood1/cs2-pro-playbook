@@ -6,6 +6,7 @@ export type NumberFormat = "number" | "integer" | "percent" | "seconds";
 function formatNumber(value: number | null | undefined, format: NumberFormat): string {
   return format === "percent" ? fmtPct(value) : format === "integer" ? fmtInt(value) : format === "seconds" ? fmtSeconds(value) : fmtNum(value);
 }
+/** Reveal the complete final number; no rolling tracks or clipped glyphs. */
 export default function CountUp({ value, text, format = "number" }: { value?: number | null; text?: string; format?: NumberFormat }) {
   const reduced = useContext(ReducedMotion);
   const entrance = useContext(NumberEntrance);
@@ -18,45 +19,23 @@ export default function CountUp({ value, text, format = "number" }: { value?: nu
     if (!node) return;
     node.dataset.rolling = "false";
     const old = previous.current;
+    previous.current = final;
     const settling = entrance === "static" && lastEntrance.current !== "static";
     lastEntrance.current = entrance;
-    if (reduced || settling || !/[0-9]/.test(final) || old === final || !node.animate) { previous.current = final; return; }
-    const tracks = [...node.querySelectorAll<HTMLElement>(".hub-digit-track")];
-    if (!tracks.length) return;
+    const number = node.querySelector<HTMLElement>(".hub-number-final");
+    if (reduced || settling || !/[0-9]/.test(final) || old === final || !number?.animate) return;
     node.dataset.rolling = "true";
-    const animations = tracks.map((track, index) => {
-      const position = Number(track.dataset.position);
-      const start = Number(old[position + old.length - final.length]) || 0;
-      const end = 20 + Number(final[position]);
-      return track.animate([
-        { transform: `translateY(${-start}em)` }, { transform: `translateY(${-end}em)` },
-      ], { duration: MOTION_TIMING.count, delay: (typeof entrance === "number" ? entrance : 0) + index * MOTION_TIMING.digit, easing: MOTION_EASE, fill: "both" });
-    });
+    const animation = number.animate([
+      { opacity: 0, filter: "blur(5px)", transform: "translateY(.08em)" },
+      { opacity: 1, filter: "blur(0px)", transform: "translateY(0)" },
+    ], { duration: MOTION_TIMING.count, delay: typeof entrance === "number" ? entrance : 0, easing: MOTION_EASE, fill: "both" });
     let cancelled = false;
-    void Promise.all(animations.map((animation) => animation.finished)).then(() => {
-      if (!cancelled) { previous.current = final; node.dataset.rolling = "false"; animations.forEach((animation) => animation.cancel()); }
+    void animation.finished.then(() => {
+      if (!cancelled) { node.dataset.rolling = "false"; animation.cancel(); }
     }, () => {});
-    return () => {
-      cancelled = true;
-      if (node.dataset.rolling === "true") {
-        const digits = Array.from(final);
-        tracks.forEach((track, index) => {
-          const position = Number(track.dataset.position);
-          const start = Number(old[position + old.length - final.length]) || 0;
-          const end = 20 + Number(final[position]);
-          const progress = animations[index].effect?.getComputedTiming().progress ?? 0;
-          digits[position] = String(Math.floor(start + (end - start) * progress) % 10);
-        });
-        previous.current = digits.join("");
-      }
-      animations.forEach((animation) => animation.cancel());
-    };
-  }, [value, final, reduced, entrance]);
+    return () => { cancelled = true; animation.cancel(); node.dataset.rolling = "false"; };
+  }, [final, reduced, entrance]);
   return <span className="hub-count" ref={visual} data-value={final} data-rolling="false">
-    <span className="sr-only">{final}</span><span aria-hidden="true" className="hub-number-display">
-      <span className="hub-number-final">{final}</span><span className="hub-number-reels">{Array.from(final).map((character, position) => /[0-9]/.test(character) ?
-        <span className="hub-digit" key={position}><span className="hub-digit-track" data-position={position}>{Array.from({ length: 30 }, (_, digit) => <span key={digit}>{digit % 10}</span>)}</span></span> :
-        <span key={position}>{character}</span>)}</span>
-    </span>
+    <span className="sr-only">{final}</span><span aria-hidden="true" className="hub-number-display"><span className="hub-number-final">{final}</span></span>
   </span>;
 }

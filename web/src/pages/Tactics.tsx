@@ -116,6 +116,8 @@ interface RecipeSpot {
   share: number | null;
   to: string | null;
   lineup?: Lineup;
+  thrower?: string | null;
+  order?: number | null;
 }
 
 function resolveSpot(map: string, ref: SpotRef, spot: Spot | undefined, core: boolean, number: number, lang: Lang, byLineup: Map<string, Lineup>): RecipeSpot {
@@ -123,7 +125,8 @@ function resolveSpot(map: string, ref: SpotRef, spot: Spot | undefined, core: bo
   const mostThrown = [...lineups].sort((a, b) => b.n_throws - a.n_throws)[0];
   return {
     lineup: mostThrown ? byLineup.get(mostThrown.lineup_id) : undefined,
-    id: ref.spot_id, type: ref.type, spot, core, number, share: ref.share,
+    id: ref.spot_id, type: ref.type, spot, core, number: ref.order ?? number, share: ref.share,
+    thrower: ref.thrower, order: ref.order,
     name: ref.name?.[lang] || spot?.name?.[lang] || ref.label,
     to: mostThrown ? `/${encodeURIComponent(map)}/lineups?${new URLSearchParams({ id: mostThrown.lineup_id })}` : null,
   };
@@ -301,6 +304,7 @@ function SpotList({ entries }: { entries: RecipeSpot[] }) {
   return <ul className="tactics-spots">{entries.map((entry) => <li key={entry.id} className={entry.core ? "" : "is-optional"}>
     <GrenadeIcon type={entry.type} /><span>{entry.number}. {entry.to ? <Link to={entry.to} title={t("tactics.open_lineup")}>{entry.name}</Link> : entry.name}
       <span className="muted"> · {t(`grenade.${entry.type}`)}{entry.share !== null ? ` · ${fmtPct(entry.share)}` : ""}</span>
+      <small className="recipe-assignment">{entry.order != null ? t("round2.recipe_order", { n: entry.order }) : null}{entry.order != null && entry.thrower ? " · " : ""}{entry.thrower ? t("round2.recipe_thrower", { name: entry.thrower }) : null}</small>
       {!entry.spot && <span className="muted"> · {t("tactics.position_missing")}</span>}
     </span>
   </li>)}</ul>;
@@ -317,7 +321,7 @@ function RecipeDetails({ recipe, entries, splitDefinition }: { recipe: Recipe; e
   const total = tempos.reduce((n, row) => n + row.rounds, 0);
   return <div className="tactics-recipe-details">
     <dl className="tactics-detail-stats">
-      <div><dt>{t("ui.matches_title")}</dt><dd>{fmtInt(recipe.n_matches)}</dd></div>
+      <div><dt>{t("ui.matches_title")}</dt><dd>{t("round2.recipe_matches", { n: fmtInt(recipe.n_matches) })}</dd></div>
       <div><dt>{t("tactics.plant_rate")}</dt><dd>{fmtPct(recipe.plant_rate)}</dd></div>
       <div><dt tabIndex={0} title={splitDefinition}>多方向进点率 ⓘ</dt><dd>{fmtPct(recipe.split_rate)}</dd></div>
       <div><dt>{t("tactics.avg_flashes")}</dt><dd>{fmtNum(recipe.avg_flashes)}</dd></div>

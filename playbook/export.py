@@ -426,6 +426,27 @@ WPA_MIN_ROUNDS = 50  # sample needed to rank a player's WPA among peers
 SHOWCASE_TEAMS = {"Falcons"}  # teams that get per-round WP timelines (files stay small)
 
 
+def team_round_sides(team_rounds: pl.DataFrame, demo: str) -> dict[str, dict[str, str]]:
+    """Actual per-round sides, including overtime; never infer sides from round numbers."""
+    sides: dict[str, dict[str, str]] = {}
+    for team, rnd, side in team_rounds.filter(pl.col("demo_id") == demo).select("team", "round_num", "side").iter_rows():
+        sides.setdefault(team_slug(team), {})[str(rnd)] = side
+    return sides
+
+
+def map_card_summary(team_rounds: pl.DataFrame, recipes: list[dict]) -> dict:
+    rates = {}
+    for side in ("T", "CT"):
+        rows = team_rounds.filter(pl.col("side") == side)
+        rates[f"win_rate_{side}"] = _rate(int(rows["won"].sum()), rows.height)
+    top = min(recipes, key=lambda recipe: (-recipe["n_rounds"], recipe["id"])) if recipes else None
+    return {**rates, "top_recipe": {
+        "id": top["id"],
+        "name": {lang: " + ".join((spot.get("name") or {}).get(lang) or spot["label"] for spot in top["core"])
+                 for lang in ("zh", "en")},
+    } if top else None}
+
+
 def _add_winprob(mdir: Path, ids: list[str], teams: list[dict], players: list[dict], res: dict,
                  sub: dict[str, pl.DataFrame], wpr: dict) -> None:
     """Win probability added per player and side, recipe WP swing, showcase-team timelines."""
@@ -454,11 +475,17 @@ def _add_winprob(mdir: Path, ids: list[str], teams: list[dict], players: list[di
             r["wp"] = swing[r["id"]]
     show = sub["matches"].filter(pl.col("team_a").is_in(list(SHOWCASE_TEAMS)) | pl.col("team_b").is_in(list(SHOWCASE_TEAMS)))
     keep = set(show["demo_id"].to_list())
+    lines = {}
     if keep:
         mask = wpr["states"]["demo_id"].is_in(list(keep)).to_numpy()
         lines = winprob.round_timelines(wpr["states"].filter(mask), wpr["oof"][mask], keep)
         for demo, by_round in lines.items():
-            _write_compact(mdir / "winprob" / f"{demo}.json", {"demo_id": demo, "wp_t": by_round})
+            _write_compact(mdir / "winprob" / f"{demo}.json", {"demo_id": demo, "wp_t": by_round,
+                           "team_sides": team_round_sides(sub["team_rounds"], demo)})
+
+    for team in teams:
+        for match in team["matches"]:
+            match["winprob_available"] = match["demo_id"] in lines
 
 
 def _add_player_tactics(mdir: Path, players: list[dict], res: dict, player_rounds: pl.DataFrame) -> None:
@@ -577,6 +604,7 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
             "map": map_name, "display_name": mm.display_name, "n_matches": len(ids),
             "teams": [p["slug"] for p in teams], "n_players": len(players), "n_lineups": len(lineups),
             "heatmaps": True,
+            **map_card_summary(sub["team_rounds"], res["recipes"]),
         })
         print(f"  {map_name}: {len(ids)} matches, {len(teams)} teams, {len(players)} players, {len(lineups)} lineups")
     _write(out_dir / "index.json", index)

@@ -11,7 +11,7 @@ import { getAssetSlots, getHeatmapBaseline, getHeatmapTeams, getMeta, getPlayerQ
 import { fmtInt, fmtPct } from "../format";
 import { blur, combine, denseLayers, HEAT_PHASES, playerRgba, toDataUrl, VIEW_WEIGHTS, type Dense, type HeatView } from "../heatmap";
 import { calloutLabel, t, useLang } from "../i18n";
-import type { AssetSlots, HeatLayer, HeatmapBaseline, HeatmapTeamIndexEntry, PlayerProfile, PlayerQuotes, PlayerSideSummary, RosterEntry, Side, TeamHeatmap, TeamProfile, TacticsFile, UtilitySpot } from "../types";
+import type { AssetSlots, HeatLayer, HeatPhase, HeatmapBaseline, HeatmapTeamIndexEntry, PlayerProfile, PlayerQuotes, PlayerSideSummary, RosterEntry, Side, TeamHeatmap, TeamProfile, TacticsFile, UtilitySpot } from "../types";
 import { rememberPortrait, usePlayerEntrance } from "./teamsHubMotion";
 import CountUp, { type NumberFormat } from "../components/CountUp";
 import { NumberEntrance, ReducedMotion, useMotionPointer, useMotionRoute, useReducedMotion } from "../motion";
@@ -19,19 +19,17 @@ import { teamTheme } from "../theme";
 import "../heatmap.css";
 import "../teams-hub.css";
 
-type HubSide = "all" | Side;
+type HubSide = Side;
 type TeamEntry = HeatmapTeamIndexEntry;
 type Selection = { team: string; map: string; player: string; side: HubSide };
 type Change = (selection: Partial<Selection>) => void;
-const SIDES: HubSide[] = ["all", "T", "CT"];
+const SIDES: HubSide[] = ["T", "CT"];
 const VIEWS: HeatView[] = ["presence", "holding", "fights", "utility"];
 const EMPTY_ASSETS: AssetSlots = { teams: [], players: [] };
 const Assets = createContext<AssetSlots>(EMPTY_ASSETS);
-const GRENADES = ["smoke", "flash", "molotov", "he"] as const;
 const SIDE_COLORS = {
   T: { key: "orange", light: "#ffdaa9", deep: "#e8893c" },
   CT: { key: "blue", light: "#c7e7ff", deep: "#519ee9" },
-  all: { key: "grey", light: "#d4e4f4", deep: "#8baccd" },
 };
 type Route = Pick<Selection, "team" | "map" | "player">;
 function routeKey(route: Route) { return JSON.stringify([route.team, route.map, route.player]); }
@@ -123,6 +121,9 @@ function Results({ team }: { team: TeamEntry }) {
 }
 
 function TeamPanel({ team, change }: { team: TeamEntry; change: Change }) {
+  const ranked = [...team.maps].filter((map) => map.map_win_rate != null).sort((a, b) => (b.map_win_rate ?? 0) - (a.map_win_rate ?? 0) || a.map.localeCompare(b.map));
+  const best = ranked[0]?.map;
+  const worst = ranked.length > 1 ? ranked[ranked.length - 1]?.map : undefined;
   return <section className="hub-panel hub-team-panel" key={team.slug} aria-labelledby="hub-heading">
     <header className="hub-team-head"><Asset path={`logos/teams/${team.slug}.png`} name={team.team} badge />
       <div><p className="hub-eyebrow">{t("hub.step_team")}</p><Heading>{team.team}</Heading>
@@ -130,9 +131,10 @@ function TeamPanel({ team, change }: { team: TeamEntry; change: Change }) {
     </header>
     <div className="hub-team-layout">
       <section><h3>{t("hub.choose_map")}</h3><p className="muted">{t("hub.map_rate_help")}</p>
-        <div className="hub-map-grid">{team.maps.map((map, index) => <button type="button" className="hub-map-card hub-primary" style={{ "--stagger": `${index * 70}ms`, "--hub-progress": 100 - Math.max(0, Math.min(1, map.map_win_rate ?? 0)) * 100 } as CSSProperties} id={`hub-map-${map.map}`} key={map.map} onClick={() => change({ map: map.map, player: "", side: "all" })}>
+        <div className="hub-map-grid">{team.maps.map((map, index) => <button type="button" className="hub-map-card hub-primary" data-rate={map.map_win_rate == null ? "unknown" : map.map_win_rate >= .65 ? "strong" : map.map_win_rate < .48 ? "weak" : "neutral"} style={{ "--stagger": `${index * 70}ms`, "--hub-progress": 100 - Math.max(0, Math.min(1, map.map_win_rate ?? 0)) * 100 } as CSSProperties} id={`hub-map-${map.map}`} key={map.map} onClick={() => change({ map: map.map, player: "", side: "T" })}>
           <img className="hub-map-preview" src={`${import.meta.env.BASE_URL}radars/${map.map}.png`} alt="" aria-hidden="true" loading="lazy" onError={(event) => { event.currentTarget.hidden = true; }} />
-          <span className="hub-map-name">{map.display_name}</span><span className="hub-rate">
+          <span className="hub-map-name">{map.display_name}</span>
+          {map.map === best ? <span className="hub-map-badge is-best">{t("round2.best_map")}</span> : map.map === worst ? <span className="hub-map-badge is-weak">{t("round2.weak_map")}</span> : null}<span className="hub-rate">
             <svg viewBox="0 0 100 100" aria-hidden="true"><circle className="hub-arc-track" cx="50" cy="50" r="44" /><circle className="hub-arc" cx="50" cy="50" r="44" pathLength="100" /></svg>
             <strong><CountUp value={map.map_win_rate} format="percent" /></strong>
           </span>
@@ -178,7 +180,7 @@ function PlayerCards({ roster, change }: { roster: RosterEntry[]; change: Change
   const reduced = useContext(ReducedMotion);
   const ordered = [...roster].sort((a, b) => (b.rounds.T + b.rounds.CT) - (a.rounds.T + a.rounds.CT) || a.color - b.color);
   function cards(players: RosterEntry[]) {
-    return <div className="hub-player-cards" data-hub-parallax>{players.map((player, index) => <button type="button" className="hub-player-card hub-primary" style={{ "--stagger": `${index * 75}ms` } as CSSProperties} key={player.steamid} id={`hub-player-${player.steamid}`} onClick={(event) => { rememberPortrait(event.currentTarget, reduced); change({ player: player.steamid, side: "all" }); }}>
+    return <div className="hub-player-cards" data-hub-parallax>{players.map((player, index) => <button type="button" className="hub-player-card hub-primary" style={{ "--stagger": `${index * 75}ms` } as CSSProperties} key={player.steamid} id={`hub-player-${player.steamid}`} onClick={(event) => { rememberPortrait(event.currentTarget, reduced); change({ player: player.steamid, side: "T" }); }}>
       <span className="hub-roster-light" aria-hidden="true" /><span className="hub-card-portrait-depth"><Asset path={`players/${player.steamid}.png`} name={player.name} /></span><strong>{player.name}</strong>
       <small>{t("heatmap.rounds", { n: fmtInt(player.rounds.T + player.rounds.CT) })}</small>
     </button>)}</div>;
@@ -240,10 +242,12 @@ function HubRadar({ map, level, overlays, spots = [] }: {
   </div>;
 }
 
-function MapControls({ view, level, levels, setView, setLevel }: {
+function MapControls({ view, level, levels, setView, setLevel, phase, setPhase }: {
   view: HeatView; level: number; levels: number; setView: (view: HeatView) => void; setLevel: (level: number) => void;
+  phase: HeatPhase; setPhase: (phase: HeatPhase) => void;
 }) {
   return <div className="hub-map-controls"><fieldset className="hub-segments"><legend>{t("hub.layer")}</legend><div>{VIEWS.map((v) => <button type="button" key={v} aria-pressed={view === v} onClick={() => setView(v)}>{t(`heatmap.view.${v}`)}</button>)}</div></fieldset>
+    <fieldset className="hub-segments hub-time-slices"><legend>{t("heatmap.phases")}</legend><div>{HEAT_PHASES.map((value) => <button type="button" key={value} aria-pressed={phase === value} onClick={() => setPhase(value)}>{t(`round2.time_${value}`)}</button>)}</div><p className="muted">{t("round2.time_help")}</p></fieldset>
     {levels > 1 ? <label>{t("tactics.floor")}<select value={level} onChange={(event) => setLevel(Number(event.target.value))}><option value={0}>{t("heatmap.level.upper")}</option><option value={1}>{t("heatmap.level.lower")}</option></select></label> : null}
   </div>;
 }
@@ -251,15 +255,16 @@ function MapControls({ view, level, levels, setView, setLevel }: {
 function TeamMapView({ profile, tactics, heatmap, baseline, change }: {
   profile: TeamProfile; tactics: TacticsFile; heatmap: TeamHeatmap; baseline: HeatmapBaseline; change: Change;
 }) {
+  const [teamSide, setTeamSide] = useState<Side>("T");
   const [view, setView] = useState<HeatView>("presence");
+  const [phase, setPhase] = useState<HeatPhase>("early");
   const [level, setLevel] = useState(0);
   const overlays = useMemo(() => {
-    if (view === "utility") return [];
     const shape = { grid: baseline.grid, levels: baseline.levels };
     const layers: Partial<Record<HeatLayer, Dense>> = {};
-    const total = heatmap.rounds.T + heatmap.rounds.CT;
-    for (const side of ["T", "CT"] as const) {
-      const source = denseLayers(heatmap.team_grid, side, HEAT_PHASES, shape);
+    const total = heatmap.rounds[teamSide];
+    for (const side of [teamSide]) {
+      const source = denseLayers(heatmap.team_grid, side, [phase], shape);
       for (const key of Object.keys(source) as HeatLayer[]) {
         const values = source[key];
         if (!values) continue;
@@ -269,22 +274,22 @@ function TeamMapView({ profile, tactics, heatmap, baseline, change }: {
     }
     const dense = blur(combine(layers, VIEW_WEIGHTS[view], shape), shape, 1.1);
     if (!dense.subarray(level * shape.grid * shape.grid, (level + 1) * shape.grid * shape.grid).some((v) => v > 0)) return [];
-    return [{ key: `team-${view}-${level}`, url: toDataUrl(playerRgba(dense, shape, level, SIDE_COLORS.all), shape.grid) }];
-  }, [heatmap, baseline, view, level]);
+    return [{ key: `team-${teamSide}-${phase}-${view}-${level}`, url: toDataUrl(playerRgba(dense, shape, level, SIDE_COLORS[teamSide]), shape.grid) }];
+  }, [heatmap, baseline, view, level, teamSide, phase]);
   return <div className="hub-team-map-view">
     <img className="hub-map-backdrop" src={`${import.meta.env.BASE_URL}radars/${heatmap.map}.png`} alt="" aria-hidden="true" />
     <div className="hub-map-context"><MapOverview profile={profile} tactics={tactics} /></div>
     <PlayerCards roster={heatmap.roster} change={change} />
     <details className="hub-details hub-team-radar"><summary>{t("ui.nav_heatmaps")}</summary><section aria-label={t("ui.nav_heatmaps")}>
-      <MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} />
-      <HubRadar map={heatmap.map} level={level} overlays={overlays} spots={view === "utility" ? Object.values(heatmap.summary).flatMap((sides) => Object.values(sides).flatMap((summary) => summary.utility.spots)).filter((spot, index, all) => spot.level === level && all.findIndex((item) => item.spot_id === spot.spot_id) === index) : []} />
+      <div className="segmented">{SIDES.map((value) => <button type="button" key={value} data-side={value} aria-pressed={teamSide === value} onClick={() => setTeamSide(value)}>{value}</button>)}</div><MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} phase={phase} setPhase={setPhase} />
+      <HubRadar map={heatmap.map} level={level} overlays={overlays} />
       {!overlays.length ? <p className="muted" role="status">{t("hub.no_layer")}</p> : null}
     </section></details>
   </div>;
 }
 
 function summaryRate(heatmap: TeamHeatmap, steamid: string, side: HubSide, metric: (summary: PlayerSideSummary) => number | null): number | null {
-  const sides: Side[] = side === "all" ? ["T", "CT"] : [side];
+  const sides: Side[] = [side];
   const known = sides.flatMap((s) => {
     const summary = heatmap.summary[steamid]?.[s];
     return summary && summary.rounds > 0 && metric(summary) !== null ? [summary] : [];
@@ -305,8 +310,9 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
   const host = useRef<HTMLDivElement>(null);
   const { entrance, skip } = usePlayerEntrance(player.steamid, reduced, host);
   const [view, setView] = useState<HeatView>("presence");
+  const [phase, setPhase] = useState<HeatPhase>("early");
   const [level, setLevel] = useState(0);
-  const selectedSides: Side[] = side === "all" ? ["T", "CT"] : [side];
+  const selectedSides: Side[] = [side];
   const summaries = selectedSides.flatMap((s) => {
     const summary = heatmap.summary[player.steamid]?.[s];
     return summary ? [summary] : [];
@@ -318,19 +324,17 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
     const cohort = heatmap.roster.map((entry) => summaryRate(heatmap, entry.steamid, side, metric)).filter((n): n is number => n !== null);
     if (value === null || cohort.length < 2) return "队内同图同侧：无可比样本";
     const rank = 1 + cohort.filter((n) => lower ? n < value : n > value).length;
-    return `队内第 ${rank} / ${cohort.length} · 同图${side === "all" ? "总览" : side + "方"}长枪局${lower ? " · 越低越前" : ""}`;
+    return `队内第 ${rank} / ${cohort.length} · 同图${side + "方"}长枪局${lower ? " · 越低越前" : ""}`;
   }
-  const sampleComparison = `队内样本量第 ${1 + heatmap.roster.filter((entry) => selectedSides.reduce((n, s) => n + (heatmap.summary[entry.steamid]?.[s]?.rounds ?? 0), 0) > rounds).length} / ${heatmap.roster.length} · 同图同侧长枪局`;
   const overlays = useMemo(() => {
     const grid = heatmap.players[player.steamid];
     if (!grid) return [];
-    if (view === "utility") return [];
     const shape = { grid: baseline.grid, levels: baseline.levels };
     const layers: Partial<Record<HeatLayer, Dense>> = {};
-    const sides: Side[] = side === "all" ? ["T", "CT"] : [side];
+    const sides: Side[] = [side];
     const total = sides.reduce((n, s) => n + player.rounds[s], 0);
     for (const s of sides) {
-      const source = denseLayers(grid, s, HEAT_PHASES, shape);
+      const source = denseLayers(grid, s, [phase], shape);
       for (const key of Object.keys(source) as HeatLayer[]) {
         const values = source[key];
         if (!values) continue;
@@ -341,16 +345,16 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
     const dense = blur(combine(layers, VIEW_WEIGHTS[view], shape), shape, 1.1);
     const floor = dense.subarray(level * shape.grid * shape.grid, (level + 1) * shape.grid * shape.grid);
     if (!floor.some((v) => v > 0)) return [];
-    return [{ key: `${player.steamid}-${side}-${view}-${level}`, url: toDataUrl(playerRgba(dense, shape, level, SIDE_COLORS[side]), shape.grid) }];
-  }, [heatmap, player, baseline, side, view, level]);
+    return [{ key: `${player.steamid}-${side}-${phase}-${view}-${level}`, url: toDataUrl(playerRgba(dense, shape, level, SIDE_COLORS[side]), shape.grid) }];
+  }, [heatmap, player, baseline, side, view, level, phase]);
   const spots = new Map<string, UtilitySpot>();
   for (const summary of summaries) for (const spot of summary.utility.spots) {
     const prev = spots.get(spot.spot_id);
     spots.set(spot.spot_id, prev ? { ...prev, n: prev.n + spot.n } : spot);
   }
   const landingSpots = [...spots.values()].filter((spot) => spot.level === level).sort((a, b) => b.n - a.n);
-  return <NumberEntrance.Provider value={entrance === "settled" || reduced ? "static" : entrance === "full" ? 1670 : 0}><div className="hub-player-view" ref={host} data-entrance={entrance} data-side={side} data-hub-parallax>
-    {entrance !== "settled" && !reduced ? <button type="button" className="hub-intro-skip" onClick={skip}>{t("hub.skip_intro")}</button> : null}
+  return <NumberEntrance.Provider value={entrance === "settled" || reduced ? "static" : entrance === "full" ? 1670 : 0}><div className="hub-player-view" ref={host} data-entrance={entrance} data-side={side} data-phase={phase} data-hub-parallax>
+    {entrance !== "settled" && !reduced ? <button type="button" className="hub-intro-skip" onClick={skip}>{t("round2.skip_intro")}</button> : null}
     <aside className="hub-player-bio" aria-label={player.name}>
       <div className="hub-stage-light" aria-hidden="true" /><div className="hub-depth-grid" aria-hidden="true" />
       <span className="hub-outline-name" aria-hidden="true">{player.name}</span>
@@ -368,26 +372,25 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
       </details>
     </aside>
     <section className="hub-player-analysis" aria-label={t("hub.player_analysis")}>
-      <header className="hub-analysis-head"><Heading>{`${player.name} · ${displayName}`}</Heading>
+      <header className="hub-analysis-head"><div className="hub-player-title"><Heading>{`${player.name} · ${displayName}`}</Heading><small className="hub-sample-inline">{t("hub.sample_rounds")} · <CountUp value={rounds} format="integer" /></small></div>
       <fieldset className="hub-segments hub-side-switch"><legend className="sr-only">{t("heatmap.side")}</legend>
-        <div style={{ "--side-index": SIDES.indexOf(side) } as CSSProperties}><span className="hub-side-indicator" aria-hidden="true" />{SIDES.map((s) => <button type="button" key={s} aria-pressed={side === s} onClick={() => change({ side: s })}>{s === "all" ? t("hub.overall") : t(`side.${s}`)}</button>)}</div>
+        <div style={{ "--side-index": SIDES.indexOf(side) } as CSSProperties}><span className="hub-side-indicator" aria-hidden="true" />{SIDES.map((s) => <button type="button" key={s} aria-pressed={side === s} onClick={() => change({ side: s })}>{t(`side.${s}`)}</button>)}</div>
       </fieldset></header>
       <div className="hub-analysis-toolbar"><div className="hub-kpis">
         <AnimatedStat label={t("heatmap.kpr")} value={rate((s) => s.fights.kills_pr)} sub={comparison((s) => s.fights.kills_pr)} />
         <AnimatedStat label={t("heatmap.dpr")} value={rate((s) => s.fights.deaths_pr)} sub={comparison((s) => s.fights.deaths_pr, true)} />
         <AnimatedStat label={t("hub.utility_pr")} value={rate(utilityRate)} sub={comparison(utilityRate)} />
-        <AnimatedStat label={t("hub.sample_rounds")} value={rounds} format="integer" sub={sampleComparison} />
       </div></div>
       {selectedSides.some((s) => player.low_sample[s]) ? <p className="hub-low">{t("hub.player_low", { n: baseline.min_reliable_rounds })}</p> : null}
-      {!rounds || (view === "utility" ? !landingSpots.length : !overlays.length) ? <p className="hub-low" role="status">{t("hub.no_layer")}</p> : null}
-      <div className="hub-map-stage"><figure className="hub-map-figure"><HubRadar map={heatmap.map} level={level} overlays={overlays} spots={view === "utility" ? landingSpots : []} />
+      {!rounds || !overlays.length ? <p className="hub-low" role="status">{t("hub.no_layer")}</p> : null}
+      <div className="hub-map-stage"><figure className="hub-map-figure"><HubRadar map={heatmap.map} level={level} overlays={overlays} />
         <figcaption>
-          <div className="hub-mini-legend" aria-label="地图图例">{view === "utility" ? <><span>图标 = 道具爆开落点 · 点击查看常用投掷</span>{GRENADES.map((type) => <span className="grenade-label" key={type}><GrenadeIcon type={type} />{t(`heatmap.util.${type}`)}</span>)}</> : <><span>低频</span><span className="hub-heat-scale" style={{ background: `linear-gradient(90deg, transparent, ${SIDE_COLORS[side].light}, ${SIDE_COLORS[side].deep})` }} /><span>高频 · {t(`heatmap.view.${view}`)}</span></>}</div>
-          <details className="hub-map-notes"><summary>{t(`heatmap.view.${view}`)} · {side === "all" ? t("hub.overall") : t(`side.${side}`)}</summary><p>{view === "utility" ? "图标表示爆开落点；点击后查看最常用的投掷方法。" : "仅显示所选行为的热力分布；低频到高频为同一图层内的相对强度。"}</p>
+          <div className="hub-mini-legend" aria-label={t(`heatmap.view.${view}`)}><span>{t(`side.${side}`)}</span><span className="hub-heat-scale" style={{ background: `linear-gradient(90deg, transparent, ${SIDE_COLORS[side].light}, ${SIDE_COLORS[side].deep})` }} /><span>{t(`heatmap.view.${view}`)} · {t(`round2.time_${phase}`)}</span></div>
+          <details className="hub-map-notes"><summary>{t(`heatmap.view.${view}`)} · {t(`side.${side}`)}</summary><p>{t("round2.time_help")}</p>
         </details></figcaption>
       </figure>
       <aside className="hub-map-side"><PlayerWpa player={profile} side={side} />
-        <MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} /></aside></div>
+        <MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} phase={phase} setPhase={setPhase} /></aside></div>
       <details className="hub-details"><summary>{t("hub.player_details")}</summary>
         <div className="hub-kpis">
           {side !== "CT" ? <Stat label={t("hub.lurk_share")} value={fmtPct(profile?.T.lurk_share)} sub={t("hub.lurk_scope")} /> : null}
@@ -429,7 +432,12 @@ export default function TeamsHub() {
   const slide = useSlideRoute(requested, reduced);
   const { team: teamSlug, map, player } = slide.route;
   const rawSide = params.get("side");
-  const side: HubSide = rawSide === "T" || rawSide === "CT" ? rawSide : "all";
+  const side: HubSide = rawSide === "T" || rawSide === "CT" ? rawSide : "T";
+  useEffect(() => {
+    if (requested.player && rawSide !== "T" && rawSide !== "CT") {
+      setParams((current) => { const next = new URLSearchParams(current); next.set("side", "T"); return next; }, { replace: true });
+    }
+  }, [requested.player, rawSide, setParams]);
   const team = teams.data?.find((entry) => entry.slug === teamSlug);
   const validMap = team?.maps.some((entry) => entry.map === map);
   function change(patch: Partial<Selection>) {
@@ -441,8 +449,8 @@ export default function TeamsHub() {
   }
   function close() {
     const current = currentHubParams();
-    if (current.get("player")) change({ player: "", side: "all" });
-    else if (current.get("map")) change({ map: "", player: "", side: "all" });
+    if (current.get("player")) change({ player: "", side: "T" });
+    else if (current.get("map")) change({ map: "", player: "", side: "T" });
     else change({ team: "" });
   }
   useEffect(() => {
@@ -484,15 +492,15 @@ export default function TeamsHub() {
       {teamSlug ? <nav className="hub-breadcrumbs" aria-label={t("hub.breadcrumb")}>
         <h1 className="hub-compact-title">{t("ui.nav_teams")}</h1>
         <button type="button" onClick={() => change({ team: "" })}>{t("hub.all_teams")}</button>
-        <span aria-hidden="true">/</span><button type="button" onClick={() => change({ map: "", player: "", side: "all" })} disabled={!map}>{team?.team ?? teamSlug}</button>
-        {map ? <><span aria-hidden="true">/</span><button type="button" disabled={!player} onClick={() => change({ player: "", side: "all" })}>{team?.maps.find((m) => m.map === map)?.display_name ?? map}</button></> : null}
+        <span aria-hidden="true">/</span><button type="button" onClick={() => change({ map: "", player: "", side: "T" })} disabled={!map}>{team?.team ?? teamSlug}</button>
+        {map ? <><span aria-hidden="true">/</span><button type="button" disabled={!player} onClick={() => change({ player: "", side: "T" })}>{team?.maps.find((m) => m.map === map)?.display_name ?? map}</button></> : null}
         <button type="button" className="hub-close" onClick={close}>{t("hub.close_level")}</button>
       </nav> : null}
       <div className="hub-stage" ref={slide.host} key={routeKey(slide.route)} data-direction={slide.direction < 0 ? "back" : "forward"}>
       {!teamSlug ? <section aria-label={t("hub.all_teams")}>
         <label className="hub-search">{t("heatmap.search")}<input type="search" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
         <p className="muted" role="status">{t("hub.team_count", { n: filtered.length })}</p>
-        <div className="hub-team-grid">{filtered.map((entry) => <button type="button" className="hub-team-card" style={teamTheme(entry.slug)} id={`hub-team-${entry.slug}`} key={entry.slug} onClick={() => change({ team: entry.slug, map: "", player: "", side: "all" })}>
+        <div className="hub-team-grid">{filtered.map((entry) => <button type="button" className="hub-team-card" style={teamTheme(entry.slug)} id={`hub-team-${entry.slug}`} key={entry.slug} onClick={() => change({ team: entry.slug, map: "", player: "", side: "T" })}>
           <Asset path={`logos/teams/${entry.slug}.png`} name={entry.team} badge /><strong>{entry.team}</strong><span>{t("hub.sample", { matches: entry.n_matches, maps: entry.maps.length })}</span>
         </button>)}</div>
       </section> : !team ? <p role="alert">{t("heatmap.team_not_found")}</p> : map && !validMap ? <p role="alert">{t("hub.map_not_found")}</p> : map ? <MapPanel key={`${team.slug}-${map}`} team={team} map={map} playerId={player} side={side} change={change} /> : <TeamPanel team={team} change={change} />}

@@ -33,6 +33,9 @@ export interface SiteIndex {
     n_lineups: number;
     /** true when <map>/heatmaps/ exists */
     heatmaps?: boolean;
+    win_rate_T?: number | null;
+    win_rate_CT?: number | null;
+    top_recipe?: { id: string; name: { zh: string; en: string } } | null;
   }[];
 }
 
@@ -97,6 +100,7 @@ export interface TeamProfile {
     opponent: string | null;
     score_for: number;
     score_against: number;
+    winprob_available?: boolean;
     event?: string | null;
     event_name?: string | null;
     date?: string | null;
@@ -369,6 +373,8 @@ export interface CTTactics {
 }
 
 export interface SpotRef {
+  thrower?: string | null;
+  order?: number | null;
   spot_id: string;
   type: "smoke" | "molotov";
   label: string; // fallback name: callout (+ "#n")
@@ -463,4 +469,4 @@ export interface Wpa {
 }
 
 /** <map>/winprob/<demo_id>.json, showcase teams only: T win probability per second, per round */
-export interface WinprobTimeline { demo_id: string; wp_t: Record<string, number[]> }
+export interface WinprobTimeline { demo_id: string; wp_t: Record<string, number[]>; team_sides?: Record<string, Record<string, Side>> }

@@ -1,47 +1,50 @@
 {
  "9z": {
-  "zh": "T 方快攻占 24%，高于其他队伍的 13%。开局 20 秒的 CT 默认站位为 A3 M1 B1，占 31% 的枪局，胜率 60%。",
-  "en": "Fast hits account for 24% of T gun rounds versus 13% for other teams. At 20 s, the default CT setup is A3 M1 B1, used in 31% of gun rounds with a win rate of 60%.",
+  "zh": "9z 快攻占 24%（51 个枪局），高于其他队伍的 13%；最常用爆弹是 A 点正门烟加小木屋顶火，5 次赢 2 次。CT 默认 A3 M1 B1 占 38% 枪局、胜率 78%，摸边多由 dgt 承担（4 次）。",
+  "en": "9z hit fast 24% of the time vs 13% for others (51 gun rounds), and their signature execute is A with Mini smoke + Hut roof molotov (5 times, won 2). Their CT default A3 M1 B1 covers 38% of gun rounds at 78% wins, with dgt the usual lurker (4 hits).",
   "facts": [
    "t_tempo_fast",
+   "t_signature_recipe",
+   "t_main_lurker",
    "ct_default_setup"
   ],
-  "fingerprint": "9a1dd888c778"
+  "fingerprint": "7a93554efb9b"
  },
  "astralis": {
-  "zh": "T 方拖后进攻占 5%，低于其他队伍的 26%。",
-  "en": "Late hits account for 5% of T gun rounds versus 26% for other teams.",
+  "zh": "Astralis 拖后进攻仅占 5%，明显低于其他队伍的 27%（19 个枪局）。",
+  "en": "Astralis went late on just 5% of their hits vs 27% for other teams (19 gun rounds).",
   "facts": [
    "t_tempo_late"
   ],
-  "fingerprint": "af2a12050d84"
+  "fingerprint": "b8660533aa4b"
  },
  "aurora": {
-  "zh": "T 方有人摸边的进攻占 58%，高于其他队伍的 34%。进攻开始后 CT 及时回防占 88%，高于其他队伍的 69%。",
-  "en": "The T side includes a lurker on 58% of hits versus 34% for other teams. CT rotations arrive in time in 88% of rounds versus 69% for other teams.",
+  "zh": "Aurora 有 58% 的进攻带摸边（24 个枪局），高于其他队伍的 33%，MAJ3R 是最常摸边的人（4 次）。CT 端 88% 的回合能及时回防，也高于其他队伍的 69%（34 个枪局）。",
+  "en": "Aurora send a lurker on 58% of their hits vs 33% for other teams (24 gun rounds), usually MAJ3R (4 hits). Their CT side rotates in time in 88% of rounds vs 69% for others (34 gun rounds).",
   "facts": [
    "t_lurk",
+   "t_main_lurker",
    "ct_rotate"
   ],
-  "fingerprint": "9f0c567e5f95"
+  "fingerprint": "532031b9edfb"
  },
  "b8": {
-  "zh": "T 方拖后进攻占 55%，高于其他队伍的 25%。T 方先假打再转点占 5%，低于其他队伍的 27%。CT 开局有人前压的回合占 45%，低于其他队伍的 71%。",
-  "en": "Late hits account for 55% of T gun rounds versus 25% for other teams. The T side fakes before the hit on 5% of attacks versus 27% for other teams. The CT side pushes early in 45% of gun rounds versus 71% for other teams.",
+  "zh": "B8 有 55% 的进攻拖到后段（29 个枪局），远高于其他队伍的 25%，但先假打再转点只有 5%（22 个枪局）。CT 端开局前压仅 45%，低于其他队伍的 72%（31 个枪局）。",
+  "en": "B8 go late on 55% of hits vs 25% for other teams (29 gun rounds) but fake first only 5% of the time (22 gun rounds). Their CT early pushes are also rare, 45% vs 72% for others (31 gun rounds).",
   "facts": [
    "t_tempo_late",
    "t_fake",
    "ct_forward"
   ],
-  "fingerprint": "de1f72322fb0"
+  "fingerprint": "fed646a203f7"
  },
  "betboom": {
-  "zh": "T 方分兵进点占 53%，低于其他队伍的 71%。",
-  "en": "The T side uses split hits on 53% of attacks versus 71% for other teams.",
+  "zh": "BETBOOM 的分兵进点只占 52%，明显低于其他队伍的 72%（42 个枪局）。",
+  "en": "BETBOOM split their hits on just 52% of gun rounds vs 72% for other teams (42 gun rounds).",
   "facts": [
    "t_split"
   ],
-  "fingerprint": "06f7482bb501"
+  "fingerprint": "d2c4734c1d92"
  },
  "falcons": {
   "zh": "T 方最常由 TeSeS 摸边，7 次进攻时他在另一侧或远离进攻点。",
@@ -61,13 +64,14 @@
   "fingerprint": "faa49f571a40"
  },
  "furia": {
-  "zh": "T 方最常用正门烟和小木屋顶火爆弹 A 点，4 次赢下 1 次。CT 开局有人前压的回合占 92%，高于其他队伍的 69%。",
-  "en": "The go-to A execute uses Mini smoke and a Hut roof molotov, winning 1 of 4 attempts. The CT side pushes early in 92% of gun rounds versus 69% for other teams.",
+  "zh": "FURIA 最常用的爆弹是 A 点正门烟加小木屋顶火（4 次，只赢 1 次），molodoy 是最常摸边的人（4 次）。CT 端开局前压高达 92%，远高于其他队伍的 70%（24 个枪局）。",
+  "en": "FURIA's go-to execute is A with Mini smoke + Hut roof molotov (4 times, won 1), and molodoy is the usual lurker (4 hits). They push early on CT in 92% of rounds vs 70% for others (24 gun rounds).",
   "facts": [
    "t_signature_recipe",
+   "t_main_lurker",
    "ct_forward"
   ],
-  "fingerprint": "522895920f30"
+  "fingerprint": "1a3e7f28d3a5"
  },
  "fut-esports": {
   "zh": "T 方快攻占 30%，高于其他队伍的 13%。开局 20 秒的 CT 默认站位为 A2 M2 B1，占 32% 的枪局，胜率 83%。",
@@ -79,21 +83,26 @@
   "fingerprint": "5eaebcbd53fb"
  },
  "gamerlegion": {
-  "zh": "T 方拖后进攻占 45%，高于其他队伍的 26%。T 方进攻 A 点占 82%，高于其他队伍的 57%。",
-  "en": "Late hits account for 45% of T gun rounds versus 26% for other teams. The T side goes A on 82% of attempts versus 57% for other teams.",
+  "zh": "GamerLegion 的进攻 82% 打 A 点（17 个枪局），远高于其他队伍的 57%，B 点只有 18%；拖后进攻占 45%。CT 默认 A2 M1 B2（27% 的枪局）一局未赢（0%）。",
+  "en": "GamerLegion go A on 82% of their hits vs 57% for other teams (17 gun rounds), leaving B at just 18%. Their CT default A2 M1 B2 shows up in 27% of gun rounds and won 0%.",
   "facts": [
+   "t_site_A",
+   "t_site_B",
    "t_tempo_late",
-   "t_site_A"
-  ],
-  "fingerprint": "fb2fc03a53bf"
- },
- "legacy": {
-  "zh": "Legacy 的 CT 默认站位 A2 M2 B1 占 30% 的枪局，胜率 83%。",
-  "en": "Legacy's default CT setup A2 M2 B1 covers 30% of gun rounds with an 83% win rate.",
-  "facts": [
    "ct_default_setup"
   ],
-  "fingerprint": "04e4ee9926ec"
+  "fingerprint": "0180f991c7e0"
+ },
+ "legacy": {
+  "zh": "Legacy 的招牌是 A 点正门烟加小木屋顶火，6 次赢 5 次；CT 默认 A2 M2 B1 占 27% 枪局、胜率 71%。堆点防守占 19%，其他队伍 8%（52 个枪局），摸边常由 saadzin 完成（5 次）。",
+  "en": "Legacy's signature execute is A with Mini smoke + Hut roof molotov (6 times, won 5). Their CT default A2 M2 B1 covers 27% of gun rounds at 71% wins, they stack 19% vs 8% for others (52 gun rounds), and saadzin is the usual lurker (5 hits).",
+  "facts": [
+   "t_signature_recipe",
+   "ct_default_setup",
+   "ct_stack",
+   "t_main_lurker"
+  ],
+  "fingerprint": "e4351bfd4fa7"
  },
  "lgcy": {
   "zh": "T 方最常用正门烟和小木屋顶火爆弹 A 点，5 次赢下 3 次。CT 开局有人前压的回合占 48%，低于其他队伍的 71%。",
@@ -131,13 +140,13 @@
   "fingerprint": "b547e8172498"
  },
  "monte": {
-  "zh": "T 方最常用正门烟和小木屋顶火爆弹 A 点，5 次赢下 3 次。CT 开局有人前压的回合占 50%，低于其他队伍的 71%。",
-  "en": "The go-to A execute uses Mini smoke and a Hut roof molotov, winning 3 of 5 attempts. The CT side pushes early in 50% of gun rounds versus 71% for other teams.",
+  "zh": "Monte 最常用的爆弹是 A 点正门烟加小木屋顶火，5 次赢 3 次。CT 端开局前压 50%，低于其他队伍的 72%（40 个枪局）。",
+  "en": "Monte's go-to execute is A with Mini smoke + Hut roof molotov (5 times, won 3). On CT they push early in only 50% of rounds vs 72% for other teams (40 gun rounds).",
   "facts": [
    "t_signature_recipe",
    "ct_forward"
   ],
-  "fingerprint": "f0b92d4673ee"
+  "fingerprint": "e3526851dcd7"
  },
  "mouz": {
   "zh": "开局 20 秒的 CT 默认站位为 A3 M1 B1，占 32% 的枪局，胜率 83%。",
@@ -182,12 +191,13 @@
   "fingerprint": "349c48cea515"
  },
  "the-mongolz": {
-  "zh": "The MongolZ 的 CT 默认站位 A2 M1 B2 占 26% 的枪局，胜率 80%。",
-  "en": "The MongolZ's default CT setup A2 M1 B2 covers 26% of gun rounds with an 80% win rate.",
+  "zh": "The MongolZ 的摸边多由 Techno4K 承担（5 次进攻时在另一侧或远离进攻点）。CT 默认 A2 M1 B2，占 27% 的枪局，胜率 57%。",
+  "en": "The MongolZ lean on Techno4K as their lurker (5 hits with him on the far side). Their CT default is A2 M1 B2, used in 27% of gun rounds for a 57% win rate.",
   "facts": [
+   "t_main_lurker",
    "ct_default_setup"
   ],
-  "fingerprint": "2f20d281e445"
+  "fingerprint": "54fa1a1fa1a3"
  },
  "tyloo": {
   "zh": "T 方最常用正门烟和小木屋顶火爆弹 A 点，5 次赢下 4 次。",
@@ -198,11 +208,11 @@
   "fingerprint": "b2c7d723805b"
  },
  "vitality": {
-  "zh": "Vitality 的 CT 方开局前压占 91%，高于其他队伍的 69%，防守频繁主动向前展开。",
-  "en": "Vitality's CT side pushes early in 91% of rounds versus the other teams' 69%, making forward aggression a frequent part of its defense.",
+  "zh": "Vitality 的 CT 端开局前压比例高达 91%，远高于其他队伍的 70%（22 个枪局）。",
+  "en": "Vitality push early on CT in 91% of rounds vs 70% for other teams (22 gun rounds).",
   "facts": [
    "ct_forward"
   ],
-  "fingerprint": "0d5ed7a0e6ee"
+  "fingerprint": "68983174a05a"
  }
 }

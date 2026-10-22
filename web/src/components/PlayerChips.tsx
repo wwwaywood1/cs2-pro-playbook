@@ -29,7 +29,7 @@ export default function PlayerChips({ roster, side, selected, onChange }: Player
                 ? [...selected, player.steamid]
                 : selected.filter((id) => id !== player.steamid))}
             />
-            <span className="hm-swatch" style={{ backgroundColor: playerColor(player.color).deep }} aria-hidden="true" />
+            <span className="hm-swatch" style={{ backgroundColor: playerColor(player.color, side).deep }} aria-hidden="true" />
             <span>{player.name}</span>
             <small>{t("heatmap.rounds", { n: player.rounds[side] ?? "—" })}</small>
             {player.low_sample[side] && <small className="hm-low">{t("heatmap.low_sample")}</small>}

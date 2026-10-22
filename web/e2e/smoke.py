@@ -39,7 +39,7 @@ class Smoke:
         if not cond:
             self.failures.append(msg)
 
-    def expected_count(self, side=None, min_throws=2, technique=None) -> int:
+    def expected_count(self, side=None, min_throws=0, technique=None) -> int:
         return sum(
             1 for lineup in self.lineups
             if (side is None or lineup["side"] == side)
@@ -75,14 +75,20 @@ def route(path: str, ready: str):
 def check_home(smoke: Smoke, page: Page) -> None:
     # Home
     smoke.check("Mirage" in page.inner_text("body"), "home lists the Mirage map")
+    smoke.check(page.locator('.map-card').filter(has_text='Cache').locator('.map-no-data').count() == 1,
+                'Cache has an explicit no-data state')
 
 
 @route('#/de_mirage/lineups', '.lineup-card')
 def check_lineups(smoke: Smoke, page: Page) -> None:
-    # Lineups: default filter (min throws 2, all sides/types)
+    # Lineups: default tier includes every exported lineup.
     n = page.locator(".lineup-card").count()
     smoke.check(n == smoke.expected_count(), f"default lineup list: {n} cards == {smoke.expected_count()} in data")
-    smoke.check(page.locator(".radar .arrow-group").count() == n, "radar draws one arrow per card")
+    places = {row.get('land_place') or row.get('land_region') or row.get('land_lane') or '' for row in smoke.lineups}
+    smoke.check(page.locator(".radar .landing-cluster").count() == len(places),
+                "overview aggregates one landing marker per callout")
+    smoke.check(page.locator(".radar .arrow-group").count() <= 1,
+                "overview keeps individual routes collapsed")
     smoke.check(page.locator(".radar image").count() == 1, "radar image element present")
     radar_loaded = page.locator(".radar image").evaluate("""element => new Promise(resolve => {
         const image = new Image();
@@ -96,10 +102,13 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     page.get_by_role("button", name="CT", exact=True).click()
     n_ct = page.locator(".lineup-card").count()
     smoke.check(n_ct == smoke.expected_count(side="CT"), f"CT filter: {n_ct} == {smoke.expected_count(side='CT')}")
-    # Min throws 5
-    page.fill("#filter-min-throws", "5")
-    n5 = page.locator(".lineup-card").count()
-    smoke.check(n5 == smoke.expected_count(side="CT", min_throws=5), f"CT + min 5: {n5} == {smoke.expected_count(side='CT', min_throws=5)}")
+    # Usage tiers replace the free-form count input.
+    page.locator("#filter-tiers button").nth(1).click()
+    n10 = page.locator(".lineup-card").count()
+    smoke.check(n10 == smoke.expected_count(side="CT", min_throws=10), "common tier filters at ten throws")
+    page.locator("#filter-tiers button").nth(2).click()
+    smoke.check(page.locator(".lineup-card").count() == smoke.expected_count(side="CT", min_throws=50),
+                "must-learn tier filters at fifty throws")
     # Reset, then technique = jump
     page.locator(".filter-actions button").click()
     page.select_option("#filter-technique", "jump")
@@ -112,9 +121,12 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     smoke.check(page.locator(".lineup-card.is-selected").count() == 1, "clicking a card selects exactly one card")
     smoke.check(page.locator(".radar .arrow-group.is-selected").count() == 1, "the radar highlights exactly one arrow")
     # Radar -> card selection
-    page.locator(".radar .arrow-group").nth(4).locator(".arrow-hit").dispatch_event("click")
+    page.locator(".radar .landing-cluster").first.dispatch_event("click")
+    smoke.check(page.locator(".radar-reset").count() == 1, "clicking a callout expands its routes")
     sel_card = page.locator(".lineup-card.is-selected .practice-cmd").inner_text()
-    smoke.check(sel_card.startswith("setpos "), "clicking an arrow selects a card")
+    smoke.check(sel_card.startswith("setpos "), "clicking a callout selects its most-used lineup")
+    smoke.check(page.locator(".radar .throw-direction").count() == 1,
+                "selected lineup shows its recorded view direction")
 
     # Copy button copies practice_cmd exactly
     first = page.locator(".lineup-card").first
@@ -159,10 +171,10 @@ def check_teams_hub(smoke: Smoke, page: Page) -> None:
     smoke.check(page.get_by_role('button', name='CT', exact=True).get_attribute('aria-pressed') == 'true',
                 'CT segment changes selected state and URL')
     page.go_back()
-    page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('side') === 'all'")
+    page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('side') === 'T'")
     expect(page.get_by_role('button', name='CT', exact=True)).to_have_attribute('aria-pressed', 'false')
     smoke.check(page.get_by_role('button', name='CT', exact=True).get_attribute('aria-pressed') == 'false',
-                'Back restores overall side')
+                'Back restores default T side')
     page.go_forward()
     page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('side') === 'CT'")
     page.reload()
@@ -209,6 +221,15 @@ def check_hub_map(smoke: Smoke, page: Page) -> None:
 def check_hub_player(smoke: Smoke, page: Page) -> None:
     smoke.check(page.locator('.hub-map-figure .hm-radar').count() == 1, 'deep-linked player has one primary radar')
     smoke.check(page.locator('.hub-player-bio').count() == 1, 'deep-linked player has portrait column')
+    smoke.check(page.locator('.hub-analysis-toolbar .stat').count() == 3,
+                'sample size is beside the title rather than a fourth stat card')
+    smoke.check(page.locator('.hub-sample-inline').count() == 1, 'sample size is small title metadata')
+    page.get_by_role('button', name='中期控图', exact=True).click()
+    expect(page.locator('.hub-player-view')).to_have_attribute('data-phase', 'mid')
+    page.get_by_role('button', name='下包后/残局', exact=True).click()
+    expect(page.locator('.hub-player-view')).to_have_attribute('data-phase', 'post')
+    page.get_by_role('button', name='开局', exact=True).click()
+    expect(page.locator('.hub-player-view')).to_have_attribute('data-phase', 'early')
     page.set_viewport_size({'width': 1920, 'height': 1080})
     overflow = page.evaluate('document.documentElement.scrollWidth - document.documentElement.clientWidth')
     smoke.check(overflow <= 0, '1920px player view has no horizontal overflow')
@@ -240,6 +261,7 @@ def check_hub_player(smoke: Smoke, page: Page) -> None:
 def check_hub_entrance(smoke: Smoke, page: Page) -> None:
     # Test owner-style copy without modifying the sample registry or production data.
     player = '76561198113666193'
+    smoke.check(page.locator('.hub-side-switch button').count() == 2, 'heatmap offers T and CT only')
     page.route('**/data/player_quotes.json', lambda request: request.fulfill(json={
         player: {'name': 'ZywOo', 'zh': '一箫一剑平生意，负尽狂名十五年', 'en': ''}
     }))
@@ -254,7 +276,7 @@ def check_hub_entrance(smoke: Smoke, page: Page) -> None:
         expect(page.locator('.hub-player-view')).to_have_attribute('data-entrance', 'settled', timeout=4000)
         page.wait_for_function("!document.querySelector('.hub-count[data-rolling=\"true\"]')")
         smoke.check(page.locator('.hub-verse-line .sr-only').inner_text() == '一箫一剑平生意，负尽狂名十五年',
-                    '2.5-second entrance settles with one complete accessible verse')
+                    'full entrance settles with one complete accessible verse')
         page.keyboard.press('Escape')
         page.wait_for_selector(f'#hub-player-{player}')
         page.locator(f'#hub-player-{player}').click()
@@ -262,14 +284,14 @@ def check_hub_entrance(smoke: Smoke, page: Page) -> None:
         page.keyboard.press('Shift')
         expect(page.locator('.hub-player-view')).to_have_attribute('data-entrance', 'settled')
         smoke.check('player=' in page.url, 'any key skips the shortened entrance without changing route')
-        counts = page.locator('.hub-analysis-toolbar .hub-count')
-        all_rounds = counts.last.get_attribute('data-value')
+        counts = page.locator('.hub-sample-inline .hub-count')
+        t_rounds = counts.last.get_attribute('data-value')
         before_heat = page.locator('.hub-layer-in image').first.get_attribute('href')
         page.get_by_role('button', name='CT', exact=True).click()
         expect(page.get_by_role('button', name='CT', exact=True)).to_have_attribute('aria-pressed', 'true')
         expect(counts.last).to_have_attribute('data-rolling', 'true')
-        smoke.check(counts.last.get_attribute('data-value') != all_rounds,
-                    'side change rolls digits to new values after the intro has settled')
+        smoke.check(counts.last.get_attribute('data-value') != t_rounds,
+                    'side change reveals the complete new number after the intro has settled')
         page.wait_for_function("!document.querySelector('.hub-count[data-rolling=\"true\"]')")
         smoke.check(page.locator('.hub-layer-in image').first.get_attribute('href') != before_heat,
                     'CT changes the heat texture and side hue independently of team palette')
@@ -289,6 +311,7 @@ def check_hub_entrance(smoke: Smoke, page: Page) -> None:
 
 @route('#/de_mirage/teams/vitality', 'h1')
 def check_team(smoke: Smoke, page: Page) -> None:
+    smoke.check('未提供' not in page.inner_text('body'), 'team match metadata omits missing fields')
     # Team page: low-sample banner
     body = page.inner_text("body")
     smoke.check("1" in body and ("样本不足" in body or "Low sample" in body), "team page shows the low-sample warning")

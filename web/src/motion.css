@@ -16,14 +16,8 @@
 @keyframes motion-reveal { from { opacity: 0; transform: translate3d(0, 36px, 0) rotateX(8deg); filter: blur(8px); } to { opacity: 1; transform: none; filter: blur(0); } }
 @keyframes motion-radar { from { opacity: 0; filter: blur(8px); } to { opacity: 1; filter: blur(0); } }
 .hub-count { display: inline-block; font-family: var(--mono); font-variant-numeric: tabular-nums; }
-/* Real digit reels keep a single exact, accessible value throughout. */
-.hub-number-display { display: inline-block; position: relative; line-height: 1.15; }
-.hub-number-reels { display: none; position: absolute; inset: 0; white-space: nowrap; align-items: center; }
-.hub-count[data-rolling="true"] .hub-number-final { visibility: hidden; }
-.hub-count[data-rolling="true"] .hub-number-reels { display: flex; }
-.hub-digit { display: inline-block; height: 1em; width: 1ch; overflow: hidden; line-height: 1; }
-.hub-digit-track { display: flex; flex-direction: column; }
-.hub-digit-track > span { display: block; height: 1em; flex: 0 0 1em; }
+/* Complete final values fade in without clipping any digit. */
+.hub-number-display, .hub-number-final { display: inline-block; position: relative; line-height: 1.2; overflow: visible; }
 
 @media (prefers-reduced-motion: reduce) {
   .route-scene, .site-page *, .site-page *::before, .site-page *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }

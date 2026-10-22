@@ -16,26 +16,32 @@ interface RadarProps {
 export default function Radar({ map, lineups, selectedId, hoveredId, onSelect }: RadarProps) {
   const [imageOk, setImageOk] = useState(true);
   const activeId = lineups.some((lineup) => lineup.id === hoveredId) ? hoveredId : selectedId;
-  const clustered = lineups.length > 50;
+  const [selectedPlace, setSelectedPlace] = useState<string | null>(null);
+  const placeKey = (lineup: Lineup) => lineup.land_place || lineup.land_region || lineup.land_lane || "";
   const clusters = useMemo(() => {
-    const cells = new Map<string, { x: number; y: number; weight: number; count: number; lineup: Lineup }>();
+    const places = new Map<string, Lineup[]>();
     for (const lineup of lineups) {
-      const { radar_x: x, radar_y: y } = lineup.land;
-      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
-      const key = `${Math.floor(x / 64)}:${Math.floor(y / 64)}`;
-      const weight = Math.max(1, lineup.n_throws);
-      const cell = cells.get(key);
-      if (cell) {
-        cell.x += x * weight; cell.y += y * weight; cell.weight += weight; cell.count++;
-        if (lineup.n_throws > cell.lineup.n_throws) cell.lineup = lineup;
-      } else cells.set(key, { x: x * weight, y: y * weight, weight, count: 1, lineup });
+      if (!Number.isFinite(lineup.land.radar_x) || !Number.isFinite(lineup.land.radar_y)) continue;
+      const key = placeKey(lineup);
+      const rows = places.get(key) ?? [];
+      rows.push(lineup); places.set(key, rows);
     }
-    return [...cells.entries()];
+    const median = (values: number[]) => {
+      const sorted = [...values].sort((a, b) => a - b);
+      const middle = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+    };
+    return [...places.entries()].map(([key, rows]) => ({
+      key, rows, x: median(rows.map((row) => row.land.radar_x)), y: median(rows.map((row) => row.land.radar_y)),
+      weight: rows.reduce((sum, row) => sum + row.n_throws, 0),
+      lineup: [...rows].sort((a, b) => b.n_throws - a.n_throws || a.id.localeCompare(b.id))[0],
+    }));
   }, [lineups]);
 
   useEffect(() => {
     setImageOk(true);
   }, [map]);
+  useEffect(() => { setSelectedPlace(null); }, [map, lineups]);
 
   return (
     <div className="radar-panel-inner">
@@ -70,14 +76,17 @@ export default function Radar({ map, lineups, selectedId, hoveredId, onSelect }:
           ))}
         </defs>
 
-        {clustered ? clusters.map(([key, cell]) => <g key={key} className="landing-cluster" role="button" tabIndex={0}
-          aria-label={`落点聚合 · ${cell.count} 组 · ${cell.weight} 次投掷；查看最常用道具`}
-          onClick={() => onSelect(cell.lineup.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(cell.lineup.id); } }}>
-          <title>{`${cell.count} 组道具 · ${cell.weight} 次投掷；点击查看最常用道具`}</title>
-          <circle cx={cell.x / cell.weight} cy={cell.y / cell.weight} r={Math.min(36, 12 + Math.sqrt(cell.weight))} />
-          <text x={cell.x / cell.weight} y={cell.y / cell.weight + 5} textAnchor="middle">{cell.count}</text>
-        </g>) : null}
-        {lineups.filter((lineup) => !clustered || lineup.id === activeId).map((lineup) => {
+        {clusters.filter((cell) => cell.key !== selectedPlace).map((cell) => {
+          const label = `${calloutLabel(map, cell.lineup.land_place)} · ${cell.weight}`;
+          const expand = () => { setSelectedPlace(cell.key); onSelect(cell.lineup.id); };
+          return <g key={cell.key} className="landing-cluster" role="button" tabIndex={0}
+            aria-label={label} onClick={expand} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); expand(); } }}>
+            <title>{label}</title>
+            <circle cx={cell.x} cy={cell.y} r={Math.min(42, 14 + Math.sqrt(cell.weight))} />
+            <text x={cell.x} y={cell.y + 5} textAnchor="middle">{cell.weight}</text>
+          </g>;
+        })}
+        {lineups.filter((lineup) => placeKey(lineup) === selectedPlace || lineup.id === activeId).map((lineup) => {
           const selected = lineup.id === activeId;
           const dimmed = activeId != null && !selected;
           const x = lineup.throw.radar_x, y = lineup.throw.radar_y;
@@ -116,6 +125,10 @@ export default function Radar({ map, lineups, selectedId, hoveredId, onSelect }:
                 cy={lineup.throw.radar_y}
                 r={selected ? 9 : 5.5}
               />
+              {selected && Number.isFinite(lineup.throw.yaw) ? <g className="throw-direction">
+                <title>{t("round2.throw_dir_tip")}</title>
+                <line x1={x} y1={y} x2={x + Math.cos(lineup.throw.yaw * Math.PI / 180) * 56} y2={y - Math.sin(lineup.throw.yaw * Math.PI / 180) * 56} markerEnd={`url(#arrowhead-${lineup.type})`} />
+              </g> : null}
               <svg x={lineup.land.radar_x - 24} y={lineup.land.radar_y - 24} width="48" height="48" viewBox="0 0 32 32" aria-hidden="true">
                 <GrenadeGlyph type={lineup.type} />
               </svg>
@@ -124,7 +137,8 @@ export default function Radar({ map, lineups, selectedId, hoveredId, onSelect }:
         })}
       </svg>
 
-      <p className="radar-hint">{clustered ? "落点聚合（数字为道具组数） · 悬停 / 聚焦卡片查看轨迹" : "悬停 / 聚焦卡片查看轨迹"} · 圆点：起投点 · 图标：爆开点</p>
+      <p className="radar-hint">{t("round2.throw_dir_tip")}</p>
+      {selectedPlace !== null ? <button type="button" className="button button-ghost radar-reset" onClick={() => setSelectedPlace(null)}>{t("round2.tier_all")}</button> : null}
       <div className="radar-legend">
         {TYPES.map((type) => (
           <span key={type} className="grenade-label">

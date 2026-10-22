@@ -46,8 +46,14 @@ export const PLAYER_COLORS: PlayerColor[] = [
   { key: "grey", light: "#e5e7eb", deep: "#4b5563" },
 ];
 
-export function playerColor(index: number): PlayerColor {
-  return PLAYER_COLORS[Math.min(Math.max(0, index), PLAYER_COLORS.length - 1)];
+// Player ownership uses shades within its side's hue; T stays amber, CT stays blue.
+const SIDE_PLAYER_COLORS = {
+  T: ["#f5d487", "#e8b75a", "#ffb46b", "#dc9a38", "#bf792e", "#ad9065"],
+  CT: ["#c7e7ff", "#8fcaff", "#6db6f2", "#519ee9", "#377fc5", "#6f94b8"],
+};
+export function playerColor(index: number, side?: Side): PlayerColor {
+  const slot = Math.min(Math.max(0, index), PLAYER_COLORS.length - 1);
+  return side ? { key: side === "T" ? "orange" : "blue", light: side === "T" ? "#ffdaa9" : "#c7e7ff", deep: SIDE_PLAYER_COLORS[side][slot] } : PLAYER_COLORS[slot];
 }
 
 const GAMMA = 0.6; // lift faint areas so all five players stay visible

@@ -15,7 +15,6 @@ const UNKNOWN_TEAM_PALETTE: TeamPalette = { primary: "#d4e4f4", secondary: "#e2e
 
 export function teamTheme(slug: string): CSSProperties {
   const palette = TEAM_PALETTES[slug] ?? (slug ? UNKNOWN_TEAM_PALETTE : DEFAULT_PALETTE);
-  return { "--accent": palette.primary, "--primary": palette.primary, "--secondary": slug ? "#e2e8ee" : palette.secondary,
-    "--tertiary": slug ? "#a6b7c9" : palette.tertiary,
-    ...(slug ? { "--side-t": "#e2e8ee", "--side-ct": "#a6b7c9", "--ct": "#a6b7c9" } : {}) } as CSSProperties;
+  return { "--team-primary": palette.primary, "--team-secondary": palette.secondary,
+    "--team-tertiary": palette.tertiary } as CSSProperties;
 }
