@@ -353,3 +353,8 @@ Inspired by Szmida & Toka (MIT Sloan 2025, temporal heterogeneous GNN) and Xenop
 - **Recipe swing**: mean WP 5 s before the commit vs 10 s after (`tactics.json` › `recipes[].wp`). Biased upward (rounds that reach a commit are already going well): use it to compare recipes, not as an absolute effect.
 - **Timelines**: `data/site/<map>/winprob/<demo_id>.json` for showcase teams (`SHOWCASE_TEAMS` in export.py, currently Falcons).
 - Export runs the model when scikit-learn is installed (≈1.5 min), otherwise prints a skip line.
+
+
+## Entry routes (playbook/tactics.py `recipe_routes`)
+
+For every execute recipe, each T player alive at the commit contributes the path from round start to the commit (1 Hz positions). Paths are grouped by the callouts the player dwelt in for ≥ 2 s on the way (the last one before the final callout, plus the final callout), so routes to the same site through different chokes stay apart. Each group is drawn as its **medoid** — a real player path, so it never crosses walls — after resampling to 16 points; groups whose medoids are within 45 radar px are merged; groups under 12 % of the recipe's paths are dropped (max 4). Exported as `recipes[].routes` (`via`, `lane`, `n`, `share`, `points` in radar px). On Mirage all 23 recipes get routes and the drawn routes cover 71 % of player paths on average.

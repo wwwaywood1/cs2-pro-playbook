@@ -79,6 +79,13 @@ RECIPE_MIN_ROUNDS = 4
 RECIPE_CORE_SHARE = 0.5
 RECIPE_OPTION_SHARE = 0.2
 
+ROUTE_POINTS = 16        # each path is resampled to this many points along its length
+ROUTE_MIN_SHARE = 0.12   # a route must carry this share of the recipe's player paths
+ROUTE_MAX = 4
+ROUTE_MERGE_PX = 45.0    # medoids closer than this (mean radar px) are the same route
+ROUTE_MIN_DWELL_S = 2    # a callout counts as "via" when the player spent this long in it
+ROUTE_VIA = 1            # route key: the via-callout before the final one, plus the final one
+
 CT_SHAPE_S = 20
 CT_FORWARD_S = 15
 T_TERRITORY_SHARE = 0.6
@@ -502,6 +509,94 @@ def execute_recipes(plans: pl.DataFrame, spots: pl.DataFrame, spot_lineups: dict
     return recipes, pl.DataFrame(assign, schema={"demo_id": pl.Utf8, "round_num": pl.Int32, "recipe_id": pl.Utf8})
 
 
+# ------------------------------------------------------------------------- entry routes
+
+def _resample(xy: np.ndarray, n: int = ROUTE_POINTS) -> np.ndarray:
+    """Resample a polyline to n points evenly spaced along its length."""
+    if len(xy) == 1:
+        return np.repeat(xy, n, axis=0)
+    seg = np.r_[0.0, np.cumsum(np.hypot(*np.diff(xy, axis=0).T))]
+    if seg[-1] == 0:
+        return np.repeat(xy[:1], n, axis=0)
+    at = np.linspace(0, seg[-1], n)
+    return np.c_[np.interp(at, seg, xy[:, 0]), np.interp(at, seg, xy[:, 1])]
+
+
+def _via(places: list[str | None]) -> tuple[str, ...]:
+    """Callouts the player dwelt in (>= ROUTE_MIN_DWELL_S consecutive seconds), in order, deduplicated."""
+    out: list[str] = []
+    run, prev = 0, None
+    for pl_ in places + [None]:
+        if pl_ == prev:
+            run += 1
+            continue
+        if prev and run >= ROUTE_MIN_DWELL_S and (not out or out[-1] != prev):
+            out.append(prev)
+        prev, run = pl_, 1
+    return tuple(out)
+
+
+def recipe_routes(plans: pl.DataFrame, positions: pl.DataFrame, mm: MapMeta) -> dict[str, list[dict]]:
+    """Typical T entry routes per recipe, from round start to the commit.
+
+    Each T player alive at the commit gives one path. Paths are grouped by the callouts the player
+    dwelt in on the way (the last ROUTE_VIA before the final one, plus the final one), so routes
+    that end on the same site through different chokes stay apart. A route is drawn as the medoid
+    path of its group (a real path, so it never cuts through walls); groups below ROUTE_MIN_SHARE
+    are dropped. Points are radar pixels.
+    """
+    hit = plans.filter(pl.col("recipe_id").is_not_null() & pl.col("commit_s").is_not_null()).select(
+        *KEYS, "team", "recipe_id", "commit_s")
+    if hit.is_empty():
+        return {}
+    pos = positions.filter((pl.col("side") == "T") & (pl.col("t_s") >= 0)).join(
+        hit.rename({"team": "plan_team"}), on=KEYS, how="inner").filter(pl.col("team") == pl.col("plan_team"))
+    pos = pos.filter(pl.col("t_s") <= pl.col("commit_s").ceil())
+    alive_at_commit = pos.filter(pl.col("t_s") == pl.col("commit_s").floor().cast(pl.Int32)).filter(
+        pl.col("alive")).select(*KEYS, "steamid")
+    pos = pos.join(alive_at_commit, on=[*KEYS, "steamid"], how="semi").sort(*KEYS, "steamid", "t_s")
+    paths: dict[str, list[tuple[tuple[str, ...], str, np.ndarray]]] = {}
+    for (rid, *_), g in pos.group_by("recipe_id", *KEYS, "steamid", maintain_order=True):
+        xs, ys = g["x"].to_numpy(), g["y"].to_numpy()
+        if len(xs) < 3:
+            continue
+        via = _via(g["place"].to_list())
+        key = via[-(ROUTE_VIA + 1):] if via else ("?",)
+        lane = g["lane"][-1]
+        xy = np.array([mm.to_radar(x, y) for x, y in zip(xs, ys)])
+        paths.setdefault(rid, []).append((key, lane, _resample(xy)))
+    out: dict[str, list[dict]] = {}
+    for rid, items in paths.items():
+        total = len(items)
+        groups: dict[tuple[str, ...], list[tuple[str, np.ndarray]]] = {}
+        for key, lane, xy in items:
+            groups.setdefault(key, []).append((lane, xy))
+        # medoid of each group; groups whose medoids run together are merged into the larger one
+        cands = []
+        for key, members in sorted(groups.items(), key=lambda kv: (-len(kv[1]), kv[0])):
+            stack = np.stack([xy for _, xy in members])
+            dist = np.linalg.norm(stack[:, None] - stack[None], axis=-1).mean(-1).mean(-1)
+            cands.append({"key": key, "members": members, "medoid": stack[int(dist.argmin())]})
+        merged: list[dict] = []
+        for c in cands:
+            near = next((m for m in merged if np.linalg.norm(m["medoid"] - c["medoid"], axis=-1).mean() < ROUTE_MERGE_PX), None)
+            if near:
+                near["members"] += c["members"]
+            else:
+                merged.append({**c, "members": list(c["members"])})
+        routes = []
+        for c in sorted(merged, key=lambda c: -len(c["members"])):
+            share = len(c["members"]) / total
+            if share < ROUTE_MIN_SHARE or len(routes) >= ROUTE_MAX:
+                continue
+            lanes = Counter(l for l, _ in c["members"])
+            routes.append({"via": list(c["key"]), "lane": lanes.most_common(1)[0][0], "n": len(c["members"]),
+                           "share": round(share, 3),
+                           "points": [[round(float(x), 1), round(float(y), 1)] for x, y in c["medoid"]]})
+        out[rid] = routes
+    return out
+
+
 # ------------------------------------------------------------------------- CT setups
 
 
@@ -593,6 +688,9 @@ def analyse_map(sub: dict[str, pl.DataFrame], mm: MapMeta, nade_lineup: pl.DataF
     recipe_utility = sub["utility"].join(spot_assign, on=["demo_id", "nade_id"], how="inner")
     recipes, recipe_assign = execute_recipes(plans, spots, spot_lineups, mm, recipe_utility)
     plans = plans.join(recipe_assign, on=KEYS, how="left")
+    routes = recipe_routes(plans, sub["positions"], mm)
+    for r in recipes:
+        r["routes"] = routes.get(r["id"], [])
     territory = t_territory(sub["positions"])
     ct = ct_setups(sub, plans, territory)
     return {

@@ -402,6 +402,8 @@ export interface Recipe {
   examples: { demo_id: string; round_num: number; team: string }[];
   /** mean T win probability 5 s before the commit and 10 s after (playbook/winprob.py); compare recipes, not absolute effect */
   wp?: { n: number; before: number; after: number; delta: number };
+  /** typical T entry routes from round start to the commit (playbook/tactics.py recipe_routes); points in radar px */
+  routes?: RecipeRoute[];
 }
 
 export interface Spot {
@@ -470,3 +472,6 @@ export interface Wpa {
 
 /** <map>/winprob/<demo_id>.json, showcase teams only: T win probability per second, per round */
 export interface WinprobTimeline { demo_id: string; wp_t: Record<string, number[]>; team_sides?: Record<string, Record<string, Side>> }
+
+/** one entry route: medoid player path of a group sharing the same choke callouts */
+export interface RecipeRoute { via: string[]; lane: string; n: number; share: number; points: [number, number][] }
