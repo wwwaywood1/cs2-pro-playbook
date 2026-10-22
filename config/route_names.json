@@ -1,0 +1,9 @@
+{
+  "_note": "Standard Chinese route names keyed by the choke callout a T route passes just before the site (draft by MiniMax). Keys that are not callouts of the map are ignored; routes without a match keep the callout name.",
+  "de_mirage": {"TRamp": "A1主攻线", "PalaceInterior": "A二楼同步线", "PalaceAlley": "A二楼同步线", "Connector": "拱门夹击线", "Apartments": "B二楼长廊线", "Catwalk": "B小夹击线", "Underpass": "下水道线"},
+  "de_inferno": {"Banana": "香蕉道线", "Apartments": "A二楼线", "TopofMid": "中路线", "Arch": "拱门线", "Boiler": "锅炉房线"},
+  "de_nuke": {"Squeaky": "吱呀门线", "Hut": "小屋线", "Outside": "外场线", "Ramp": "B坡道线", "Vents": "通风管线", "Secret": "暗道线"},
+  "de_dust2": {"LongDoors": "A大线", "ShortStairs": "A小线", "Catwalk": "A小线", "UpperTunnel": "B洞线", "LowerTunnel": "B洞线", "MidDoors": "中门夹击线"},
+  "de_ancient": {"MainHall": "A主攻线", "SideHall": "A小道线", "Tunnel": "B洞线", "SideEntrance": "B侧门线"},
+  "de_anubis": {"Main": "A主攻线", "Fountain": "A小道线", "OutsideLong": "B长道线", "Connector": "B连接线"}
+}
