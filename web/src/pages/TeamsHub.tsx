@@ -377,17 +377,17 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
         <AnimatedStat label={t("heatmap.dpr")} value={rate((s) => s.fights.deaths_pr)} sub={comparison((s) => s.fights.deaths_pr, true)} />
         <AnimatedStat label={t("hub.utility_pr")} value={rate(utilityRate)} sub={comparison(utilityRate)} />
         <AnimatedStat label={t("hub.sample_rounds")} value={rounds} format="integer" sub={sampleComparison} />
-      </div>
-      <PlayerWpa player={profile} side={side} />
-      <MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} /></div>
+      </div></div>
       {selectedSides.some((s) => player.low_sample[s]) ? <p className="hub-low">{t("hub.player_low", { n: baseline.min_reliable_rounds })}</p> : null}
       {!rounds || (view === "utility" ? !landingSpots.length : !overlays.length) ? <p className="hub-low" role="status">{t("hub.no_layer")}</p> : null}
-      <figure className="hub-map-figure"><HubRadar map={heatmap.map} level={level} overlays={overlays} spots={view === "utility" ? landingSpots : []} />
+      <div className="hub-map-stage"><figure className="hub-map-figure"><HubRadar map={heatmap.map} level={level} overlays={overlays} spots={view === "utility" ? landingSpots : []} />
         <figcaption>
           <div className="hub-mini-legend" aria-label="地图图例">{view === "utility" ? <><span>图标 = 道具爆开落点 · 点击查看常用投掷</span>{GRENADES.map((type) => <span className="grenade-label" key={type}><GrenadeIcon type={type} />{t(`heatmap.util.${type}`)}</span>)}</> : <><span>低频</span><span className="hub-heat-scale" style={{ background: `linear-gradient(90deg, transparent, ${SIDE_COLORS[side].light}, ${SIDE_COLORS[side].deep})` }} /><span>高频 · {t(`heatmap.view.${view}`)}</span></>}</div>
           <details className="hub-map-notes"><summary>{t(`heatmap.view.${view}`)} · {side === "all" ? t("hub.overall") : t(`side.${side}`)}</summary><p>{view === "utility" ? "图标表示爆开落点；点击后查看最常用的投掷方法。" : "仅显示所选行为的热力分布；低频到高频为同一图层内的相对强度。"}</p>
         </details></figcaption>
       </figure>
+      <aside className="hub-map-side"><PlayerWpa player={profile} side={side} />
+        <MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} /></aside></div>
       <details className="hub-details"><summary>{t("hub.player_details")}</summary>
         <div className="hub-kpis">
           {side !== "CT" ? <Stat label={t("hub.lurk_share")} value={fmtPct(profile?.T.lurk_share)} sub={t("hub.lurk_scope")} /> : null}

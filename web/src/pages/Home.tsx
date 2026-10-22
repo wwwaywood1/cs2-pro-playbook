@@ -9,7 +9,7 @@ import { t, useLang } from "../i18n";
 
 const MAP_CATALOG = [
   ["de_ancient", "Ancient"], ["de_anubis", "Anubis"], ["de_dust2", "Dust II"],
-  ["de_inferno", "Inferno"], ["de_mirage", "Mirage"], ["de_nuke", "Nuke"], ["de_overpass", "Overpass"],
+  ["de_inferno", "Inferno"], ["de_mirage", "Mirage"], ["de_nuke", "Nuke"], ["de_cache", "Cache"],
 ] as const;
 function MapTile({ map, available, children, className = "", style }: { map: string; available: boolean; children: ReactNode; className?: string; style?: CSSProperties }) {
   const props = { className: `map-card ${className}`, style, "data-motion-tilt": true };
