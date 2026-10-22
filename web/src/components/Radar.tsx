@@ -1,7 +1,7 @@
 import { fmtInt } from "../format";
 import { useMapLink } from "../mapLink";
 import GrenadeIcon, { GrenadeGlyph } from "./GrenadeIcon";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { calloutLabel, t } from "../i18n";
 import type { GrenadeType, Lineup } from "../types";
 
@@ -13,10 +13,11 @@ interface RadarProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   pickedIds: Set<string> | null;
+  visibleIds: ReadonlySet<string>;
   onPick: (ids: string[] | null) => void;
 }
 
-export default function Radar({ map, lineups, selectedId, onSelect, pickedIds, onPick }: RadarProps) {
+function Radar({ map, lineups, selectedId, onSelect, pickedIds, visibleIds, onPick }: RadarProps) {
   const { activeId: linkedId, bind } = useMapLink();
   const hoveredId = linkedId?.startsWith("lineup:") ? linkedId.slice(7) : null;
   const [imageOk, setImageOk] = useState(true);
@@ -100,7 +101,7 @@ export default function Radar({ map, lineups, selectedId, onSelect, pickedIds, o
           ))}
         </defs>
 
-        {lineups.filter((lineup) => (pickedIds ? pickedIds.has(lineup.id) : lineup.id === activeId)).map((lineup) => {
+        {lineups.filter((lineup) => (pickedIds ? pickedIds.has(lineup.id) && (visibleIds.has(lineup.id) || lineup.id === activeId) : lineup.id === activeId)).map((lineup) => {
           const selected = lineup.id === activeId;
           const dimmed = activeId != null && !selected;
           const x = lineup.throw.radar_x, y = lineup.throw.radar_y;
@@ -177,3 +178,5 @@ export default function Radar({ map, lineups, selectedId, onSelect, pickedIds, o
     </div>
   );
 }
+
+export default memo(Radar);

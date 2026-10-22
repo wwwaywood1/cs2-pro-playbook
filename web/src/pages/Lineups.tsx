@@ -4,7 +4,7 @@ import Num from "../components/Num";
 import Segmented from "../components/Segmented";
 import { Reveal, Stagger } from "../components/Motion";
 import { PageContext, PageSurface, MetricStrip } from "../components/Page";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import GrenadeIcon from "../components/GrenadeIcon";
 import { MapLinkHint, useMapLink } from "../mapLink";
@@ -20,6 +20,7 @@ const ALL_TYPES: GrenadeType[] = ["smoke", "flashbang", "molotov", "he"];
 const LANE_OPTIONS: Lane[] = ["A", "MID", "B"];
 const TECHNIQUES: Technique[] = ["jump", "run", "crouch", "walk", "stand"];
 const SIDES: Side[] = ["T", "CT"];
+const BATCH_SIZE = 60;
 
 
 export default function Lineups() {
@@ -80,7 +81,15 @@ export default function Lineups() {
   }, [lineups, side, types, lane, minThrows, technique]);
 
   const filtered = useMemo(() => candidates.filter((lineup) => !clusterIds || clusterIds.has(lineup.id)), [candidates, clusterIds]);
-  const pickCluster = (ids: string[] | null) => {
+  // Reset the batch when the result set changes. Keep a requested/selected card
+  // mounted even beyond the batch so radar picks and shared URLs still scroll to it.
+  const [batch, setBatch] = useState({ rows: filtered, count: BATCH_SIZE });
+  const visibleCount = batch.rows === filtered ? batch.count : BATCH_SIZE;
+  if (batch.rows !== filtered) setBatch({ rows: filtered, count: BATCH_SIZE });
+  const visibleLineups = useMemo(() => filtered.filter((row, index) =>
+    index < visibleCount || row.id === selectedId), [filtered, visibleCount, selectedId]);
+  const visibleIds = useMemo(() => new Set(visibleLineups.map((row) => row.id)), [visibleLineups]);
+  const pickCluster = useCallback((ids: string[] | null) => {
     setLandingPick({ map, url: urlLanding, value: ids?.length ? ids.join(",") : null });
     if (ids?.length) setSelectedId(ids[0]);
     setSearchParams((current) => {
@@ -89,14 +98,14 @@ export default function Lineups() {
       else next.delete("landing");
       return next;
     }, { replace: true });
-  };
+  }, [map, urlLanding, setSearchParams]);
   useEffect(() => {
     const escape = (event: KeyboardEvent) => {
       if (event.key === "Escape" && clusterIds && !document.querySelector("dialog[open]")) { event.preventDefault(); pickCluster(null); }
     };
     document.addEventListener("keydown", escape);
     return () => document.removeEventListener("keydown", escape);
-  }, [clusterIds]);
+  }, [clusterIds, pickCluster]);
 
   useEffect(() => {
     if (!lineups) return;
@@ -136,7 +145,7 @@ export default function Lineups() {
       scrolledRequest.current = requestKey;
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [requestKey, requestedId, selectedId, filtered]);
+  }, [requestKey, requestedId, selectedId, visibleLineups]);
 
   const toggleType = (type: GrenadeType) => {
     setTypes((current) => {
@@ -147,6 +156,7 @@ export default function Lineups() {
 
   const resetFilters = () => {
     pickCluster(null);
+    setBatch({ rows: filtered, count: BATCH_SIZE });
     setSide("ALL");
     setTypes(ALL_TYPES);
     setLane("ALL");
@@ -154,12 +164,12 @@ export default function Lineups() {
     setTechnique("ALL");
   };
 
-  const selectFromRadar = (id: string) => {
+  const selectFromRadar = useCallback((id: string) => {
     setSelectedId(id);
     setSearchParams((current) => { const next = new URLSearchParams(current); next.set("id", id); return next; }, { replace: true });
     const card = cardRefs.current.get(id);
     if (card) card.scrollIntoView({ behavior: motionScrollBehavior(), block: "nearest" });
-  };
+  }, [setSearchParams]);
 
   const handleCopy = async (lineup: Lineup) => {
     const fallback = document.getElementById(`practice-${lineup.id}`);
@@ -301,17 +311,18 @@ export default function Lineups() {
               map={map}
               lineups={candidates}
               pickedIds={clusterIds}
+              visibleIds={visibleIds}
               onPick={pickCluster}
               selectedId={selectedId}
               onSelect={selectFromRadar}
             /></Reveal>
           </aside>
 
-          <Stagger className="lineup-list">
+          <Stagger className="lineup-list" data-total-count={filtered.length}>
             {filtered.length === 0 ? (
               <div className="empty">—</div>
             ) : (
-              filtered.map((lineup) => {
+              visibleLineups.map((lineup) => {
                 const selected = lineup.id === selectedId;
                 const copied = lineup.id === copiedId;
                 return (
@@ -398,6 +409,10 @@ export default function Lineups() {
                 );
               })
             )}
+            {visibleLineups.length < filtered.length ? <button type="button" className="button lineup-show-more"
+              onClick={() => setBatch({ rows: filtered, count: visibleCount + BATCH_SIZE })}>
+              {t("ui.show_more")} · {fmtInt(visibleLineups.length)} / {fmtInt(filtered.length)}
+            </button> : null}
           </Stagger>
         </div>
       )}

@@ -93,11 +93,30 @@ def check_home(smoke: Smoke, page: Page) -> None:
     expect(mirage.locator('.map-card-secondary')).to_have_attribute('href', '#/de_mirage/lineups')
 
 
+def check_lineup_batch(smoke: Smoke, page: Page, total: int, label: str) -> int:
+    expect(page.locator('.lineup-list')).to_have_attribute('data-total-count', str(total))
+    n = page.locator('.lineup-card').count()
+    # A deep-linked selection beyond the first batch gets one extra mounted card.
+    smoke.check(min(total, 60) <= n <= min(total, 61),
+                f'{label}: {n} mounted cards, {total} total results')
+    expect(page.locator('.lineup-show-more')).to_have_count(int(n < total))
+    return n
+
+
 @route('#/de_mirage/lineups', '.lineup-card')
 def check_lineups(smoke: Smoke, page: Page) -> None:
-    # Lineups: default tier includes every exported lineup.
-    n = page.locator(".lineup-card").count()
-    smoke.check(n == smoke.expected_count(), f"default lineup list: {n} cards == {smoke.expected_count()} in data")
+    # All exported results remain filterable; only the first batch is mounted.
+    check_lineup_batch(smoke, page, smoke.expected_count(), 'default lineup list')
+    if smoke.shots:
+        page.screenshot(path=str(smoke.shots / 'lineups-initial.png'), timeout=10_000)
+    if smoke.expected_count() > 60:
+        first_id = page.locator('.lineup-card').first.get_attribute('data-map-link')
+        page.locator('.lineup-show-more').click()
+        expect(page.locator('.lineup-card')).to_have_count(min(120, smoke.expected_count()))
+        smoke.check(page.locator('.lineup-card').first.get_attribute('data-map-link') == first_id,
+                    'show more appends the next batch without replacing existing cards')
+        page.locator('.filter-actions button').click()
+
     bubbles = page.locator(".radar .landing-cluster text").all_text_contents()
     smoke.check(sum(int(value.replace(",", "")) for value in bubbles) == len(smoke.lineups),
                 "cluster counts include every filtered lineup exactly once")
@@ -118,22 +137,19 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
 
     # Side filter
     page.get_by_role("button", name="CT", exact=True).click()
-    n_ct = page.locator(".lineup-card").count()
+    n_ct = smoke.expected_count(side="CT")
+    check_lineup_batch(smoke, page, n_ct, "CT filter")
     smoke.check(sum(int(value.replace(',', '')) for value in page.locator('.radar .landing-cluster text').all_text_contents()) == n_ct,
                 'cluster counts recompute after the side filter')
-    smoke.check(n_ct == smoke.expected_count(side="CT"), f"CT filter: {n_ct} == {smoke.expected_count(side='CT')}")
     # Usage tiers replace the free-form count input.
     page.locator("#filter-tiers button").nth(1).click()
-    n10 = page.locator(".lineup-card").count()
-    smoke.check(n10 == smoke.expected_count(side="CT", min_throws=10), "common tier filters at ten throws")
+    check_lineup_batch(smoke, page, smoke.expected_count(side="CT", min_throws=10), "common tier filters at ten throws")
     page.locator("#filter-tiers button").nth(2).click()
-    smoke.check(page.locator(".lineup-card").count() == smoke.expected_count(side="CT", min_throws=50),
-                "must-learn tier filters at fifty throws")
+    check_lineup_batch(smoke, page, smoke.expected_count(side="CT", min_throws=50), "must-learn tier filters at fifty throws")
     # Reset, then technique = jump
     page.locator(".filter-actions button").click()
     page.select_option("#filter-technique", "jump")
-    nj = page.locator(".lineup-card").count()
-    smoke.check(nj == smoke.expected_count(technique="jump"), f"jump filter: {nj} == {smoke.expected_count(technique='jump')}")
+    check_lineup_batch(smoke, page, smoke.expected_count(technique="jump"), "jump filter")
     page.locator(".filter-actions button").click()
 
     # Card -> radar selection
@@ -153,8 +169,8 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     # URL navigation is transitioned independently of the immediate local pick.
     page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).has('landing')")
     picked = page.evaluate("new URLSearchParams(location.hash.split('?')[1]).get('landing').split(',')")
-    expect(page.locator('.lineup-card')).to_have_count(len(picked))
-    smoke.check(page.locator('.radar .throw-dot').count() == len(picked), 'landing pick filters cards and shows every remaining throw position')
+    mounted = check_lineup_batch(smoke, page, len(picked), 'landing pick')
+    smoke.check(page.locator('.radar .throw-dot').count() == mounted, 'landing pick draws the mounted batch of throw positions')
     target = page.locator('.radar .arrow-group').last
     target_id = target.get_attribute('data-map-link').removeprefix('lineup:')
     target.focus()
@@ -168,13 +184,13 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
                 "selected lineup shows its recorded view direction")
 
     page.keyboard.press('Escape')
-    expect(page.locator('.lineup-card')).to_have_count(smoke.expected_count())
+    check_lineup_batch(smoke, page, smoke.expected_count(), 'cleared landing pick')
     page.wait_for_function("!new URLSearchParams(location.hash.split('?')[1]).has('landing')")
     smoke.check('landing=' not in page.url, 'Escape clears the landing filter')
     page.locator('.radar .landing-cluster').first.locator('circle:not(.map-link-ring)').click()
     page.locator('.radar-reset').click()
     expect(page.locator('.radar-pick-status')).to_have_count(0)
-    expect(page.locator('.lineup-card')).to_have_count(smoke.expected_count())
+    check_lineup_batch(smoke, page, smoke.expected_count(), 'cleared landing pick')
     smoke.check(True, 'visible clear action restores all map results')
     card = page.locator('.lineup-card').first
     key = card.get_attribute('data-map-link')
@@ -207,7 +223,16 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     page.keyboard.press('ArrowRight')
     expect(tiers.locator('button').nth(1)).to_have_attribute('aria-pressed', 'true')
     smoke.check(tiers.locator('.segment-highlight').evaluate('el => el.getBoundingClientRect().width') > 0, 'shared segmented control supports arrows and positions its highlight')
-    expect(page.locator('.lineup-card')).to_have_count(smoke.expected_count(min_throws=10))
+    check_lineup_batch(smoke, page, smoke.expected_count(min_throws=10), 'keyboard tier change')
+
+    # Loading a tail result directly must mount/select it without mounting 2,443 cards.
+    if len(smoke.lineups) > 60:
+        tail = sorted(smoke.lineups, key=lambda row: (-row['n_throws'], row['id']))[-1]
+        page.goto(f"{smoke.base}/#/de_mirage/lineups?id={tail['id']}")
+        expect(page.locator('.lineup-card.is-selected')).to_have_attribute('data-map-link', f"lineup:{tail['id']}")
+        check_lineup_batch(smoke, page, smoke.expected_count(), 'tail deep link')
+        smoke.check(page.locator('.radar .arrow-group.is-selected').count() == 1,
+                    'tail deep link selects its radar trajectory')
 
 
 @route('#/de_mirage/tactics', '.tactics-page')
@@ -966,6 +991,16 @@ def check_players(smoke: Smoke, page: Page) -> None:
 def check_segmented_layout(smoke: Smoke, page: Page) -> None:
     for width, height in [(1440, 900), (1280, 800)]:
         page.set_viewport_size({'width': width, 'height': height})
+        page.evaluate('document.fonts.ready.then(() => undefined)')
+        page.wait_for_function("""() => [...document.querySelectorAll('.hud-segmented')].every(track => {
+            if (!track.getClientRects().length) return true;
+            const selected = track.querySelector('button[aria-pressed="true"], button[aria-selected="true"]');
+            if (!selected) return true;
+            const button = selected.getBoundingClientRect();
+            const highlight = track.querySelector('.segment-highlight').getBoundingClientRect();
+            return ['x', 'y', 'width', 'height'].every(key => Math.abs(button[key] - highlight[key]) <= 1.5);
+        })""")
+        smoke.check(True, f'{width}x{height}: segmented highlight matches the pressed button after fonts/resize')
         smoke.check(page.locator('.hud-segmented > button:visible').evaluate_all("""buttons => buttons.every(button => {
             const style = getComputedStyle(button);
             const range = document.createRange(); range.selectNodeContents(button);

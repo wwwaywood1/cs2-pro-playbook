@@ -219,27 +219,53 @@ function HubRadar({ map, level, overlays, spots = [], markers = [] }: {
   const commonId = selected ? [...selected.lineups].sort((a, b) => b.n - a.n)[0]?.lineup_id : undefined;
   const trajectory = lineups.data?.find((lineup) => lineup.id === commonId);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = host.current;
     if (!element) return;
     const page = element.closest<HTMLElement>(".hub-page");
-    const topbar = document.querySelector<HTMLElement>(".topbar");
+    let frame = 0;
+    let disposed = false;
     const measure = () => {
-      // offsetTop is unaffected by the panel's entrance transform or page scrolling.
+      // Use document layout coordinates, including offset-parent borders.
+      // Entrance/parallax transforms and scrolling must not change this budget.
       let top = 0;
       let node: HTMLElement | null = element;
-      while (node) { top += node.offsetTop; node = node.offsetParent as HTMLElement | null; }
+      while (node) {
+        const parent = node.offsetParent as HTMLElement | null;
+        top += node.offsetTop + (parent?.clientTop ?? 0);
+        node = parent;
+      }
+      const nextWidth = element.clientWidth;
       element.style.setProperty("--hub-radar-top", `${top}px`);
-      setWidth(element.getBoundingClientRect().width || 640);
+      setWidth(nextWidth || 640);
     };
-    const observer = new ResizeObserver(measure);
+    const schedule = () => {
+      if (disposed) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    };
+    const observer = new ResizeObserver(schedule);
     observer.observe(element);
-    if (page) observer.observe(page);
+    if (page) {
+      observer.observe(page);
+      // Wrapping controls can move the radar while the total page size stays
+      // unchanged: observe the content above it, rather than only the page.
+      for (const node of page.querySelectorAll(".hub-breadcrumbs, .map-link-hint, .hub-analysis-head, .hub-analysis-toolbar, .hub-map-controls, .low-sample, .hub-low")) observer.observe(node);
+    }
+    const topbar = document.querySelector(".topbar");
     if (topbar) observer.observe(topbar);
-    window.addEventListener("resize", measure);
+    window.addEventListener("resize", schedule);
+    document.fonts.addEventListener("loadingdone", schedule);
+    void document.fonts.ready.then(schedule);
     measure();
-    return () => { observer.disconnect(); window.removeEventListener("resize", measure); };
-  }, []);
+    return () => {
+      disposed = true;
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("resize", schedule);
+      document.fonts.removeEventListener("loadingdone", schedule);
+    };
+  });
   const unit = 1024 / width;
   const scale = meta.data?.radar.scale;
   return <div className="hub-radar" ref={host}>

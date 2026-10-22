@@ -360,3 +360,16 @@
 
 .hub-player-analysis .hub-side-switch { flex: 0 0 auto; width: auto; }
 .hub-player-view .hub-time-slices { width: auto; }
+
+/* Short desktop viewports spend height on the map; the verse keeps its full size. */
+@media (min-width: 1001px) and (max-height: 850px) {
+  .hub-breadcrumbs { margin-bottom: 8px; }
+  .hub-page-selected > .map-link-hint { margin-block: 6px; }
+  .hub-player-analysis { padding-top: 12px; }
+  .hub-analysis-head { margin-bottom: 8px; gap: 6px 12px; }
+  .hub-analysis-head h2 { font-size: 1.3rem; }
+  .hub-analysis-toolbar { margin-bottom: 8px; }
+  .hub-analysis-toolbar .stat { padding-block: 6px; }
+  .hub-analysis-toolbar .stat-value { font-size: 1.5rem; }
+  .hub-player-view .hub-map-controls legend { margin-bottom: 4px; }
+}

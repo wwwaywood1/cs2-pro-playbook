@@ -12,11 +12,30 @@ export default function Segmented({ children, className = "", onKeyDown, ...prop
       const next = selected ? { x: selected.offsetLeft, y: selected.offsetTop, width: selected.offsetWidth, height: selected.offsetHeight } : { x: 0, y: 0, width: 0, height: 0 };
       setHighlight((old) => old.x === next.x && old.y === next.y && old.width === next.width && old.height === next.height ? old : next);
     };
-    const observer = new ResizeObserver(measure);
+    let frame = 0;
+    let disposed = false;
+    const schedule = () => {
+      if (disposed) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    };
+    const observer = new ResizeObserver(schedule);
     observer.observe(element);
     for (const button of element.querySelectorAll('button')) observer.observe(button);
     measure();
-    return () => observer.disconnect();
+    // max-content tracks can move without resizing; fonts can change button
+    // advances after the first layout. Recheck once the final layout is ready.
+    schedule();
+    void document.fonts.ready.then(schedule);
+    document.fonts.addEventListener("loadingdone", schedule);
+    window.addEventListener("resize", schedule);
+    return () => {
+      disposed = true;
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      document.fonts.removeEventListener("loadingdone", schedule);
+      window.removeEventListener("resize", schedule);
+    };
   }, [children]);
   return <div role="group" {...props} ref={host} className={`segmented hud-segmented ${className}`} onKeyDown={(event) => {
     onKeyDown?.(event);
