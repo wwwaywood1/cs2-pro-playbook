@@ -158,7 +158,7 @@ function HeatmapView({ entry, team, baseline }: {
   const canonical = new URLSearchParams(params);
   Object.entries({
     map: team.map, side, players: selectedIds.join(","), view, util,
-    phases: phases.join(","), mode, sigma: sigma.toFixed(1), level: String(chosenLevel),
+    phases: phases.join(","), mode, sigma: fmtNum(sigma, 1), level: String(chosenLevel),
   }).forEach(([key, value]) => canonical.set(key, value));
   if (holdsIds.length) canonical.set("holds", holdsIds.join(","));
   else canonical.delete("holds");
@@ -252,7 +252,7 @@ function HeatmapView({ entry, team, baseline }: {
             ))}
           </div>
           <label className="hm-slider">
-            <span>{t("heatmap.sigma")} · {sigma.toFixed(1)}</span>
+            <span>{t("heatmap.sigma")} · {fmtNum(sigma, 1)}</span>
             <input type="range" min="0" max="2.5" step="0.1" value={sigma} onChange={(event) => update({ sigma: event.target.value })} />
           </label>
           {baseline.levels === 2 && <div className="hm-buttons" role="group" aria-label={t("heatmap.level.upper")}>

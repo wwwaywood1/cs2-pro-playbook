@@ -1,3 +1,4 @@
+import LowSampleBanner from "../components/LowSampleBanner";
 import { Stagger } from "../components/Motion";
 import { PageContext, PageSurface, MetricStrip } from "../components/Page";
 import { Link, useParams } from "react-router-dom";
@@ -23,7 +24,7 @@ export default function Teams() {
           </h1>
           <PageContext>{t("site.teams_context")}</PageContext>
         </div>
-        {teams ? <p className="result-count">{teams.length}</p> : null}
+        {teams ? <p className="result-count">{fmtInt(teams.length)}</p> : null}
       </header>
       {teams ? <MetricStrip items={[{ label: t("ui.nav_teams"), value: teams.length }, { label: t("site.reliable_teams"), value: teams.filter((team) => !team.low_sample).length }]} /> : null}
 
@@ -36,7 +37,6 @@ export default function Teams() {
       ) : (
         <Stagger className="team-grid">
           {teams.map((team) => {
-            const warning = t("ui.low_sample_warning", { n: team.n_matches });
             return (
               <Link
                 key={team.slug}
@@ -45,15 +45,7 @@ export default function Teams() {
               >
                 <div className="team-card-head">
                   <h2>{team.team}</h2>
-                  {team.low_sample ? (
-                    <span
-                      className="tag-warn"
-                      title={warning}
-                      aria-label={warning}
-                    >
-                      !
-                    </span>
-                  ) : null}
+                  <LowSampleBanner inline low_sample={team.low_sample} />
                 </div>
 
                 <dl>

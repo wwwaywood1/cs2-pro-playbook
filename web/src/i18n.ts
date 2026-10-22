@@ -32,7 +32,7 @@ function applyDocumentLang(lang: Lang): void {
 
 applyDocumentLang(current);
 
-export function getLang(): Lang {
+function getLang(): Lang {
   return current;
 }
 

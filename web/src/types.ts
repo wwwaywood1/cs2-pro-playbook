@@ -7,8 +7,8 @@ export type Lane = "T_SPAWN" | "A" | "MID" | "B" | "CT_SPAWN" | "OTHER";
 export type GrenadeType = "smoke" | "flashbang" | "molotov" | "he";
 export type Technique = "jump" | "run" | "crouch" | "walk" | "stand";
 export type BuyType = "pistol" | "eco" | "force" | "full";
-export type ExecuteTiming = "fast" | "default_then_execute" | "late" | "no_clear_execute";
-export type Role = "awper" | "a_anchor" | "b_anchor" | "mid_ct" | "lurker" | "entry" | "support";
+type ExecuteTiming = "fast" | "default_then_execute" | "late" | "no_clear_execute";
+type Role = "awper" | "a_anchor" | "b_anchor" | "mid_ct" | "lurker" | "entry" | "support";
 
 /** A ranked value with its sample: setups, plant sites, execute timing, ... */
 export interface Ranked<V = string> {
@@ -205,7 +205,7 @@ export type HeatPhase = "early" | "mid" | "post";
  * cell = level * grid * grid + row * grid + col (row 0 = top of the radar image).
  * value = per round played on that side: seconds (presence, holding) or counts.
  */
-export type SparseGrid = number[];
+type SparseGrid = number[];
 
 export interface HeatGrid {
   /** totals per round, by side and phase ("all" = sum of phases) */
@@ -214,7 +214,7 @@ export interface HeatGrid {
 }
 
 /** Grid metadata plus all teams on the map together (per team gun round). */
-export interface PlacePosition {
+interface PlacePosition {
   place: string;
   radar_x: number;
   radar_y: number;
@@ -277,14 +277,14 @@ export interface RosterEntry {
   low_sample: { T: boolean; CT: boolean }; // rounds < min_reliable_rounds
 }
 
-export interface ZoneShare {
+interface ZoneShare {
   place: string;
   region: string;
   lane: Lane;
   share: number | null;
 }
 
-export interface HoldSpot {
+interface HoldSpot {
   place: string;
   lane: Lane;
   x: number;
@@ -350,7 +350,7 @@ export interface TeamHeatmap {
 // ----------------------------------------------------------------------------- tactics
 // <map>/tactics.json and TeamProfile.tactics (playbook/tactics.py). Gun rounds only.
 
-export type Tempo = "fast" | "mid" | "late" | "no_hit";
+type Tempo = "fast" | "mid" | "late" | "no_hit";
 
 export interface TTactics {
   gun_rounds: number;
@@ -452,7 +452,7 @@ export interface TacticsFile {
   spots: Spot[];
 }
 
-export interface Insight {
+interface Insight {
   id: string; // e.g. t_tempo_fast, t_signature_recipe, ct_default_setup
   side: Side;
   kind: "compare" | "signature";
@@ -494,8 +494,8 @@ export interface RecipeRoute { via: string[]; lane: string; n: number; share: nu
 // ----------------------------------------------------------------------------- 2D replays
 // playbook/replay.py: <map>/replay/<demo_id>/<round>.json, and <map>/replay/index.json = {demo_id: round[]}
 
-export type ReplayPoint = [number, number];
-export type ReplayEvent =
+type ReplayPoint = [number, number];
+type ReplayEvent =
   | { t: number; kind: "kill"; by: number | null; victim: number | null; at: ReplayPoint | null; weapon: string; headshot: boolean }
   | { t: number; kind: "util"; nade: "smoke" | "flash" | "molotov" | "he"; by: number | null; at: ReplayPoint | null; from: ReplayPoint | null }
   | { t: number; kind: "plant"; site: string; at: ReplayPoint | null };

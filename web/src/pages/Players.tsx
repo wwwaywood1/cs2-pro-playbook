@@ -70,7 +70,7 @@ export default function Players() {
           </h1>
           <PageContext>{t("site.players_context")}</PageContext>
         </div>
-        {players ? <p className="result-count">{players.length}</p> : null}
+        {players ? <p className="result-count">{fmtInt(players.length)}</p> : null}
       </header>
       {players ? <MetricStrip items={[{ label: t("ui.nav_players"), value: players.length }, { label: t("ui.nav_teams"), value: groups.length }]} /> : null}
 

@@ -13,7 +13,7 @@ import Stat from "../components/Stat";
 import PlayerWpa from "../components/PlayerWpa";
 import { Loading } from "../components/Status";
 import { getAssetSlots, getHeatmapBaseline, getHeatmapTeams, getLineups, getMeta, getPlayerQuotes, getPlayers, getTactics, getTeam, getTeamHeatmap, useData } from "../data";
-import { fmtInt, fmtPct } from "../format";
+import { fmtInt, fmtNum, fmtPct } from "../format";
 import { blur, combine, denseLayers, HEAT_PHASES, playerRgba, toDataUrl, VIEW_WEIGHTS, type Dense, type HeatView } from "../heatmap";
 import { calloutLabel, t, useLang } from "../i18n";
 import type { AssetSlots, HeatLayer, HeatPhase, HeatmapBaseline, HeatmapTeamIndexEntry, PlayerProfile, PlayerQuotes, PlayerSideSummary, RosterEntry, Side, TeamHeatmap, TeamProfile, TacticsFile, UtilitySpot } from "../types";
@@ -120,7 +120,7 @@ function Results({ team }: { team: TeamEntry }) {
         {t(result.score_for === result.score_against ? "hub.draw" : result.score_for > result.score_against ? "hub.win" : "hub.loss")}
       </span>
       <span>{result.opponent ?? t("hub.unknown_opponent")}<small>{[result.map, result.event_name || result.event, result.date].filter(Boolean).join(" · ")}</small></span>
-      <strong>{result.score_for} : {result.score_against}</strong>
+      <strong>{fmtInt(result.score_for)} : {fmtInt(result.score_against)}</strong>
     </li>)}</ul> : <p className="muted">{t("heatmap.no_data")}</p>}
   </section>;
 }
@@ -132,7 +132,7 @@ function TeamPanel({ team, change }: { team: TeamEntry; change: Change }) {
   return <section className="hub-panel hub-team-panel" key={team.slug} aria-labelledby="hub-heading">
     <header className="hub-team-head"><Asset path={`logos/teams/${team.slug}.png`} name={team.team} badge />
       <div><p className="hub-eyebrow">{t("hub.step_team")}</p><Heading>{team.team}</Heading>
-        <p className="muted">{t("hub.sample", { matches: team.n_matches, maps: team.maps.length })}</p></div>
+        <p className="muted">{t("hub.sample", { matches: fmtInt(team.n_matches), maps: fmtInt(team.maps.length) })}</p></div>
     </header>
     <div className="hub-team-layout">
       <section><h3>{t("hub.choose_map")}</h3><p className="muted">{t("hub.map_rate_help")}</p>
@@ -143,7 +143,7 @@ function TeamPanel({ team, change }: { team: TeamEntry; change: Change }) {
             <svg viewBox="0 0 100 100" aria-hidden="true"><circle className="hub-arc-track" cx="50" cy="50" r="44" /><circle className="hub-arc" cx="50" cy="50" r="44" pathLength="100" /></svg>
             <strong><CountUp value={map.map_win_rate} format="percent" /></strong>
           </span>
-          <span>{t("hub.map_win_rate")}</span><small>{t("hub.matches", { n: map.n_matches })}{map.low_sample ? ` · ${t("heatmap.low_sample")}` : ""}</small>
+          <span>{t("hub.map_win_rate")}</span><small>{t("hub.matches", { n: fmtInt(map.n_matches) })}<LowSampleBanner inline low_sample={!!map.low_sample} /></small>
         </button>)}</div>
       </section><details className="hub-details hub-team-results"><summary>{t("hub.results")}</summary><Results team={team} /></details>
     </div>
@@ -155,7 +155,7 @@ function MapOverview({ profile, tactics }: { profile: TeamProfile; tactics: Tact
   const { T, CT } = profile.sides;
   const rounds = T.rounds + CT.rounds;
   return <>
-    <LowSampleBanner n_matches={profile.n_matches} low_sample={profile.low_sample} />
+    <LowSampleBanner low_sample={profile.low_sample} />
     <div className="hub-kpis">
       <AnimatedStat label={t("ui.round_win_rate")} value={rounds ? (T.won + CT.won) / rounds : null} format="percent" sub={t("heatmap.rounds", { n: fmtInt(rounds) })} />
       <div className="hub-side-stat" data-side="T"><AnimatedStat label={t("hub.t_win")} value={T.win_rate} format="percent" sub={t("heatmap.rounds", { n: fmtInt(T.rounds) })} /></div>
@@ -179,7 +179,7 @@ function MapTacticsSummary({ profile, tactics }: { profile: TeamProfile; tactics
       </section><section><h3>{t("hub.top_recipes")}</h3>
         {recipes.length ? <ul className="hub-data-list">{recipes.map((rank) => {
           const recipe = tactics.recipes.find((item) => item.id === rank.value);
-          return <li key={rank.value}><Link to={`/${profile.map}/tactics?recipe=${encodeURIComponent(rank.value)}`}>{recipe ? `${t(`region.${recipe.site}_SITE`)} · ` : ""}{recipe ? recipe.core.map((spot) => spot.name?.[lang] || spot.label).join(" + ") : rank.value}<small>{t("tactics.round_count", { n: rank.rounds })} · {t("ui.round_win_rate")} {fmtPct(rank.win_rate)}</small></Link></li>;
+          return <li key={rank.value}><Link to={`/${profile.map}/tactics?recipe=${encodeURIComponent(rank.value)}`}>{recipe ? `${t(`region.${recipe.site}_SITE`)} · ` : ""}{recipe ? recipe.core.map((spot) => spot.name?.[lang] || spot.label).join(" + ") : rank.value}<small>{t("tactics.round_count", { n: fmtInt(rank.rounds) })} · {t("ui.round_win_rate")} {fmtPct(rank.win_rate)}</small></Link></li>;
         })}</ul> : <p className="muted">{t("tactics.no_recipes")}</p>}
       </section></div>;
 }
@@ -192,14 +192,14 @@ function PlayerCards({ roster, heatmap, profiles, change }: { roster: RosterEntr
       <span className="hub-roster-light" aria-hidden="true" /><span className="hub-card-portrait-depth"><Asset path={`players/${player.steamid}.png`} name={player.name} /></span><strong>{player.name}</strong>
       <small className="hub-portrait-line">{t("round4.portrait_line", {
         lane: heatmap.summary[player.steamid]?.T?.main_lane.early?.lane ? t(`lane.${heatmap.summary[player.steamid]?.T?.main_lane.early?.lane}`) : "—",
-        kpr: profiles.find((profile) => profile.steamid === player.steamid && profile.team === heatmap.team)?.kpr?.toFixed(2) ?? "—",
+        kpr: fmtNum(profiles.find((profile) => profile.steamid === player.steamid && profile.team === heatmap.team)?.kpr, 2),
       })}</small>
       <small>{t("heatmap.rounds", { n: fmtInt(player.rounds.T + player.rounds.CT) })}</small>
     </button>)}</div>;
   }
   return <section className="hub-roster"><h3>{t("hub.choose_player")}</h3><p className="muted">{t("hub.roster_help")}</p>
     {cards(ordered.slice(0, 5))}
-    {ordered.length > 5 ? <details className="hub-details"><summary>{t("hub.other_players", { n: ordered.length - 5 })}</summary>{cards(ordered.slice(5))}</details> : null}
+    {ordered.length > 5 ? <details className="hub-details"><summary>{t("hub.other_players", { n: fmtInt(ordered.length - 5) })}</summary>{cards(ordered.slice(5))}</details> : null}
   </section>;
 }
 
@@ -379,7 +379,7 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
     const cohort = heatmap.roster.map((entry) => summaryRate(heatmap, entry.steamid, side, metric)).filter((n): n is number => n !== null);
     if (value === null || cohort.length < 2) return "队内同图同侧：无可比样本";
     const rank = 1 + cohort.filter((n) => lower ? n < value : n > value).length;
-    return `队内第 ${rank} / ${cohort.length} · 同图${side + "方"}长枪局${lower ? " · 越低越前" : ""}`;
+    return `队内第 ${fmtInt(rank)} / ${fmtInt(cohort.length)} · 同图${side + "方"}长枪局${lower ? " · 越低越前" : ""}`;
   }
   const overlays = useMemo(() => {
     const grid = heatmap.players[player.steamid];
@@ -436,7 +436,7 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
         <AnimatedStat label={t("heatmap.dpr")} value={rate((s) => s.fights.deaths_pr)} sub={comparison((s) => s.fights.deaths_pr, true)} />
         <AnimatedStat label={t("hub.utility_pr")} value={rate(utilityRate)} sub={comparison(utilityRate)} />
       </div></div>
-      {selectedSides.some((s) => player.low_sample[s]) ? <p className="hub-low">{t("hub.player_low", { n: baseline.min_reliable_rounds })}</p> : null}
+      <LowSampleBanner low_sample={selectedSides.some((s) => player.low_sample[s])} />
       {!rounds || !overlays.length ? <p className="hub-low" role="status">{t("hub.no_layer")}</p> : null}
       <div className="hub-map-stage"><figure className="hub-map-figure"><HubRadar map={heatmap.map} level={level} overlays={view === "utility" ? [] : overlays} markers={view === "utility" ? [] : places.filter((place) => place.level === level)} spots={view === "utility" ? landingSpots : []} />
         <figcaption>
@@ -454,9 +454,9 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
         <h3>{t("heatmap.zones")}</h3>
         <ul className="hub-data-list">{(summaries[0]?.zones[phase] ?? []).slice(0, 5).map((zone) => <li key={zone.place} {...bind(`place:${zone.place}`)} tabIndex={0}><span>{calloutLabel(heatmap.map, zone.place)}</span><strong>{fmtPct(zone.share)}</strong></li>)}</ul>
         <h3>{t("heatmap.holds")}</h3>
-        <ul className="hub-data-list">{(summaries[0]?.holds ?? []).map((hold, index) => <li key={`${hold.place}:${index}`} {...bind(`place:${hold.place}`)} tabIndex={0}>{t("heatmap.hold_line", { place: calloutLabel(heatmap.map, hold.place), sec: hold.seconds_per_round ?? "—", rounds: hold.rounds_held })}</li>)}</ul>
+        <ul className="hub-data-list">{(summaries[0]?.holds ?? []).map((hold, index) => <li key={`${hold.place}:${index}`} {...bind(`place:${hold.place}`)} tabIndex={0}>{t("heatmap.hold_line", { place: calloutLabel(heatmap.map, hold.place), sec: fmtNum(hold.seconds_per_round, 1), rounds: fmtInt(hold.rounds_held) })}</li>)}</ul>
         <h3>{t("heatmap.fights")}</h3>
-        <ul className="hub-data-list">{(summaries[0]?.fights.places ?? []).map((place) => <li key={place.place} {...bind(`place:${place.place}`)} tabIndex={0}><span>{calloutLabel(heatmap.map, place.place)}</span><strong>{place.kills} / {place.deaths}</strong></li>)}</ul>
+        <ul className="hub-data-list">{(summaries[0]?.fights.places ?? []).map((place) => <li key={place.place} {...bind(`place:${place.place}`)} tabIndex={0}><span>{calloutLabel(heatmap.map, place.place)}</span><strong>{fmtInt(place.kills)} / {fmtInt(place.deaths)}</strong></li>)}</ul>
         <h3>{t("heatmap.util_spots")}</h3><p className="muted">{t("hub.spot_scope")}</p>
         <ul className="hub-data-list">{landingSpots.map((spot) => <li key={spot.spot_id} {...bind(`spot:${spot.spot_id}`)} tabIndex={0}>
           <span className="grenade-label"><GrenadeIcon type={spot.type} />{calloutLabel(heatmap.map, spot.place)}</span><span>{fmtInt(spot.n)}</span>
@@ -561,9 +561,9 @@ export default function TeamsHub() {
       <div className="hub-stage" ref={slide.host} key={routeKey(slide.route)} data-direction={slide.direction < 0 ? "back" : "forward"}>
       {!teamSlug ? <section aria-label={t("hub.all_teams")}>
         <label className="hub-search">{t("heatmap.search")}<input type="search" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
-        <p className="muted" role="status">{t("hub.team_count", { n: filtered.length })}</p>
+        <p className="muted" role="status">{t("hub.team_count", { n: fmtInt(filtered.length) })}</p>
         <div className="hub-team-grid">{filtered.map((entry) => <button type="button" className="hub-team-card" style={teamTheme(entry.slug)} id={`hub-team-${entry.slug}`} key={entry.slug} onClick={() => change({ team: entry.slug, map: "", player: "", side: "T" })}>
-          <Asset path={`logos/teams/${entry.slug}.png`} name={entry.team} badge /><strong>{entry.team}</strong><span>{t("hub.sample", { matches: entry.n_matches, maps: entry.maps.length })}</span>
+          <Asset path={`logos/teams/${entry.slug}.png`} name={entry.team} badge /><strong>{entry.team}</strong><span>{t("hub.sample", { matches: fmtInt(entry.n_matches), maps: fmtInt(entry.maps.length) })}</span>
         </button>)}</div>
       </section> : !team ? <p role="alert">{t("heatmap.team_not_found")}</p> : map && !validMap ? <p role="alert">{t("hub.map_not_found")}</p> : map ? <MapPanel key={`${team.slug}-${map}`} team={team} map={map} playerId={player} side={side} change={change} /> : <TeamPanel team={team} change={change} />}
       </div>

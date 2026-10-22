@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 
-export type TeamPalette = { primary: string; secondary: string; tertiary: string };
-export const TEAM_PALETTES: Record<string, TeamPalette> = {
+type TeamPalette = { primary: string; secondary: string; tertiary: string };
+const TEAM_PALETTES: Record<string, TeamPalette> = {
   falcons: { primary: "#2ecc71", secondary: "#e8b75a", tertiary: "#9aafc7" },
   vitality: { primary: "#f8cf55", secondary: "#bcb0f4", tertiary: "#9cb8cf" },
   spirit: { primary: "#8cdeb0", secondary: "#efb580", tertiary: "#a6b7d4" },
@@ -10,7 +10,7 @@ export const TEAM_PALETTES: Record<string, TeamPalette> = {
   mouz: { primary: "#ff9696", secondary: "#e8c780", tertiary: "#9cb8cf" },
   "the-mongolz": { primary: "#75c9e8", secondary: "#e8b75a", tertiary: "#b4b9cd" },
 };
-export const DEFAULT_PALETTE: TeamPalette = { primary: "#f2b134", secondary: "#e8b75a", tertiary: "#a6b7c9" };
+const DEFAULT_PALETTE: TeamPalette = { primary: "#f2b134", secondary: "#e8b75a", tertiary: "#a6b7c9" };
 const UNKNOWN_TEAM_PALETTE: TeamPalette = { primary: "#d4e4f4", secondary: "#e2e8ee", tertiary: "#a6b7c9" };
 
 export function teamTheme(slug: string): CSSProperties {

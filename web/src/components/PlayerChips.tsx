@@ -1,3 +1,5 @@
+import { fmtInt } from "../format";
+import LowSampleBanner from "./LowSampleBanner";
 import { playerColor } from "../heatmap";
 import { t } from "../i18n";
 import type { RosterEntry, Side } from "../types";
@@ -31,8 +33,8 @@ export default function PlayerChips({ roster, side, selected, onChange }: Player
             />
             <span className="hm-swatch" style={{ backgroundColor: playerColor(player.color, side).deep }} aria-hidden="true" />
             <span>{player.name}</span>
-            <small>{t("heatmap.rounds", { n: player.rounds[side] ?? "—" })}</small>
-            {player.low_sample[side] && <small className="hm-low">{t("heatmap.low_sample")}</small>}
+            <small>{t("heatmap.rounds", { n: fmtInt(player.rounds[side]) })}</small>
+            <LowSampleBanner inline low_sample={player.low_sample[side]} />
           </label>
         ))}
       </div>

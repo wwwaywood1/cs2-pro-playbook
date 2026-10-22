@@ -14,6 +14,5 @@ export function Stagger({ children, className = "", as: Tag = "div", ...props }:
       style: { ...element.props.style, "--stagger": `${Math.min(index * 55, 385)}ms` } as CSSProperties });
   })}</Tag>;
 }
-export function TiltCard(props: BoxProps) { return <div {...props} data-motion-tilt />; }
 export function Spotlight(props: BoxProps) { return <div {...props} data-motion-spotlight />; }
 export function ParallaxLayer({ className = "", ...props }: BoxProps) { return <div {...props} className={`motion-depth ${className}`} aria-hidden="true" />; }

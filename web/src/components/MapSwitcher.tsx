@@ -1,3 +1,4 @@
+import { fmtInt } from "../format";
 import { useEffect } from "react";
 import { t } from "../i18n";
 import type { HeatmapTeamIndexEntry } from "../types";
@@ -40,7 +41,7 @@ export default function MapSwitcher({ maps, map, onChange }: MapSwitcherProps) {
       <div aria-live="polite">
         <strong>{current.display_name}</strong>
         <span>{t("heatmap.map_caption", {
-          matches: current.n_matches ?? "—", t: current.rounds.T ?? "—", ct: current.rounds.CT ?? "—",
+          matches: fmtInt(current.n_matches), t: fmtInt(current.rounds.T), ct: fmtInt(current.rounds.CT),
         })}</span>
       </div>
       <button type="button" disabled={disabled} onClick={() => move(1)} aria-label={t("heatmap.next_map")}>

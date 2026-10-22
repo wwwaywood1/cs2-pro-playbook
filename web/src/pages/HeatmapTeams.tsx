@@ -1,3 +1,4 @@
+import { fmtInt } from "../format";
 import { Stagger } from "../components/Motion";
 import { PageContext, PageSurface, MetricStrip } from "../components/Page";
 import { Link, useSearchParams } from "react-router-dom";
@@ -35,7 +36,7 @@ export default function HeatmapTeams() {
           {filtered.map((team) => (
             <Link key={team.slug} to={`/teams-hub?${new URLSearchParams({ team: team.slug })}`} className="hm-team-card" data-motion-tilt>
               <h2>{team.team}</h2>
-              <p>{t("heatmap.matches")} · {team.n_matches ?? "—"} · {t("heatmap.maps_count")} · {team.maps.length}</p>
+              <p>{t("heatmap.matches")} · {fmtInt(team.n_matches)} · {t("heatmap.maps_count")} · {fmtInt(team.maps.length)}</p>
               <ul>
                 {team.roster.filter((player) => player.color < 5).sort((a, b) => a.color - b.color).slice(0, 5).map((player) => (
                   <li key={player.steamid}>

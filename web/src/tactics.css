@@ -78,7 +78,7 @@
 .recipe-wp strong { color: var(--accent); font-variant-numeric: tabular-nums; }
 .tactics-inline-list { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 0; margin: 8px 0; list-style: none; font-size: 13px; color: var(--muted); }
 .tactics-inline-list li { overflow-wrap: anywhere; min-width: 0; }
-.tactics-page details > summary, .team-insights details > summary { cursor: pointer; padding: 8px 0; }
+.tactics-page details > summary{ cursor: pointer; padding: 8px 0; }
 .tactics-recipe-details details { margin-top: 16px; }
 .tactics-more { min-width: 0; padding-top: 16px; border-top: 1px solid var(--line); }
 .tactics-more > summary { font-size: 18px; }
@@ -90,9 +90,7 @@
 .tactics-more .ranked-head { flex-wrap: wrap; }
 .tactics-people { padding-left: 20px; }
 .tactics-people li { margin: 8px 0; overflow-wrap: anywhere; }
-.team-insights .team-insights-top { display: grid; gap: 8px; padding: 0; list-style: none; }
-.team-insights-top li { margin: 0; padding: 8px 16px; border-left: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); font-size: 14px; }
-.team-summary { margin: 0 0 12px; padding: 12px 16px; border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); font-size: 16px; line-height: 1.7; }
+
 .team-insights-rest { padding-left: 20px; color: var(--muted); font-size: 13px; }
 .team-insights-rest li { margin: 8px 0; overflow-wrap: anywhere; }
 @media (max-width: 1000px) {

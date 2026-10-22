@@ -247,14 +247,14 @@ export default function TeamDetails({ team, tacticsContent, heatmapContent, deta
   const losses = team.matches.filter((match) => match.score_for < match.score_against).length;
   return <div className="hub-archive-cards">
     <details className="hub-details hub-archive-card hub-team-matches">
-      <summary><strong>{t("round4.archive_matches", { n: team.matches.length, w: wins, l: losses })}</strong><small>{team.matches[0] ? `${team.matches[0].opponent ?? "—"} · ${team.matches[0].score_for} : ${team.matches[0].score_against}` : t("heatmap.no_data")}</small></summary>
+      <summary><strong>{t("round4.archive_matches", { n: fmtInt(team.matches.length), w: fmtInt(wins), l: fmtInt(losses) })}</strong><small>{team.matches[0] ? `${team.matches[0].opponent ?? "—"} · ${fmtInt(team.matches[0].score_for)} : ${fmtInt(team.matches[0].score_against)}` : t("heatmap.no_data")}</small></summary>
       <p className="muted">{t("round3.round_bars_caption")}</p>
       <ul className="match-list">{team.matches.length ? team.matches.map((match) => {
         const outcome = match.score_for > match.score_against ? "win" : match.score_for < match.score_against ? "loss" : "draw";
         return <li key={match.demo_id} className={`match is-${outcome}`} title={match.demo_id}>
           <span className="match-outcome" aria-label={t(`hub.${outcome}`)}>{outcome === "win" ? "W" : outcome === "loss" ? "L" : "D"}</span>
           <span className="match-opponent">{match.opponent ?? "—"}<small className="match-context">{[match.event_name || match.event, match.date].filter(Boolean).join(" · ")}</small></span>
-          <span className="match-score">{match.score_for} : {match.score_against}</span>
+          <span className="match-score">{fmtInt(match.score_for)} : {fmtInt(match.score_against)}</span>
           {match.winprob_available ? <MatchWinprob map={team.map} demoId={match.demo_id} teamSlug={team.slug} /> : null}
         </li>;
       }) : <li className="empty">{t("heatmap.no_data")}</li>}</ul>
@@ -277,7 +277,7 @@ export default function TeamDetails({ team, tacticsContent, heatmapContent, deta
       <EconomyTable rows={team.economy} />
     </details>
     <details className="hub-details hub-archive-card hub-team-radar">
-      <summary><strong>{t("round4.archive_heatmap")}</strong><small>{t("hub.sample", { matches: team.n_matches, maps: 1 })} · T / CT</small></summary>
+      <summary><strong>{t("round4.archive_heatmap")}</strong><small>{t("hub.sample", { matches: fmtInt(team.n_matches), maps: fmtInt(1) })} · T / CT</small></summary>
       <Link className="button button-ghost" to={`/heatmaps/${encodeURIComponent(team.slug)}?${new URLSearchParams({ map: team.map })}`}>{t("round4.archive_heatmap")} →</Link>
       {heatmapContent}
     </details>

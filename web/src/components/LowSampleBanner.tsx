@@ -1,18 +1,10 @@
 import { t } from "../i18n";
 
-interface Props {
-  n_matches: number;
-  low_sample: boolean;
-}
-
-export default function LowSampleBanner({ n_matches, low_sample }: Props) {
+/** Shared wording for match, round and percentile sample warnings. */
+export default function LowSampleBanner({ low_sample, inline = false }: { low_sample: boolean; inline?: boolean }) {
   if (!low_sample) return null;
-  return (
-    <div className="low-sample" role="status">
-      <span className="low-sample-mark" aria-hidden="true">
-        !
-      </span>
-      <span>{t("ui.low_sample_warning", { n: n_matches })}</span>
-    </div>
-  );
+  return <span className={inline ? "low-sample-inline" : "low-sample"} role="status">
+    <span className="low-sample-mark" aria-hidden="true">!</span>
+    <span>{t("ui.low_sample_warning")}</span>
+  </span>;
 }

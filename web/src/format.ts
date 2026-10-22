@@ -1,4 +1,4 @@
-export function isNum(value: number | null | undefined): value is number {
+function isNum(value: number | null | undefined): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
@@ -12,7 +12,13 @@ export function fmtNum(value: number | null | undefined, digits = 2): string {
 }
 
 export function fmtPct(value: number | null | undefined): string {
-  return isNum(value) ? `${Math.round(value * 100)}%` : "—";
+  return isNum(value) ? `${fmtInt(value * 100)}%` : "—";
+}
+
+export function fmtSignedNum(value: number | null | undefined, digits = 2): string {
+  if (!isNum(value)) return "—";
+  const rounded = Number(value.toFixed(digits));
+  return `${rounded >= 0 ? "+" : ""}${fmtNum(rounded, digits)}`;
 }
 
 export function fmtSeconds(value: number | null | undefined, digits = 1): string {

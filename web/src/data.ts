@@ -114,7 +114,7 @@ export function getTeamHeatmap(map: string, slug: string): Promise<TeamHeatmap> 
   );
 }
 
-export interface DataState<T> {
+interface DataState<T> {
   data: T | null;
   error: Error | null;
   loading: boolean;

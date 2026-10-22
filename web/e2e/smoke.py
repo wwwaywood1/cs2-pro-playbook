@@ -90,7 +90,7 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     n = page.locator(".lineup-card").count()
     smoke.check(n == smoke.expected_count(), f"default lineup list: {n} cards == {smoke.expected_count()} in data")
     bubbles = page.locator(".radar .landing-cluster text").all_text_contents()
-    smoke.check(sum(int(value) for value in bubbles) == len(smoke.lineups),
+    smoke.check(sum(int(value.replace(",", "")) for value in bubbles) == len(smoke.lineups),
                 "cluster counts include every filtered lineup exactly once")
     smoke.check(page.locator(".radar .landing-cluster").evaluate_all("""rows => rows.every((a, i) => rows.slice(i + 1).every(b => {
       const ca = a.querySelector('circle:not(.map-link-ring)'), cb = b.querySelector('circle:not(.map-link-ring)');
@@ -110,7 +110,7 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     # Side filter
     page.get_by_role("button", name="CT", exact=True).click()
     n_ct = page.locator(".lineup-card").count()
-    smoke.check(sum(int(value) for value in page.locator('.radar .landing-cluster text').all_text_contents()) == n_ct,
+    smoke.check(sum(int(value.replace(',', '')) for value in page.locator('.radar .landing-cluster text').all_text_contents()) == n_ct,
                 'cluster counts recompute after the side filter')
     smoke.check(n_ct == smoke.expected_count(side="CT"), f"CT filter: {n_ct} == {smoke.expected_count(side='CT')}")
     # Usage tiers replace the free-form count input.
@@ -208,7 +208,9 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         smoke.check('暂无路线' in page.locator('.tactics-routes-legend').inner_text(), 'empty recipe has a route-specific empty state')
         selected = page.locator('.tactics-recipe.is-selected')
         selected.locator('summary', has_text='示例回合').click()
-        selected.locator('.replay-open').click()
+        opener = selected.locator('.replay-open')
+        overflow = page.evaluate('document.body.style.overflow')
+        opener.click()
         page.wait_for_selector('dialog[open] .replay-radar')
         expect(page.locator('.round-replay .replay-scrubber')).to_have_value('0')
         expect(page.get_by_role('button', name='播放', exact=True)).to_be_visible()
@@ -216,6 +218,42 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         expect(page.locator('.round-replay .replay-scrubber')).to_have_value('0')
         smoke.check(page.locator('.replay-player').count() == 10, 'replay shows ten players and reduced motion prevents auto-play')
         scrubber = page.locator('.replay-scrubber')
+        smoke.check(page.evaluate('document.body.style.overflow') == 'hidden', 'replay locks body scrolling')
+        close = page.locator('.replay-close')
+        close.focus()
+        page.keyboard.press('Shift+Tab')
+        expect(scrubber).to_be_focused()
+        page.keyboard.press('Tab')
+        expect(close).to_be_focused()
+        smoke.check(True, 'replay focus wraps in both directions')
+        radar = page.locator('.replay-radar')
+        bounds = radar.bounding_box()
+        smoke.check(bounds is not None and abs(bounds['width'] - bounds['height']) < 1
+                    and abs(bounds['height'] - min(page.viewport_size['height'] * .7,
+                                                  page.locator('.round-replay').evaluate('el => el.clientWidth - 40'))) < 3,
+                    'replay radar fills a square up to 70vh and available modal width')
+        smoke.check(page.locator('.replay-player-name').count() == 0, 'replay does not label every player')
+        dot = page.locator('.replay-player').first
+        diameter = dot.evaluate('el => el.r.baseVal.value * el.getScreenCTM().a * 2')
+        smoke.check(8 <= diameter <= 10 and dot.evaluate('el => getComputedStyle(el).strokeWidth') == '1px',
+                    'replay dots are 8–10px with a 1px outline')
+        dot.hover()
+        expect(page.locator('.replay-player-name')).to_have_count(1)
+        dot.click()
+        page.mouse.move(0, 0)
+        expect(page.locator('.replay-player-name')).to_have_count(1)
+        scrubber.focus()
+        page.keyboard.press('ArrowRight')
+        expect(scrubber).to_have_value('1')
+        page.keyboard.press('ArrowLeft')
+        expect(scrubber).to_have_value('0')
+        page.keyboard.press('ArrowLeft')
+        expect(scrubber).to_have_value('0')
+        page.keyboard.press('Space')
+        expect(page.get_by_role('button', name='暂停', exact=True)).to_be_visible()
+        page.keyboard.press('Space')
+        expect(page.get_by_role('button', name='播放', exact=True)).to_be_visible()
+        smoke.check(True, 'Space toggles playback and arrow keys seek one second with bounds')
         scrubber.fill('5')
         smoke.check(page.locator('.replay-player').count() == 9 and page.locator('.replay-kill').count() == 1,
                     'scrubbing applies the exact kill time and removes the victim')
@@ -233,11 +271,55 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         page.wait_for_selector('dialog[open] .replay-radar')
         page.locator('.replay-close').click()
         expect(page.locator('dialog[open]')).to_have_count(0)
+        expect(opener).to_be_focused()
+        smoke.check(page.evaluate('document.body.style.overflow') == overflow, 'replay restores body scrolling and opener focus')
         smoke.check('replay=' not in page.url, 'Back, Escape and close remove the replay overlay')
     finally:
         page.emulate_media(reduced_motion='no-preference')
         page.unroute('**/data/de_mirage/tactics.json')
         page.unroute('**/data/de_mirage/replay/smoke-replay/1.json')
+
+
+@route('#/de_mirage/tactics', '.tactics-page')
+def check_replay_switching(smoke: Smoke, page: Page) -> None:
+    """An obsolete response and playback state must not replace the selected round."""
+    pending = []
+    late_url = '**/data/de_mirage/replay/smoke-late/1.json'
+    fast_url = '**/data/de_mirage/replay/smoke-fast/*.json'
+    page.route(late_url, lambda request: pending.append(request))
+    page.route(fast_url, lambda request: request.fulfill(json={
+        **replay_fixture(), 'demo_id': 'smoke-fast',
+        'round_num': int(request.request.url.rsplit('/', 1)[1].split('.')[0]),
+    }))
+    try:
+        page.emulate_media(reduced_motion='reduce')
+        with page.expect_request('**/data/de_mirage/replay/smoke-late/1.json'):
+            page.goto(f'{smoke.base}/#/de_mirage/tactics?replay=smoke-late:1')
+        page.wait_for_selector('dialog[open]')
+        page.evaluate("location.hash = '/de_mirage/tactics?replay=smoke-fast:2'")
+        expect(page.locator('.replay-title-match')).to_contain_text('第 2 回合')
+        pending.pop().fulfill(json=replay_fixture())
+        page.wait_for_timeout(100)
+        expect(page.locator('.replay-title-match')).to_contain_text('第 2 回合')
+        smoke.check(True, 'late replay response cannot replace the selected round')
+        page.locator('.replay-scrubber').fill('3')
+        page.get_by_role('button', name='4×', exact=True).click()
+        page.locator('.replay-player').first.focus()
+        page.evaluate("location.hash = '/de_mirage/tactics?replay=smoke-fast:3'")
+        expect(page.locator('.replay-title-match')).to_contain_text('第 3 回合')
+        expect(page.locator('.replay-scrubber')).to_have_value('0')
+        expect(page.get_by_role('button', name='1×', exact=True)).to_have_attribute('aria-pressed', 'true')
+        expect(page.get_by_role('button', name='播放', exact=True)).to_be_visible()
+        smoke.check(page.evaluate("document.querySelector('dialog').contains(document.activeElement)"),
+                    'round switching resets time and speed and keeps focus in the modal')
+        page.keyboard.press('Escape')
+        expect(page.locator('dialog[open]')).to_have_count(0)
+    finally:
+        for request in pending:
+            request.fulfill(json=replay_fixture())
+        page.unroute(late_url)
+        page.unroute(fast_url)
+        page.emulate_media(reduced_motion='no-preference')
 
 
 def replay_fixture() -> dict:
@@ -504,7 +586,8 @@ def check_team(smoke: Smoke, page: Page) -> None:
     page.wait_for_selector('.hub-player-card')
     # Team map: low-sample banner
     body = page.inner_text("body")
-    smoke.check("1" in body and ("样本不足" in body or "Low sample" in body), "team page shows the low-sample warning")
+    expect(page.locator('.low-sample')).to_contain_text('样本不足，结果仅供参考。')
+    smoke.check("1" in body, "team page retains the match count beside the shared low-sample warning")
 
 
 @route('#/de_mirage/teams', 'text=Vitality')

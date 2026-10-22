@@ -5,7 +5,7 @@
 
 import type { HeatGrid, HeatLayer, HeatPhase, Side } from "./types";
 
-export const HEAT_LAYERS: HeatLayer[] = [
+const HEAT_LAYERS: HeatLayer[] = [
   "presence",
   "holding",
   "shots",
@@ -30,14 +30,14 @@ export const VIEW_WEIGHTS: Record<HeatView, Weights> = {
   utility: { smoke: 1, flash: 1, molotov: 1, he: 1 },
 };
 
-export interface PlayerColor {
+interface PlayerColor {
   key: string; // i18n key suffix: heatmap.color.<key>
   light: string;
   deep: string;
 }
 
 /** Index = RosterEntry.color. 0 red, 1 blue, 2 purple, 3 green, 4 orange, then grey. */
-export const PLAYER_COLORS: PlayerColor[] = [
+const PLAYER_COLORS: PlayerColor[] = [
   { key: "red", light: "#fecaca", deep: "#b91c1c" },
   { key: "blue", light: "#bfdbfe", deep: "#1d4ed8" },
   { key: "purple", light: "#e9d5ff", deep: "#7e22ce" },
@@ -60,7 +60,7 @@ const GAMMA = 0.6; // lift faint areas so all five players stay visible
 const ALPHA_FLOOR = 0.12; // below this share of the player's peak: transparent
 const ALPHA_MAX = 0.9;
 
-export interface GridShape {
+interface GridShape {
   grid: number; // cells per side
   levels: number; // 1, or 2 for maps with a lower floor
 }

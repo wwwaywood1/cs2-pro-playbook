@@ -145,7 +145,7 @@ function RecipeDetails({ recipe, entries, splitDefinition, map, teams }: { recip
     </dl>
     {recipe.wp && recipe.wp.n > 0 && Number.isFinite(recipe.wp.before) && Number.isFinite(recipe.wp.after) ? <p className="recipe-wp">
       胜率变化 <strong>{fmtPct(recipe.wp.before)} → {fmtPct(recipe.wp.after)}</strong>{" "}
-      <span className="data-tooltip" tabIndex={0} role="note" aria-label="胜率变化说明">ⓘ<span role="tooltip">T 方模型胜率：进点前 5 秒与进点后 10 秒的均值（{recipe.wp.n} 回合）。能推进到进点的回合本就较顺利，因此估计偏高；用于套路之间的比较，不代表这套道具的绝对或因果效果。</span></span>
+      <span className="data-tooltip" tabIndex={0} role="note" aria-label="胜率变化说明">ⓘ<span role="tooltip">T 方模型胜率：进点前 5 秒与进点后 10 秒的均值（{fmtInt(recipe.wp.n)} 回合）。能推进到进点的回合本就较顺利，因此估计偏高；用于套路之间的比较，不代表这套道具的绝对或因果效果。</span></span>
     </p> : null}
     <div className="tactics-spot-columns">
       <section><h4>{t("tactics.core")}</h4><SpotList entries={entries.filter((entry) => entry.core)} /></section>
@@ -153,12 +153,12 @@ function RecipeDetails({ recipe, entries, splitDefinition, map, teams }: { recip
     </div>
     <h4>{t("tactics.tempo_title")}</h4>
     {total ? <div className="tactics-tempo-bar" role="img" aria-label={tempos.map((row) => `${t(`tactics.tempo.${row.value}`)} ${fmtPct(row.rounds / total)}`).join(" · ")}>
-      {tempos.map((row) => <span key={row.value} data-tempo={row.value} style={{ flexGrow: row.rounds }} title={`${t(`tactics.tempo.${row.value}`)} · ${row.rounds} 回合`} />)}
+      {tempos.map((row) => <span key={row.value} data-tempo={row.value} style={{ flexGrow: row.rounds }} title={`${t(`tactics.tempo.${row.value}`)} · ${fmtInt(row.rounds)} 回合`} />)}
     </div> : <p className="muted">{t("tactics.no_data")}</p>}
     <ul className="tactics-tempo-labels">{tempos.map((row) => <li key={row.value} data-tempo={row.value}>{t(`tactics.tempo.${row.value}`)} {total ? fmtPct(row.rounds / total) : "—"}</li>)}</ul>
     <details><summary>{t("tactics.teams")}</summary><ul className="tactics-inline-list">{[...recipe.teams].sort((a, b) => b.rounds - a.rounds).map((team) => <li key={team.team}>{teams.has(team.team) ? <Link to={`/teams-hub?${new URLSearchParams({ team: teams.get(team.team)!, map })}`}>{team.team}</Link> : team.team} · {t("tactics.round_count", { n: fmtInt(team.rounds) })}</li>)}</ul></details>
     <details><summary>{t("tactics.examples")}</summary>{recipe.examples.length ? <ul className="tactics-inline-list">{recipe.examples.map((example) => <li key={`${example.demo_id}:${example.round_num}:${example.team}`}>
-      {example.team} · {t("tactics.example_round", { n: example.round_num })} · <code>{example.demo_id}</code> {example.replay ? <ReplayButton map={map} demoId={example.demo_id} round={example.round_num} /> : null}
+      {example.team} · {t("tactics.example_round", { n: fmtInt(example.round_num) })} · <code>{example.demo_id}</code> {example.replay ? <ReplayButton map={map} demoId={example.demo_id} round={example.round_num} /> : null}
     </li>)}</ul> : <p className="muted">{t("tactics.no_data")}</p>}</details>
   </div>;
 }

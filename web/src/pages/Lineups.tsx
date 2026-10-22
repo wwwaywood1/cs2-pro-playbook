@@ -7,7 +7,7 @@ import { MapLinkHint, useMapLink } from "../mapLink";
 import Radar from "../components/Radar";
 import { ErrorNotice, Loading } from "../components/Status";
 import { getLineups, getMeta, useData } from "../data";
-import { fmtPct } from "../format";
+import { fmtInt, fmtPct, fmtNum } from "../format";
 import { motionScrollBehavior } from "../motion";
 import { calloutLabel, t, useLang } from "../i18n";
 import type { GrenadeType, Lane, Lineup, Side, Technique } from "../types";
@@ -353,8 +353,8 @@ export default function Lineups() {
 
                     <p className="lineup-meta">
                       {t("ui.times_thrown", {
-                        n: lineup.n_throws,
-                        m: lineup.n_matches,
+                        n: fmtInt(lineup.n_throws),
+                        m: fmtInt(lineup.n_matches),
                       })}
                     </p>
 
@@ -373,7 +373,7 @@ export default function Lineups() {
                       </div>
                       <div>
                         <dt tabIndex={0} title={t("round2.pop_tip")}>{t("round2.pop_tip")} ⓘ</dt>
-                        <dd>{lineup.median_pop_t_s == null ? "—" : t("round2.pop_time", { s: lineup.median_pop_t_s.toFixed(1) })}</dd>
+                        <dd>{lineup.median_pop_t_s == null ? "—" : t("round2.pop_time", { s: fmtNum(lineup.median_pop_t_s, 1) })}</dd>
                       </div>
                     </dl>
 

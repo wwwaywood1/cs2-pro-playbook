@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import GrenadeIcon, { GrenadeGlyph } from "./GrenadeIcon";
 import { useMapLink } from "../mapLink";
 import { calloutLabel, t } from "../i18n";
-import { fmtPct } from "../format";
+import { fmtPct, fmtInt } from "../format";
 import type { Lineup, Recipe, RecipeRoute, Spot } from "../types";
 
 export interface RecipeSpot {
@@ -172,7 +172,7 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
     {map === "de_nuke" && <div className="segmented tactics-levels" role="group" aria-label={t("tactics.floor")}>
       {[0, 1].map((value) => <button key={value} type="button" aria-pressed={level === value} disabled={!levels.includes(value)}
         className={level === value ? "is-active" : ""} onClick={() => setChosenLevel(value)}>
-        {t(`heatmap.level.${value === 1 ? "lower" : "upper"}`)} ({spots.filter(({ spot }) => spot?.level === value).length})
+        {t(`heatmap.level.${value === 1 ? "lower" : "upper"}`)} ({fmtInt(spots.filter(({ spot }) => spot?.level === value).length)})
       </button>)}
     </div>}
     <svg ref={radar} className="radar tactics-radar" viewBox={`${view.x} ${view.y} ${view.size} ${view.size}`} role="group" aria-label={t("tactics.radar_label", { map })}>
@@ -186,7 +186,7 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
       {failedSource !== source && <image href={source} width="1024" height="1024" onError={() => setFailedSource(source)} />}
       <rect width="1024" height="1024" fill="#060b12" opacity="0.55" mask={`url(#${maskId})`} pointerEvents="none" />
       <g className="tactics-entry-routes" key={routeKey} pointerEvents="none">{entryRoutes.map((route, index) => {
-        const label = t("round3.route_label", { via: route.via.map((place) => calloutLabel(map, place)).join(" → "), p: Math.round(route.share * 100) });
+        const label = t("round3.route_label", { via: route.via.map((place) => calloutLabel(map, place)).join(" → "), p: fmtPct(route.share) });
         const [x, y] = routeLabelPoint(route.points);
         return <g key={index} opacity={Math.max(.3, .9 - index * .17)}
           className={activeRoute === null ? undefined : activeRoute === index ? "is-active" : "is-dimmed"}>
@@ -199,7 +199,7 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
       {visible.filter((entry) => entry.lineup).map((entry) => {
         const lineup = entry.lineup!;
         return <g className="tactics-throw-route" key={`route-${entry.id}`} opacity={entry.core ? .85 : .4}>
-          <title>{`${entry.number}. ${calloutLabel(map, lineup.throw_place)} → ${entry.name} · 最常用起投点`}</title>
+          <title>{`${fmtInt(entry.number)}. ${calloutLabel(map, lineup.throw_place)} → ${entry.name} · 最常用起投点`}</title>
           <line x1={lineup.throw.radar_x} y1={lineup.throw.radar_y} x2={lineup.land.radar_x} y2={lineup.land.radar_y} vectorEffect="non-scaling-stroke" />
           <circle cx={lineup.throw.radar_x} cy={lineup.throw.radar_y} r={4 * unit} />
         </g>;
@@ -208,14 +208,14 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
         const spot = entry.spot;
         if (!spot || !Number.isFinite(spot.radar_x) || !Number.isFinite(spot.radar_y)) return null;
         const radius = scale && (entry.type === "smoke" || entry.type === "molotov") ? (entry.type === "smoke" ? 144 : 120) / scale : null;
-        const label = `${entry.number}. ${entry.name} · ${t(`grenade.${entry.type}`)} · ${t(entry.core ? "tactics.core" : "tactics.optional")}`;
+        const label = `${fmtInt(entry.number)}. ${entry.name} · ${t(`grenade.${entry.type}`)} · ${t(entry.core ? "tactics.core" : "tactics.optional")}`;
         const marker = <g transform={`translate(${spot.radar_x}, ${spot.radar_y})`} opacity={entry.core ? 1 : 0.5}>
           {radius !== null && <circle r={radius} fill={`url(#${maskId}-${entry.type})`} className={`tactics-effect tactics-effect-${entry.type}`} strokeDasharray={entry.core ? undefined : "5 4"} vectorEffect="non-scaling-stroke" />}
           <circle className="map-link-ring" r={22 * unit} />
           <g transform={`scale(${unit})`}>
             {!entry.core && <circle r="17" fill="none" stroke="#8fa3bd" strokeWidth="1" strokeDasharray="4 3" />}
             <g className="tactics-marker-icon" transform="translate(-14 -14) scale(0.875)"><GrenadeGlyph type={entry.type} /></g>
-            <g transform="translate(15 -15)"><circle r="8" fill="#0b1220" /><text className="tactics-marker-number" textAnchor="middle" y="4">{entry.number}</text></g>
+            <g transform="translate(15 -15)"><circle r="8" fill="#0b1220" /><text className="tactics-marker-number" textAnchor="middle" y="4">{fmtInt(entry.number)}</text></g>
           </g>
         </g>;
         return entry.to ? <a key={entry.id} {...bind(`spot:${entry.id}`)} href={`#${entry.to}`} aria-label={`${label} · ${t("tactics.open_lineup")}`}><title>{label}</title>{marker}</a>
@@ -224,7 +224,7 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
     </svg>
     {routes !== undefined ? <div className="tactics-routes-legend"><strong tabIndex={0} title={t("round3.routes_tip")}>{t("round3.routes_title")} ⓘ</strong>
       {!entryRoutes.length ? <p className="muted">{t("round3.routes_none")}</p> : entryRoutes.map((route, index) => {
-        const label = t("round3.route_label", { via: route.via.map((place) => calloutLabel(map, place)).join(" → "), p: Math.round(route.share * 100) });
+        const label = t("round3.route_label", { via: route.via.map((place) => calloutLabel(map, place)).join(" → "), p: fmtPct(route.share) });
         return <button key={index} type="button" className="tactics-route-row"
           onMouseEnter={() => setActiveRoute(index)} onMouseLeave={() => setActiveRoute(null)}
           onFocus={() => setActiveRoute(index)} onBlur={() => setActiveRoute(null)}>
@@ -238,14 +238,14 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
     {failedSource === source && <p className="muted">{t("tactics.radar_unavailable")}</p>}
     {!scale && <p className="muted">{t("tactics.no_scale")}</p>}
     <p className="tactics-help muted">{t("tactics.radar_help")} · 细线：最常用起投点 → 落点；非队员移动路线</p>
-    {!!visible.length && <details className="tactics-map-spots"><summary>{t("tactics.spot_index", { n: visible.length })}</summary><SpotList entries={visible} /></details>}
+    {!!visible.length && <details className="tactics-map-spots"><summary>{t("tactics.spot_index", { n: fmtInt(visible.length) })}</summary><SpotList entries={visible} /></details>}
   </figure>;
 }
 
 export function SpotList({ entries }: { entries: RecipeSpot[] }) {
   const { bind } = useMapLink();
   return <ul className="tactics-spots">{[...entries].sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity)).map((entry) => <li key={entry.id} {...bind(`spot:${entry.id}`)} tabIndex={0} className={entry.core ? "" : "is-optional"}>
-    <GrenadeIcon type={entry.type} /><span>{entry.number}. {entry.to ? <Link to={entry.to} title={t("tactics.open_lineup")}>{entry.name}</Link> : entry.name}
+    <GrenadeIcon type={entry.type} /><span>{fmtInt(entry.number)}. {entry.to ? <Link to={entry.to} title={t("tactics.open_lineup")}>{entry.name}</Link> : entry.name}
       <span className="muted"> · {t(`grenade.${entry.type}`)}{entry.share !== null ? ` · ${fmtPct(entry.share)}` : ""}</span>
       <small className="recipe-assignment muted">{t("round4.throw_from", { place: entry.throwPlace ?? entry.lineup?.throw_place ?? "—" })}</small>
       {entry.thrower ? <small className="recipe-assignment muted">{t("round4.thrower_example", { name: entry.thrower, team: entry.throwerTeam || "—" })}</small> : null}

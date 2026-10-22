@@ -1,6 +1,6 @@
 import { createContext, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 
-export const MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+const MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 export const ReducedMotion = createContext(false);
 export const NumberEntrance = createContext<number | "static">(0);
 export const MOTION_EASE = "cubic-bezier(.2,.8,.2,1)";

@@ -2,7 +2,7 @@ import { calloutLabel } from "./i18n";
 import type { HeatmapBaseline, PlayerSideSummary } from "./types";
 import type { HeatmapMarker } from "./components/HeatmapCanvas";
 
-export type PlaceMarker = HeatmapMarker & { level: number };
+type PlaceMarker = HeatmapMarker & { level: number };
 
 /** Prefer map-wide observed callout anchors; older exports retain hold/utility linking. */
 export function heatmapMarkers(map: string, baseline: HeatmapBaseline, summaries: PlayerSideSummary[], color: string): PlaceMarker[] {

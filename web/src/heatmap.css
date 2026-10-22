@@ -37,14 +37,14 @@
 .hm-controls { grid-column: 2; grid-row: 1; display: grid; gap: 1rem; min-width: 0; }
 .hm-field { border: 0; padding: 0; margin: 0; min-width: 0; }
 .hm-field legend { margin-bottom: .5rem; font-weight: 600; }
-.hm-buttons, .hm-actions, .hm-checks { display: flex; flex-wrap: wrap; gap: .5rem; }
+.hm-buttons, .hm-actions{ display: flex; flex-wrap: wrap; gap: .5rem; }
 .hm-buttons > button { flex: 1 1 auto; }
 .hm-actions { margin-bottom: .5rem; }
 .hm-actions button { font-size: .85rem; }
 .hm-chips { display: grid; gap: .4rem; }
 .hm-chip { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; border: 1px solid var(--hm-border); border-radius: .5rem; padding: .5rem; cursor: pointer; }
 .hm-chip small { color: var(--hm-muted); }
-.hm-low { border: 1px solid currentColor; border-radius: .25rem; padding: .1rem .25rem; }
+
 .hm-check { display: inline-flex; align-items: center; gap: .45rem; }
 .hm-page input[type="checkbox"] { flex-shrink: 0; }
 .hm-slider { display: grid; gap: .5rem; min-width: 0; }

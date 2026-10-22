@@ -1,3 +1,4 @@
+import { fmtInt, fmtPct } from "../format";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getReplayIndex, getWinprob, useData } from "../data";
 import { t, useLang } from "../i18n";
@@ -27,7 +28,7 @@ export default function MatchWinprob({ map, demoId, teamSlug }: { map: string; d
         const to = sides[round] === "T" ? values[values.length - 1] : 1 - values[values.length - 1];
         const delta = to - from;
         const height = Math.abs(delta) * 45;
-        const label = t("round2.round_bar_tip", { r: round, from: Math.round(from * 100), to: Math.round(to * 100) });
+        const label = t("round2.round_bar_tip", { r: fmtInt(Number(round)), from: fmtPct(from), to: fmtPct(to) });
         const available = replayIndex.data?.[demoId]?.includes(Number(round));
         const open = () => {
           if (!available) return;
@@ -35,12 +36,12 @@ export default function MatchWinprob({ map, demoId, teamSlug }: { map: string; d
           query.set("replay", `${demoId}:${round}`);
           navigate({ pathname: location.pathname, search: `?${query}` }, { state: { ...location.state, replayOpened: `${demoId}:${round}` } });
         };
-        return <g key={round} className="winprob-round" tabIndex={0} role={available ? "button" : "img"} aria-label={available ? `${label} · ${t("round4.replay_open", { round })}` : label}
+        return <g key={round} className="winprob-round" tabIndex={0} role={available ? "button" : "img"} aria-label={available ? `${label} · ${t("round4.replay_open", { round: fmtInt(Number(round)) })}` : label}
           style={available ? { cursor: "pointer" } : undefined} onClick={open} onKeyDown={(event) => { if (available && ["Enter", " "].includes(event.key)) { event.preventDefault(); open(); } }}>
           <title>{label}</title>
           <rect x={index * 16 + 2} y={delta >= 0 ? 50 - height : 50} width="12" height={height || .5} className={`winprob-bar ${delta >= 0 ? "is-positive" : "is-negative"}`} />
           <rect x={index * 16} y="0" width="16" height="98" fill="transparent" />
-          <text x={index * 16 + 8} y="106" textAnchor="middle">{round}</text>
+          <text x={index * 16 + 8} y="106" textAnchor="middle">{fmtInt(Number(round))}</text>
         </g>;
       })}
       {half > 0 ? <line x1={half * 16} x2={half * 16} y1="0" y2="98" className="winprob-halftime" /> : null}

@@ -66,18 +66,35 @@ def run():
         summ.scroll_into_view_if_needed(); wait(0.8)
         cap("展开「本图比赛记录」：每场比赛按回合画出胜率涨跌", "绿 = 这回合胜率上升，红 = 下降；虚线是半场")
         to(summ); summ.click(); wait(1.2); pg.mouse.wheel(0, 500); wait(3)
-        bars = pg.locator(".match-winprob rect, [class*=winprob] rect").nth(6)
-        try: to(bars, 15); wait(2)
-        except Exception: pass
-        pg.mouse.wheel(0, 500); wait(2)
+        bar = pg.locator("g.winprob-round[role=button]").nth(8)
+        if bar.count():
+            cap("点击任意一根柱子：打开这一回合的 2D 回放"); to(bar, 20); wait(1); bar.click(); wait(2)
+            play = pg.locator("button", has_text="播放").first
+            if play.count():
+                cap("2D 回放：10 名选手按秒移动，击杀、道具、下包依次出现", "下方是 T 方胜率曲线，播放头同步走"); to(play); play.click()
+            sp = pg.locator("button", has_text="4×").first
+            wait(5)
+            if sp.count(): cap("切到 4 倍速"); to(sp, 15); sp.click()
+            wait(9)
+            cap("按 Esc 关闭回放"); pg.keyboard.press("Escape"); wait(2)
         cap("进入「战术」页：Mirage 的 T 方进攻套路"); pg.goto(BASE + "#/de_mirage/tactics"); wait(3.5)
-        cap("选中的套路：道具编号 = 投掷顺序，标注常由谁投；橙色线是 T 方进点路线", "胜率变化：这套爆弹前后 T 方回合胜率的变化"); wait(4)
+        cap("选中的套路：道具按投掷顺序排列，注明从哪里投；橙色线是 T 方进点路线", "胜率变化：这套爆弹前后 T 方回合胜率的变化"); wait(4)
         rows = pg.locator(".tactics-route-row")
         for i in range(min(3, rows.count())):
             cap(f"悬停路线 {'abc'[i]}：只高亮这一条"); to(rows.nth(i), 15); wait(1.6)
         links = pg.locator(".tactics-recipe-details [data-map-link]")
         for i in range(min(3, links.count())):
             cap("悬停道具行：地图上对应道具同步高亮"); to(links.nth(i), 15); wait(1.4)
+        ex = pg.locator("details summary", has_text="示例").first
+        if ex.count():
+            ex.scroll_into_view_if_needed(); cap("示例回合：每套爆弹都能直接看真实回合的回放"); to(ex); ex.click(); wait(1.2)
+            rb = pg.locator("button", has_text="回放").first
+            if rb.count():
+                to(rb); rb.click(); wait(1.5)
+                play = pg.locator("button", has_text="播放").first
+                if play.count(): play.click()
+                cap("这套 A 点爆弹在比赛里的真实执行过程"); wait(10)
+                pg.keyboard.press("Escape"); wait(1.5)
         toggles = pg.locator(".tactics-recipe-toggle")
         if toggles.count() > 3:
             t3 = toggles.nth(3); t3.scroll_into_view_if_needed(); cap("换一套爆弹：地图和路线跟着切换"); to(t3); t3.click(); wait(3.5)

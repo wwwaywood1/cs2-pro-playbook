@@ -1,3 +1,4 @@
+import { fmtInt } from "../format";
 import { useMapLink } from "../mapLink";
 import GrenadeIcon, { GrenadeGlyph } from "./GrenadeIcon";
 import { useEffect, useMemo, useState } from "react";
@@ -98,7 +99,7 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
         </defs>
 
         {clusters.filter((cell) => cell.key !== selectedPlace).map((cell) => {
-          const label = `${[...new Set(cell.rows.map((row) => calloutLabel(map, row.land_place)))].join(" / ")} · ${t("round4.cluster_count", { n: cell.weight })}`;
+          const label = `${[...new Set(cell.rows.map((row) => calloutLabel(map, row.land_place)))].join(" / ")} · ${t("round4.cluster_count", { n: fmtInt(cell.weight) })}`;
           const expand = () => { setSelectedPlace(cell.key); onSelect(cell.lineup.id); };
           return <g key={cell.key} className="landing-cluster" role="button" tabIndex={0}
             {...bind(`lineup:${cell.rows.find((row) => row.id === hoveredId)?.id ?? cell.lineup.id}`)}
@@ -106,7 +107,7 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
             <circle className="map-link-ring" cx={cell.x} cy={cell.y} r={cell.radius + 6} />
             <title>{label}</title>
             <circle cx={cell.x} cy={cell.y} r={cell.radius} />
-            <text x={cell.x} y={cell.y + 7} textAnchor="middle" style={{ fontSize: 22, fontWeight: 800, fill: "#f5f8ff" }}>{cell.weight}</text>
+            <text x={cell.x} y={cell.y + 7} textAnchor="middle" style={{ fontSize: 22, fontWeight: 800, fill: "#f5f8ff" }}>{fmtInt(cell.weight)}</text>
           </g>;
         })}
         {lineups.filter((lineup) => clusters.find((cell) => cell.key === selectedPlace)?.rows.some((row) => row.id === lineup.id) || lineup.id === activeId).map((lineup) => {

@@ -1,6 +1,6 @@
 import type { GrenadeType } from "../types";
 
-export type GrenadeIconType = GrenadeType | "flash" | "incendiary";
+type GrenadeIconType = GrenadeType | "flash" | "incendiary";
 
 /** Grenade colours, shared with map coverage and legends. */
 export const GRENADE_COLORS: Record<"smoke" | "molotov" | "flash" | "he", string> = {

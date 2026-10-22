@@ -1,3 +1,4 @@
+import LowSampleBanner from "../components/LowSampleBanner";
 import type { CSSProperties, ReactNode } from "react";
 import { PageContext, PageSurface, MetricStrip } from "../components/Page";
 import { Link } from "react-router-dom";
@@ -52,15 +53,7 @@ export default function Home() {
               <img className="map-card-radar" src={`${import.meta.env.BASE_URL}radars/${item.map}.png`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />
               <div className="map-card-head">
                 <h2>{item.display_name}</h2>
-                {item.sample && item.sample.n_matches < data.min_matches_reliable ? (
-                  <span
-                    className="tag-warn"
-                    title={t("ui.low_sample_warning", { n: item.sample.n_matches })}
-                    aria-label={t("ui.low_sample_warning", { n: item.sample.n_matches })}
-                  >
-                    !
-                  </span>
-                ) : null}
+                <LowSampleBanner inline low_sample={!!item.sample && item.sample.n_matches < data.min_matches_reliable} />
               </div>
               <p className="map-code">{item.map}</p>
 
