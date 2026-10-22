@@ -1,0 +1,15 @@
+{
+  "_note": "Event date ranges (main event). Source: esports.gg 'CS2 events in 2026: Full top-tier schedule' (fetched 2026-10-22). Keys are event slugs as found in raw paths; aliases map other spellings. Dates are inclusive, local event dates.",
+  "events": {
+    "pgl-astana-2026":                     {"name": "PGL Astana 2026", "start": "2026-05-09", "end": "2026-05-17"},
+    "cac2026":                             {"name": "CS Asia Championships 2026", "start": "2026-05-19", "end": "2026-05-24"},
+    "cs-asia-championships-2026":          {"name": "CS Asia Championships 2026", "start": "2026-05-19", "end": "2026-05-24"},
+    "iem_cologne_major_2026":              {"name": "IEM Cologne Major 2026", "start": "2026-06-02", "end": "2026-06-21"},
+    "iem-cologne-major-2026":              {"name": "IEM Cologne Major 2026", "start": "2026-06-02", "end": "2026-06-21"},
+    "blast-bounty-2026-season-2":          {"name": "BLAST Bounty 2026 Season 2", "start": "2026-07-30", "end": "2026-08-02"},
+    "esports-world-cup-2026":              {"name": "Esports World Cup 2026", "start": "2026-08-12", "end": "2026-08-23"},
+    "blast-open-porto-2026":               {"name": "BLAST Open Porto 2026", "start": "2026-08-26", "end": "2026-09-06"},
+    "esl-pro-league-season-24":            {"name": "ESL Pro League Season 24", "start": "2026-10-03", "end": "2026-10-11"},
+    "thunderpick-world-championship-2026": {"name": "Thunderpick World Championship 2026", "start": "2026-10-14", "end": "2026-10-18"}
+  }
+}
