@@ -1,3 +1,4 @@
+import { useMapLink } from "../mapLink";
 import GrenadeIcon, { GrenadeGlyph } from "./GrenadeIcon";
 import { useEffect, useMemo, useState } from "react";
 import { calloutLabel, t } from "../i18n";
@@ -9,11 +10,12 @@ interface RadarProps {
   map: string;
   lineups: Lineup[];
   selectedId: string | null;
-  hoveredId?: string | null;
   onSelect: (id: string) => void;
 }
 
-export default function Radar({ map, lineups, selectedId, hoveredId, onSelect }: RadarProps) {
+export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps) {
+  const { activeId: linkedId, bind } = useMapLink();
+  const hoveredId = linkedId?.startsWith("lineup:") ? linkedId.slice(7) : null;
   const [imageOk, setImageOk] = useState(true);
   const activeId = lineups.some((lineup) => lineup.id === hoveredId) ? hoveredId : selectedId;
   const [selectedPlace, setSelectedPlace] = useState<string | null>(null);
@@ -80,7 +82,9 @@ export default function Radar({ map, lineups, selectedId, hoveredId, onSelect }:
           const label = `${calloutLabel(map, cell.lineup.land_place)} · ${cell.weight}`;
           const expand = () => { setSelectedPlace(cell.key); onSelect(cell.lineup.id); };
           return <g key={cell.key} className="landing-cluster" role="button" tabIndex={0}
+            {...bind(`lineup:${cell.rows.find((row) => row.id === hoveredId)?.id ?? cell.lineup.id}`)}
             aria-label={label} onClick={expand} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); expand(); } }}>
+            <circle className="map-link-ring" cx={cell.x} cy={cell.y} r={Math.min(42, 14 + Math.sqrt(cell.weight)) + 6} />
             <title>{label}</title>
             <circle cx={cell.x} cy={cell.y} r={Math.min(42, 14 + Math.sqrt(cell.weight))} />
             <text x={cell.x} y={cell.y + 5} textAnchor="middle">{cell.weight}</text>
@@ -104,6 +108,7 @@ export default function Radar({ map, lineups, selectedId, hoveredId, onSelect }:
           return (
             <g
               key={lineup.id}
+              {...bind(`lineup:${lineup.id}`)}
               className={className}
               role="button"
               tabIndex={0}
@@ -116,6 +121,7 @@ export default function Radar({ map, lineups, selectedId, hoveredId, onSelect }:
                 map,
                 lineup.land_place,
               )}`}</title>
+              <circle className="map-link-ring" cx={lineup.land.radar_x} cy={lineup.land.radar_y} r="30" />
               <path className="arrow-hit" d={arc} />
               <path className="arrow-line" d={arc} pathLength={1} markerEnd={`url(#arrowhead-${lineup.type})`} />
               <circle className="land-dot" cx={lineup.land.radar_x} cy={lineup.land.radar_y} r={selected ? 17 : 9} />

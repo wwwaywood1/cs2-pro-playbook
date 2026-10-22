@@ -214,7 +214,16 @@ export interface HeatGrid {
 }
 
 /** Grid metadata plus all teams on the map together (per team gun round). */
+export interface PlacePosition {
+  place: string;
+  radar_x: number;
+  radar_y: number;
+  level: number;
+}
+
 export interface HeatmapBaseline extends HeatGrid {
+  /** Median cleaned presence/fight coordinates per callout and floor; additive. */
+  place_positions?: PlacePosition[];
   map: string;
   grid: number; // cells per side (64)
   cell_px: number; // radar pixels per cell (16)

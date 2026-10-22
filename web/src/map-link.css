@@ -1,0 +1,14 @@
+[data-map-link] { transition: opacity 140ms ease, scale 140ms ease, outline-color 140ms ease; }
+[data-map-state="dimmed"] { opacity: .5 !important; }
+[data-map-state="active"] { outline: 2px solid var(--accent, #efad55); outline-offset: 3px; scale: 1.025; }
+svg [data-map-link] { transform-box: fill-box; transform-origin: center; outline: none; }
+.map-link-ring { fill: none; stroke: var(--accent, #efad55); stroke-width: 2; vector-effect: non-scaling-stroke; opacity: 0; pointer-events: none; }
+[data-map-state="active"] .map-link-ring { opacity: 1; }
+.map-link-hint { font-size: .75rem; margin: 6px 0 12px; }
+@media (prefers-reduced-motion: reduce) {
+  [data-map-link] { transition: none; }
+  [data-map-state="active"] { scale: none; }
+}
+
+.map-link-label { opacity: 0; fill: #fff; font-size: 16px; paint-order: stroke; stroke: #0b1220; stroke-width: 4px; pointer-events: none; }
+[data-map-state="active"] .map-link-label { opacity: 1; }

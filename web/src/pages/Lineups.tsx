@@ -3,6 +3,7 @@ import { PageContext, PageSurface, MetricStrip } from "../components/Page";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import GrenadeIcon from "../components/GrenadeIcon";
+import { MapLinkHint, useMapLink } from "../mapLink";
 import Radar from "../components/Radar";
 import { ErrorNotice, Loading } from "../components/Status";
 import { getLineups, getMeta, useData } from "../data";
@@ -75,7 +76,7 @@ export default function Lineups() {
   const [minThrows, setMinThrows] = useState(0);
   const [technique, setTechnique] = useState<Technique | "ALL">("ALL");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const { bind } = useMapLink();
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const cardRefs = useRef(new Map<string, HTMLElement>());
@@ -188,6 +189,7 @@ export default function Lineups() {
         </div>
         {lineups ? <MetricStrip items={[{ label: t("site.results"), value: filtered.length }, { label: t("ui.nav_lineups"), value: lineups.length }]} /> : null}
       </header>
+      <MapLinkHint />
       <section className="filters">
         <div className="filter-group" role="group" aria-label={t("ui.filter_side")}>
           <span className="filter-label">{t("ui.filter_side")}</span>
@@ -302,7 +304,6 @@ export default function Lineups() {
               map={map}
               lineups={filtered}
               selectedId={selectedId}
-              hoveredId={hoveredId}
               onSelect={selectFromRadar}
             /></Reveal>
           </aside>
@@ -329,10 +330,7 @@ export default function Lineups() {
                         setSelectedId(lineup.id);
                       }
                     }}
-                    onMouseEnter={() => setHoveredId(lineup.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                    onFocus={() => setHoveredId(lineup.id)}
-                    onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setHoveredId(null); }}
+                    {...bind(`lineup:${lineup.id}`)}
                     onClick={() => setSelectedId(lineup.id)}
                   >
                     <div className="lineup-top">

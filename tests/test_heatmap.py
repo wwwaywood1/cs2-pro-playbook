@@ -130,3 +130,15 @@ def test_combine_uses_shares_not_raw_units():
     assert out[0, 0, 1] == pytest.approx(1.1)
     assert out.sum() == pytest.approx(2.0)
     assert np.count_nonzero(to_array([5, 1.0])) == 1
+
+
+def test_place_anchors_use_cleaned_observations_and_keep_floor():
+    # t=4 at x=100 is excluded; Spot's remaining x values are 101, 102, 103.
+    # Far includes the CT victim's coordinate even without CT presence frames.
+    source = tables(z=-300.0)
+    source["kills"] = source["kills"].with_columns(pl.col("attacker_x", "attacker_y", "victim_x", "victim_y").cast(pl.Float32))
+    baseline = build_heatmaps(source, MM2)["baseline"]
+    assert baseline["place_positions"] == [
+        {"place": "Far", "level": 1, "radar_x": 400.0, "radar_y": 100.0},
+        {"place": "Spot", "level": 1, "radar_x": 102.0, "radar_y": 100.0},
+    ]

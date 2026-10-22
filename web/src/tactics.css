@@ -134,3 +134,13 @@
   .site-page.tactics-page .tactics-key { padding-left: 12px; }
   .site-page.tactics-page .page-head h1 { font-size: 1.8rem; }
 }
+
+/* Player entry paths sit below grenade flight lines and landing icons. */
+.tactics-entry-path { fill: none; stroke: #efad55; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; animation: entry-route-draw 600ms ease-out both; }
+.tactics-entry-label { fill: #ffdaa9; paint-order: stroke; stroke: #0b1220; stroke-width: 3px; stroke-linejoin: round; }
+.tactics-routes-legend { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: .75rem; }
+.tactics-routes-legend strong { cursor: help; }
+.tactics-routes-legend p { margin: 0; }
+.tactics-route-swatch { width: 38px; border-top: 3px solid #efad55; }
+@keyframes entry-route-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .tactics-entry-path { animation: none; stroke-dashoffset: 0; } }

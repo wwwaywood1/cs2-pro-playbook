@@ -33,7 +33,7 @@ export default function HeatmapTeams() {
       ) : (
         <Stagger className="hm-team-grid">
           {filtered.map((team) => (
-            <Link key={team.slug} to={`/heatmaps/${encodeURIComponent(team.slug)}`} className="hm-team-card" data-motion-tilt>
+            <Link key={team.slug} to={`/teams-hub?${new URLSearchParams({ team: team.slug })}`} className="hm-team-card" data-motion-tilt>
               <h2>{team.team}</h2>
               <p>{t("heatmap.matches")} · {team.n_matches ?? "—"} · {t("heatmap.maps_count")} · {team.maps.length}</p>
               <ul>

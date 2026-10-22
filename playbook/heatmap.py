@@ -236,7 +236,19 @@ def build_heatmaps(sub: dict[str, pl.DataFrame], mm: MapMeta, order: dict[str, l
 
     all_rounds = {s: tr.filter(pl.col("side") == s).height for s in SIDES}
     levels = 2 if "lower_level_max_z" in mm.radar else 1
+    # Callout anchors for map/text linking. Keep floors separate and use only the
+    # same cleaned observations as the heatmaps; fight-only places remain linkable.
+    place_positions = (
+        pl.concat([frames[name].select("place", "level", "radar_x", "radar_y")
+                   for name in ("presence", "kills", "deaths")], how="vertical_relaxed")
+        .filter(pl.col("place").is_not_null() & (pl.col("place") != "")
+                & pl.col("radar_x").is_finite() & pl.col("radar_y").is_finite())
+        .group_by("place", "level").agg(pl.col("radar_x").median().round(1),
+                                       pl.col("radar_y").median().round(1))
+        .sort("place", "level").to_dicts()
+    )
     baseline = {
+        "place_positions": place_positions,
         "map": mm.name, "grid": GRID, "cell_px": CELL_PX, "levels": levels,
         "layers": list(LAYERS), "phases": list(PHASES), "sides": list(SIDES), "n_colors": N_COLORS,
         "early_s": EARLY_S, "spawn_skip_s": SPAWN_SKIP_S, "hold_speed": HOLD_SPEED, "gun_rounds_only": True,

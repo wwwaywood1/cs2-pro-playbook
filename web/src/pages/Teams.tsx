@@ -40,7 +40,7 @@ export default function Teams() {
             return (
               <Link
                 key={team.slug}
-                to={`/${map}/teams/${team.slug}`}
+                to={`/teams-hub?${new URLSearchParams({ team: team.slug, map })}`}
                 className="team-card" data-motion-tilt
               >
                 <div className="team-card-head">

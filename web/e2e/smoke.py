@@ -128,6 +128,16 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     smoke.check(page.locator(".radar .throw-direction").count() == 1,
                 "selected lineup shows its recorded view direction")
 
+    card = page.locator('.lineup-card').first
+    key = card.get_attribute('data-map-link')
+    card.hover()
+    expect(page.locator(f'.radar .arrow-group[data-map-link="{key}"]')).to_have_attribute('data-map-state', 'active')
+    marker = page.locator(f'.radar .arrow-group[data-map-link="{key}"]')
+    marker.focus()
+    page.mouse.move(0, 0)
+    expect(card).to_have_attribute('data-map-state', 'active')
+    smoke.check(page.locator('.map-link-hint').count() == 1, 'lineups has one shared hover hint')
+
     # Copy button copies practice_cmd exactly
     first = page.locator(".lineup-card").first
     cmd = first.locator(".practice-cmd").inner_text().strip()
@@ -139,6 +149,70 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     smoke.check(btn.inner_text() != label_before, "copy button shows the 'copied' label")
     page.wait_for_timeout(1700)
     smoke.check(btn.inner_text() == label_before, "copy button label resets after 1.5s")
+
+
+@route('#/de_mirage/tactics', '.tactics-page')
+def check_tactics_linking(smoke: Smoke, page: Page) -> None:
+    root = Path(__file__).resolve().parents[1]
+    fixture = json.loads((root / 'public/data/de_mirage/tactics.json').read_text())
+    lineup = next(row for row in smoke.lineups if row['type'] in ('smoke', 'molotov'))
+    spot = {
+        'spot_id': 'smoke-test', 'side': 'T', 'type': lineup['type'],
+        'place': lineup['land_place'], 'label': '测试落点', 'name': {'zh': '测试落点', 'en': '测试落点'},
+        'radar_x': lineup['land']['radar_x'], 'radar_y': lineup['land']['radar_y'], 'level': 0,
+        'n_throws': 20, 'lineups': [{'lineup_id': lineup['id'], 'n_throws': 20}],
+    }
+    recipe = {
+        'id': 'test-entry', 'site': 'A', 'core': [{**spot, 'share': 1}], 'options': [],
+        'n_rounds': 20, 'n_matches': 2, 'teams': [{'team': 'Vitality', 'rounds': 20}],
+        'win_rate': .6, 'plant_rate': .8, 'median_commit_s': 35,
+        'tempo': [{'value': 'mid', 'rounds': 20}], 'avg_flashes': 3, 'split_rate': .2, 'examples': [],
+        'routes': [{'via': ['TSpawn', 'TRamp'], 'lane': 'A', 'n': 6, 'share': .6,
+                    'points': [[900, 500], [800, 600], [700, 700], [600, 720]]}],
+    }
+    fixture['spots'] = [spot]
+    fixture['recipes'] = [recipe, {**recipe, 'id': 'test-empty', 'n_rounds': 10, 'routes': []}]
+    page.route('**/data/de_mirage/tactics.json', lambda request: request.fulfill(json=fixture))
+    try:
+        page.reload()
+        page.wait_for_selector('.tactics-entry-path')
+        smoke.check(page.locator('.tactics-entry-path').count() == 1, 'selected recipe draws its player entry route')
+        smoke.check('60%' in (page.locator('.tactics-entry-label').first.text_content() or ''), 'entry route label includes its share')
+        path = page.locator('.tactics-entry-path')
+        smoke.check(path.get_attribute('marker-end') is not None, 'entry route has an arrowhead')
+        row = page.locator('.tactics-recipe.is-selected .tactics-spots li').first
+        key = row.get_attribute('data-map-link')
+        row.hover()
+        marker = page.locator(f'.tactics-radar [data-map-link="{key}"]')
+        expect(marker).to_have_attribute('data-map-state', 'active')
+        marker.focus()
+        page.mouse.move(0, 0)
+        expect(row).to_have_attribute('data-map-state', 'active')
+        smoke.check(page.locator('.map-link-hint').count() == 1, 'tactics has one shared hover hint')
+        page.emulate_media(reduced_motion='reduce')
+        smoke.check(path.evaluate("el => getComputedStyle(el).animationName") == 'none', 'reduced motion keeps entry paths static')
+        page.locator('.tactics-recipe-toggle').nth(1).click()
+        expect(page.locator('.tactics-entry-path')).to_have_count(0)
+        smoke.check('暂无路线' in page.locator('.tactics-routes-legend').inner_text(), 'empty recipe has a route-specific empty state')
+    finally:
+        page.emulate_media(reduced_motion='no-preference')
+        page.unroute('**/data/de_mirage/tactics.json')
+
+
+@route('#/heatmaps/vitality?map=de_mirage', '.hm-player-card')
+def check_heatmap_linking(smoke: Smoke, page: Page) -> None:
+    keys = page.locator('.hm-player-card [data-map-link^="place:"]').evaluate_all(
+        'rows => [...new Set(rows.map(row => row.dataset.mapLink))]')
+    key = next(key for key in keys if page.locator(f'.hm-radar [data-map-link="{key}"]').count())
+    row = page.locator(f'.hm-player-card [data-map-link="{key}"]').first
+    marker = page.locator(f'.hm-radar [data-map-link="{key}"]').first
+    row.focus()
+    expect(marker).to_have_attribute('data-map-state', 'active')
+    marker.focus()
+    expect(row).to_have_attribute('data-map-state', 'active')
+    smoke.check(page.locator('.map-link-hint').count() == 1, 'heatmaps has one shared hover hint')
+    smoke.check(page.locator('a[href*="teams-hub"][href*="team=vitality"]').count() == 1,
+                'heatmap team navigation points to the merged hub')
 
 
 @route('#/teams-hub', '.hub-team-card')
@@ -214,7 +288,18 @@ def check_hub_team(smoke: Smoke, page: Page) -> None:
 
 @route('#/teams-hub?team=vitality&map=de_mirage', '.hub-player-card')
 def check_hub_map(smoke: Smoke, page: Page) -> None:
-    smoke.check(page.locator('.hub-kpis .stat').count() == 4, 'map overview shows four leading metrics')
+    smoke.check(page.locator('.hub-map-context .hub-kpis .stat').count() == 4, 'map overview shows four leading metrics')
+    archive = page.locator('.hub-team-matches')
+    smoke.check(archive.get_attribute('open') is None, 'map match archive starts collapsed below the roster')
+    archive.locator('summary').click()
+    smoke.check(archive.locator('.match').count() == 1, 'map archive retains the sample match and outcome')
+    smoke.check(archive.locator('.match-outcome').inner_text() == 'W', 'match archive retains the win tag')
+    basis = page.locator('.hub-team-basis')
+    smoke.check(basis.get_attribute('open') is None, 'detailed stats and heatmap link start collapsed')
+    basis.locator('summary').click()
+    smoke.check(basis.locator('a[href*="heatmaps/vitality"]').count() == 1, 'heatmap link moved into the hub archive')
+    basis.locator('summary').click()
+    archive.locator('summary').click()
 
 
 @route('#/teams-hub?team=vitality&map=de_mirage&player=76561198113666193&side=CT', '.hub-player-view')
@@ -309,10 +394,23 @@ def check_hub_entrance(smoke: Smoke, page: Page) -> None:
         page.unroute('**/data/player_quotes.json')
 
 
-@route('#/de_mirage/teams/vitality', 'h1')
+@route('#/de_mirage/teams/vitality', '.hub-player-card')
 def check_team(smoke: Smoke, page: Page) -> None:
     smoke.check('未提供' not in page.inner_text('body'), 'team match metadata omits missing fields')
-    # Team page: low-sample banner
+    smoke.check('#/teams-hub?' in page.url and 'team=vitality' in page.url and 'map=de_mirage' in page.url,
+                'legacy team URL redirects to the matching hub slide')
+    smoke.check(page.locator('.team-page').count() == 0, 'legacy team page is removed')
+    # Redirect must replace the old entry: Back returns to the previous real page.
+    page.goto(f"{smoke.base}/#/de_mirage/teams")
+    page.wait_for_selector('.team-card')
+    page.evaluate("location.hash = '/de_mirage/teams/vitality'")
+    page.wait_for_selector('.hub-player-card')
+    page.go_back()
+    page.wait_for_selector('.team-card')
+    smoke.check(page.url.endswith('#/de_mirage/teams'), 'Back skips the replaced legacy route')
+    page.go_forward()
+    page.wait_for_selector('.hub-player-card')
+    # Team map: low-sample banner
     body = page.inner_text("body")
     smoke.check("1" in body and ("样本不足" in body or "Low sample" in body), "team page shows the low-sample warning")
 

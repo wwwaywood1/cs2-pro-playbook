@@ -1,17 +1,10 @@
-import { Stagger } from "../components/Motion";
-import { teamTheme } from "../theme";
-import { PageContext, PageSurface, SampleStrip } from "../components/Page";
 import { Fragment, useState, type CSSProperties } from "react";
-import { Link, useParams } from "react-router-dom";
-import TeamSummaryLinks from "../components/TeamSummaryLinks";
-import MatchWinprob from "../components/MatchWinprob";
-import LowSampleBanner from "../components/LowSampleBanner";
-import Stat from "../components/Stat";
-import { ErrorNotice, Loading } from "../components/Status";
-import { getTactics, getTeam, useData } from "../data";
+import { Link } from "react-router-dom";
+import { Stagger } from "./Motion";
+import Stat from "./Stat";
+import MatchWinprob from "./MatchWinprob";
 import { fmtInt, fmtPct, fmtSeconds } from "../format";
 import { t, useLang } from "../i18n";
-import "../tactics.css";
 import type { BuyType, CTSide, Ranked, Side, TeamProfile, TSide } from "../types";
 
 const BUY_TYPES: BuyType[] = ["pistol", "eco", "force", "full"];
@@ -244,127 +237,40 @@ function EconomyTable({ rows }: { rows: TeamProfile["economy"] }) {
   );
 }
 
-export default function Team() {
+/** The former team page's archive lives below the map's roster, closed by default. */
+export default function TeamDetails({ team }: { team: TeamProfile }) {
   const lang = useLang();
-  const { map = "", slug = "" } = useParams<{ map: string; slug: string }>();
-  const { data: team, error, loading } = useData(
-    () => getTeam(map, slug),
-    [map, slug],
-  );
-  const { data: tactics } = useData(() => getTactics(map), [map]);
   const [side, setSide] = useState<Side>("T");
-
-  if (loading) return <Loading />;
-  if (error || !team) {
-    return <ErrorNotice error={error ?? new Error("Team profile is empty")} />;
-  }
-
-  return (
-    <PageSurface className="team-page" style={teamTheme(slug)}>
-      <LowSampleBanner n_matches={team.n_matches} low_sample={team.low_sample} />
-
-      <header className="page-head">
-        <div>
-          <p className="eyebrow">{map}</p>
-          <h1>{team.team}</h1>
-          <PageContext>{t("site.team_context")}</PageContext>
-        </div>
-        <SampleStrip matches={team.n_matches} />
-        <Link
-          to={`/heatmaps/${encodeURIComponent(slug)}?${new URLSearchParams({ map })}`}
-          className="button button-ghost"
-        >
-          {t("heatmap.title")}
-        </Link>
-        <Link to={`/${map}/teams`} className="button button-ghost">
-          {t("ui.nav_teams")}
-        </Link>
-      </header>
-      {team.insights?.length || team.summary || team.tactics?.T.recipes.length ? (
-        <section className="panel team-insights motion-reveal" data-motion-spotlight>
-          <h3>{t("tactics.insights")}</h3>
-          <p className="team-summary"><TeamSummaryLinks profile={team} tactics={tactics} /></p>
-          {team.insights?.length ? <>
-            <details>
-              <summary>{t("tactics.summary_basis", { n: fmtInt((team.insights?.length ?? 0)) })}</summary>
-              <ul className="team-insights-rest">{(team.insights ?? []).map((insight) => (
-                <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>
-              ))}</ul>
-            </details>
-          </> : null}
-        </section>
-      ) : null}
-
-      <section className="panel">
-        <h3>{t("ui.matches_title")}</h3>
-        <Stagger as="ul" className="match-list">
-          {team.matches.length === 0 ? (
-            <li className="empty">—</li>
-          ) : (
-            team.matches.map((match) => {
-              const outcome =
-                match.score_for > match.score_against
-                  ? " is-win"
-                  : match.score_for < match.score_against
-                    ? " is-loss"
-                    : "";
-              return (
-                <li
-                  key={match.demo_id}
-                  className={`match${outcome}`}
-                  title={match.demo_id}
-                >
-                  <span className="match-outcome" aria-label={outcome === " is-win" ? "胜" : outcome === " is-loss" ? "负" : "平"}>{outcome === " is-win" ? "W" : outcome === " is-loss" ? "L" : "D"}</span>
-                  <span className="match-opponent">{match.opponent ?? "—"}{(match.event_name || match.event || match.date) ? <small className="match-context">{[match.event_name || match.event, match.date].filter(Boolean).join(" · ")}</small> : null}</span>
-                  <span className="match-score">
-                    {match.score_for} : {match.score_against}
-                  </span>
-                  {match.winprob_available ? <MatchWinprob key={`${map}:${match.demo_id}`} map={map} demoId={match.demo_id} teamSlug={slug} /> : null}
-                </li>
-              );
-            })
-          )}
-        </Stagger>
-      </section>
-
-      <div className="tabs" role="tablist" aria-label={t("ui.nav_teams")}>
-        {SIDE_ORDER.map((value) => (
-          <button
-            key={value}
-            type="button"
-            role="tab"
-            id={`tab-${value}`}
-            aria-selected={side === value}
-            aria-controls="team-side-panel"
-            tabIndex={side === value ? 0 : -1}
-            onClick={() => setSide(value)}
-            onKeyDown={(event) => {
-              if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-              event.preventDefault();
-              const next = event.key === "Home" ? "T" : event.key === "End" ? "CT" : side === "T" ? "CT" : "T";
-              setSide(next);
-              document.getElementById(`tab-${next}`)?.focus();
-            }}
-          >
-            {t(`side.${value}`)}
-          </button>
-        ))}
+  return <>
+    <details className="hub-details hub-team-matches">
+      <summary><strong>{t("round3.matches_title")}</strong> · {t("round3.matches_toggle", { n: team.matches.length })}</summary>
+      <p className="muted">{t("round3.round_bars_caption")}</p>
+      <ul className="match-list">{team.matches.length ? team.matches.map((match) => {
+        const outcome = match.score_for > match.score_against ? "win" : match.score_for < match.score_against ? "loss" : "draw";
+        return <li key={match.demo_id} className={`match is-${outcome}`} title={match.demo_id}>
+          <span className="match-outcome" aria-label={t(`hub.${outcome}`)}>{outcome === "win" ? "W" : outcome === "loss" ? "L" : "D"}</span>
+          <span className="match-opponent">{match.opponent ?? "—"}<small className="match-context">{[match.event_name || match.event, match.date].filter(Boolean).join(" · ")}</small></span>
+          <span className="match-score">{match.score_for} : {match.score_against}</span>
+          {match.winprob_available ? <MatchWinprob map={team.map} demoId={match.demo_id} teamSlug={team.slug} /> : null}
+        </li>;
+      }) : <li className="empty">{t("heatmap.no_data")}</li>}</ul>
+    </details>
+    <details className="hub-details hub-team-basis">
+      <summary>{t("hub.team_details")} · {t("tactics.summary_basis", { n: fmtInt(team.insights?.length ?? 0) })}</summary>
+      <Link className="button button-ghost" to={`/heatmaps/${encodeURIComponent(team.slug)}?${new URLSearchParams({ map: team.map })}`}>{t("heatmap.title")}</Link>
+      <ul className="team-insights-rest">{(team.insights ?? []).map((insight) => <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>)}</ul>
+      <div className="tabs" role="tablist" aria-label={t("ui.nav_teams")}>{SIDE_ORDER.map((value) => <button
+        key={value} type="button" role="tab" id={`tab-${value}`} aria-selected={side === value} aria-controls="team-side-panel" tabIndex={side === value ? 0 : -1}
+        onClick={() => setSide(value)} onKeyDown={(event) => {
+          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          const next = event.key === "Home" ? "T" : event.key === "End" ? "CT" : side === "T" ? "CT" : "T";
+          setSide(next); document.getElementById(`tab-${next}`)?.focus();
+        }}>{t(`side.${value}`)}</button>)}</div>
+      <div id="team-side-panel" role="tabpanel" aria-labelledby={`tab-${side}`} className={`side-panel side-${side.toLowerCase()}`}>
+        {side === "T" ? <TSideView side={team.sides.T} /> : <CTSideView side={team.sides.CT} />}
       </div>
-
-      <div
-        id="team-side-panel"
-        role="tabpanel"
-        aria-labelledby={`tab-${side}`}
-        className={`side-panel side-${side.toLowerCase()}`}
-      >
-        {side === "T" ? (
-          <TSideView side={team.sides.T} />
-        ) : (
-          <CTSideView side={team.sides.CT} />
-        )}
-      </div>
-
       <EconomyTable rows={team.economy} />
-    </PageSurface>
-  );
+    </details>
+  </>;
 }

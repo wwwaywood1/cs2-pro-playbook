@@ -3,6 +3,8 @@ import { teamTheme } from "../theme";
 import { PageContext, PageSurface, SampleStrip } from "../components/Page";
 import { Fragment, useCallback, useEffect, useMemo, type CSSProperties } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { MapLinkHint, useMapLink } from "../mapLink";
+import { heatmapMarkers, linkedLevel } from "../mapPlaces";
 import HeatmapCanvas from "../components/HeatmapCanvas";
 import MapSwitcher from "../components/MapSwitcher";
 import PlayerChips from "../components/PlayerChips";
@@ -42,6 +44,7 @@ function PlayerCard({
   showHolds: boolean;
   onShowHolds: (checked: boolean) => void;
 }) {
+  const { bind } = useMapLink();
   const color = playerColor(player.color, side).deep;
   return (
     <article className={`hm-player-card ${className}`} data-motion-tilt style={{ ...style, borderColor: color }}>
@@ -54,7 +57,7 @@ function PlayerCard({
               <h4>{t(`heatmap.phase.${phase}`)}</h4>
               {summary.zones[phase]?.length ? (
                 <ul>{summary.zones[phase]?.slice(0, 3).map((zone, index) => (
-                  <li key={`${zone.place}:${index}`}>{calloutLabel(map, zone.place)} · {fmtPct(zone.share)}</li>
+                  <li key={`${zone.place}:${index}`} {...bind(`place:${zone.place}`)} tabIndex={0}>{calloutLabel(map, zone.place)} · {fmtPct(zone.share)}</li>
                 ))}</ul>
               ) : <p>{t("heatmap.no_data")}</p>}
             </div>
@@ -66,7 +69,7 @@ function PlayerCard({
           </label>
           {summary.holds.length ? (
             <ul>{summary.holds.slice(0, 3).map((hold, index) => (
-              <li key={`${hold.place}:${index}`}>{t("heatmap.hold_line", {
+              <li key={`${hold.place}:${index}`} {...bind(`place:${hold.place}`)} tabIndex={0}>{t("heatmap.hold_line", {
                 place: calloutLabel(map, hold.place), sec: fmtNum(hold.seconds_per_round, 1), rounds: fmtInt(hold.rounds_held),
               })}</li>
             ))}</ul>
@@ -79,7 +82,7 @@ function PlayerCard({
           </dl>
           {summary.fights.places.length ? (
             <ul>{summary.fights.places.slice(0, 3).map((place, index) => (
-              <li key={`${place.place}:${index}`}>{calloutLabel(map, place.place)} · {fmtInt(place.kills)} / {fmtInt(place.deaths)}</li>
+              <li key={`${place.place}:${index}`} {...bind(`place:${place.place}`)} tabIndex={0}>{calloutLabel(map, place.place)} · {fmtInt(place.kills)} / {fmtInt(place.deaths)}</li>
             ))}</ul>
           ) : <p>{t("heatmap.no_data")}</p>}
           <h3>{t("heatmap.utility")}</h3>
@@ -94,7 +97,7 @@ function PlayerCard({
           <h4>{t("heatmap.util_spots")}</h4>
           {summary.utility.spots.length ? (
             <ul>{summary.utility.spots.slice(0, 5).map((spot) => (
-              <li key={spot.spot_id}>
+              <li key={spot.spot_id} {...bind(`spot:${spot.spot_id}`)} tabIndex={0}>
                 {t(`heatmap.util.${spot.type === "flashbang" ? "flash" : spot.type}`)} · {calloutLabel(map, spot.place)} · {fmtInt(spot.n)}
                 {spot.lineups.length > 0 && (
                   <Link className="hm-lineup-link" to={`/${encodeURIComponent(map)}/lineups?${new URLSearchParams({ id: spot.lineups[0].lineup_id })}`}>
@@ -115,6 +118,7 @@ function HeatmapView({ entry, team, baseline }: {
   team: TeamHeatmapData;
   baseline: HeatmapBaseline;
 }) {
+  const { activeId } = useMapLink();
   const [params, setParams] = useSearchParams();
   const side = choice<Side>(params.get("side"), ["T", "CT"], "T");
   const view = choice(params.get("view"), VIEWS, "presence");
@@ -124,7 +128,13 @@ function HeatmapView({ entry, team, baseline }: {
   const parsedSigma = rawSigma?.trim() ? Number(rawSigma) : NaN;
   const sigma = Number.isFinite(parsedSigma) && parsedSigma >= 0 && parsedSigma <= 2.5
     ? Math.round(parsedSigma * 10) / 10 : 1;
-  const level = baseline.levels === 2 && params.get("level") === "1" ? 1 : 0;
+  const chosenLevel = baseline.levels === 2 && params.get("level") === "1" ? 1 : 0;
+  const allSummaries = useMemo(() => Object.values(team.summary).flatMap((sides) => Object.values(sides).filter((summary): summary is PlayerSideSummary => !!summary)), [team]);
+  const places = useMemo(() => heatmapMarkers(team.map, baseline, allSummaries, "#efad55"), [team.map, baseline, allSummaries]);
+  const utilityMarkers = allSummaries.flatMap((summary) => summary.utility.spots.filter((spot) => spot.radar_x !== null && spot.radar_y !== null).map((spot) => ({
+    id: `spot:${spot.spot_id}`, level: spot.level, x: spot.radar_x!, y: spot.radar_y!, color: "#efad55", title: calloutLabel(team.map, spot.place), small: true,
+  })));
+  const level = linkedLevel(activeId, [...places, ...utilityMarkers], chosenLevel);
   const phasesRaw = params.get("phases");
   const phases = useMemo(() => {
     const requested = phasesRaw?.split(",") ?? [];
@@ -148,7 +158,7 @@ function HeatmapView({ entry, team, baseline }: {
   const canonical = new URLSearchParams(params);
   Object.entries({
     map: team.map, side, players: selectedIds.join(","), view, util,
-    phases: phases.join(","), mode, sigma: sigma.toFixed(1), level: String(level),
+    phases: phases.join(","), mode, sigma: sigma.toFixed(1), level: String(chosenLevel),
   }).forEach(([key, value]) => canonical.set(key, value));
   if (holdsIds.length) canonical.set("holds", holdsIds.join(","));
   else canonical.delete("holds");
@@ -191,11 +201,13 @@ function HeatmapView({ entry, team, baseline }: {
     const owners = selected.flatMap((player) => player.values ? [{ values: player.values, color: playerColor(player.color, side) }] : []);
     return owners.length ? [{ key: "owner", url: toDataUrl(ownerRgba(owners, shape, level), shape.grid) }] : [];
   }, [mode, images, selectedIds, selected, shape, level, side]);
-  const markers = selected.flatMap((player) => holdsIds.includes(player.steamid)
+  const holdMarkers = selected.flatMap((player) => holdsIds.includes(player.steamid)
     ? (team.summary[player.steamid]?.[side]?.holds ?? []).slice(0, 3)
       .filter((hold) => hold.level === level && Number.isFinite(hold.radar_x) && Number.isFinite(hold.radar_y))
-      .map((hold) => ({ x: hold.radar_x, y: hold.radar_y, color: playerColor(player.color, side).deep, title: `${player.name} · ${calloutLabel(team.map, hold.place)}` }))
+      .map((hold) => ({ id: `place:${hold.place}`, x: hold.radar_x, y: hold.radar_y, color: playerColor(player.color, side).deep, title: `${player.name} · ${calloutLabel(team.map, hold.place)}` }))
     : []);
+  const markers = [...places.filter((place) => place.level === level), ...holdMarkers,
+    ...utilityMarkers.filter((marker, index) => marker.level === level && utilityMarkers.findIndex((item) => item.id === marker.id) === index)];
   const setup = team.setup[side]?.early;
   const setupLanes = LANES.filter((lane) => setup?.[lane]?.length);
   const captionLabel = view === "utility" && util !== "all" ? t(`heatmap.util.${util}`) : t(`heatmap.view.${view}`);
@@ -205,9 +217,11 @@ function HeatmapView({ entry, team, baseline }: {
       <header className="page-head">
         <div><p className="eyebrow">{team.map}</p><h1>{entry.team} · {t("heatmap.title")}</h1><PageContext>{t("site.team_heatmap_context")}</PageContext></div>
         <Link to="/heatmaps" className="button button-ghost">{t("heatmap.back")}</Link>
+        <Link className="button button-ghost" to={`/teams-hub?${new URLSearchParams({ team: entry.slug, map: team.map })}`}>{t("ui.nav_teams")}</Link>
       </header>
       <SampleStrip matches={entry.maps.find((map) => map.map === team.map)?.n_matches} players={selected.length} maps={entry.maps.length} />
       <MapSwitcher maps={entry.maps} map={team.map} onChange={changeMap} />
+      <MapLinkHint />
       <div className="hm-workspace">
         <div className="hm-controls">
           <fieldset className="hm-field">
