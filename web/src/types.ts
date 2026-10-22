@@ -526,6 +526,8 @@ export interface ReplayRound extends MatchDateInfo {
   players: { name: string; side: "T" | "CT"; team: string }[];
   /** one row per second (index = seconds after freeze end); null = dead or not seen */
   frames: (ReplayPoint | null)[][];
+  /** Radar degrees clockwise from +x, parallel to frames; absent in older exports. */
+  yaw?: (number | null)[][];
   events: ReplayEvent[];
   /** T win probability per second; may be empty */
   wp_t: (number | null)[];

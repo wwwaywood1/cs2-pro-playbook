@@ -38,6 +38,16 @@ TEAM_NUM_SIDE = {2: "T", 3: "CT"}
 SAMPLE_SECONDS = 1
 
 
+def position_yaw(column: str = "m_angEyeAngles") -> pl.Expr:
+    """World yaw in degrees, nullable Float64 (awpy 3.1 has no ``yaw`` alias).
+
+    Pawn eye angles decode as ``QAngle(pitch, yaw, roll)``. Extract only after
+    sampling; parsing strings at every tick would waste work and memory.
+    """
+    value = pl.col(column).str.extract(r"^QAngle\([^,]+,\s*([^,]+),[^)]+\)$", 1).cast(pl.Float64, strict=False)
+    return pl.when(value.is_finite()).then(value).otherwise(None).alias("yaw")
+
+
 def demo_identity(path: Path) -> dict:
     """Demo id and HLTV match id from the file location.
 
@@ -215,7 +225,7 @@ def parse_demo(path: Path | list[Path] | tuple[Path, ...], aliases: dict[str, st
 
     # ---- every tick: position + callout (fast; parallel pawn decode) -------------
     tk = (
-        demo.ticks(["X", "Y", "Z", "health", "team_num", "m_szLastPlaceName"], players_only=True)
+        demo.ticks(["X", "Y", "Z", "health", "team_num", "m_szLastPlaceName", "m_angEyeAngles"], players_only=True)
         .rename({"X": "x", "Y": "y", "Z": "z", "m_szLastPlaceName": "place"})
         .filter(pl.col("team_num").is_in([2, 3]))
         .with_columns(pl.col("tick").cast(pl.Int64))
@@ -239,6 +249,7 @@ def parse_demo(path: Path | list[Path] | tuple[Path, ...], aliases: dict[str, st
     positions = (
         sample_df.join(tk, on="tick", how="inner")
         .with_columns(
+            position_yaw(),
             side=pl.col("team_num").replace_strict(TEAM_NUM_SIDE, default=None, return_dtype=pl.Utf8),
             team=pl.col("steamid").replace_strict(team_of, default=None, return_dtype=pl.Utf8),
             name=pl.col("steamid").replace_strict(names, default=None, return_dtype=pl.Utf8),
@@ -248,7 +259,7 @@ def parse_demo(path: Path | list[Path] | tuple[Path, ...], aliases: dict[str, st
         .with_columns(lane=pl.col("region").replace_strict(mm.region_lane, default="OTHER", return_dtype=pl.Utf8))
         .select(
             pl.lit(demo_id).alias("demo_id"), "round_num", "t_s", "tick", "steamid", "name", "team", "side",
-            "x", "y", "z", "place", "region", "lane", "health", "alive",
+            "x", "y", "z", "place", "region", "lane", "health", "alive", "yaw",
         )
         .sort("round_num", "t_s", "steamid")
     )

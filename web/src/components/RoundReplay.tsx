@@ -1,5 +1,5 @@
 import MatchDate from "./MatchDate";
-import { framePosition, lastPosition, roundClock, utilityEffect } from "../replayMath";
+import { framePosition, frameYaw, lastPosition, roundClock, utilityEffect } from "../replayMath";
 import Segmented from "./Segmented";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -212,6 +212,17 @@ function ReplayViewer({ replay, commit }: { replay: ReplayRound; commit?: number
             : <g transform="translate(-16 -16)"><GrenadeGlyph type={event.nade} /></g>}
         </g>;
       })}</g>
+      <g className="replay-view-cones" aria-hidden="true" pointerEvents="none">
+        {living.map(({ player, index, point: [x, y] }) => {
+          const yaw = frameYaw(replay.yaw, index, time, !reduced);
+          const radius = 30 * unit;
+          const dx = radius * Math.cos(Math.PI / 9), dy = radius * Math.sin(Math.PI / 9);
+          return yaw == null ? null : <path key={index} className="replay-view-cone"
+            d={`M 0 0 L ${dx} ${-dy} A ${radius} ${radius} 0 0 1 ${dx} ${dy} Z`}
+            transform={`translate(${x} ${y}) rotate(${yaw})`}
+            fill={player.side === "T" ? "#efad55" : "#62b5ff"} opacity={.34} />;
+        })}
+      </g>
       {living.map(({ player, index, point: [x, y], labelY }) => {
         return <g key={index} className="replay-player-marker" onPointerEnter={() => setHovered(index)} onPointerLeave={() => setHovered(null)}>
           <circle className="replay-player" cx={x} cy={y} r={4.5 * unit} fill={player.side === "T" ? "#efad55" : "#62b5ff"}

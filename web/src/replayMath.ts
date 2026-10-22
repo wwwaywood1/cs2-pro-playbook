@@ -17,6 +17,17 @@ export function framePosition(frames: ReplayRound["frames"], index: number, at: 
   const fraction = at - Math.floor(at);
   return [start[0] + (end[0] - start[0]) * fraction, start[1] + (end[1] - start[1]) * fraction];
 }
+/** Shortest arc through 0/360; reduced motion holds the current second's cone. */
+export function frameYaw(yaw: ReplayRound["yaw"], index: number, at: number, interpolate = true): number | null {
+  if (!yaw?.length) return null;
+  const second = Math.max(0, Math.min(Math.floor(at), yaw.length - 1));
+  const start = yaw[second]?.[index];
+  if (start == null || !Number.isFinite(start)) return null;
+  const end = yaw[second + 1]?.[index];
+  if (!interpolate || end == null || !Number.isFinite(end)) return start;
+  const delta = ((end - start + 180) % 360 + 360) % 360 - 180;
+  return ((start + delta * (at - Math.floor(at))) % 360 + 360) % 360;
+}
 export function lastPosition(frames: ReplayRound["frames"], index: number | null, at: number): [number, number] | null {
   if (index == null) return null;
   for (let second = Math.min(Math.floor(at), frames.length - 1); second >= 0; second--) {

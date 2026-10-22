@@ -70,6 +70,8 @@ def test_grenade_attribution(tables):
 def test_positions_complete(tables):
     start = tables["positions"].filter(pl.col("t_s") == 0)
     assert start.group_by("round_num").len()["len"].to_list() == [10] * 18
+    assert tables["positions"].schema["yaw"] == pl.Float64
+    assert start["yaw"].null_count() == 0
 
 
 def test_roles_match_known_players(tables):

@@ -26,7 +26,10 @@ def write_tables(tables: dict[str, pl.DataFrame], demo_id: str, root: Path = PAR
 
 
 def is_parsed(demo_id: str, root: Path = PARSED_DIR) -> bool:
-    return all((root / name / f"{demo_id}.parquet").exists() for name in TABLES)
+    if not all((root / name / f"{demo_id}.parquet").exists() for name in TABLES):
+        return False
+    # Schema-based cache invalidation: old position tables need yaw decoded.
+    return pl.read_parquet_schema(root / "positions" / f"{demo_id}.parquet").get("yaw") == pl.Float64
 
 
 def read_table(name: str, root: Path = PARSED_DIR) -> pl.DataFrame:

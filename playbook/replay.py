@@ -7,6 +7,7 @@ teams' matches and the example rounds of every execute recipe. Coordinates are r
     {"demo_id", "round_num", "map", "teams": {"T", "CT"}, "winner": "T"|"CT", "duration": s,
      "players": [{"name", "side", "team"}],          # index = column in frames
      "frames": [[[x, y] | null, ...], ...],          # one row per second; null = dead / not seen
+     "yaw": [[degrees | null, ...], ...],          # parallel to frames; SVG/radar clockwise from +x
      "events": [{"t", "kind": "kill"|"util"|"plant", ...}],
      "wp_t": [p, ...]}                               # T win probability per second (may be empty)
 """
@@ -22,6 +23,11 @@ from playbook.utility import PlaceIndex
 KEYS = ["demo_id", "round_num"]
 UTIL_KINDS = {"smoke": "smoke", "flashbang": "flash", "flash": "flash", "molotov": "molotov",
               "incendiary": "molotov", "he": "he", "hegrenade": "he"}
+
+
+def radar_yaw(yaw: float | None) -> int | None:
+    """World +y is radar -y: negate yaw for SVG rotation, clockwise from right."""
+    return int(round(-yaw)) % 360 if yaw is not None and np.isfinite(yaw) else None
 
 
 def _px(mm: MapMeta, x: float | None, y: float | None) -> list[int] | None:
@@ -100,9 +106,14 @@ def build_round(sub: dict[str, pl.DataFrame], mm: MapMeta, demo: str, rnd: int,
     sids = roster["steamid"].to_list()
     index = {s: i for i, s in enumerate(sids)}
     frames: list[list] = [[None] * len(sids) for _ in range(dur + 1)]
-    for sid, t, x, y, alive in pos.select("steamid", "t_s", "x", "y", "alive").iter_rows():
+    yaw: list[list] = [[None] * len(sids) for _ in range(dur + 1)]
+    if "yaw" not in pos.columns:
+        pos = pos.with_columns(pl.lit(None, dtype=pl.Float64).alias("yaw"))
+    for sid, t, x, y, alive, angle in pos.select("steamid", "t_s", "x", "y", "alive", "yaw").iter_rows():
         if 0 <= t <= dur and alive:
             frames[t][index[sid]] = _px(mm, x, y)
+            if frames[t][index[sid]] is not None:
+                yaw[t][index[sid]] = radar_yaw(angle)
     if grid is None:
         grid = control_grid(sub["positions"])
     controls = [None] * (dur + 1)
@@ -150,7 +161,7 @@ def build_round(sub: dict[str, pl.DataFrame], mm: MapMeta, demo: str, rnd: int,
         "teams": {"T": r0["t_team"], "CT": r0["ct_team"]}, "winner": r0["winner_side"],
         "reason": r0.get("reason"), "duration": dur,
         "players": [{"name": n, "side": s, "team": tm} for n, s, tm in roster.select("name", "side", "team").iter_rows()],
-        "frames": frames, "events": events, "wp_t": [round(float(v), 3) if v is not None else None for v in (wp or [])],
+        "frames": frames, "yaw": yaw, "events": events, "wp_t": [round(float(v), 3) if v is not None else None for v in (wp or [])],
         "t_control": controls,
     }
 

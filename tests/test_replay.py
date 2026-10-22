@@ -1,5 +1,6 @@
 """2D replay round files: frames per second, dead players hidden, events sorted, radar pixels."""
 import polars as pl
+import pytest
 
 from playbook.config import MapMeta
 from playbook.replay import build_round
@@ -7,13 +8,17 @@ from playbook.replay import build_round
 MM = MapMeta(name="de_test", display_name="Test", radar={"pos_x": 0.0, "pos_y": 100.0, "scale": 1.0})
 
 
-def test_build_round():
+@pytest.mark.parametrize("with_yaw", [False, True])
+def test_build_round(with_yaw):
     pos = []
     for t in range(4):
         pos.append({"demo_id": "d", "round_num": 1, "t_s": t, "steamid": "a", "name": "Ann", "side": "T", "team": "X",
                     "x": 10.0 + t, "y": 90.0, "alive": True})
         pos.append({"demo_id": "d", "round_num": 1, "t_s": t, "steamid": "b", "name": "Bob", "side": "CT", "team": "Y",
                     "x": 50.0, "y": 50.0, "alive": t < 2})
+    if with_yaw:
+        for row in pos:
+            row["yaw"] = [0., 90., 180., None][row["t_s"]] if row["steamid"] == "a" else -90.
     sub = {
         "matches": pl.DataFrame([{"demo_id": "d", "date": "2026-05-09", "date_precision": "day", "event": "Test Event"}]),
         "positions": pl.DataFrame(pos),
@@ -34,6 +39,10 @@ def test_build_round():
     assert names == ["Ann", "Bob"]                           # T first
     assert r["frames"][0] == [[10, 10], [50, 50]]          # radar px: y flipped around pos_y
     assert r["frames"][2][1] is None                        # dead players are hidden
+    assert len(r["yaw"]) == len(r["frames"])
+    assert all(len(angles) == len(r["players"]) for angles in r["yaw"])
+    assert r["yaw"] == ([[0, 90], [270, 90], [180, None], [None, None], [None, None]]
+                         if with_yaw else [[None, None]] * 5)
     assert [e["kind"] for e in r["events"]] == ["util", "kill"]
     assert r["events"][1]["by"] == 0 and r["events"][1]["victim"] == 1 and r["events"][0]["from"] is None
     assert r["wp_t"] == [0.5, 0.6, 0.8, 0.9]

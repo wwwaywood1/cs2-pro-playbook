@@ -58,3 +58,5 @@ def test_all_multipart_event_tables_have_valid_round_bounds(tables):
             assert events["team"].null_count() == 0
     assert tables["utility"]["nade_id"].n_unique() == tables["utility"].height
     assert tables["positions"].filter(pl.col("t_s") == 0).group_by("round_num").len()["len"].to_list() == [10] * 19
+    assert tables["positions"].schema["yaw"] == pl.Float64
+    assert tables["positions"].filter(pl.col("t_s") == 0)["yaw"].null_count() == 0

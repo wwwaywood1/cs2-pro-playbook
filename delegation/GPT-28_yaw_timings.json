@@ -1,0 +1,1664 @@
+{
+  "demos": 207,
+  "seconds": 167.65,
+  "metadata_before_sha256": "bfc45441663b53066e5606ac29b18847fe1574954a21ed6586ff924eb4b6178c",
+  "metadata_after_sha256": "bfc45441663b53066e5606ac29b18847fe1574954a21ed6586ff924eb4b6178c",
+  "records": [
+    {
+      "demo_id": "100-thieves-vs-falcons-m1-nuke",
+      "parts": 1,
+      "rows": 14260,
+      "alive_rows": 11009,
+      "alive_yaw_rows": 11009,
+      "seconds": 0.64
+    },
+    {
+      "demo_id": "100-thieves-vs-falcons-m2-dust2",
+      "parts": 1,
+      "rows": 20490,
+      "alive_rows": 16121,
+      "alive_yaw_rows": 16121,
+      "seconds": 0.921
+    },
+    {
+      "demo_id": "2394199_legacy-vs-nrg-nuke",
+      "parts": 1,
+      "rows": 20320,
+      "alive_rows": 15451,
+      "alive_yaw_rows": 15451,
+      "seconds": 0.833
+    },
+    {
+      "demo_id": "2394200_mouz-vs-tyloo-inferno",
+      "parts": 1,
+      "rows": 21570,
+      "alive_rows": 17613,
+      "alive_yaw_rows": 17613,
+      "seconds": 0.845
+    },
+    {
+      "demo_id": "2394201_falcons-vs-bc-game-dust2",
+      "parts": 1,
+      "rows": 24990,
+      "alive_rows": 20384,
+      "alive_yaw_rows": 20384,
+      "seconds": 0.909
+    },
+    {
+      "demo_id": "2394202_pain-vs-m80-mirage",
+      "parts": 1,
+      "rows": 19410,
+      "alive_rows": 15724,
+      "alive_yaw_rows": 15724,
+      "seconds": 0.622
+    },
+    {
+      "demo_id": "2394203_3dmax-vs-mibr-anubis",
+      "parts": 1,
+      "rows": 17600,
+      "alive_rows": 13429,
+      "alive_yaw_rows": 13429,
+      "seconds": 0.696
+    },
+    {
+      "demo_id": "2394204_parivision-vs-liquid-dust2",
+      "parts": 1,
+      "rows": 19570,
+      "alive_rows": 15399,
+      "alive_yaw_rows": 15399,
+      "seconds": 0.769
+    },
+    {
+      "demo_id": "2394205_the-mongolz-vs-lynn-vision-ancient",
+      "parts": 1,
+      "rows": 13550,
+      "alive_rows": 9485,
+      "alive_yaw_rows": 9485,
+      "seconds": 0.673
+    },
+    {
+      "demo_id": "2394206_b8-vs-ninjas-in-pyjamas-ancient",
+      "parts": 1,
+      "rows": 17960,
+      "alive_rows": 14085,
+      "alive_yaw_rows": 14085,
+      "seconds": 0.704
+    },
+    {
+      "demo_id": "2394207_legacy-vs-tyloo-m2-ancient",
+      "parts": 1,
+      "rows": 24270,
+      "alive_rows": 19054,
+      "alive_yaw_rows": 19054,
+      "seconds": 0.91
+    },
+    {
+      "demo_id": "2394209_mibr-vs-parivision-m1-mirage",
+      "parts": 1,
+      "rows": 16340,
+      "alive_rows": 13457,
+      "alive_yaw_rows": 13457,
+      "seconds": 0.75
+    },
+    {
+      "demo_id": "2394209_mibr-vs-parivision-m2-ancient",
+      "parts": 1,
+      "rows": 13590,
+      "alive_rows": 10225,
+      "alive_yaw_rows": 10225,
+      "seconds": 0.62
+    },
+    {
+      "demo_id": "2394210_the-mongolz-vs-b8-m1-ancient",
+      "parts": 1,
+      "rows": 19800,
+      "alive_rows": 14884,
+      "alive_yaw_rows": 14884,
+      "seconds": 0.663
+    },
+    {
+      "demo_id": "2394210_the-mongolz-vs-b8-m2-nuke",
+      "parts": 1,
+      "rows": 20690,
+      "alive_rows": 16468,
+      "alive_yaw_rows": 16468,
+      "seconds": 0.74
+    },
+    {
+      "demo_id": "2394210_the-mongolz-vs-b8-m3-mirage",
+      "parts": 1,
+      "rows": 17570,
+      "alive_rows": 14272,
+      "alive_yaw_rows": 14272,
+      "seconds": 0.653
+    },
+    {
+      "demo_id": "2394211_nrg-vs-mouz-m1-ancient",
+      "parts": 1,
+      "rows": 18930,
+      "alive_rows": 14443,
+      "alive_yaw_rows": 14443,
+      "seconds": 0.655
+    },
+    {
+      "demo_id": "2394211_nrg-vs-mouz-m2-nuke",
+      "parts": 1,
+      "rows": 16170,
+      "alive_rows": 11726,
+      "alive_yaw_rows": 11726,
+      "seconds": 0.538
+    },
+    {
+      "demo_id": "2394211_nrg-vs-mouz-m3-mirage",
+      "parts": 1,
+      "rows": 19710,
+      "alive_rows": 15715,
+      "alive_yaw_rows": 15715,
+      "seconds": 0.911
+    },
+    {
+      "demo_id": "2394212_bc-game-vs-pain-m1-dust2",
+      "parts": 1,
+      "rows": 18310,
+      "alive_rows": 14618,
+      "alive_yaw_rows": 14618,
+      "seconds": 1.004
+    },
+    {
+      "demo_id": "2394212_bc-game-vs-pain-m2-anubis",
+      "parts": 1,
+      "rows": 16430,
+      "alive_rows": 12684,
+      "alive_yaw_rows": 12684,
+      "seconds": 0.805
+    },
+    {
+      "demo_id": "2394213_3dmax-vs-liquid-m1-nuke",
+      "parts": 1,
+      "rows": 20650,
+      "alive_rows": 17012,
+      "alive_yaw_rows": 17012,
+      "seconds": 0.759
+    },
+    {
+      "demo_id": "2394213_3dmax-vs-liquid-m2-dust2",
+      "parts": 1,
+      "rows": 21020,
+      "alive_rows": 16156,
+      "alive_yaw_rows": 16156,
+      "seconds": 0.916
+    },
+    {
+      "demo_id": "2394213_3dmax-vs-liquid-m3-inferno",
+      "parts": 1,
+      "rows": 24540,
+      "alive_rows": 18671,
+      "alive_yaw_rows": 18671,
+      "seconds": 1.104
+    },
+    {
+      "demo_id": "2394214_lynn-vision-vs-ninjas-in-pyjamas-m1-dust2",
+      "parts": 1,
+      "rows": 18340,
+      "alive_rows": 15068,
+      "alive_yaw_rows": 15068,
+      "seconds": 0.801
+    },
+    {
+      "demo_id": "2394214_lynn-vision-vs-ninjas-in-pyjamas-m2-nuke",
+      "parts": 1,
+      "rows": 20140,
+      "alive_rows": 15003,
+      "alive_yaw_rows": 15003,
+      "seconds": 0.786
+    },
+    {
+      "demo_id": "2394215_m80-vs-mouz-m2-inferno",
+      "parts": 1,
+      "rows": 21740,
+      "alive_rows": 17260,
+      "alive_yaw_rows": 17260,
+      "seconds": 0.975
+    },
+    {
+      "demo_id": "2394215_m80-vs-mouz-m3-mirage",
+      "parts": 1,
+      "rows": 11000,
+      "alive_rows": 8987,
+      "alive_yaw_rows": 8987,
+      "seconds": 0.474
+    },
+    {
+      "demo_id": "2394216_tyloo-vs-pain-m1-mirage",
+      "parts": 1,
+      "rows": 16080,
+      "alive_rows": 12309,
+      "alive_yaw_rows": 12309,
+      "seconds": 0.502
+    },
+    {
+      "demo_id": "2394216_tyloo-vs-pain-m2-nuke",
+      "parts": 1,
+      "rows": 17710,
+      "alive_rows": 13829,
+      "alive_yaw_rows": 13829,
+      "seconds": 0.688
+    },
+    {
+      "demo_id": "2394217_the-mongolz-vs-liquid-m1-mirage",
+      "parts": 1,
+      "rows": 22370,
+      "alive_rows": 17045,
+      "alive_yaw_rows": 17045,
+      "seconds": 0.862
+    },
+    {
+      "demo_id": "2394217_the-mongolz-vs-liquid-m2-inferno",
+      "parts": 1,
+      "rows": 19590,
+      "alive_rows": 15793,
+      "alive_yaw_rows": 15793,
+      "seconds": 0.796
+    },
+    {
+      "demo_id": "2394217_the-mongolz-vs-liquid-m3-nuke",
+      "parts": 1,
+      "rows": 19730,
+      "alive_rows": 15252,
+      "alive_yaw_rows": 15252,
+      "seconds": 0.738
+    },
+    {
+      "demo_id": "2394218_parivision-vs-lynn-vision-m1-ancient",
+      "parts": 1,
+      "rows": 18400,
+      "alive_rows": 15196,
+      "alive_yaw_rows": 15196,
+      "seconds": 0.798
+    },
+    {
+      "demo_id": "2394218_parivision-vs-lynn-vision-m2-dust2",
+      "parts": 1,
+      "rows": 24080,
+      "alive_rows": 20341,
+      "alive_yaw_rows": 20341,
+      "seconds": 0.902
+    },
+    {
+      "demo_id": "2394220_mouz-vs-pain-m1-nuke",
+      "parts": 1,
+      "rows": 13810,
+      "alive_rows": 11258,
+      "alive_yaw_rows": 11258,
+      "seconds": 0.529
+    },
+    {
+      "demo_id": "2394221_mibr-vs-b8-m3-ancient",
+      "parts": 1,
+      "rows": 12350,
+      "alive_rows": 9248,
+      "alive_yaw_rows": 9248,
+      "seconds": 0.447
+    },
+    {
+      "demo_id": "2394222_the-mongolz-vs-parivision-m1-dust2",
+      "parts": 1,
+      "rows": 17280,
+      "alive_rows": 14215,
+      "alive_yaw_rows": 14215,
+      "seconds": 0.676
+    },
+    {
+      "demo_id": "2394222_the-mongolz-vs-parivision-m2-mirage",
+      "parts": 1,
+      "rows": 19600,
+      "alive_rows": 15893,
+      "alive_yaw_rows": 15893,
+      "seconds": 0.815
+    },
+    {
+      "demo_id": "2394223_legacy-vs-the-mongolz-m1-inferno",
+      "parts": 1,
+      "rows": 23460,
+      "alive_rows": 18617,
+      "alive_yaw_rows": 18617,
+      "seconds": 0.697
+    },
+    {
+      "demo_id": "2394223_legacy-vs-the-mongolz-m2-mirage",
+      "parts": 1,
+      "rows": 19330,
+      "alive_rows": 15994,
+      "alive_yaw_rows": 15994,
+      "seconds": 0.623
+    },
+    {
+      "demo_id": "2394223_legacy-vs-the-mongolz-m3-nuke",
+      "parts": 1,
+      "rows": 21050,
+      "alive_rows": 15766,
+      "alive_yaw_rows": 15766,
+      "seconds": 0.693
+    },
+    {
+      "demo_id": "2394224_b8-vs-mouz-m2-ancient",
+      "parts": 1,
+      "rows": 36020,
+      "alive_rows": 26935,
+      "alive_yaw_rows": 26935,
+      "seconds": 1.338
+    },
+    {
+      "demo_id": "2394226_mibr-vs-legacy-m1-mirage",
+      "parts": 1,
+      "rows": 24540,
+      "alive_rows": 19266,
+      "alive_yaw_rows": 19266,
+      "seconds": 0.89
+    },
+    {
+      "demo_id": "2394226_mibr-vs-legacy-m2-inferno",
+      "parts": 1,
+      "rows": 13590,
+      "alive_rows": 10923,
+      "alive_yaw_rows": 10923,
+      "seconds": 0.536
+    },
+    {
+      "demo_id": "2394228_falcons-vs-legacy-m2-ancient",
+      "parts": 1,
+      "rows": 21530,
+      "alive_rows": 15906,
+      "alive_yaw_rows": 15906,
+      "seconds": 0.698
+    },
+    {
+      "demo_id": "2394772_gamerlegion-vs-nrg-inferno",
+      "parts": 1,
+      "rows": 22700,
+      "alive_rows": 18346,
+      "alive_yaw_rows": 18346,
+      "seconds": 0.793
+    },
+    {
+      "demo_id": "2394774_heroic-vs-sharks-nuke",
+      "parts": 1,
+      "rows": 19210,
+      "alive_rows": 14494,
+      "alive_yaw_rows": 14494,
+      "seconds": 0.693
+    },
+    {
+      "demo_id": "2394776_big-vs-liquid-nuke",
+      "parts": 1,
+      "rows": 20010,
+      "alive_rows": 15203,
+      "alive_yaw_rows": 15203,
+      "seconds": 0.682
+    },
+    {
+      "demo_id": "2394779_sinners-vs-flyquest-ancient",
+      "parts": 1,
+      "rows": 29030,
+      "alive_rows": 23388,
+      "alive_yaw_rows": 23388,
+      "seconds": 0.998
+    },
+    {
+      "demo_id": "2394840_b8-vs-thunder-downunder-dust2",
+      "parts": 1,
+      "rows": 20280,
+      "alive_rows": 15273,
+      "alive_yaw_rows": 15273,
+      "seconds": 0.68
+    },
+    {
+      "demo_id": "2394841_heroic-vs-lynn-vision-dust2",
+      "parts": 1,
+      "rows": 23280,
+      "alive_rows": 19364,
+      "alive_yaw_rows": 19364,
+      "seconds": 0.78
+    },
+    {
+      "demo_id": "2394842_mibr-vs-tyloo-nuke",
+      "parts": 1,
+      "rows": 25220,
+      "alive_rows": 19139,
+      "alive_yaw_rows": 19139,
+      "seconds": 0.818
+    },
+    {
+      "demo_id": "2394843_sinners-vs-nrg-nuke",
+      "parts": 1,
+      "rows": 16920,
+      "alive_rows": 13824,
+      "alive_yaw_rows": 13824,
+      "seconds": 0.595
+    },
+    {
+      "demo_id": "2394844_gamerlegion-vs-flyquest-inferno",
+      "parts": 1,
+      "rows": 23910,
+      "alive_rows": 19171,
+      "alive_yaw_rows": 19171,
+      "seconds": 0.848
+    },
+    {
+      "demo_id": "2394846_betboom-vs-liquid-dust2",
+      "parts": 1,
+      "rows": 17620,
+      "alive_rows": 14343,
+      "alive_yaw_rows": 14343,
+      "seconds": 0.641
+    },
+    {
+      "demo_id": "2394848_nrg-vs-flyquest-mirage",
+      "parts": 1,
+      "rows": 20990,
+      "alive_rows": 15294,
+      "alive_yaw_rows": 15294,
+      "seconds": 0.713
+    },
+    {
+      "demo_id": "2394850_liquid-vs-mibr-mirage",
+      "parts": 1,
+      "rows": 19300,
+      "alive_rows": 15469,
+      "alive_yaw_rows": 15469,
+      "seconds": 0.686
+    },
+    {
+      "demo_id": "2394851_thunder-downunder-vs-big-inferno",
+      "parts": 1,
+      "rows": 19680,
+      "alive_rows": 15378,
+      "alive_yaw_rows": 15378,
+      "seconds": 0.72
+    },
+    {
+      "demo_id": "2394852_gamerlegion-vs-betboom-m1-nuke",
+      "parts": 1,
+      "rows": 14260,
+      "alive_rows": 11456,
+      "alive_yaw_rows": 11456,
+      "seconds": 0.528
+    },
+    {
+      "demo_id": "2394853_tyloo-vs-sinners-m1-ancient",
+      "parts": 1,
+      "rows": 24680,
+      "alive_rows": 18750,
+      "alive_yaw_rows": 18750,
+      "seconds": 0.829
+    },
+    {
+      "demo_id": "2394854_m80-vs-b8-m2-inferno",
+      "parts": 1,
+      "rows": 40820,
+      "alive_rows": 31851,
+      "alive_yaw_rows": 31851,
+      "seconds": 1.427
+    },
+    {
+      "demo_id": "2394856_thunder-downunder-vs-flyquest-m1-anubis",
+      "parts": 1,
+      "rows": 21550,
+      "alive_rows": 15610,
+      "alive_yaw_rows": 15610,
+      "seconds": 0.701
+    },
+    {
+      "demo_id": "2394857_tyloo-vs-sharks-m3-anubis",
+      "parts": 1,
+      "rows": 20840,
+      "alive_rows": 16643,
+      "alive_yaw_rows": 16643,
+      "seconds": 0.731
+    },
+    {
+      "demo_id": "2394858_gamerlegion-vs-big-m2-ancient",
+      "parts": 1,
+      "rows": 19290,
+      "alive_rows": 15177,
+      "alive_yaw_rows": 15177,
+      "seconds": 0.692
+    },
+    {
+      "demo_id": "2394860_liquid-vs-heroic-m1-nuke",
+      "parts": 1,
+      "rows": 15560,
+      "alive_rows": 12051,
+      "alive_yaw_rows": 12051,
+      "seconds": 0.591
+    },
+    {
+      "demo_id": "2394860_liquid-vs-heroic-m2-inferno",
+      "parts": 1,
+      "rows": 24530,
+      "alive_rows": 19580,
+      "alive_yaw_rows": 19580,
+      "seconds": 0.859
+    },
+    {
+      "demo_id": "2394863_liquid-vs-flyquest-m1-anubis",
+      "parts": 1,
+      "rows": 12020,
+      "alive_rows": 9403,
+      "alive_yaw_rows": 9403,
+      "seconds": 0.459
+    },
+    {
+      "demo_id": "2394864_nrg-vs-big-m1-dust2",
+      "parts": 2,
+      "rows": 14060,
+      "alive_rows": 11621,
+      "alive_yaw_rows": 11621,
+      "seconds": 1.657
+    },
+    {
+      "demo_id": "2394864_nrg-vs-big-m3-mirage",
+      "parts": 1,
+      "rows": 19750,
+      "alive_rows": 15961,
+      "alive_yaw_rows": 15961,
+      "seconds": 0.756
+    },
+    {
+      "demo_id": "2394865_spirit-vs-betboom-mirage",
+      "parts": 1,
+      "rows": 16580,
+      "alive_rows": 13303,
+      "alive_yaw_rows": 13303,
+      "seconds": 0.601
+    },
+    {
+      "demo_id": "2394867_g2-vs-m80-dust2",
+      "parts": 1,
+      "rows": 19460,
+      "alive_rows": 15567,
+      "alive_yaw_rows": 15567,
+      "seconds": 0.647
+    },
+    {
+      "demo_id": "2394868_fut-vs-b8-ancient",
+      "parts": 1,
+      "rows": 20690,
+      "alive_rows": 15801,
+      "alive_yaw_rows": 15801,
+      "seconds": 0.758
+    },
+    {
+      "demo_id": "2394870_9z-vs-flyquest-dust2",
+      "parts": 1,
+      "rows": 19630,
+      "alive_rows": 14686,
+      "alive_yaw_rows": 14686,
+      "seconds": 0.703
+    },
+    {
+      "demo_id": "2394871_pain-vs-tyloo-mirage",
+      "parts": 1,
+      "rows": 19130,
+      "alive_rows": 15343,
+      "alive_yaw_rows": 15343,
+      "seconds": 0.666
+    },
+    {
+      "demo_id": "2394872_monte-vs-big-nuke",
+      "parts": 1,
+      "rows": 19990,
+      "alive_rows": 15892,
+      "alive_yaw_rows": 15892,
+      "seconds": 0.681
+    },
+    {
+      "demo_id": "2394875_g2-vs-monte-mirage",
+      "parts": 1,
+      "rows": 36440,
+      "alive_rows": 28666,
+      "alive_yaw_rows": 28666,
+      "seconds": 1.319
+    },
+    {
+      "demo_id": "2394878_legacy-vs-flyquest-dust2",
+      "parts": 1,
+      "rows": 18630,
+      "alive_rows": 15316,
+      "alive_yaw_rows": 15316,
+      "seconds": 0.622
+    },
+    {
+      "demo_id": "2394880_b8-vs-m80-mirage",
+      "parts": 1,
+      "rows": 21710,
+      "alive_rows": 17642,
+      "alive_yaw_rows": 17642,
+      "seconds": 0.766
+    },
+    {
+      "demo_id": "2394882_astralis-vs-tyloo-nuke",
+      "parts": 1,
+      "rows": 14590,
+      "alive_rows": 11887,
+      "alive_yaw_rows": 11887,
+      "seconds": 0.5
+    },
+    {
+      "demo_id": "2394883_betboom-vs-m80-dust2",
+      "parts": 1,
+      "rows": 13970,
+      "alive_rows": 11809,
+      "alive_yaw_rows": 11809,
+      "seconds": 0.495
+    },
+    {
+      "demo_id": "2394886_flyquest-vs-pain-m1-nuke",
+      "parts": 1,
+      "rows": 18730,
+      "alive_rows": 14815,
+      "alive_yaw_rows": 14815,
+      "seconds": 0.66
+    },
+    {
+      "demo_id": "2394886_flyquest-vs-pain-m2-anubis",
+      "parts": 1,
+      "rows": 22400,
+      "alive_rows": 18109,
+      "alive_yaw_rows": 18109,
+      "seconds": 0.779
+    },
+    {
+      "demo_id": "2394887_g2-vs-fut-m1-anubis",
+      "parts": 1,
+      "rows": 22590,
+      "alive_rows": 18285,
+      "alive_yaw_rows": 18285,
+      "seconds": 0.773
+    },
+    {
+      "demo_id": "2394889_astralis-vs-pain-m1-nuke",
+      "parts": 1,
+      "rows": 20940,
+      "alive_rows": 16524,
+      "alive_yaw_rows": 16524,
+      "seconds": 0.751
+    },
+    {
+      "demo_id": "2394890_mibr-vs-b8-m1-mirage",
+      "parts": 1,
+      "rows": 16760,
+      "alive_rows": 13352,
+      "alive_yaw_rows": 13352,
+      "seconds": 0.639
+    },
+    {
+      "demo_id": "2394890_mibr-vs-b8-m2-nuke",
+      "parts": 1,
+      "rows": 20240,
+      "alive_rows": 15959,
+      "alive_yaw_rows": 15959,
+      "seconds": 0.671
+    },
+    {
+      "demo_id": "2394891_monte-vs-betboom-m2-mirage",
+      "parts": 1,
+      "rows": 14440,
+      "alive_rows": 11791,
+      "alive_yaw_rows": 11791,
+      "seconds": 0.573
+    },
+    {
+      "demo_id": "2394893_g2-vs-big-m2-mirage",
+      "parts": 2,
+      "rows": 17340,
+      "alive_rows": 13536,
+      "alive_yaw_rows": 13536,
+      "seconds": 1.868
+    },
+    {
+      "demo_id": "2394894_m80-vs-legacy-m1-dust2",
+      "parts": 1,
+      "rows": 23580,
+      "alive_rows": 19215,
+      "alive_yaw_rows": 19215,
+      "seconds": 0.78
+    },
+    {
+      "demo_id": "2394895_monte-vs-pain-m1-nuke",
+      "parts": 1,
+      "rows": 16040,
+      "alive_rows": 12694,
+      "alive_yaw_rows": 12694,
+      "seconds": 0.568
+    },
+    {
+      "demo_id": "2394896_legacy-vs-tyloo-m1-mirage",
+      "parts": 1,
+      "rows": 19330,
+      "alive_rows": 15513,
+      "alive_yaw_rows": 15513,
+      "seconds": 0.731
+    },
+    {
+      "demo_id": "2394896_legacy-vs-tyloo-m2-inferno",
+      "parts": 1,
+      "rows": 15390,
+      "alive_rows": 12904,
+      "alive_yaw_rows": 12904,
+      "seconds": 0.669
+    },
+    {
+      "demo_id": "2394898_vitality-vs-fut-m1-anubis",
+      "parts": 1,
+      "rows": 17610,
+      "alive_rows": 14118,
+      "alive_yaw_rows": 14118,
+      "seconds": 0.611
+    },
+    {
+      "demo_id": "2394899_falcons-vs-g2-m1-inferno",
+      "parts": 1,
+      "rows": 22490,
+      "alive_rows": 17670,
+      "alive_yaw_rows": 17670,
+      "seconds": 0.796
+    },
+    {
+      "demo_id": "2394899_falcons-vs-g2-m2-dust2",
+      "parts": 1,
+      "rows": 20540,
+      "alive_rows": 14795,
+      "alive_yaw_rows": 14795,
+      "seconds": 0.704
+    },
+    {
+      "demo_id": "2394900_natus-vincere-vs-spirit-m2-anubis",
+      "parts": 1,
+      "rows": 22000,
+      "alive_rows": 17308,
+      "alive_yaw_rows": 17308,
+      "seconds": 0.746
+    },
+    {
+      "demo_id": "2394902_aurora-vs-monte-m2-anubis",
+      "parts": 1,
+      "rows": 19860,
+      "alive_rows": 15980,
+      "alive_yaw_rows": 15980,
+      "seconds": 0.702
+    },
+    {
+      "demo_id": "2394903_parivision-vs-9z-m2-dust2",
+      "parts": 1,
+      "rows": 18810,
+      "alive_rows": 14749,
+      "alive_yaw_rows": 14749,
+      "seconds": 0.664
+    },
+    {
+      "demo_id": "2394904_the-mongolz-vs-betboom-m2-mirage",
+      "parts": 1,
+      "rows": 15160,
+      "alive_rows": 11834,
+      "alive_yaw_rows": 11834,
+      "seconds": 0.571
+    },
+    {
+      "demo_id": "2394904_the-mongolz-vs-betboom-m3-ancient",
+      "parts": 1,
+      "rows": 19220,
+      "alive_rows": 14536,
+      "alive_yaw_rows": 14536,
+      "seconds": 0.649
+    },
+    {
+      "demo_id": "2394905_mouz-vs-legacy-m2-nuke",
+      "parts": 2,
+      "rows": 15320,
+      "alive_rows": 12544,
+      "alive_yaw_rows": 12544,
+      "seconds": 1.658
+    },
+    {
+      "demo_id": "2394972_the-mongolz-vs-b8-m1-mirage",
+      "parts": 1,
+      "rows": 25080,
+      "alive_rows": 20288,
+      "alive_yaw_rows": 20288,
+      "seconds": 0.873
+    },
+    {
+      "demo_id": "2394973_fut-vs-g2-m2-ancient",
+      "parts": 2,
+      "rows": 15750,
+      "alive_rows": 12090,
+      "alive_yaw_rows": 12090,
+      "seconds": 1.674
+    },
+    {
+      "demo_id": "2394973_fut-vs-g2-m3-mirage",
+      "parts": 1,
+      "rows": 19200,
+      "alive_rows": 15775,
+      "alive_yaw_rows": 15775,
+      "seconds": 0.665
+    },
+    {
+      "demo_id": "2394974_parivision-vs-monte-m2-ancient",
+      "parts": 1,
+      "rows": 19710,
+      "alive_rows": 15664,
+      "alive_yaw_rows": 15664,
+      "seconds": 0.68
+    },
+    {
+      "demo_id": "2394974_parivision-vs-monte-m3-inferno",
+      "parts": 1,
+      "rows": 19000,
+      "alive_rows": 15216,
+      "alive_yaw_rows": 15216,
+      "seconds": 0.7
+    },
+    {
+      "demo_id": "2394976_natus-vincere-vs-legacy-m2-ancient",
+      "parts": 1,
+      "rows": 20270,
+      "alive_rows": 15309,
+      "alive_yaw_rows": 15309,
+      "seconds": 0.721
+    },
+    {
+      "demo_id": "2394978_vitality-vs-9z-m2-mirage",
+      "parts": 1,
+      "rows": 18780,
+      "alive_rows": 14951,
+      "alive_yaw_rows": 14951,
+      "seconds": 0.675
+    },
+    {
+      "demo_id": "2394978_vitality-vs-9z-m3-dust2",
+      "parts": 1,
+      "rows": 22540,
+      "alive_rows": 18610,
+      "alive_yaw_rows": 18610,
+      "seconds": 0.759
+    },
+    {
+      "demo_id": "2394979_natus-vincere-vs-the-mongolz-m1-nuke",
+      "parts": 1,
+      "rows": 18520,
+      "alive_rows": 14405,
+      "alive_yaw_rows": 14405,
+      "seconds": 0.669
+    },
+    {
+      "demo_id": "2394979_natus-vincere-vs-the-mongolz-m2-ancient",
+      "parts": 1,
+      "rows": 24980,
+      "alive_rows": 18589,
+      "alive_yaw_rows": 18589,
+      "seconds": 0.885
+    },
+    {
+      "demo_id": "2394979_natus-vincere-vs-the-mongolz-m3-mirage",
+      "parts": 1,
+      "rows": 15950,
+      "alive_rows": 12642,
+      "alive_yaw_rows": 12642,
+      "seconds": 0.619
+    },
+    {
+      "demo_id": "2394980_b8-vs-fut-m1-dust2",
+      "parts": 1,
+      "rows": 19130,
+      "alive_rows": 14947,
+      "alive_yaw_rows": 14947,
+      "seconds": 0.659
+    },
+    {
+      "demo_id": "2394981_aurora-vs-g2-m2-anubis",
+      "parts": 1,
+      "rows": 19760,
+      "alive_rows": 16143,
+      "alive_yaw_rows": 16143,
+      "seconds": 0.661
+    },
+    {
+      "demo_id": "2394983_vitality-vs-mouz-m1-mirage",
+      "parts": 1,
+      "rows": 20630,
+      "alive_rows": 15941,
+      "alive_yaw_rows": 15941,
+      "seconds": 0.717
+    },
+    {
+      "demo_id": "2394984_parivision-vs-legacy-m1-inferno",
+      "parts": 2,
+      "rows": 30770,
+      "alive_rows": 25053,
+      "alive_yaw_rows": 25053,
+      "seconds": 3.364
+    },
+    {
+      "demo_id": "2394985_betboom-vs-furia-m2-dust2",
+      "parts": 1,
+      "rows": 16360,
+      "alive_rows": 13328,
+      "alive_yaw_rows": 13328,
+      "seconds": 0.564
+    },
+    {
+      "demo_id": "2394986_spirit-vs-9z-m2-mirage",
+      "parts": 1,
+      "rows": 25730,
+      "alive_rows": 20959,
+      "alive_yaw_rows": 20959,
+      "seconds": 0.958
+    },
+    {
+      "demo_id": "2394987_mouz-vs-fut-m1-ancient",
+      "parts": 1,
+      "rows": 23880,
+      "alive_rows": 18480,
+      "alive_yaw_rows": 18480,
+      "seconds": 0.764
+    },
+    {
+      "demo_id": "2394988_the-mongolz-vs-monte-m1-nuke",
+      "parts": 1,
+      "rows": 21930,
+      "alive_rows": 16155,
+      "alive_yaw_rows": 16155,
+      "seconds": 0.741
+    },
+    {
+      "demo_id": "2394988_the-mongolz-vs-monte-m3-dust2",
+      "parts": 1,
+      "rows": 22330,
+      "alive_rows": 17424,
+      "alive_yaw_rows": 17424,
+      "seconds": 0.77
+    },
+    {
+      "demo_id": "2394994_betboom-vs-fut-m2-dust2",
+      "parts": 1,
+      "rows": 17500,
+      "alive_rows": 14197,
+      "alive_yaw_rows": 14197,
+      "seconds": 0.643
+    },
+    {
+      "demo_id": "2394995_natus-vincere-vs-g2-m3-mirage",
+      "parts": 2,
+      "rows": 22900,
+      "alive_rows": 18289,
+      "alive_yaw_rows": 18289,
+      "seconds": 2.315
+    },
+    {
+      "demo_id": "2394996_aurora-vs-betboom-m1-nuke",
+      "parts": 1,
+      "rows": 15710,
+      "alive_rows": 11837,
+      "alive_yaw_rows": 11837,
+      "seconds": 0.561
+    },
+    {
+      "demo_id": "2394996_aurora-vs-betboom-m2-anubis",
+      "parts": 1,
+      "rows": 20290,
+      "alive_rows": 15746,
+      "alive_yaw_rows": 15746,
+      "seconds": 0.677
+    },
+    {
+      "demo_id": "2394998_g2-vs-spirit-m3-mirage",
+      "parts": 2,
+      "rows": 45870,
+      "alive_rows": 36492,
+      "alive_yaw_rows": 36492,
+      "seconds": 4.803
+    },
+    {
+      "demo_id": "2395000_aurora-vs-furia-m2-nuke",
+      "parts": 1,
+      "rows": 16590,
+      "alive_rows": 12523,
+      "alive_yaw_rows": 12523,
+      "seconds": 0.534
+    },
+    {
+      "demo_id": "9z-vs-falcons-m1-nuke",
+      "parts": 1,
+      "rows": 19560,
+      "alive_rows": 15222,
+      "alive_yaw_rows": 15222,
+      "seconds": 0.511
+    },
+    {
+      "demo_id": "9z-vs-falcons-m2-mirage",
+      "parts": 1,
+      "rows": 18490,
+      "alive_rows": 14770,
+      "alive_yaw_rows": 14770,
+      "seconds": 0.518
+    },
+    {
+      "demo_id": "9z-vs-falcons-m3-dust2",
+      "parts": 1,
+      "rows": 20970,
+      "alive_rows": 17040,
+      "alive_yaw_rows": 17040,
+      "seconds": 0.602
+    },
+    {
+      "demo_id": "aurora-vs-falcons-m1-anubis",
+      "parts": 1,
+      "rows": 18490,
+      "alive_rows": 14419,
+      "alive_yaw_rows": 14419,
+      "seconds": 0.552
+    },
+    {
+      "demo_id": "aurora-vs-falcons-m2-dust2",
+      "parts": 1,
+      "rows": 35880,
+      "alive_rows": 29323,
+      "alive_yaw_rows": 29323,
+      "seconds": 1.058
+    },
+    {
+      "demo_id": "aurora-vs-falcons-m3-nuke",
+      "parts": 1,
+      "rows": 18020,
+      "alive_rows": 14300,
+      "alive_yaw_rows": 14300,
+      "seconds": 0.582
+    },
+    {
+      "demo_id": "falcons-vs-9z-m1-nuke",
+      "parts": 1,
+      "rows": 19340,
+      "alive_rows": 15329,
+      "alive_yaw_rows": 15329,
+      "seconds": 0.727
+    },
+    {
+      "demo_id": "falcons-vs-9z-m2-mirage",
+      "parts": 1,
+      "rows": 20380,
+      "alive_rows": 16103,
+      "alive_yaw_rows": 16103,
+      "seconds": 0.735
+    },
+    {
+      "demo_id": "falcons-vs-9z-m3-dust2",
+      "parts": 1,
+      "rows": 11290,
+      "alive_rows": 9244,
+      "alive_yaw_rows": 9244,
+      "seconds": 0.428
+    },
+    {
+      "demo_id": "falcons-vs-astralis-m2-dust2",
+      "parts": 1,
+      "rows": 23730,
+      "alive_rows": 19164,
+      "alive_yaw_rows": 19164,
+      "seconds": 0.742
+    },
+    {
+      "demo_id": "falcons-vs-aurora-m1-mirage",
+      "parts": 1,
+      "rows": 15630,
+      "alive_rows": 12377,
+      "alive_yaw_rows": 12377,
+      "seconds": 0.514
+    },
+    {
+      "demo_id": "falcons-vs-aurora-m2-dust2",
+      "parts": 1,
+      "rows": 19970,
+      "alive_rows": 16490,
+      "alive_yaw_rows": 16490,
+      "seconds": 0.649
+    },
+    {
+      "demo_id": "falcons-vs-betboom-m1-anubis",
+      "parts": 1,
+      "rows": 16920,
+      "alive_rows": 13691,
+      "alive_yaw_rows": 13691,
+      "seconds": 0.503
+    },
+    {
+      "demo_id": "falcons-vs-betboom-m1-nuke",
+      "parts": 1,
+      "rows": 21340,
+      "alive_rows": 16524,
+      "alive_yaw_rows": 16524,
+      "seconds": 0.742
+    },
+    {
+      "demo_id": "falcons-vs-betboom-m2-ancient",
+      "parts": 1,
+      "rows": 19370,
+      "alive_rows": 14745,
+      "alive_yaw_rows": 14745,
+      "seconds": 0.679
+    },
+    {
+      "demo_id": "falcons-vs-betboom-m2-dust2",
+      "parts": 1,
+      "rows": 27960,
+      "alive_rows": 22341,
+      "alive_yaw_rows": 22341,
+      "seconds": 0.813
+    },
+    {
+      "demo_id": "falcons-vs-betboom-m3-mirage",
+      "parts": 1,
+      "rows": 15550,
+      "alive_rows": 12749,
+      "alive_yaw_rows": 12749,
+      "seconds": 0.568
+    },
+    {
+      "demo_id": "falcons-vs-g2-m1-inferno",
+      "parts": 1,
+      "rows": 18130,
+      "alive_rows": 14914,
+      "alive_yaw_rows": 14914,
+      "seconds": 0.745
+    },
+    {
+      "demo_id": "falcons-vs-g2-m2-dust2",
+      "parts": 1,
+      "rows": 21420,
+      "alive_rows": 16911,
+      "alive_yaw_rows": 16911,
+      "seconds": 0.639
+    },
+    {
+      "demo_id": "falcons-vs-g2-m3-ancient",
+      "parts": 1,
+      "rows": 26530,
+      "alive_rows": 20704,
+      "alive_yaw_rows": 20704,
+      "seconds": 0.917
+    },
+    {
+      "demo_id": "falcons-vs-k27-m1-dust2",
+      "parts": 1,
+      "rows": 16840,
+      "alive_rows": 14088,
+      "alive_yaw_rows": 14088,
+      "seconds": 0.615
+    },
+    {
+      "demo_id": "falcons-vs-k27-m2-ancient",
+      "parts": 1,
+      "rows": 21260,
+      "alive_rows": 16276,
+      "alive_yaw_rows": 16276,
+      "seconds": 0.758
+    },
+    {
+      "demo_id": "falcons-vs-legacy-m1-dust2",
+      "parts": 1,
+      "rows": 18880,
+      "alive_rows": 14992,
+      "alive_yaw_rows": 14992,
+      "seconds": 0.63
+    },
+    {
+      "demo_id": "falcons-vs-legacy-m1-nuke",
+      "parts": 1,
+      "rows": 21790,
+      "alive_rows": 17190,
+      "alive_yaw_rows": 17190,
+      "seconds": 0.742
+    },
+    {
+      "demo_id": "falcons-vs-legacy-m2-ancient",
+      "parts": 1,
+      "rows": 17330,
+      "alive_rows": 13831,
+      "alive_yaw_rows": 13831,
+      "seconds": 0.62
+    },
+    {
+      "demo_id": "falcons-vs-legacy-m3-mirage",
+      "parts": 1,
+      "rows": 19020,
+      "alive_rows": 15146,
+      "alive_yaw_rows": 15146,
+      "seconds": 0.647
+    },
+    {
+      "demo_id": "falcons-vs-legacy-m4-dust2",
+      "parts": 1,
+      "rows": 15590,
+      "alive_rows": 12972,
+      "alive_yaw_rows": 12972,
+      "seconds": 0.561
+    },
+    {
+      "demo_id": "falcons-vs-lynn-vision-m1-inferno",
+      "parts": 1,
+      "rows": 16710,
+      "alive_rows": 12499,
+      "alive_yaw_rows": 12499,
+      "seconds": 0.566
+    },
+    {
+      "demo_id": "falcons-vs-lynn-vision-m2-ancient",
+      "parts": 1,
+      "rows": 16610,
+      "alive_rows": 11553,
+      "alive_yaw_rows": 11553,
+      "seconds": 0.572
+    },
+    {
+      "demo_id": "falcons-vs-m80-m1-inferno",
+      "parts": 1,
+      "rows": 34840,
+      "alive_rows": 27357,
+      "alive_yaw_rows": 27357,
+      "seconds": 1.281
+    },
+    {
+      "demo_id": "falcons-vs-m80-m2-ancient",
+      "parts": 1,
+      "rows": 20500,
+      "alive_rows": 16099,
+      "alive_yaw_rows": 16099,
+      "seconds": 0.622
+    },
+    {
+      "demo_id": "falcons-vs-monte-m1-dust2",
+      "parts": 1,
+      "rows": 22590,
+      "alive_rows": 18567,
+      "alive_yaw_rows": 18567,
+      "seconds": 0.795
+    },
+    {
+      "demo_id": "falcons-vs-monte-m1-inferno",
+      "parts": 1,
+      "rows": 23580,
+      "alive_rows": 19098,
+      "alive_yaw_rows": 19098,
+      "seconds": 0.845
+    },
+    {
+      "demo_id": "falcons-vs-monte-m2-ancient",
+      "parts": 1,
+      "rows": 20400,
+      "alive_rows": 15542,
+      "alive_yaw_rows": 15542,
+      "seconds": 0.747
+    },
+    {
+      "demo_id": "falcons-vs-monte-m2-dust2",
+      "parts": 1,
+      "rows": 22870,
+      "alive_rows": 18055,
+      "alive_yaw_rows": 18055,
+      "seconds": 0.796
+    },
+    {
+      "demo_id": "falcons-vs-monte-m3-mirage",
+      "parts": 1,
+      "rows": 21440,
+      "alive_rows": 17934,
+      "alive_yaw_rows": 17934,
+      "seconds": 0.751
+    },
+    {
+      "demo_id": "falcons-vs-mouz-m1-mirage",
+      "parts": 1,
+      "rows": 17140,
+      "alive_rows": 14073,
+      "alive_yaw_rows": 14073,
+      "seconds": 0.617
+    },
+    {
+      "demo_id": "falcons-vs-mouz-m2-dust2",
+      "parts": 1,
+      "rows": 20600,
+      "alive_rows": 16933,
+      "alive_yaw_rows": 16933,
+      "seconds": 0.661
+    },
+    {
+      "demo_id": "falcons-vs-natus-vincere-m1-inferno",
+      "parts": 1,
+      "rows": 22170,
+      "alive_rows": 18061,
+      "alive_yaw_rows": 18061,
+      "seconds": 0.706
+    },
+    {
+      "demo_id": "falcons-vs-natus-vincere-m2-anubis",
+      "parts": 1,
+      "rows": 35630,
+      "alive_rows": 28678,
+      "alive_yaw_rows": 28678,
+      "seconds": 1.122
+    },
+    {
+      "demo_id": "falcons-vs-ninjas-in-pyjamas-m1-ancient",
+      "parts": 1,
+      "rows": 21370,
+      "alive_rows": 16238,
+      "alive_yaw_rows": 16238,
+      "seconds": 0.653
+    },
+    {
+      "demo_id": "falcons-vs-ninjas-in-pyjamas-m2-dust2",
+      "parts": 1,
+      "rows": 18710,
+      "alive_rows": 14847,
+      "alive_yaw_rows": 14847,
+      "seconds": 0.565
+    },
+    {
+      "demo_id": "falcons-vs-spirit-m1-mirage",
+      "parts": 1,
+      "rows": 20910,
+      "alive_rows": 16666,
+      "alive_yaw_rows": 16666,
+      "seconds": 0.686
+    },
+    {
+      "demo_id": "falcons-vs-spirit-m2-anubis",
+      "parts": 1,
+      "rows": 20670,
+      "alive_rows": 16889,
+      "alive_yaw_rows": 16889,
+      "seconds": 0.666
+    },
+    {
+      "demo_id": "falcons-vs-the-mongolz-m1-inferno",
+      "parts": 1,
+      "rows": 13770,
+      "alive_rows": 10763,
+      "alive_yaw_rows": 10763,
+      "seconds": 0.444
+    },
+    {
+      "demo_id": "falcons-vs-the-mongolz-m2-dust2",
+      "parts": 1,
+      "rows": 18450,
+      "alive_rows": 14253,
+      "alive_yaw_rows": 14253,
+      "seconds": 0.542
+    },
+    {
+      "demo_id": "falcons-vs-tyloo-m1-mirage",
+      "parts": 1,
+      "rows": 21760,
+      "alive_rows": 17809,
+      "alive_yaw_rows": 17809,
+      "seconds": 0.722
+    },
+    {
+      "demo_id": "falcons-vs-tyloo-m2-anubis",
+      "parts": 1,
+      "rows": 15620,
+      "alive_rows": 12818,
+      "alive_yaw_rows": 12818,
+      "seconds": 0.516
+    },
+    {
+      "demo_id": "falcons-vs-vitality-m1-anubis",
+      "parts": 2,
+      "rows": 24370,
+      "alive_rows": 19834,
+      "alive_yaw_rows": 19834,
+      "seconds": 2.669
+    },
+    {
+      "demo_id": "falcons-vs-vitality-m2-inferno",
+      "parts": 1,
+      "rows": 25160,
+      "alive_rows": 19427,
+      "alive_yaw_rows": 19427,
+      "seconds": 0.964
+    },
+    {
+      "demo_id": "falcons-vs-vitality-m3-dust2",
+      "parts": 1,
+      "rows": 25850,
+      "alive_rows": 20405,
+      "alive_yaw_rows": 20405,
+      "seconds": 0.857
+    },
+    {
+      "demo_id": "furia-vs-falcons-m1-mirage",
+      "parts": 1,
+      "rows": 17590,
+      "alive_rows": 14655,
+      "alive_yaw_rows": 14655,
+      "seconds": 0.686
+    },
+    {
+      "demo_id": "furia-vs-falcons-m2-anubis",
+      "parts": 1,
+      "rows": 21160,
+      "alive_rows": 17069,
+      "alive_yaw_rows": 17069,
+      "seconds": 0.755
+    },
+    {
+      "demo_id": "furia-vs-falcons-m2-nuke",
+      "parts": 1,
+      "rows": 41850,
+      "alive_rows": 32035,
+      "alive_yaw_rows": 32035,
+      "seconds": 1.495
+    },
+    {
+      "demo_id": "furia-vs-falcons-m3-dust2",
+      "parts": 1,
+      "rows": 36680,
+      "alive_rows": 29085,
+      "alive_yaw_rows": 29085,
+      "seconds": 1.25
+    },
+    {
+      "demo_id": "furia-vs-falcons-m3-inferno",
+      "parts": 1,
+      "rows": 21210,
+      "alive_rows": 17689,
+      "alive_yaw_rows": 17689,
+      "seconds": 0.767
+    },
+    {
+      "demo_id": "legacy-vs-falcons-m1-mirage",
+      "parts": 1,
+      "rows": 17720,
+      "alive_rows": 14430,
+      "alive_yaw_rows": 14430,
+      "seconds": 0.568
+    },
+    {
+      "demo_id": "legacy-vs-falcons-m2-ancient",
+      "parts": 1,
+      "rows": 18870,
+      "alive_rows": 14810,
+      "alive_yaw_rows": 14810,
+      "seconds": 0.6
+    },
+    {
+      "demo_id": "legacy-vs-falcons-m2-dust2",
+      "parts": 1,
+      "rows": 22030,
+      "alive_rows": 17895,
+      "alive_yaw_rows": 17895,
+      "seconds": 0.704
+    },
+    {
+      "demo_id": "magic-vs-falcons-m1-ancient",
+      "parts": 1,
+      "rows": 17790,
+      "alive_rows": 14256,
+      "alive_yaw_rows": 14256,
+      "seconds": 0.656
+    },
+    {
+      "demo_id": "magic-vs-falcons-m2-dust2",
+      "parts": 1,
+      "rows": 17630,
+      "alive_rows": 13820,
+      "alive_yaw_rows": 13820,
+      "seconds": 0.617
+    },
+    {
+      "demo_id": "mouz-vs-falcons-m1-nuke",
+      "parts": 1,
+      "rows": 14290,
+      "alive_rows": 11169,
+      "alive_yaw_rows": 11169,
+      "seconds": 0.488
+    },
+    {
+      "demo_id": "mouz-vs-falcons-m2-ancient",
+      "parts": 1,
+      "rows": 13550,
+      "alive_rows": 11106,
+      "alive_yaw_rows": 11106,
+      "seconds": 0.479
+    },
+    {
+      "demo_id": "natus-vincere-vs-falcons-m1-dust2",
+      "parts": 1,
+      "rows": 15730,
+      "alive_rows": 12608,
+      "alive_yaw_rows": 12608,
+      "seconds": 0.604
+    },
+    {
+      "demo_id": "natus-vincere-vs-falcons-m2-mirage",
+      "parts": 1,
+      "rows": 17660,
+      "alive_rows": 14352,
+      "alive_yaw_rows": 14352,
+      "seconds": 0.64
+    },
+    {
+      "demo_id": "natus-vincere-vs-falcons-m3-anubis",
+      "parts": 2,
+      "rows": 36700,
+      "alive_rows": 28754,
+      "alive_yaw_rows": 28754,
+      "seconds": 3.697
+    },
+    {
+      "demo_id": "spirit-vs-falcons-m1-anubis",
+      "parts": 1,
+      "rows": 30720,
+      "alive_rows": 24638,
+      "alive_yaw_rows": 24638,
+      "seconds": 1.036
+    },
+    {
+      "demo_id": "spirit-vs-falcons-m1-dust2",
+      "parts": 1,
+      "rows": 26600,
+      "alive_rows": 21442,
+      "alive_yaw_rows": 21442,
+      "seconds": 0.98
+    },
+    {
+      "demo_id": "spirit-vs-falcons-m1-nuke",
+      "parts": 1,
+      "rows": 18350,
+      "alive_rows": 14878,
+      "alive_yaw_rows": 14878,
+      "seconds": 0.583
+    },
+    {
+      "demo_id": "spirit-vs-falcons-m2-ancient",
+      "parts": 1,
+      "rows": 21670,
+      "alive_rows": 17130,
+      "alive_yaw_rows": 17130,
+      "seconds": 0.694
+    },
+    {
+      "demo_id": "spirit-vs-falcons-m2-mirage",
+      "parts": 1,
+      "rows": 19300,
+      "alive_rows": 15181,
+      "alive_yaw_rows": 15181,
+      "seconds": 0.678
+    },
+    {
+      "demo_id": "spirit-vs-falcons-m3-ancient",
+      "parts": 1,
+      "rows": 20520,
+      "alive_rows": 15464,
+      "alive_yaw_rows": 15464,
+      "seconds": 0.715
+    },
+    {
+      "demo_id": "spirit-vs-falcons-m3-dust2",
+      "parts": 1,
+      "rows": 26730,
+      "alive_rows": 22363,
+      "alive_yaw_rows": 22363,
+      "seconds": 0.871
+    },
+    {
+      "demo_id": "the-mongolz-vs-falcons-m1-dust2",
+      "parts": 1,
+      "rows": 19680,
+      "alive_rows": 15289,
+      "alive_yaw_rows": 15289,
+      "seconds": 0.728
+    },
+    {
+      "demo_id": "the-mongolz-vs-falcons-m2-inferno",
+      "parts": 1,
+      "rows": 21440,
+      "alive_rows": 17200,
+      "alive_yaw_rows": 17200,
+      "seconds": 0.827
+    },
+    {
+      "demo_id": "the-mongolz-vs-falcons-m3-mirage",
+      "parts": 1,
+      "rows": 23390,
+      "alive_rows": 18538,
+      "alive_yaw_rows": 18538,
+      "seconds": 0.856
+    },
+    {
+      "demo_id": "vitality-vs-falcons-m1-anubis",
+      "parts": 1,
+      "rows": 22090,
+      "alive_rows": 16828,
+      "alive_yaw_rows": 16828,
+      "seconds": 0.682
+    },
+    {
+      "demo_id": "vitality-vs-falcons-m2-dust2",
+      "parts": 1,
+      "rows": 15490,
+      "alive_rows": 12694,
+      "alive_yaw_rows": 12694,
+      "seconds": 0.515
+    },
+    {
+      "demo_id": "vitality-vs-falcons-m3-mirage",
+      "parts": 1,
+      "rows": 18690,
+      "alive_rows": 15508,
+      "alive_yaw_rows": 15508,
+      "seconds": 0.57
+    }
+  ]
+}
