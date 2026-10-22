@@ -39,11 +39,14 @@ CT setups         one row per CT round: lane shape at 20 s, forward players at 1
 from __future__ import annotations
 
 from collections import Counter
+import json
+import logging
+from functools import lru_cache
 
 import numpy as np
 import polars as pl
 
-from playbook.config import MapMeta
+from playbook.config import CONFIG_DIR, MapMeta
 from playbook.semantics import lane_shape, round_plants
 
 KEYS = ["demo_id", "round_num"]
@@ -562,7 +565,23 @@ def _via(places: list[str | None]) -> tuple[str, ...]:
     return tuple(out)
 
 
-def recipe_routes(plans: pl.DataFrame, positions: pl.DataFrame, mm: MapMeta) -> dict[str, list[dict]]:
+@lru_cache(maxsize=None)
+def _route_names(map_name: str, callouts: tuple[str, ...]) -> dict[str, str]:
+    path = CONFIG_DIR / "route_names.json"
+    names = json.loads(path.read_text()).get(map_name, {}) if path.exists() else {}
+    invalid = sorted(set(names) - set(callouts))
+    if invalid:
+        logging.getLogger(__name__).warning("Ignoring unknown route callouts on %s: %s", map_name, ", ".join(invalid))
+    return {key: value for key, value in names.items() if key in callouts}
+
+
+def route_name(via: list[str], mm: MapMeta) -> str:
+    choke = next((p for p in reversed(via) if p not in SITE_CORE.values()), via[-1] if via else "?")
+    return _route_names(mm.name, tuple(sorted(mm.callout_region))).get(choke, choke)
+
+
+def recipe_routes(plans: pl.DataFrame, positions: pl.DataFrame, mm: MapMeta,
+                  memberships: dict | None = None) -> dict[str, list[dict]]:
     """Typical T entry routes per recipe, from round start to the commit.
 
     Each T player alive at the commit gives one path. Paths are grouped by the callouts the player
@@ -581,8 +600,8 @@ def recipe_routes(plans: pl.DataFrame, positions: pl.DataFrame, mm: MapMeta) -> 
     alive_at_commit = pos.filter(pl.col("t_s") == pl.col("commit_s").floor().cast(pl.Int32)).filter(
         pl.col("alive")).select(*KEYS, "steamid")
     pos = pos.join(alive_at_commit, on=[*KEYS, "steamid"], how="semi").sort(*KEYS, "steamid", "t_s")
-    paths: dict[str, list[tuple[tuple[str, ...], str, np.ndarray]]] = {}
-    for (rid, *_), g in pos.group_by("recipe_id", *KEYS, "steamid", maintain_order=True):
+    paths: dict[str, list[tuple[tuple[str, ...], str, np.ndarray, tuple]]] = {}
+    for (rid, demo, rnd, sid), g in pos.group_by("recipe_id", *KEYS, "steamid", maintain_order=True):
         xs, ys = g["x"].to_numpy(), g["y"].to_numpy()
         if len(xs) < 3:
             continue
@@ -590,17 +609,17 @@ def recipe_routes(plans: pl.DataFrame, positions: pl.DataFrame, mm: MapMeta) -> 
         key = via[-(ROUTE_VIA + 1):] if via else ("?",)
         lane = g["lane"][-1]
         xy = np.array([mm.to_radar(x, y) for x, y in zip(xs, ys)])
-        paths.setdefault(rid, []).append((key, lane, _resample(xy)))
+        paths.setdefault(rid, []).append((key, lane, _resample(xy), (demo, rnd, sid)))
     out: dict[str, list[dict]] = {}
     for rid, items in paths.items():
         total = len(items)
-        groups: dict[tuple[str, ...], list[tuple[str, np.ndarray]]] = {}
-        for key, lane, xy in items:
-            groups.setdefault(key, []).append((lane, xy))
+        groups: dict[tuple[str, ...], list[tuple[str, np.ndarray, tuple]]] = {}
+        for key, lane, xy, member in items:
+            groups.setdefault(key, []).append((lane, xy, member))
         # medoid of each group; groups whose medoids run together are merged into the larger one
         cands = []
         for key, members in sorted(groups.items(), key=lambda kv: (-len(kv[1]), kv[0])):
-            stack = np.stack([xy for _, xy in members])
+            stack = np.stack([xy for _, xy, _ in members])
             dist = np.linalg.norm(stack[:, None] - stack[None], axis=-1).mean(-1).mean(-1)
             cands.append({"key": key, "members": members, "medoid": stack[int(dist.argmin())]})
         # Biggest groups first. A group whose path is a stretch of another route (players caught
@@ -624,6 +643,7 @@ def recipe_routes(plans: pl.DataFrame, positions: pl.DataFrame, mm: MapMeta) -> 
                 continue
             merged.append({**c, "members": list(c["members"])})
         routes = []
+        route_members = []
         ranked = sorted(merged, key=lambda c: -len(c["members"]))
         main_len = _length(ranked[0]["medoid"]) if ranked else 0.0
         for c in ranked:
@@ -635,12 +655,55 @@ def recipe_routes(plans: pl.DataFrame, positions: pl.DataFrame, mm: MapMeta) -> 
             straight = float(np.linalg.norm(c["medoid"][-1] - c["medoid"][0])) or 1.0
             if routes and (length > ROUTE_DETOUR_MAX * main_len or length / straight > ROUTE_TORTUOSITY_MAX):
                 continue
-            lanes = Counter(l for l, _ in c["members"])
-            routes.append({"via": list(c["key"]), "lane": lanes.most_common(1)[0][0], "n": len(c["members"]),
+            lanes = Counter(l for l, _, _ in c["members"])
+            route_members.append({member for _, _, member in c["members"]})
+            routes.append({"via": list(c["key"]), "name": route_name(list(c["key"]), mm),
+                           "lane": lanes.most_common(1)[0][0], "n": len(c["members"]),
                            "share": round(share, 3),
                            "points": [[round(float(x), 1), round(float(y), 1)] for x, y in c["medoid"]]})
         out[rid] = routes
+        if memberships is not None:
+            memberships[rid] = route_members
     return out
+
+
+def recipe_extras(recipe: dict, plans: pl.DataFrame, positions: pl.DataFrame,
+                  members: list[set]) -> dict:
+    """Route-pair entry gaps and intent; definitions are in DESIGN.md."""
+    rounds = plans.filter(pl.col("recipe_id") == recipe["id"])
+    entries = positions.filter((pl.col("side") == "T") & pl.col("alive") & (pl.col("t_s") >= 0))
+    entries = entries.filter(pl.col("place") == SITE_CORE[recipe["site"]]).join(
+        rounds.select(*KEYS, "team"), on=[*KEYS, "team"], how="semi")
+    first = {tuple(row[:3]): row[3] for row in entries.group_by(*KEYS, "steamid").agg(
+        pl.col("t_s").min()).select(*KEYS, "steamid", "t_s").iter_rows()}
+    route_entries = []
+    for group in members:
+        times = {}
+        for key in group:
+            if key in first:
+                times[key[:2]] = min(times.get(key[:2], float("inf")), first[key])
+        route_entries.append(times)
+    # Compare the two highest-share routes, with a paired observation required in each round.
+    gaps = [abs(t - route_entries[1][key]) for key, t in route_entries[0].items()
+            if key in route_entries[1]] if len(route_entries) >= 2 else []
+    sync = float(np.median(gaps)) if gaps else None
+    latencies = []
+    for row in rounds.iter_rows(named=True):
+        times = [t for (d, r, _), t in first.items() if (d, r) == (row["demo_id"], row["round_num"])]
+        if times:
+            latencies.append(max(0.0, min(times) - max(0.0, row["commit_s"] - EXEC_BEFORE_S)))
+    latency = float(np.median(latencies)) if latencies else None
+    other_rate = float((rounds["plant_site"] == OTHER_SITE[recipe["site"]]).fill_null(False).mean()) if rounds.height else 0.0
+    badges = []
+    if other_rate >= .25:
+        badges.append("fake")
+    if len(recipe.get("routes", [])) >= 2 and all(r["share"] >= .2 for r in recipe["routes"][:2]) and sync is not None and sync <= 3.5:
+        badges.append("sync_pinch")
+    if latency is not None and latency <= 8:
+        badges.append("rush")
+    return {"entry_sync_sec": round(sync, 2) if sync is not None else None,
+            "median_first_entry_delay_sec": round(latency, 2) if latency is not None else None,
+            "other_site_plant_rate": round(other_rate, 3), "intent_badges": badges}
 
 
 # ------------------------------------------------------------------------- CT setups
@@ -734,9 +797,11 @@ def analyse_map(sub: dict[str, pl.DataFrame], mm: MapMeta, nade_lineup: pl.DataF
     recipe_utility = sub["utility"].join(spot_assign, on=["demo_id", "nade_id"], how="inner")
     recipes, recipe_assign = execute_recipes(plans, spots, spot_lineups, mm, recipe_utility)
     plans = plans.join(recipe_assign, on=KEYS, how="left")
-    routes = recipe_routes(plans, sub["positions"], mm)
+    memberships = {}
+    routes = recipe_routes(plans, sub["positions"], mm, memberships)
     for r in recipes:
         r["routes"] = routes.get(r["id"], [])
+        r.update(recipe_extras(r, plans, sub["positions"], memberships.get(r["id"], [])))
     territory = t_territory(sub["positions"])
     ct = ct_setups(sub, plans, territory)
     return {

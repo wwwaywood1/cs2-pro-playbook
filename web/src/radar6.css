@@ -1,0 +1,15 @@
+.player-radar6 { margin: 12px 0; width: 100%; max-width: 320px; color: #c5ceda; }
+.player-radar6 figcaption { font-size: .78rem; font-weight: 600; }
+.player-radar6 figcaption small { display: block; margin-top: 4px; font-size: .67rem; color: #8c9bad; font-weight: 400; }
+.player-radar6 svg { display: block; width: 100%; height: auto; overflow: visible; }
+.player-radar6 text { fill: currentColor; font-size: 10px; }
+.radar6-ring, .radar6-axis { stroke: #364451; stroke-width: .7; fill: none; }
+.player-radar6 { --radar6-color: #efad55; }
+.player-radar6[data-side="CT"] { --radar6-color: #62b5ff; }
+.radar6-area { fill: var(--radar6-color); fill-opacity: .14; stroke: var(--radar6-color); stroke-width: 1.5; }
+.radar6-edge { stroke: var(--radar6-color); stroke-width: 1.5; }
+.radar6-dot { fill: var(--radar6-color); }
+.player-radar6 .radar6-missing { fill: #83909d; }
+.radar6-tooltip { min-height: 3.6em; font-size: .68rem; line-height: 1.5; color: #9faebd; margin: -4px 0 0; overflow-wrap: anywhere; }
+.player-radar6 g:focus { outline: none; }
+.player-radar6 g:focus text, .player-radar6 g:hover text { fill: #fff; text-decoration: underline; }

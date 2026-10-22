@@ -364,3 +364,96 @@ For every execute recipe, each T player alive at the commit contributes the path
 - Exported as `recipes[].routes` (`via`, `lane`, `n`, `share`, `points` in radar px). Mirage: 2.1 routes per recipe covering 86 % of player paths; Inferno 85 %; Nuke 94 %.
 
 Recipe spots also carry `throw_place` (most common callout the grenade is thrown from, with `throw_place_share`) and `thrower` / `thrower_team` (most frequent thrower, an example only: recipes pool every team). `core` and `options` stay in frequency order because recipe names and insight texts are built from them; the site sorts them by `order` (throw order).
+
+## GPT-23 metrics: routes, intent, six-axis profiles and replay
+
+`recipe_routes` names each retained route from its **last non-site callout** in
+`via`. Site means the BombsiteA/B core callouts; chokes such as Mirage Connector remain
+eligible even when their coarse region is A_SITE.
+`config/route_names.json` supplies a standard name; the original display callout
+is the fallback. Only keys present in that map's configured callouts are accepted;
+unknown keys are warned about once per map/configuration per export process.
+Route membership follows the existing dwell grouping, geometric merging, share
+floor and lurk filtering; membership IDs are internal and are never exported.
+
+Recipe `entry_sync_sec` is the median absolute difference of the first living
+player's first target **BombsiteA/B core** sample on the two highest-share retained
+routes. Only rounds where both routes enter contribute; fewer than two routes or
+no paired entries gives null. Route shares use all eligible pre-commit player
+paths as their denominator. `sync_pinch` needs both leading routes at >=20% and a
+paired median <=3.5 s. `fake` needs other-site plants / **all recipe rounds** >=25%,
+including unplanted rounds in the denominator. Existing recipe clustering uses
+the plant site as its target, so this badge is normally absent: it cannot discover
+a fake that changed target before the recipe was assigned. It does not reuse the
+older utility-based fake flag.
+
+The **commit start window** for `rush` starts at `max(0, commit_s - 15)` (the
+existing execute utility window's left edge). For each round take the earliest
+living T core entry on the target, subtract this start, and clamp at zero for
+players already inside. The median of observed rounds is exported as
+`median_first_entry_delay_sec`; `rush` requires <=8 s. Missing core observations
+are excluded, never interpreted as an instant entry. This is entry speed relative
+to the execute window, not necessarily an early-round hit.
+
+`players.json` has `T/CT.radar_6d`. All live rounds count (including pistols and
+ecos), deduplicated by match/round/player, with post-round positions and events
+excluded. Each axis has `raw`, `percentile`, and `reference_players`. Reference
+players have >=50 rounds **on this map and this side**. Lower-sample players retain
+raw values but have null percentiles. Per-axis missing observations are excluded
+from the reference distribution. Empirical midrank is
+`100 * (# below + 0.5 * # equal) / N`; ties, including a constant population, are
+centred at 50. Higher values describe more of an attribute, not overall skill.
+
+- **entry**: rounds containing the opening enemy kill or death / rounds played.
+  Each round contributes at most one for a player; teamkills/world deaths are not
+  opening enemy duels.
+- **trade**: equal-weight mean of (own enemy deaths avenged by a teammate within
+  `(0, 4]` seconds / own enemy deaths) and (teammate enemy deaths this player
+  avenged within `(0, 4]` seconds / all teammate enemy deaths). A revenge kills
+  the original attacker. The first qualifying revenge gets credit; one revenge
+  may avenge several victims. A denominator of zero gives a null component; the
+  available component is used, or null if neither exists. Both raw component
+  shares are in `trade_components`. Times are recomputed, not inferred from old
+  parser trade flags.
+- **lurk_distance**: T only; mean world XY Manhattan distance to the centroid of
+  *other alive teammates*, equally weighted by observed living seconds strictly
+  after 15 s and strictly before the first plant (or round end if unplanted).
+  Samples with no living teammate are excluded. CT is null, not zero.
+- **space_gain**: mean per round of `distance(first living position, enemy spawn)
+  - distance(last living position, enemy spawn)`, using world XY Euclidean
+  distance. Enemy spawn is the map-wide mean of the opposing side's second-zero
+  positions. Retreat is negative; death ends the track. This measures net advance,
+  not accumulated path length or navigation-mesh reachability.
+- **utility_impact**: `(flash-assisted enemy kills + molotov displacements) / rounds`.
+  A displacement is one enemy alive at the nearest 1 Hz sample to pop (ties round
+  up), within 120 world XY units of the landing point and 120 Z units, whose
+  living samples show >150 XY units displacement from that initial point after
+  pop and within 3.5 s. Each enemy counts once per grenade. Radius matches the
+  replay overlay. `utility_counts` exposes both event counts. This is a sampled
+  spatial proxy, not proof that fire caused movement or dealt damage.
+- **clutch_wpa**: mean `round win (0/1) - side WP` at the first observed 1vN
+  state per side per round, N>=1 (including 1v1). WP comes exclusively from
+  `playbook.winprob` match-held-out states at that exact second. Null when no
+  scored clutch exists. `clutch_situations` and `clutch_wpa_sum` retain the sample
+  and total. It does not credit a player again as N decreases.
+
+Replay `t_control` has one value per frame (three decimal places). Map-wide finite
+observed XY positions at nonnegative seconds define a bounding rectangle, split
+into **15×15 cells**; only cells containing any observed position are treated as
+walkable. Control is the share of these occupied cell centres strictly closer in
+Euclidean XY distance to the nearest alive T than the nearest alive CT. Ties are
+uncontrolled. T-only gives 1, CT-only 0, no living positions null. Cells are reused
+across every round of the map. This is an observed occupancy / proximity proxy;
+it ignores walls, sight lines, floors and unseen walkable areas.
+
+Kill `wpa` uses the same sampled window as `winprob.action_values`:
+`WP[floor(event_s)+2] - WP[floor(event_s)]`, sign reversed for CT actors.
+If the later second is beyond the round end, the actual terminal outcome is used;
+missing pre-event states or unknown actors give null. Raw replay WPA is rounded
+to four decimals; the UI displays signed percentage points. Multiple actions in
+the window can share a swing: this is not causal attribution. WP arrays preserve
+second indexes, including null holes. Positions remain integer radar pixels.
+
+View cones are intentionally skipped. The parser would need each player's eye
+or view **yaw per sampled second**, keyed by demo/round/player/time (and preferably
+pitch for vertical aim); grenade throw yaw cannot substitute for player view yaw.

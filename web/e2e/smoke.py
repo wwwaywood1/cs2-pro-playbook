@@ -209,11 +209,13 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         'n_rounds': 20, 'n_matches': 2, 'teams': [{'team': 'Vitality', 'rounds': 20}],
         'win_rate': .6, 'plant_rate': .8, 'median_commit_s': 35,
         'tempo': [{'value': 'mid', 'rounds': 20}], 'avg_flashes': 3, 'split_rate': .2, 'examples': [{'demo_id': 'smoke-replay', 'round_num': 1, 'team': 'Vitality', 'replay': True}],
-        'routes': [{'via': ['TSpawn', 'TRamp'], 'lane': 'A', 'n': 6, 'share': .6,
+        'entry_sync_sec': 2.5, 'intent_badges': ['fake', 'sync_pinch', 'rush'],
+        'routes': [{'name': 'A1主攻线', 'via': ['TSpawn', 'TRamp'], 'lane': 'A', 'n': 6, 'share': .6,
                     'points': [[900, 500], [800, 600], [700, 700], [600, 720]]}],
     }
     fixture['spots'] = [spot]
-    fixture['recipes'] = [recipe, {**recipe, 'id': 'test-empty', 'n_rounds': 10, 'routes': []}]
+    fixture['recipes'] = [recipe, {**recipe, 'id': 'test-empty', 'n_rounds': 10, 'routes': [],
+                                   'entry_sync_sec': None, 'intent_badges': []}]
     page.route('**/data/de_mirage/replay/smoke-replay/1.json', lambda request: request.fulfill(json=replay_fixture()))
     page.route('**/data/de_mirage/tactics.json', lambda request: request.fulfill(json=fixture))
     try:
@@ -221,7 +223,10 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         page.wait_for_selector('.tactics-entry-path')
         smoke.check(page.locator('.tactics-entry-path').count() == 1, 'selected recipe draws its player entry route')
         smoke.check('60%' in page.locator('.tactics-route-row').first.inner_text(), 'entry route label includes its share')
-        smoke.check('→' not in page.locator('.tactics-route-row').first.inner_text() and '匪家' not in page.locator('.tactics-route-row').first.inner_text(), 'route names use the first non-spawn choke')
+        expect(page.locator('.tactics-route-row').first).to_contain_text('A1主攻线')
+        selected_intent = page.locator('.tactics-recipe.is-selected .recipe-intent')
+        expect(selected_intent).to_contain_text('两路进点相差 2.5 秒')
+        smoke.check(selected_intent.locator('.recipe-intent-badge').count() == 3, 'recipe shows all three intent status badges')
         path = page.locator('.tactics-entry-path')
         smoke.check(path.get_attribute('marker-end') is not None, 'entry route has an arrowhead')
         row = page.locator('.tactics-recipe.is-selected .tactics-spots li').first
@@ -272,6 +277,8 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         smoke.check(bounds is not None and abs(bounds['width'] - bounds['height']) < 1 and bounds['y'] + bounds['height'] <= 900,
                     'replay radar is square and fits the desktop viewport')
         wp_bounds = page.locator('.replay-wp svg').bounding_box()
+        expect(page.locator('.replay-control')).to_contain_text('T 控图')
+        smoke.check(page.locator('.replay-control path').get_attribute('d').startswith('M'), 'replay renders the thin control series below WP')
         dialog_bounds = page.locator('.round-replay').bounding_box()
         smoke.check(wp_bounds is not None and dialog_bounds is not None and wp_bounds['y'] + wp_bounds['height'] < dialog_bounds['y'] + dialog_bounds['height'] <= 900,
                     'the entire WP chart fits in the modal at 1440x900')
@@ -308,6 +315,7 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         expect(page.locator('.replay-clock')).to_contain_text('0:39')
         expect(page.locator('.replay-killfeed')).to_contain_text('ak47')
         expect(page.locator('.replay-killfeed')).to_contain_text('爆头')
+        expect(page.locator('.replay-kill-wpa')).to_contain_text('+12.5%')
         smoke.check(page.locator('.replay-kill-line').count() == 1 and page.locator('.replay-effect-smoke').count() == 1,
                     'kill line flashes for 1.5 seconds while smoke remains active')
         scrubber.fill('7')
@@ -415,10 +423,11 @@ def replay_fixture() -> dict:
                      'team': 'Vitality' if i < 5 else 'B8'} for i in range(10)],
         'frames': [[[100 + i * 50 + second * 5, 300 + i * 10] if i != 9 or second < 5 else None
                     for i in range(10)] for second in range(11)],
-        'events': [{'t': 5, 'kind': 'kill', 'by': 0, 'victim': 9, 'at': [570, 390], 'weapon': 'ak47', 'headshot': True},
+        'events': [{'t': 5, 'kind': 'kill', 'by': 0, 'victim': 9, 'at': [570, 390], 'weapon': 'ak47', 'headshot': True, 'wpa': .125},
                    {'t': 3, 'kind': 'util', 'nade': 'smoke', 'by': 0, 'at': [300, 300], 'from': [100, 300]},
                    {'t': 4, 'kind': 'plant', 'site': 'A', 'at': [560, 760]}],
         'wp_t': [.5 + i * .05 for i in range(11)],
+        't_control': [.4 + i * .02 for i in range(11)],
     }
 
 
@@ -779,6 +788,54 @@ def check_team(smoke: Smoke, page: Page) -> None:
 def check_teams(smoke: Smoke, page: Page) -> None:
     # Teams and players pages render
     smoke.check("B8" in page.inner_text("body"), "teams page lists both teams")
+
+
+@route('#/teams-hub', '.hub-team-card')
+def check_team_shields(smoke: Smoke, page: Page) -> None:
+    pattern = '**/data/asset_slots.json'
+    page.route(pattern, lambda request: request.fulfill(json={'teams': [], 'players': []}))
+    try:
+        page.reload()
+        page.wait_for_selector('.hub-team-card .team-shield')
+        badges = page.locator('.hub-team-card .hub-badge')
+        smoke.check(badges.count() == page.locator('.hub-team-card .team-shield').count(),
+                    'teams without logos all use the shared neutral shield')
+        smoke.check(all(len(text.strip()) > 1 for text in page.locator('.team-shield text').all_text_contents()),
+                    'shield placeholders show short team names rather than single letters')
+    finally:
+        page.unroute(pattern)
+
+
+@route('#/teams-hub?team=vitality&map=de_mirage&player=76561198113666193&side=T', '.hub-player-view')
+def check_radar6(smoke: Smoke, page: Page) -> None:
+    root = Path(__file__).resolve().parents[1]
+    players = json.loads((root / 'public/data/de_mirage/players.json').read_text())
+    axes = ['entry', 'trade', 'lurk_distance', 'space_gain', 'utility_impact', 'clutch_wpa']
+    for player in players:
+        for side in ['T', 'CT']:
+            player[side]['radar_6d'] = {
+                'rounds': 60, 'eligible': True,
+                **{axis: {'raw': .2, 'percentile': 75 if side == 'T' else 25,
+                          'reference_players': 10} for axis in axes},
+            }
+        player['CT']['radar_6d']['lurk_distance'] = {'raw': None, 'percentile': None, 'reference_players': 0}
+    pattern = '**/data/de_mirage/players.json'
+    page.route(pattern, lambda request: request.fulfill(json=players))
+    try:
+        page.reload()
+        chart = page.locator('.player-radar6')
+        expect(chart).to_have_attribute('data-side', 'T')
+        smoke.check(chart.locator('[data-axis]').count() == 6, 'player radar has six focusable axes')
+        chart.locator('[data-axis=entry]').focus()
+        expect(chart.locator('[role=status]')).to_contain_text('P75.0')
+        page.get_by_role('button', name='CT', exact=True).click()
+        expect(chart).to_have_attribute('data-side', 'CT')
+        chart.locator('[data-axis=entry]').focus()
+        expect(chart.locator('[role=status]')).to_contain_text('P25.0')
+        expect(chart.locator('[data-axis=lurk_distance]')).to_contain_text('—')
+        smoke.check(True, 'side switch updates percentiles and CT lurk is unavailable')
+    finally:
+        page.unroute(pattern)
 
 
 @route('#/de_mirage/players', 'text=ZywOo')

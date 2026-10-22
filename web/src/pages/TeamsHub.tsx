@@ -13,6 +13,8 @@ import TeamSummaryLinks, { signatureRecipe } from "../components/TeamSummaryLink
 import LowSampleBanner from "../components/LowSampleBanner";
 import Stat from "../components/Stat";
 import PlayerWpa from "../components/PlayerWpa";
+import PlayerRadar6 from "../components/PlayerRadar6";
+import TeamShield from "../components/TeamShield";
 import { Loading } from "../components/Status";
 import { getAssetSlots, getHeatmapBaseline, getHeatmapTeams, getLineups, getMeta, getPlayerQuotes, getPlayers, getTactics, getTeam, getTeamHeatmap, useData } from "../data";
 import { fmtInt, fmtNum, fmtPct } from "../format";
@@ -91,9 +93,9 @@ function Asset({ path, name, badge = false }: { path: string; name: string; badg
   const assets = useContext(Assets);
   const stem = path.split("/").pop()?.replace(/\.png$/, "") ?? "";
   const supplied = (badge ? assets.teams : assets.players).includes(stem);
-  return <span className={`hub-asset ${badge ? "hub-badge" : "hub-portrait"}`}>
+  return <span className={`hub-asset ${badge ? "hub-badge" : "hub-portrait"}${badge && (failed || !supplied) ? " is-fallback" : ""}`}>
     {!failed && supplied ? <img src={`${import.meta.env.BASE_URL}${path}`} alt="" width={badge ? 80 : 1000} height={badge ? 80 : 666} onError={() => setFailed(true)} /> : badge ?
-      <span aria-hidden="true">{name.split(/\s+/).map((part) => part[0]).join("").slice(0, 3).toUpperCase()}</span> :
+      <TeamShield name={name} /> :
       <svg viewBox="0 0 240 280" aria-hidden="true"><circle cx="120" cy="88" r="42" /><path d="M32 260v-28a88 88 0 0 1 176 0v28Z" /></svg>}
   </span>;
 }
@@ -458,6 +460,7 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
         </details></figcaption>
       </figure>
       <aside className="hub-map-side"><label className="ghost-toggle" title="比较本侧、本阶段的归一化站位分布；全部楼层共用同一色阶"><input type="checkbox" checked={ghost} onChange={(event) => toggleGhost(event.target.checked)} />{t("round5.ghost_toggle")}</label>{ghost ? <p className="ghost-legend" role="status">{t("round5.ghost_legend")}</p> : null}<PlayerWpa player={profile} side={side} />
+        <PlayerRadar6 player={profile} side={side} />
         <MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} phase={phase} setPhase={setPhase} /></aside></div>
       <details ref={details} className="hub-details"><summary>{t("hub.player_details")}</summary>
         <h3>{t("heatmap.zones")}</h3>

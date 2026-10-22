@@ -268,6 +268,10 @@ export default function Tactics() {
               }}><span className="tactics-recipe-heading"><span className="tactics-chevron" aria-hidden="true">{open ? "▾" : "▸"}</span><span className="tactics-site">{siteLabel(recipe.site)}</span><RecipeTitle entries={rowEntries.filter((entry) => entry.core)} /></span>
                 <span className="tactics-row-meta">{t("tactics.recipe_meta", { rounds: fmtInt(recipe.n_rounds), win: fmtPct(recipe.win_rate), time: fmtSeconds(recipe.median_commit_s) })}</span>
               </button></h3>
+              {(recipe.intent_badges?.length || recipe.entry_sync_sec != null) ? <div className="recipe-intent">
+                {recipe.intent_badges?.map((badge) => <span className="recipe-intent-badge" key={badge}>{({ fake: "含假打转点", sync_pinch: "多向同步夹击", rush: "爆弹一波流" })[badge]}</span>)}
+                {recipe.entry_sync_sec != null ? <small>两路进点相差 {fmtNum(recipe.entry_sync_sec, 1)} 秒</small> : null}
+              </div> : null}
               <div id={`details-${recipe.id}`} hidden={!open}>{open && <RecipeDetails recipe={recipe} map={map} teams={teams} entries={rowEntries} splitDefinition={`进点位置相距至少 400 游戏单位，或相对包点中心的方位角相差至少 50°。不限定中路。导出定义：${String(data.definitions.split ?? "未提供")}`} />}</div>
             </article>;
           }) : <p className="muted">{t("tactics.no_recipes")}</p>}

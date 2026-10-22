@@ -143,6 +143,7 @@ export interface PlayerProfile {
   awp_share: number | null;
   util_pr: number | null;
   T: {
+    radar_6d?: Radar6Profile | null;
     avg_dist_to_team_30s: number | null;
     first_into_site_rate: number | null;
     lanes_15s: Share[];
@@ -152,6 +153,7 @@ export interface PlayerProfile {
     wpa?: Wpa;
   };
   CT: {
+    radar_6d?: Radar6Profile | null;
     lanes_15s: Share[];
     places_30s: Share[];
     /** share of the team's CT gun rounds in which he stood forward (T territory) at 15 s */
@@ -399,6 +401,8 @@ export interface SpotRef {
 }
 
 export interface Recipe {
+  entry_sync_sec?: number | null;
+  intent_badges?: ("fake" | "sync_pinch" | "rush")[];
   id: string; // e.g. de_mirage-a-r01
   site: "A" | "B";
   core: SpotRef[]; // used in >= 50% of its rounds
@@ -489,14 +493,19 @@ export interface Wpa {
 export interface WinprobTimeline { demo_id: string; wp_t: Record<string, number[]>; team_sides?: Record<string, Record<string, Side>> }
 
 /** one entry route: medoid player path of a group sharing the same choke callouts */
-export interface RecipeRoute { via: string[]; lane: string; n: number; share: number; points: [number, number][] }
+export type Radar6Axis = "entry" | "trade" | "lurk_distance" | "space_gain" | "utility_impact" | "clutch_wpa";
+export type Radar6Profile = { rounds: number; eligible: boolean } & Record<Radar6Axis, {
+  raw: number | null; percentile: number | null; reference_players: number;
+}>;
+
+export interface RecipeRoute { name?: string; via: string[]; lane: string; n: number; share: number; points: [number, number][] }
 
 // ----------------------------------------------------------------------------- 2D replays
 // playbook/replay.py: <map>/replay/<demo_id>/<round>.json, and <map>/replay/index.json = {demo_id: round[]}
 
 type ReplayPoint = [number, number];
 type ReplayEvent =
-  | { t: number; kind: "kill"; by: number | null; victim: number | null; at: ReplayPoint | null; weapon: string; headshot: boolean }
+  | { t: number; kind: "kill"; by: number | null; victim: number | null; at: ReplayPoint | null; weapon: string; headshot: boolean; wpa?: number | null }
   | { t: number; kind: "util"; nade: "smoke" | "flash" | "molotov" | "he"; by: number | null; at: ReplayPoint | null; from: ReplayPoint | null }
   | { t: number; kind: "plant"; site: string; at: ReplayPoint | null };
 
@@ -509,5 +518,6 @@ export interface ReplayRound {
   frames: (ReplayPoint | null)[][];
   events: ReplayEvent[];
   /** T win probability per second; may be empty */
-  wp_t: number[];
+  wp_t: (number | null)[];
+  t_control?: (number | null)[];
 }

@@ -342,3 +342,6 @@
 .hub-player-analysis > .hub-details > summary { min-height: 42px; }
 .hub-player-analysis { padding-bottom: 32px; }
 .hub-map-side .player-wpa { max-width: 100%; }
+
+.hub-badge.is-fallback::before { display: none; }
+.hub-badge .team-shield { display: block; width: 100%; height: 100%; }

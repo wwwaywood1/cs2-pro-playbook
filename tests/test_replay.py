@@ -35,3 +35,7 @@ def test_build_round():
     assert [e["kind"] for e in r["events"]] == ["util", "kill"]
     assert r["events"][1]["by"] == 0 and r["events"][1]["victim"] == 1 and r["events"][0]["from"] is None
     assert r["wp_t"] == [0.5, 0.6, 0.8, 0.9]
+    assert len(r["t_control"]) == len(r["frames"])
+    assert 0 < r["t_control"][0] < 1
+    assert r["t_control"][2] == 1 and r["t_control"][4] is None
+    assert r["events"][1]["wpa"] == .2  # final outcome minus pre-kill T WP

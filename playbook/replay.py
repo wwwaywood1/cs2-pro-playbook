@@ -30,8 +30,44 @@ def _px(mm: MapMeta, x: float | None, y: float | None) -> list[int] | None:
     return [int(round(rx)), int(round(ry))]
 
 
+def control_grid(positions: pl.DataFrame) -> np.ndarray:
+    """Centres of occupied cells in a map-wide 15×15 world-XY grid."""
+    xy = positions.filter((pl.col("t_s") >= 0) & pl.col("x").is_finite() & pl.col("y").is_finite()).select("x", "y").to_numpy()
+    if not len(xy):
+        return np.empty((0, 2))
+    low, high = xy.min(axis=0), xy.max(axis=0)
+    size = np.maximum(high - low, 1.0) / 15
+    cells = np.unique(np.clip(((xy - low) / size).astype(int), 0, 14), axis=0)
+    return low + (cells + .5) * size
+
+
+def t_control(t: np.ndarray, ct: np.ndarray, grid: np.ndarray) -> float | None:
+    if not len(grid) or (not len(t) and not len(ct)):
+        return None
+    if not len(t):
+        return 0.0
+    if not len(ct):
+        return 1.0
+    td = ((grid[:, None, :] - t[None, :, :]) ** 2).sum(axis=2).min(axis=1)
+    cd = ((grid[:, None, :] - ct[None, :, :]) ** 2).sum(axis=2).min(axis=1)
+    return round(float((td < cd).mean()), 3)
+
+
+def kill_wpa(at: float, side: str | None, wp: list, duration: float, winner: str) -> float | None:
+    """Same floor(t) → floor(t)+2 window as winprob.action_values; terminal outcome fallback."""
+    before, after = int(np.floor(at)), int(np.floor(at)) + 2
+    if side not in ("T", "CT") or before < 0 or before >= len(wp) or wp[before] is None:
+        return None
+    post = wp[after] if after < len(wp) else None
+    if post is None and after >= duration:
+        post = float(winner == "T")
+    if post is None:
+        return None
+    return round((post - wp[before]) * (1 if side == "T" else -1), 4)
+
+
 def build_round(sub: dict[str, pl.DataFrame], mm: MapMeta, demo: str, rnd: int,
-                wp: list[float] | None = None) -> dict | None:
+                wp: list[float] | None = None, grid: np.ndarray | None = None) -> dict | None:
     key = (pl.col("demo_id") == demo) & (pl.col("round_num") == rnd)
     r = sub["rounds"].filter(key)
     pos = sub["positions"].filter(key & (pl.col("t_s") >= 0)).sort("t_s")
@@ -47,13 +83,23 @@ def build_round(sub: dict[str, pl.DataFrame], mm: MapMeta, demo: str, rnd: int,
     for sid, t, x, y, alive in pos.select("steamid", "t_s", "x", "y", "alive").iter_rows():
         if 0 <= t <= dur and alive:
             frames[t][index[sid]] = _px(mm, x, y)
+    if grid is None:
+        grid = control_grid(sub["positions"])
+    controls = [None] * (dur + 1)
+    for (second,), g in pos.filter(pl.col("alive") & pl.col("x").is_finite() & pl.col("y").is_finite()).group_by("t_s"):
+        if 0 <= second <= dur:
+            controls[second] = t_control(g.filter(pl.col("side") == "T").select("x", "y").to_numpy(),
+                                        g.filter(pl.col("side") == "CT").select("x", "y").to_numpy(), grid)
+    sides = dict(roster.select("steamid", "side").iter_rows())
     events: list[dict] = []
     k = sub["kills"].filter(key & ~pl.col("is_post_round"))
     for row in k.iter_rows(named=True):
         events.append({"t": round(float(row["t_s"]), 1), "kind": "kill",
                        "by": index.get(row["attacker_steamid"]), "victim": index.get(row["victim_steamid"]),
                        "at": _px(mm, row["victim_x"], row["victim_y"]), "weapon": row["weapon"],
-                       "headshot": bool(row.get("headshot"))})
+                       "headshot": bool(row.get("headshot")),
+                       "wpa": kill_wpa(float(row["t_s"]), sides.get(row["attacker_steamid"]), wp or [],
+                                       float(r0["dur_s"]), r0["winner_side"])})
     u = sub["utility"].filter(key & ~pl.col("is_post_round") & pl.col("pop_t_s").is_not_null()
                               & pl.col("land_x").is_not_null())
     for row in u.iter_rows(named=True):
@@ -72,7 +118,8 @@ def build_round(sub: dict[str, pl.DataFrame], mm: MapMeta, demo: str, rnd: int,
         "teams": {"T": r0["t_team"], "CT": r0["ct_team"]}, "winner": r0["winner_side"],
         "reason": r0.get("reason"), "duration": dur,
         "players": [{"name": n, "side": s, "team": tm} for n, s, tm in roster.select("name", "side", "team").iter_rows()],
-        "frames": frames, "events": events, "wp_t": [round(float(v), 3) for v in (wp or [])],
+        "frames": frames, "events": events, "wp_t": [round(float(v), 3) if v is not None else None for v in (wp or [])],
+        "t_control": controls,
     }
 
 
@@ -86,5 +133,9 @@ def wp_by_round(states: pl.DataFrame, oof: np.ndarray, rounds: set[tuple[str, in
     out: dict[tuple[str, int], list[float]] = {}
     for (demo, rnd), g in s.group_by(KEYS, maintain_order=True):
         if (demo, rnd) in rounds:
-            out[(demo, int(rnd))] = g.sort("t_s")["wp"].to_list()
+            values = [None] * (int(g["t_s"].max()) + 1)
+            for second, value in g.select("t_s", "wp").iter_rows():
+                if second >= 0:
+                    values[second] = float(value)
+            out[(demo, int(rnd))] = values
     return out

@@ -35,6 +35,7 @@ from playbook.store import read_all
 from playbook.semantics import round_plants
 from playbook.dedupe import deduplicate_tables, demo_events, hltv_demo_ids
 from playbook import replay, winprob
+from playbook.radar6 import player_radar
 
 SCHEMA_VERSION = 1
 MIN_MATCHES_RELIABLE = 5
@@ -499,9 +500,10 @@ def _write_replays(mdir: Path, sub: dict[str, pl.DataFrame], mm, res: dict, wpr:
     for rec in res["recipes"]:
         wanted |= {(e["demo_id"], int(e["round_num"])) for e in rec.get("examples", [])}
     wp = replay.wp_by_round(wpr["states"], wpr["oof"], wanted) if wpr else {}
+    grid = replay.control_grid(sub["positions"])
     index: dict[str, list[int]] = {}
     for demo, rnd in sorted(wanted):
-        data = replay.build_round(sub, mm, demo, rnd, wp.get((demo, rnd)))
+        data = replay.build_round(sub, mm, demo, rnd, wp.get((demo, rnd)), grid)
         if data:
             _write_compact(mdir / "replay" / demo / f"{rnd}.json", data)
             index.setdefault(demo, []).append(rnd)
@@ -573,6 +575,10 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         sub = {k: v.filter(pl.col("demo_id").is_in(ids)) for k, v in t.items() if "demo_id" in v.columns}
         teams = team_profiles(sub, mm)
         players = player_profiles(sub)
+        radar = player_radar(sub, wpr["wp"].filter(pl.col("demo_id").is_in(ids)) if wpr else None) if players else {}
+        for player in players:
+            for side in ("T", "CT"):
+                player[side]["radar_6d"] = radar.get((player["steamid"], side))
         lineups, nade_lineup = build_lineups(sub, mm)
         lineup_ids = {l["id"] for l in lineups}
         mdir = out_dir / map_name

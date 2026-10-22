@@ -43,3 +43,8 @@
 .replay-jumps { display: flex; flex-wrap: wrap; gap: 6px; }
 .replay-jumps button { font-size: .75rem; }
 .replay-legend, .replay-keys { margin: 0; }
+
+.replay-control { margin: 0; min-width: 0; }
+.replay-control figcaption { color: #9faebd; font-size: .67rem; }
+.replay-control svg { display: block; width: 100%; height: auto; }
+.replay-kill-wpa { white-space: nowrap; color: #bfcbd7; font: .68rem var(--mono); }

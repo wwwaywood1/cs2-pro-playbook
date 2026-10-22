@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getMeta, getReplay, getTactics, useData } from "../data";
-import { fmtInt, fmtNum } from "../format";
+import { fmtInt, fmtNum, fmtSignedNum } from "../format";
 import { t, useLang } from "../i18n";
 import { useReducedMotion } from "../motion";
 import type { ReplayRound } from "../types";
@@ -164,6 +164,7 @@ function ReplayViewer({ replay, commit }: { replay: ReplayRound; commit?: number
     : event.kind === "plant" ? `${t("round4.replay_legend_plant")} ${event.site}` : t(`grenade.${event.nade === "flash" ? "flashbang" : event.nade}`);
   const eventSymbol = (event: typeof events[number]) => event.kind === "kill" ? "×" : event.kind === "plant" ? "▣" : "◌";
   const wp = replay.wp_t.map((value, index) => ({ value, index })).filter(({ value }) => Number.isFinite(value));
+  const control = (replay.t_control ?? []).map((value, index) => ({ value, index }));
   const xAt = (seconds: number) => Math.max(0, Math.min(600, seconds / Math.max(1, duration) * 600));
   return <div className="replay-layout">
 <div className="hud-radar-frame">    <svg ref={radar} className="replay-radar" viewBox="0 0 1024 1024" role="group" aria-label={t("round4.replay_title")}>
@@ -212,7 +213,7 @@ function ReplayViewer({ replay, commit }: { replay: ReplayRound; commit?: number
       })}
     </svg></div>
     <div className="replay-sidebar">
-    <section className="replay-events" aria-label="回合事件"><h3>回合事件</h3><ol>{events.filter((event) => event.t <= time).slice().reverse().map((event, index) => <li className={event.kind === "kill" ? "replay-killfeed" : ""} key={`${event.t}:${index}`}><button type="button" onClick={() => seek(event.t)}><time>{fmtNum(event.t, 1)}s</time> {eventLabel(event)}</button></li>)}</ol></section>
+    <section className="replay-events" aria-label="回合事件"><h3>回合事件</h3><ol>{events.filter((event) => event.t <= time).slice().reverse().map((event, index) => <li className={event.kind === "kill" ? "replay-killfeed" : ""} key={`${event.t}:${index}`}><button type="button" onClick={() => seek(event.t)}><time>{fmtNum(event.t, 1)}s</time> {eventLabel(event)}{event.kind === "kill" && event.wpa != null && Number.isFinite(event.wpa) ? <span className="replay-kill-wpa" title="击杀者阵营的模型胜率变化（百分点）"> WPA {fmtSignedNum(event.wpa * 100, 1)}%</span> : null}</button></li>)}</ol></section>
     <div className="replay-controls">
       <button type="button" className="button" onClick={togglePlayback}>{t(playing ? "round4.replay_pause" : "round4.replay_play")}</button>
       <Segmented className="segmented" role="group" aria-label="回放速度">{[1, 2, 4].map((value) => <button key={value} type="button" aria-pressed={speed === value} onClick={() => setSpeed(value)}>{t("round4.replay_speed", { x: value })}</button>)}</Segmented>
@@ -223,10 +224,15 @@ function ReplayViewer({ replay, commit }: { replay: ReplayRound; commit?: number
     </div>
     <figure className="replay-wp"><figcaption>{t("round4.replay_wp")}</figcaption>{wp.length ? <svg viewBox="-8 -8 616 100" role="group" aria-label={t("round4.replay_wp")}>
       <line x1="0" x2="600" y1="35" y2="35" stroke="#526077" strokeDasharray="4 4" />
-      <polyline points={wp.map(({ value, index }) => `${xAt(index)},${65 - Math.max(0, Math.min(1, value)) * 60}`).join(" ")} fill="none" stroke="#efad55" strokeWidth="2" />
+      <polyline points={wp.map(({ value, index }) => `${xAt(index)},${65 - Math.max(0, Math.min(1, value!)) * 60}`).join(" ")} fill="none" stroke="#efad55" strokeWidth="2" />
       {anchors.map((event, index) => <g key={index} role="button" tabIndex={0} aria-label={`${fmtNum(event.t, 1)}s · ${eventLabel(event)}`} onClick={() => seek(event.t)} onKeyDown={(key) => { if (key.key === "Enter" || key.key === " ") { key.preventDefault(); seek(event.t); } }}><title>{eventLabel(event)}</title><circle cx={xAt(event.t)} cy="80" r="7" fill={event.kind === "kill" ? "#ff8b84" : event.kind === "plant" ? "#efad55" : "#a3b4c5"} /></g>)}
       <line className="replay-playhead" x1={xAt(time)} x2={xAt(time)} y1="0" y2="70" stroke="#fff" strokeWidth="2" />
     </svg> : <p className="muted">{t("heatmap.no_data")}</p>}</figure>
+    {control.some(({ value }) => value != null) ? <figure className="replay-control"><figcaption>T 控图</figcaption><svg viewBox="-8 -4 616 34" role="img" aria-label="T 控图 · 存活双方到可行走格子的距离占比"><title>T 控图 · 按距离估算；不计墙体与视野</title>
+      <line x1="0" x2="600" y1="13" y2="13" stroke="#526077" strokeDasharray="4 4" />
+      <path d={control.map(({ value, index }, i) => value == null || !Number.isFinite(value) ? "" : `${i === 0 || control[i - 1].value == null ? "M" : "L"}${xAt(index)},${25 - Math.max(0, Math.min(1, value)) * 24}`).join(" ")} fill="none" stroke="#9faebd" strokeWidth="1.25" />
+      <line x1={xAt(time)} x2={xAt(time)} y1="0" y2="26" stroke="#fff" strokeWidth="1" />
+    </svg></figure> : null}
     <p className="muted replay-legend"><span style={{ color: "#efad55" }}>● T</span> · <span style={{ color: "#62b5ff" }}>● CT</span> · × {t("round4.replay_legend_kill")} · {t("round4.replay_legend_util")} · ▣ {t("round4.replay_legend_plant")}</p>
     <div className="replay-jumps"><button className="button button-ghost" type="button" onClick={jumpNextKill} disabled={!events.some((event) => event.kind === "kill" && event.t > time + .05)}>{t("round5.next_kill")}</button><button className="button button-ghost" type="button" disabled={hitTime == null} onClick={() => hitTime != null && seek(hitTime)} title={commit == null ? "首个 T 方击杀时刻" : "本套路进点时间中位数"}>{t("round5.jump_hit")}</button><button className="button button-ghost" type="button" disabled={!plant} onClick={() => plant && seek(plant.t)}>{t("round5.jump_plant")}</button></div>
     <p className="muted replay-keys">{t("round5.keys_hint")}</p>

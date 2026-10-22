@@ -7,6 +7,11 @@ import { calloutLabel, t } from "../i18n";
 import { fmtPct, fmtInt, fmtNum } from "../format";
 import type { Lineup, Recipe, RecipeRoute, Spot } from "../types";
 
+function routeDisplayName(map: string, route: RecipeRoute) {
+  if (route.name) return route.via.includes(route.name) ? calloutLabel(map, route.name) : route.name;
+  return calloutLabel(map, [...route.via].reverse().find((place) => !/spawn|start|^Bombsite[AB]$/i.test(place)));
+}
+
 export interface RecipeSpot {
   id: string;
   type: Spot["type"];
@@ -187,7 +192,7 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
       {failedSource !== source && <image href={source} width="1024" height="1024" onError={() => setFailedSource(source)} />}
       <rect width="1024" height="1024" fill="#060b12" opacity="0.55" mask={`url(#${maskId})`} pointerEvents="none" />
       <g className="tactics-entry-routes" key={routeKey} pointerEvents="none">{entryRoutes.map((route, index) => {
-        const label = t("round5.route_name", { via: calloutLabel(map, route.via.find((place) => !/spawn|start/i.test(place))), p: fmtNum(route.share * 100, 0) });
+        const label = t("round5.route_name", { via: routeDisplayName(map, route), p: fmtNum(route.share * 100, 0) });
         const [x, y] = routeLabelPoint(route.points);
         return <g key={index} opacity={Math.max(.3, .9 - index * .17)}
           className={activeRoute === null ? undefined : activeRoute === index ? "is-active" : "is-dimmed"}>
@@ -225,7 +230,7 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
     </svg></div>
     {routes !== undefined ? <div className="tactics-routes-legend"><strong tabIndex={0} title={t("round3.routes_tip")}>{t("round3.routes_title")} ⓘ</strong>
       {!entryRoutes.length ? <p className="muted">{t("round3.routes_none")}</p> : entryRoutes.map((route, index) => {
-        const label = t("round5.route_name", { via: calloutLabel(map, route.via.find((place) => !/spawn|start/i.test(place))), p: fmtNum(route.share * 100, 0) });
+        const label = t("round5.route_name", { via: routeDisplayName(map, route), p: fmtNum(route.share * 100, 0) });
         return <button key={index} type="button" className="tactics-route-row"
           onMouseEnter={() => setActiveRoute(index)} onMouseLeave={() => setActiveRoute(null)}
           onFocus={() => setActiveRoute(index)} onBlur={() => setActiveRoute(null)}>

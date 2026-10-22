@@ -1,14 +1,16 @@
 import { Stagger } from "../components/Motion";
 import { PageContext, PageSurface, MetricStrip } from "../components/Page";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import Stat from "../components/Stat";
 import PlayerWpa from "../components/PlayerWpa";
+import PlayerRadar6 from "../components/PlayerRadar6";
+import Segmented from "../components/Segmented";
 import { ErrorNotice, Loading } from "../components/Status";
 import { getMeta, getPlayers, useData } from "../data";
 import { fmtInt, fmtMetric, fmtNum, fmtPct } from "../format";
 import { t, useLang } from "../i18n";
-import type { PlayerProfile, RoleHint, Share } from "../types";
+import type { PlayerProfile, RoleHint, Share, Side } from "../types";
 
 function hintTooltip(hint: RoleHint): string {
   const basis = `${t(`metric.${hint.metric}`)}: ${fmtMetric(hint.metric, hint.value)}`;
@@ -38,6 +40,7 @@ export default function Players() {
   useLang();
   const [params] = useSearchParams();
   const requestedPlayer = params.get("player");
+  const [side, setSide] = useState<Side>(params.get("side") === "CT" ? "CT" : "T");
   const { map = "" } = useParams<{ map: string }>();
   const { data: meta } = useData(() => getMeta(map), [map]);
   const { data: players, error, loading } = useData(() => getPlayers(map), [map]);
@@ -76,6 +79,7 @@ export default function Players() {
         {players ? <p className="result-count">{fmtInt(players.length)}</p> : null}
       </header>
       {players ? <MetricStrip items={[{ label: t("ui.nav_players"), value: players.length }, { label: t("ui.nav_teams"), value: groups.length }]} /> : null}
+      <Segmented aria-label={t("heatmap.side")}>{(["T", "CT"] as const).map((value) => <button type="button" key={value} aria-pressed={side === value} onClick={() => setSide(value)}>{value}</button>)}</Segmented>
 
       {loading ? (
         <Loading />
@@ -114,6 +118,7 @@ export default function Players() {
                   </div>
 
                   <div className="player-wpa-sides"><PlayerWpa player={player} side="T" /><PlayerWpa player={player} side="CT" /></div>
+                  <PlayerRadar6 player={player} side={side} />
 
                   <div className="player-roles">
                     <span className="section-label">{t("ui.roles_title")}</span>
