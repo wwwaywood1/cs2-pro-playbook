@@ -1,0 +1,357 @@
+{
+"map": "de_inferno",
+"teams": [
+{
+"slug": "9z",
+"team": "9z",
+"n_matches": 4,
+"facts": [
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B区警家烟 + 棺材烟 + B包三箱火（7 次，赢 4 次）",
+"en": "Go-to execute: B with CT smoke (B) + Coffins smoke + New box molotov (7 times, won 4)"
+},
+{
+"id": "t_main_lurker",
+"side": "T",
+"zh": "dgt 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
+"en": "dgt is the usual lurker (4 hits with him on the other side or far away)"
+},
+{
+"id": "ct_rotate",
+"side": "CT",
+"zh": "进攻开始后有人及时回防的回合占 76%，高于其他队伍的 49%（21 个枪局）",
+"en": "Rounds where a CT rotated in time: 76% vs 49% for other teams (21 gun rounds)"
+}
+]
+},
+{
+"slug": "falcons",
+"team": "Falcons",
+"n_matches": 10,
+"facts": [
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B区警家烟 + 棺材烟 + B包三箱火（20 次，赢 11 次）",
+"en": "Go-to execute: B with CT smoke (B) + Coffins smoke + New box molotov (20 times, won 11)"
+},
+{
+"id": "t_main_lurker",
+"side": "T",
+"zh": "TeSeS 是最常摸边的人（16 次进攻时在另一侧或远离进攻点）",
+"en": "TeSeS is the usual lurker (16 hits with him on the other side or far away)"
+}
+]
+},
+{
+"slug": "furia",
+"team": "FURIA",
+"n_matches": 2,
+"facts": [
+{
+"id": "ct_default_setup",
+"side": "CT",
+"zh": "CT 默认站位 A3 B2（开局 20 秒，42% 的枪局，胜率 88%）",
+"en": "Default CT setup A3 B2 at 20 s (42% of gun rounds, won 88%)"
+}
+]
+},
+{
+"slug": "gamerlegion",
+"team": "GamerLegion",
+"n_matches": 2,
+"facts": [
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B区警家烟 + 棺材烟 + B包三箱火（5 次，赢 2 次）",
+"en": "Go-to execute: B with CT smoke (B) + Coffins smoke + New box molotov (5 times, won 2)"
+},
+{
+"id": "ct_default_setup",
+"side": "CT",
+"zh": "CT 默认站位 A3 B2（开局 20 秒，27% 的枪局，胜率 50%）",
+"en": "Default CT setup A3 B2 at 20 s (27% of gun rounds, won 50%)"
+}
+]
+},
+{
+"slug": "heroic",
+"team": "Heroic",
+"n_matches": 2,
+"facts": [
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B区警家烟 + 棺材烟 + B包三箱火（4 次，赢 4 次）",
+"en": "Go-to execute: B with CT smoke (B) + Coffins smoke + New box molotov (4 times, won 4)"
+},
+{
+"id": "ct_default_setup",
+"side": "CT",
+"zh": "CT 默认站位 A2 B3（开局 20 秒，32% 的枪局，胜率 71%）",
+"en": "Default CT setup A2 B3 at 20 s (32% of gun rounds, won 71%)"
+}
+]
+},
+{
+"slug": "legacy",
+"team": "Legacy",
+"n_matches": 6,
+"facts": [
+{
+"id": "t_tempo_fast",
+"side": "T",
+"zh": "快攻占 20%，高于其他队伍的 9%（54 个枪局）",
+"en": "fast hits: 20% vs 9% for other teams (54 gun rounds)"
+},
+{
+"id": "t_tempo_late",
+"side": "T",
+"zh": "拖后进攻占 24%，低于其他队伍的 41%（54 个枪局）",
+"en": "late hits: 24% vs 41% for other teams (54 gun rounds)"
+},
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B区警家烟 + B包死点火（8 次，赢 7 次）",
+"en": "Go-to execute: B with CT smoke (B) + Dark molotov (8 times, won 7)"
+},
+{
+"id": "t_main_lurker",
+"side": "T",
+"zh": "n1ssim 是最常摸边的人（13 次进攻时在另一侧或远离进攻点）",
+"en": "n1ssim is the usual lurker (13 hits with him on the other side or far away)"
+},
+{
+"id": "ct_default_setup",
+"side": "CT",
+"zh": "CT 默认站位 A3 B2（开局 20 秒，27% 的枪局，胜率 59%）",
+"en": "Default CT setup A3 B2 at 20 s (27% of gun rounds, won 59%)"
+}
+]
+},
+{
+"slug": "liquid",
+"team": "Liquid",
+"n_matches": 4,
+"facts": [
+{
+"id": "t_lurk",
+"side": "T",
+"zh": "有人摸边的进攻占 54%，高于其他队伍的 31%（26 个枪局）",
+"en": "Hits with a lurker: 54% vs 31% for other teams (26 gun rounds)"
+},
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B区警家烟 + 棺材烟 + B包三箱火（8 次，赢 6 次）",
+"en": "Go-to execute: B with CT smoke (B) + Coffins smoke + New box molotov (8 times, won 6)"
+},
+{
+"id": "t_main_lurker",
+"side": "T",
+"zh": " NAF-FLY 是最常摸边的人（12 次进攻时在另一侧或远离进攻点）",
+"en": " NAF-FLY is the usual lurker (12 hits with him on the other side or far away)"
+}
+]
+},
+{
+"slug": "lynn-vision",
+"team": "Lynn Vision",
+"n_matches": 4,
+"facts": [
+{
+"id": "t_tempo_fast",
+"side": "T",
+"zh": "快攻占 0%，低于其他队伍的 10%（37 个枪局）",
+"en": "fast hits: 0% vs 10% for other teams (37 gun rounds)"
+},
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B区警家烟 + 棺材烟 + B包三箱火（11 次，赢 5 次）",
+"en": "Go-to execute: B with CT smoke (B) + Coffins smoke + New box molotov (11 times, won 5)"
+},
+{
+"id": "ct_default_setup",
+"side": "CT",
+"zh": "CT 默认站位 A2 B3（开局 20 秒，28% 的枪局，胜率 29%）",
+"en": "Default CT setup A2 B3 at 20 s (28% of gun rounds, won 29%)"
+}
+]
+},
+{
+"slug": "m80",
+"team": "M80",
+"n_matches": 6,
+"facts": [
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B区警家烟 + 棺材烟 + B包三箱火（12 次，赢 8 次）",
+"en": "Go-to execute: B with CT smoke (B) + Coffins smoke + New box molotov (12 times, won 8)"
+},
+{
+"id": "t_main_lurker",
+"side": "T",
+"zh": "JBa 是最常摸边的人（13 次进攻时在另一侧或远离进攻点）",
+"en": "JBa is the usual lurker (13 hits with him on the other side or far away)"
+},
+{
+"id": "ct_default_setup",
+"side": "CT",
+"zh": "CT 默认站位 A3 B2（开局 20 秒，31% 的枪局，胜率 67%）",
+"en": "Default CT setup A3 B2 at 20 s (31% of gun rounds, won 67%)"
+}
+]
+},
+{
+"slug": "mibr",
+"team": "MIBR",
+"n_matches": 5,
+"facts": [
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B区警家烟 + 棺材烟 + B包三箱火（8 次，赢 3 次）",
+"en": "Go-to execute: B with CT smoke (B) + Coffins smoke + New box molotov (8 times, won 3)"
+},
+{
+"id": "t_main_lurker",
+"side": "T",
+"zh": "LNZ 是最常摸边的人（5 次进攻时在另一侧或远离进攻点）",
+"en": "LNZ is the usual lurker (5 hits with him on the other side or far away)"
+}
+]
+},
+{
+"slug": "monte",
+"team": "Monte",
+"n_matches": 3,
+"facts": [
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B区警家烟 + 棺材烟 + B包三箱火（5 次，赢 5 次）",
+"en": "Go-to execute: B with CT smoke (B) + Coffins smoke + New box molotov (5 times, won 5)"
+}
+]
+},
+{
+"slug": "parivision",
+"team": "PARIVISION",
+"n_matches": 3,
+"facts": [
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B区警家烟 + 棺材烟 + B包三箱火（7 次，赢 4 次）",
+"en": "Go-to execute: B with CT smoke (B) + Coffins smoke + New box molotov (7 times, won 4)"
+},
+{
+"id": "t_main_lurker",
+"side": "T",
+"zh": "xiELO 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
+"en": "xiELO is the usual lurker (4 hits with him on the other side or far away)"
+},
+{
+"id": "ct_default_setup",
+"side": "CT",
+"zh": "CT 默认站位 A3 B2（开局 20 秒，42% 的枪局，胜率 31%）",
+"en": "Default CT setup A3 B2 at 20 s (42% of gun rounds, won 31%)"
+}
+]
+},
+{
+"slug": "the-mongolz",
+"team": "The MongolZ",
+"n_matches": 6,
+"facts": [
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B区警家烟 + 棺材烟 + B包三箱火（12 次，赢 6 次）",
+"en": "Go-to execute: B with CT smoke (B) + Coffins smoke + New box molotov (12 times, won 6)"
+},
+{
+"id": "ct_default_setup",
+"side": "CT",
+"zh": "CT 默认站位 A2 B3（开局 20 秒，28% 的枪局，胜率 38%）",
+"en": "Default CT setup A2 B3 at 20 s (28% of gun rounds, won 38%)"
+}
+]
+},
+{
+"slug": "thunderdownunder",
+"team": "THUNDERdOWNUNDER",
+"n_matches": 3,
+"facts": [
+{
+"id": "ct_forward",
+"side": "CT",
+"zh": "开局有人前压的回合占 20%，高于其他队伍的 3%（20 个枪局）",
+"en": "Rounds with an early push: 20% vs 3% for other teams (20 gun rounds)"
+}
+]
+},
+{
+"slug": "tyloo",
+"team": "TYLOO",
+"n_matches": 6,
+"facts": [
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B区警家烟 + 棺材烟 + B包三箱火（19 次，赢 12 次）",
+"en": "Go-to execute: B with CT smoke (B) + Coffins smoke + New box molotov (19 times, won 12)"
+},
+{
+"id": "t_main_lurker",
+"side": "T",
+"zh": "Moseyuh 是最常摸边的人（7 次进攻时在另一侧或远离进攻点）",
+"en": "Moseyuh is the usual lurker (7 hits with him on the other side or far away)"
+},
+{
+"id": "ct_default_setup",
+"side": "CT",
+"zh": "CT 默认站位 A3 B2（开局 20 秒，29% 的枪局，胜率 73%）",
+"en": "Default CT setup A3 B2 at 20 s (29% of gun rounds, won 73%)"
+}
+]
+},
+{
+"slug": "vitality",
+"team": "Vitality",
+"n_matches": 3,
+"facts": [
+{
+"id": "t_lurk",
+"side": "T",
+"zh": "有人摸边的进攻占 75%，高于其他队伍的 31%（16 个枪局）",
+"en": "Hits with a lurker: 75% vs 31% for other teams (16 gun rounds)"
+},
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B区警家烟 + 棺材烟 + B包三箱火（4 次，赢 4 次）",
+"en": "Go-to execute: B with CT smoke (B) + Coffins smoke + New box molotov (4 times, won 4)"
+},
+{
+"id": "t_main_lurker",
+"side": "T",
+"zh": "ropz 是最常摸边的人（7 次进攻时在另一侧或远离进攻点）",
+"en": "ropz is the usual lurker (7 hits with him on the other side or far away)"
+},
+{
+"id": "ct_default_setup",
+"side": "CT",
+"zh": "CT 默认站位 A3 B2（开局 20 秒，27% 的枪局，胜率 89%）",
+"en": "Default CT setup A3 B2 at 20 s (27% of gun rounds, won 89%)"
+}
+]
+}
+]
+}

@@ -1,0 +1,182 @@
+{
+"map": "de_anubis",
+"teams": [
+{
+"slug": "aurora",
+"team": "Aurora",
+"n_matches": 5,
+"facts": [
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B连接烟 + 警家烟（B点） + B后点火（5 次，赢 4 次）",
+"en": "Go-to execute: B with Palace smoke + CT smoke (B) + Back site molotov (B) (5 times, won 4)"
+},
+{
+"id": "ct_stack",
+"side": "CT",
+"zh": "堆点防守的回合占 0%，低于其他队伍的 11%（51 个枪局）",
+"en": "Stacked rounds: 0% vs 11% for other teams (51 gun rounds)"
+},
+{
+"id": "ct_default_setup",
+"side": "CT",
+"zh": "CT 默认站位 A1 M1 B3（开局 20 秒，29% 的枪局，胜率 47%）",
+"en": "Default CT setup A1 M1 B3 at 20 s (29% of gun rounds, won 47%)"
+},
+{
+"id": "ct_rotate",
+"side": "CT",
+"zh": "进攻开始后有人及时回防的回合占 20%，低于其他队伍的 48%（30 个枪局）",
+"en": "Rounds where a CT rotated in time: 20% vs 48% for other teams (30 gun rounds)"
+}
+]
+},
+{
+"slug": "betboom",
+"team": "BETBOOM",
+"n_matches": 2,
+"facts": [
+{
+"id": "ct_stack",
+"side": "CT",
+"zh": "堆点防守的回合占 26%，高于其他队伍的 9%（19 个枪局）",
+"en": "Stacked rounds: 26% vs 9% for other teams (19 gun rounds)"
+}
+]
+},
+{
+"slug": "falcons",
+"team": "Falcons",
+"n_matches": 10,
+"facts": [
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 B连接烟 + 警家烟（B点） + B后点火（17 次，赢 12 次）",
+"en": "Go-to execute: B with Palace smoke + CT smoke (B) + Back site molotov (B) (17 times, won 12)"
+},
+{
+"id": "t_main_lurker",
+"side": "T",
+"zh": "NiKo 是最常摸边的人（14 次进攻时在另一侧或远离进攻点）",
+"en": "NiKo is the usual lurker (14 hits with him on the other side or far away)"
+}
+]
+},
+{
+"slug": "flyquest",
+"team": "FlyQuest",
+"n_matches": 3,
+"facts": [
+{
+"id": "t_main_lurker",
+"side": "T",
+"zh": "jks 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
+"en": "jks is the usual lurker (4 hits with him on the other side or far away)"
+}
+]
+},
+{
+"slug": "g2",
+"team": "G2",
+"n_matches": 2,
+"facts": [
+{
+"id": "t_tempo_fast",
+"side": "T",
+"zh": "快攻占 30%，高于其他队伍的 12%（20 个枪局）",
+"en": "fast hits: 30% vs 12% for other teams (20 gun rounds)"
+},
+{
+"id": "t_split",
+"side": "T",
+"zh": "分兵进点占 29%，低于其他队伍的 62%（17 个枪局）",
+"en": "Split hits: 29% vs 62% for other teams (17 gun rounds)"
+},
+{
+"id": "ct_default_setup",
+"side": "CT",
+"zh": "CT 默认站位 A1 M2 B2（开局 20 秒，29% 的枪局，胜率 80%）",
+"en": "Default CT setup A1 M2 B2 at 20 s (29% of gun rounds, won 80%)"
+}
+]
+},
+{
+"slug": "natus-vincere",
+"team": "Natus Vincere",
+"n_matches": 3,
+"facts": [
+{
+"id": "t_tempo_late",
+"side": "T",
+"zh": "拖后进攻占 55%，高于其他队伍的 35%（40 个枪局）",
+"en": "late hits: 55% vs 35% for other teams (40 gun rounds)"
+},
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：A 点 天堂烟 + A连接烟 + A连接火（包点出口） + A包点火（天堂侧）（4 次，赢 3 次）",
+"en": "Go-to execute: A with Heaven smoke + A connector smoke + A connector molotov (site exit) + A site molotov (Heaven side) (4 times, won 3)"
+},
+{
+"id": "ct_forward",
+"side": "CT",
+"zh": "开局有人前压的回合占 27%，高于其他队伍的 14%（41 个枪局）",
+"en": "Rounds with an early push: 27% vs 14% for other teams (41 gun rounds)"
+}
+]
+},
+{
+"slug": "spirit",
+"team": "Spirit",
+"n_matches": 4,
+"facts": [
+{
+"id": "t_main_lurker",
+"side": "T",
+"zh": "zont1x 是最常摸边的人（7 次进攻时在另一侧或远离进攻点）",
+"en": "zont1x is the usual lurker (7 hits with him on the other side or far away)"
+},
+{
+"id": "ct_default_setup",
+"side": "CT",
+"zh": "CT 默认站位 A2 M1 B2（开局 20 秒，33% 的枪局，胜率 64%）",
+"en": "Default CT setup A2 M1 B2 at 20 s (33% of gun rounds, won 64%)"
+}
+]
+},
+{
+"slug": "tyloo",
+"team": "TYLOO",
+"n_matches": 2,
+"facts": [
+{
+"id": "t_tempo_late",
+"side": "T",
+"zh": "拖后进攻占 10%，低于其他队伍的 38%（21 个枪局）",
+"en": "late hits: 10% vs 38% for other teams (21 gun rounds)"
+},
+{
+"id": "ct_default_setup",
+"side": "CT",
+"zh": "CT 默认站位 A2 M1 B2（开局 20 秒，40% 的枪局，胜率 67%）",
+"en": "Default CT setup A2 M1 B2 at 20 s (40% of gun rounds, won 67%)"
+}
+]
+},
+{
+"slug": "vitality",
+"team": "Vitality",
+"n_matches": 3,
+"facts": [
+{
+"id": "t_signature_recipe",
+"side": "T",
+"zh": "最常用的爆弹：B 点 警家烟（B点）（4 次，赢 3 次）",
+"en": "Go-to execute: B with CT smoke (B) (4 times, won 3)"
+}
+]
+}
+]
+}

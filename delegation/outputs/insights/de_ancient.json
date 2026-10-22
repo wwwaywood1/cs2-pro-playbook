@@ -1,0 +1,103 @@
+{
+ "b8": {
+  "zh": "T 方快攻占 14%，低于其他队伍的 28%。T 方最常用一道烟、二道烟和 B点柱子火爆弹 B 点，7 次赢下 7 次。",
+  "en": "Fast hits account for 14% of T gun rounds versus 28% for other teams. The go-to B execute uses B short smoke, B long smoke and a B pillar molotov, winning 7 of 7 attempts.",
+  "facts": [
+   "t_tempo_fast",
+   "t_signature_recipe"
+  ]
+ },
+ "betboom": {
+  "zh": "T 方快攻占 46%，高于其他队伍的 26%。T 方最常用警家烟和靠墓地的 A后点火爆弹 A 点，6 次赢下 3 次。",
+  "en": "Fast hits account for 46% of T gun rounds versus 26% for other teams. The go-to A execute uses CT smoke and a Back A molotov on the Temple side, winning 3 of 6 attempts.",
+  "facts": [
+   "t_tempo_fast",
+   "t_signature_recipe"
+  ]
+ },
+ "fut-esports": {
+  "zh": "T 方最常用一道烟、二道烟和 B点柱子火爆弹 B 点，7 次赢下 6 次。T 方最常由 Krabeni 摸边，5 次进攻时他在另一侧或远离进攻点。",
+  "en": "The go-to B execute uses B short smoke, B long smoke and a B pillar molotov, winning 6 of 7 attempts. Krabeni is the usual T lurker, on the other side or far from the hit on 5 attacks.",
+  "facts": [
+   "t_signature_recipe",
+   "t_main_lurker"
+  ]
+ },
+ "g2": {
+  "zh": "T 方最常用一道烟、二道烟和 B点柱子火爆弹 B 点，6 次赢下 0 次。T 方最常由 MATYS 摸边，4 次进攻时他在另一侧或远离进攻点。",
+  "en": "The go-to B execute uses B short smoke, B long smoke and a B pillar molotov, winning 0 of 6 attempts. MATYS is the usual T lurker, on the other side or far from the hit on 4 attacks.",
+  "facts": [
+   "t_signature_recipe",
+   "t_main_lurker"
+  ]
+ },
+ "legacy": {
+  "zh": "T 方分兵进点占 19%，低于其他队伍的 46%。T 方最常由 latto 摸边，7 次进攻时他在另一侧或远离进攻点。",
+  "en": "The T side uses split hits on 19% of attacks versus 46% for other teams. latto is the usual T lurker, on the other side or far from the hit on 7 attacks.",
+  "facts": [
+   "t_split",
+   "t_main_lurker"
+  ]
+ },
+ "lgcy": {
+  "zh": "T 方最常用一道烟、二道烟和 B点柱子火爆弹 B 点，5 次赢下 5 次。开局 20 秒的 CT 默认站位为 A2 B3，占 31% 的枪局，胜率 57%。",
+  "en": "The go-to B execute uses B short smoke, B long smoke and a B pillar molotov, winning 5 of 5 attempts. At 20 s, the default CT setup is A2 B3, used in 31% of gun rounds with a win rate of 57%.",
+  "facts": [
+   "t_signature_recipe",
+   "ct_default_setup"
+  ]
+ },
+ "lvg": {
+  "zh": "T 方最常用一道烟、二道烟和 B点柱子火爆弹 B 点，4 次赢下 2 次。CT 堆点防守占 25%，高于其他队伍的 7%。",
+  "en": "The go-to B execute uses B short smoke, B long smoke and a B pillar molotov, winning 2 of 4 attempts. The CT side stacks a site in 25% of gun rounds versus 7% for other teams.",
+  "facts": [
+   "t_signature_recipe",
+   "ct_stack"
+  ]
+ },
+ "m80": {
+  "zh": "T 方有人摸边的进攻占 55%，高于其他队伍的 36%。进攻开始后 CT 及时回防占 78%，高于其他队伍的 55%。",
+  "en": "The T side includes a lurker on 55% of hits versus 36% for other teams. CT rotations arrive in time in 78% of rounds versus 55% for other teams.",
+  "facts": [
+   "t_lurk",
+   "ct_rotate"
+  ]
+ },
+ "mibr": {
+  "zh": "T 方有人摸边的进攻占 58%，高于其他队伍的 36%。T 方最常用警家烟和靠墓地的 A后点火爆弹 A 点，6 次赢下 3 次。",
+  "en": "The T side includes a lurker on 58% of hits versus 36% for other teams. The go-to A execute uses CT smoke and a Back A molotov on the Temple side, winning 3 of 6 attempts.",
+  "facts": [
+   "t_lurk",
+   "t_signature_recipe"
+  ]
+ },
+ "ninjas-in-pyjamas": {
+  "zh": "T 方分兵进点占 73%，高于其他队伍的 45%。",
+  "en": "The T side uses split hits on 73% of attacks versus 45% for other teams.",
+  "facts": [
+   "t_split"
+  ]
+ },
+ "parivision": {
+  "zh": "T 方有人摸边的进攻占 56%，高于其他队伍的 36%。T 方最常用警家烟和甜甜圈出口烟爆弹 A 点，5 次赢下 1 次。",
+  "en": "The T side includes a lurker on 56% of hits versus 36% for other teams. The go-to A execute uses CT smoke and Donut exit smoke, winning 1 of 5 attempts.",
+  "facts": [
+   "t_lurk",
+   "t_signature_recipe"
+  ]
+ },
+ "spirit": {
+  "zh": "T 方最常用警家烟和靠墓地的 A后点火爆弹 A 点，4 次赢下 2 次。",
+  "en": "The go-to A execute uses CT smoke and a Back A molotov on the Temple side, winning 2 of 4 attempts.",
+  "facts": [
+   "t_signature_recipe"
+  ]
+ },
+ "tyloo": {
+  "zh": "T 方最常用一道烟、二道烟和 B点柱子火爆弹 B 点，8 次赢下 5 次。",
+  "en": "The go-to B execute uses B short smoke, B long smoke and a B pillar molotov, winning 5 of 8 attempts.",
+  "facts": [
+   "t_signature_recipe"
+  ]
+ }
+}
