@@ -190,3 +190,13 @@ def test_demo_events_from_paths(tmp_path):
     ev = demo_events(tmp_path)
     assert ev["2394905_mouz-vs-legacy-m2-nuke"] == "IEM Cologne Major 2026"
     assert ev["falcons-vs-9z-m1-dust2"] == "PGL Astana 2026"
+
+
+def test_apply_aliases_renames_team_columns():
+    import polars as pl
+    from playbook.dedupe import apply_aliases
+    t = {"matches": pl.DataFrame({"demo_id": ["d"], "team_a": ["FLC"], "team_b": ["9z Globant"], "winner": ["FLC"]}),
+         "kills": pl.DataFrame({"attacker_team": ["FLC", "Vitality"]})}
+    out = apply_aliases(t, {"flc": "Falcons", "9z globant": "9z"})
+    assert out["matches"].row(0) == ("d", "Falcons", "9z", "Falcons")
+    assert out["kills"]["attacker_team"].to_list() == ["Falcons", "Vitality"]

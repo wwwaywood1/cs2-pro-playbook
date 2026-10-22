@@ -84,6 +84,29 @@ def hltv_demo_ids(raw_dir: Path = RAW_DIR) -> set[str]:
             if p.is_file() and p.suffix.lower() == ".dem"}
 
 
+TEAM_COLUMNS = ("team", "team_a", "team_b", "winner", "winner_team", "ct_team", "t_team",
+                "attacker_team", "victim_team", "thrower_team", "assister_team", "opponent")
+
+
+def apply_aliases(tables: dict[str, pl.DataFrame], aliases: dict[str, str] | None = None) -> dict[str, pl.DataFrame]:
+    """Re-apply config/team_aliases.csv to every team-name column at export time, so alias
+    edits take effect without re-parsing demos (parse applies the aliases known at that time)."""
+    aliases = load_team_aliases() if aliases is None else aliases
+    out = {}
+    for name, df in tables.items():
+        cols = [c for c in TEAM_COLUMNS if c in df.columns and df.schema[c] == pl.Utf8]
+        if cols:
+            uniq = set()
+            for c in cols:
+                uniq.update(v for v in df[c].unique().to_list() if v is not None)
+            mapping = {v: canonical_team(v, aliases) for v in uniq}
+            mapping = {k: v for k, v in mapping.items() if v != k}
+            if mapping:
+                df = df.with_columns(pl.col(c).replace(mapping) for c in cols)
+        out[name] = df
+    return out
+
+
 def deduplicate_tables(tables: dict[str, pl.DataFrame], *,
                        preferred_ids: set[str] | None = None,
                        aliases: dict[str, str] | None = None
@@ -95,6 +118,7 @@ def deduplicate_tables(tables: dict[str, pl.DataFrame], *,
     through unchanged and no input DataFrame is mutated.
     """
     aliases = load_team_aliases() if aliases is None else aliases
+    tables = apply_aliases(tables, aliases)
     preferred_ids = set() if preferred_ids is None else preferred_ids
     rounds = tables.get("rounds", pl.DataFrame())
     by_demo = (rounds.partition_by("demo_id", as_dict=True)
