@@ -1,3 +1,4 @@
+import Segmented from "../components/Segmented";
 import { Reveal, Stagger } from "../components/Motion";
 import { teamTheme } from "../theme";
 import { PageContext, PageSurface, SampleStrip } from "../components/Page";
@@ -12,7 +13,7 @@ import { ErrorNotice, Loading } from "../components/Status";
 import { getHeatmapBaseline, getHeatmapTeams, getTeamHeatmap, useData } from "../data";
 import { fmtInt, fmtNum, fmtPct } from "../format";
 import {
-  blur, combine, denseLayers, HEAT_PHASES, ownerRgba, perRound,
+  blur, combine, denseLayers, differenceRgba, HEAT_PHASES, ownerRgba, perRound,
   playerColor, playerRgba, toDataUrl, UTILITY_LAYERS, VIEW_WEIGHTS,
 } from "../heatmap";
 import type { HeatView, Weights } from "../heatmap";
@@ -120,6 +121,7 @@ function HeatmapView({ entry, team, baseline }: {
 }) {
   const { activeId } = useMapLink();
   const [params, setParams] = useSearchParams();
+  const ghost = params.get("ghost") === "1";
   const side = choice<Side>(params.get("side"), ["T", "CT"], "T");
   const view = choice(params.get("view"), VIEWS, "presence");
   const util = view === "utility" ? choice(params.get("util"), UTILS, "all") : "all";
@@ -196,11 +198,18 @@ function HeatmapView({ entry, team, baseline }: {
   })), [computed, shape, level, side]);
   const selected = useMemo(() => computed.filter((player) => selectedIds.includes(player.steamid)), [computed, selectedIds]);
   const overlays = useMemo(() => {
+    if (ghost) {
+      const values = new Float32Array(shape.grid * shape.grid * shape.levels);
+      for (const player of selected) if (player.values) for (let i = 0; i < values.length; i++) values[i] += player.values[i];
+      const average = blur(combine(denseLayers(baseline, side, phases, shape), weights, shape), shape, sigma);
+      const rgba = differenceRgba(values, average, shape, level);
+      return rgba.some((value, index) => index % 4 === 3 && value > 0) ? [{ key: "ghost", url: toDataUrl(rgba, shape.grid) }] : [];
+    }
     if (mode === "stack") return images.filter((image) => selectedIds.includes(image.key) && image.url)
       .sort((a, b) => b.color - a.color).map(({ key, url }) => ({ key, url }));
     const owners = selected.flatMap((player) => player.values ? [{ values: player.values, color: playerColor(player.color, side) }] : []);
     return owners.length ? [{ key: "owner", url: toDataUrl(ownerRgba(owners, shape, level), shape.grid) }] : [];
-  }, [mode, images, selectedIds, selected, shape, level, side]);
+  }, [mode, images, selectedIds, selected, shape, level, side, ghost, baseline, phases, weights, sigma]);
   const holdMarkers = selected.flatMap((player) => holdsIds.includes(player.steamid)
     ? (team.summary[player.steamid]?.[side]?.holds ?? []).slice(0, 3)
       .filter((hold) => hold.level === level && Number.isFinite(hold.radar_x) && Number.isFinite(hold.radar_y))
@@ -226,41 +235,42 @@ function HeatmapView({ entry, team, baseline }: {
         <div className="hm-controls">
           <fieldset className="hm-field">
             <legend>{t("heatmap.side")}</legend>
-            <div className="hm-buttons">{(["T", "CT"] as const).map((value) => (
+            <Segmented className="hm-buttons">{(["T", "CT"] as const).map((value) => (
               <button key={value} type="button" aria-pressed={side === value} onClick={() => update({ side: value, players: null })}>{value}</button>
-            ))}</div>
+            ))}</Segmented>
           </fieldset>
           <PlayerChips roster={team.roster} side={side} selected={selectedIds} onChange={(ids) => update({ players: ids.join(",") })} />
-          <div className="hm-buttons" role="group" aria-label={t("heatmap.title")}>
+          <Segmented className="hm-buttons" role="group" aria-label={t("heatmap.title")}>
             {VIEWS.map((value) => (
               <button key={value} type="button" aria-pressed={view === value} onClick={() => update({ view: value })}>{t(`heatmap.view.${value}`)}</button>
             ))}
-          </div>
-          {view === "utility" && <div className="hm-buttons" role="group" aria-label={t("heatmap.utility")}>
+          </Segmented>
+          {view === "utility" && <Segmented className="hm-buttons" role="group" aria-label={t("heatmap.utility")}>
             {UTILS.map((value) => (
               <button key={value} type="button" aria-pressed={util === value} onClick={() => update({ util: value })}>{t(`heatmap.util.${value}`)}</button>
             ))}
-          </div>}
+          </Segmented>}
           <fieldset className="hm-field">
             <legend>{t("heatmap.phases")}</legend>
-            <div className="hm-buttons">{HEAT_PHASES.map((phase) => <button type="button" key={phase} aria-pressed={phases.length === 1 && phases[0] === phase} onClick={() => update({ phases: phase })}>{t(`round2.time_${phase}`)}</button>)}</div>
+            <Segmented className="hm-buttons">{HEAT_PHASES.map((phase) => <button type="button" key={phase} aria-pressed={phases.length === 1 && phases[0] === phase} onClick={() => update({ phases: phase })}>{t(`round2.time_${phase}`)}</button>)}</Segmented>
             <p className="muted">{t("round2.time_help")}</p>
           </fieldset>
-          <div className="hm-buttons" role="group" aria-label={t("heatmap.mode.owner")}>
+          <Segmented className="hm-buttons" role="group" aria-label={t("heatmap.mode.owner")}>
             {(["stack", "owner"] as const).map((value) => (
               <button key={value} type="button" aria-pressed={mode === value} onClick={() => update({ mode: value })}>{t(`heatmap.mode.${value}`)}</button>
             ))}
-          </div>
+          </Segmented>
           <label className="hm-slider">
             <span>{t("heatmap.sigma")} · {fmtNum(sigma, 1)}</span>
             <input type="range" min="0" max="2.5" step="0.1" value={sigma} onChange={(event) => update({ sigma: event.target.value })} />
           </label>
-          {baseline.levels === 2 && <div className="hm-buttons" role="group" aria-label={t("heatmap.level.upper")}>
+          {baseline.levels === 2 && <Segmented className="hm-buttons" role="group" aria-label={t("heatmap.level.upper")}>
             {([0, 1] as const).map((value) => (
               <button key={value} type="button" aria-pressed={level === value} onClick={() => update({ level: String(value) })}>{t(`heatmap.level.${value === 0 ? "upper" : "lower"}`)}</button>
             ))}
-          </div>}
-          <p className="hm-help">{t("heatmap.help")}</p>
+          </Segmented>}
+          <label className="ghost-toggle" title="比较所选队员与本图同侧、同阶段的归一化分布"><input type="checkbox" checked={ghost} onChange={(event) => update({ ghost: event.target.checked ? "1" : null })} />{t("round5.ghost_toggle")}</label>
+          <p className="hm-help">{ghost ? t("round5.ghost_legend") : t("heatmap.help")}</p>
         </div>
         <figure className="hm-figure">
           <Reveal className="motion-radar" key={`${team.map}:${level}`}><HeatmapCanvas map={team.map} level={level} overlays={overlays} markers={markers} /></Reveal>

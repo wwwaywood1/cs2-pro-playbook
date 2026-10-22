@@ -1,9 +1,10 @@
+import Segmented from "./Segmented";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import GrenadeIcon, { GrenadeGlyph } from "./GrenadeIcon";
 import { useMapLink } from "../mapLink";
 import { calloutLabel, t } from "../i18n";
-import { fmtPct, fmtInt } from "../format";
+import { fmtPct, fmtInt, fmtNum } from "../format";
 import type { Lineup, Recipe, RecipeRoute, Spot } from "../types";
 
 export interface RecipeSpot {
@@ -164,18 +165,18 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
   }, []);
   const source = `${import.meta.env.BASE_URL}radars/${map}${level === 1 ? "_lower" : ""}.png`;
   const unit = view.size / width;
-  return <figure className="tactics-radar-wrap" ref={host}>
+  return <figure className="tactics-radar-wrap" ref={host} data-recipe-id={routeKey}>
     <figcaption className="tactics-map-head">
       <div><h2>{title}</h2><p className="muted tactics-selection-label" aria-live="polite">{selectionLabel || t("tactics.map_hint")}</p></div>
       <button type="button" className="button button-ghost" aria-pressed={full} onClick={() => setFull((value) => !value)}>{t("tactics.full_map")}</button>
     </figcaption>
-    {map === "de_nuke" && <div className="segmented tactics-levels" role="group" aria-label={t("tactics.floor")}>
+    {map === "de_nuke" && <Segmented className="segmented tactics-levels" role="group" aria-label={t("tactics.floor")}>
       {[0, 1].map((value) => <button key={value} type="button" aria-pressed={level === value} disabled={!levels.includes(value)}
         className={level === value ? "is-active" : ""} onClick={() => setChosenLevel(value)}>
         {t(`heatmap.level.${value === 1 ? "lower" : "upper"}`)} ({fmtInt(spots.filter(({ spot }) => spot?.level === value).length)})
       </button>)}
-    </div>}
-    <svg ref={radar} className="radar tactics-radar" viewBox={`${view.x} ${view.y} ${view.size} ${view.size}`} role="group" aria-label={t("tactics.radar_label", { map })}>
+    </Segmented>}
+<div className="hud-radar-frame">    <svg ref={radar} className="radar tactics-radar" viewBox={`${view.x} ${view.y} ${view.size} ${view.size}`} role="group" aria-label={t("tactics.radar_label", { map })}>
       <defs>
         <marker id={`${maskId}-entry-arrow`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#efad55" /></marker>
         <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024"><rect width="1024" height="1024" fill="white" /><rect x={focus.x} y={focus.y} width={focus.size} height={focus.size} fill="black" /></mask>
@@ -186,7 +187,7 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
       {failedSource !== source && <image href={source} width="1024" height="1024" onError={() => setFailedSource(source)} />}
       <rect width="1024" height="1024" fill="#060b12" opacity="0.55" mask={`url(#${maskId})`} pointerEvents="none" />
       <g className="tactics-entry-routes" key={routeKey} pointerEvents="none">{entryRoutes.map((route, index) => {
-        const label = t("round3.route_label", { via: route.via.map((place) => calloutLabel(map, place)).join(" → "), p: fmtPct(route.share) });
+        const label = t("round5.route_name", { via: calloutLabel(map, route.via.find((place) => !/spawn|start/i.test(place))), p: fmtNum(route.share * 100, 0) });
         const [x, y] = routeLabelPoint(route.points);
         return <g key={index} opacity={Math.max(.3, .9 - index * .17)}
           className={activeRoute === null ? undefined : activeRoute === index ? "is-active" : "is-dimmed"}>
@@ -221,10 +222,10 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
         return entry.to ? <a key={entry.id} {...bind(`spot:${entry.id}`)} href={`#${entry.to}`} aria-label={`${label} · ${t("tactics.open_lineup")}`}><title>{label}</title>{marker}</a>
           : <g key={entry.id} {...bind(`spot:${entry.id}`)} tabIndex={0} role="img" aria-label={label}><title>{label}</title>{marker}</g>;
       })}
-    </svg>
+    </svg></div>
     {routes !== undefined ? <div className="tactics-routes-legend"><strong tabIndex={0} title={t("round3.routes_tip")}>{t("round3.routes_title")} ⓘ</strong>
       {!entryRoutes.length ? <p className="muted">{t("round3.routes_none")}</p> : entryRoutes.map((route, index) => {
-        const label = t("round3.route_label", { via: route.via.map((place) => calloutLabel(map, place)).join(" → "), p: fmtPct(route.share) });
+        const label = t("round5.route_name", { via: calloutLabel(map, route.via.find((place) => !/spawn|start/i.test(place))), p: fmtNum(route.share * 100, 0) });
         return <button key={index} type="button" className="tactics-route-row"
           onMouseEnter={() => setActiveRoute(index)} onMouseLeave={() => setActiveRoute(null)}
           onFocus={() => setActiveRoute(index)} onBlur={() => setActiveRoute(null)}>

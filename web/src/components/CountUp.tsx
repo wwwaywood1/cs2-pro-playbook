@@ -1,3 +1,4 @@
+import Num from "./Num";
 import { useContext, useLayoutEffect, useRef } from "react";
 import { fmtInt, fmtNum, fmtPct, fmtSeconds } from "../format";
 import { MOTION_EASE, MOTION_TIMING, NumberEntrance, ReducedMotion } from "../motion";
@@ -36,6 +37,6 @@ export default function CountUp({ value, text, format = "number" }: { value?: nu
     return () => { cancelled = true; animation.cancel(); node.dataset.rolling = "false"; };
   }, [final, reduced, entrance]);
   return <span className="hub-count" ref={visual} data-value={final} data-rolling="false">
-    <span className="sr-only">{final}</span><span aria-hidden="true" className="hub-number-display"><span className="hub-number-final">{final}</span></span>
+    <span className="sr-only">{final}</span><span aria-hidden="true" className="hub-number-display"><span className="hub-number-final"><Num value={final} /></span></span>
   </span>;
 }

@@ -1,3 +1,7 @@
+import PracticeCopy from "../components/PracticeCopy";
+import { copyText, practiceBind } from "../practice";
+import Num from "../components/Num";
+import Segmented from "../components/Segmented";
 import { Reveal, Stagger } from "../components/Motion";
 import { PageContext, PageSurface, MetricStrip } from "../components/Page";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -17,51 +21,11 @@ const LANE_OPTIONS: Lane[] = ["A", "MID", "B"];
 const TECHNIQUES: Technique[] = ["jump", "run", "crouch", "walk", "stand"];
 const SIDES: Side[] = ["T", "CT"];
 
-async function copyText(text: string, fallback: HTMLElement | null): Promise<boolean> {
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  } catch {
-    // Permission denied or an insecure context: try the legacy path.
-  }
-
-  let area: HTMLTextAreaElement | null = null;
-  try {
-    area = document.createElement("textarea");
-    area.value = text;
-    area.setAttribute("readonly", "");
-    area.style.position = "fixed";
-    area.style.top = "0";
-    area.style.left = "-9999px";
-    document.body.appendChild(area);
-    area.select();
-    area.setSelectionRange(0, text.length);
-    const copied = document.execCommand("copy");
-    if (copied) return true;
-  } catch {
-    // Fall through to selecting the visible command for manual copying.
-  } finally {
-    area?.remove();
-  }
-
-  if (fallback) {
-    const selection = window.getSelection();
-    if (selection) {
-      const range = document.createRange();
-      range.selectNodeContents(fallback);
-      selection.removeAllRanges();
-      selection.addRange(range);
-    }
-  }
-  return false;
-}
 
 export default function Lineups() {
   useLang();
   const { map = "" } = useParams<{ map: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const requestedId = searchParams.get("id");
   const requestKey = `${map}:${requestedId ?? ""}`;
   const { data: meta } = useData(() => getMeta(map), [map]);
@@ -70,6 +34,10 @@ export default function Lineups() {
   );
   const lineups = lineupData?.map === map ? lineupData.rows : null;
 
+  const clusterIds = useMemo(() => {
+    const value = searchParams.get("landing");
+    return value ? new Set(value.split(",")) : null;
+  }, [searchParams]);
   const [side, setSide] = useState<Side | "ALL">("ALL");
   const [types, setTypes] = useState<GrenadeType[]>(ALL_TYPES);
   const [lane, setLane] = useState<Lane | "ALL">("ALL");
@@ -90,7 +58,7 @@ export default function Lineups() {
     };
   }, []);
 
-  const filtered = useMemo(() => {
+  const candidates = useMemo(() => {
     const rows = (lineups ?? []).filter(
       (lineup) =>
         (side === "ALL" || lineup.side === side) &&
@@ -104,6 +72,23 @@ export default function Lineups() {
     );
   }, [lineups, side, types, lane, minThrows, technique]);
 
+  const filtered = useMemo(() => candidates.filter((lineup) => !clusterIds || clusterIds.has(lineup.id)), [candidates, clusterIds]);
+  const pickCluster = (ids: string[] | null) => {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      if (ids?.length) { next.set("landing", ids.join(",")); next.set("id", ids[0]); }
+      else next.delete("landing");
+      return next;
+    }, { replace: true });
+  };
+  useEffect(() => {
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && clusterIds && !document.querySelector("dialog[open]")) { event.preventDefault(); pickCluster(null); }
+    };
+    document.addEventListener("keydown", escape);
+    return () => document.removeEventListener("keydown", escape);
+  }, [clusterIds]);
+
   useEffect(() => {
     if (!lineups) return;
     if (appliedRequest.current !== requestKey) {
@@ -112,6 +97,7 @@ export default function Lineups() {
       const target = lineups.find((lineup) => lineup.id === requestedId);
       if (target) {
         if (!filtered.some((lineup) => lineup.id === target.id)) {
+          pickCluster(null);
           setSide("ALL");
           setTypes(ALL_TYPES);
           setMinThrows(1);
@@ -151,6 +137,7 @@ export default function Lineups() {
   };
 
   const resetFilters = () => {
+    pickCluster(null);
     setSide("ALL");
     setTypes(ALL_TYPES);
     setLane("ALL");
@@ -160,6 +147,7 @@ export default function Lineups() {
 
   const selectFromRadar = (id: string) => {
     setSelectedId(id);
+    setSearchParams((current) => { const next = new URLSearchParams(current); next.set("id", id); return next; }, { replace: true });
     const card = cardRefs.current.get(id);
     if (card) card.scrollIntoView({ behavior: motionScrollBehavior(), block: "nearest" });
   };
@@ -193,7 +181,7 @@ export default function Lineups() {
       <section className="filters">
         <div className="filter-group" role="group" aria-label={t("ui.filter_side")}>
           <span className="filter-label">{t("ui.filter_side")}</span>
-          <div className="segmented">
+          <Segmented className="segmented">
             <button
               type="button"
               className={side === "ALL" ? "is-active" : ""}
@@ -214,7 +202,7 @@ export default function Lineups() {
                 {t(`side.${value}`)}
               </button>
             ))}
-          </div>
+          </Segmented>
         </div>
 
         <div className="filter-group" role="group" aria-label={t("ui.filter_type")}>
@@ -236,7 +224,7 @@ export default function Lineups() {
 
         <div className="filter-group" role="group" aria-label={t("ui.filter_lane")}>
           <span className="filter-label">{t("ui.filter_lane")}</span>
-          <div className="segmented">
+          <Segmented className="segmented">
             <button
               type="button"
               className={lane === "ALL" ? "is-active" : ""}
@@ -256,7 +244,7 @@ export default function Lineups() {
                 {t(`lane.${value}`)}
               </button>
             ))}
-          </div>
+          </Segmented>
         </div>
 
         <div className="filter-group">
@@ -281,9 +269,9 @@ export default function Lineups() {
 
         <div className="filter-group" role="group" aria-label={t("ui.filter_min_throws")}>
           <span className="filter-label">{t("ui.filter_min_throws")}</span>
-          <div className="segmented" id="filter-tiers">
+          <Segmented className="segmented" id="filter-tiers">
             {([0, 10, 50] as const).map((minimum, index) => <button key={minimum} type="button" aria-pressed={minThrows === minimum} className={minThrows === minimum ? "is-active" : ""} onClick={() => setMinThrows(minimum)}>{t(`round2.${["tier_all", "tier_common", "tier_must"][index]}`)}</button>)}
-          </div>
+          </Segmented>
         </div>
 
         <div className="filter-group filter-actions">
@@ -302,7 +290,9 @@ export default function Lineups() {
           <aside className="radar-panel">
             <Reveal className="motion-radar"><Radar
               map={map}
-              lineups={filtered}
+              lineups={candidates}
+              pickedIds={clusterIds}
+              onPick={pickCluster}
               selectedId={selectedId}
               onSelect={selectFromRadar}
             /></Reveal>
@@ -369,7 +359,7 @@ export default function Lineups() {
                       </div>
                       <div>
                         <dt>{t("ui.round_win_rate")}</dt>
-                        <dd>{fmtPct(lineup.round_win_rate)}</dd>
+                        <dd><Num value={fmtPct(lineup.round_win_rate)} /></dd>
                       </div>
                       <div>
                         <dt tabIndex={0} title={t("round2.pop_tip")}>{t("round2.pop_tip")} ⓘ</dt>
@@ -388,6 +378,7 @@ export default function Lineups() {
                       >
                         {copied ? t("ui.copied") : t("ui.copy_cmd")}
                       </button>
+                      <PracticeCopy command={practiceBind(lineup)} label={t("round5.bind_copy")} tip={t("round5.bind_tip")} />
                       <span className="hint">{t("ui.practice_hint")}</span>
                     </div>
 

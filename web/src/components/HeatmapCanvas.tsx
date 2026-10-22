@@ -25,7 +25,7 @@ export default function HeatmapCanvas({
   useEffect(() => setFailedSource(null), [source]);
 
   return (
-    <svg className="hm-radar" viewBox="0 0 1024 1024" role={markers.length ? "group" : "img"} aria-label={map}>
+<div className="hud-radar-frame">    <svg className="hm-radar" viewBox="0 0 1024 1024" role={markers.length ? "group" : "img"} aria-label={map}>
       <rect width="1024" height="1024" className="hm-radar-bg" />
       {failedSource !== source && (
         <image
@@ -41,7 +41,7 @@ export default function HeatmapCanvas({
         />
       ))}
       <HeatmapMarkers markers={markers} />
-    </svg>
+    </svg></div>
   );
 }
 

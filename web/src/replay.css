@@ -1,20 +1,45 @@
-.round-replay { width: min(calc(70vh + 42px), calc(100vw - 48px)); max-height: calc(100dvh - 32px); padding: 20px; color: #e7edf5; background: #111b2c; border: 1px solid #526077; border-radius: 16px; overflow: auto; box-shadow: 0 20px 80px #0009; }
+.round-replay { box-sizing: border-box; width: min(1320px, calc(100vw - 48px)); max-height: calc(100dvh - 32px); padding: 20px; color: #e7edf5; background: #111b2c; border: 1px solid #526077; border-radius: 6px; overflow: auto; box-shadow: 0 20px 80px #0009; }
 .round-replay::backdrop { background: #020814d9; }
 .round-replay > header, .replay-controls { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .round-replay > header { justify-content: space-between; }
 .round-replay h2 { margin: 0; }
-.replay-radar { display: block; width: min(100%, 70vh); aspect-ratio: 1; margin: 12px auto; background: #070e18; }
+.replay-radar { display: block; width: 100%; aspect-ratio: 1; margin: 0 auto; background: transparent; }
 .replay-player { stroke: #09121e; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .replay-player:focus { outline: none; stroke: #09121e; stroke-width: 1; filter: drop-shadow(0 0 3px white); }
-.replay-kill { stroke: #ff7c78; stroke-width: 4; }
 .replay-plant rect { fill: #efad55; stroke: #fff; stroke-width: 2; }
 .replay-plant text { fill: #111b2c; font-size: 19px; font-weight: 800; }
 .replay-controls output { margin-left: auto; font-variant-numeric: tabular-nums; }
 .replay-scrubber { display: block; width: 100%; margin: 12px 0; accent-color: #efad55; }
 .replay-wp { margin: 0; }
-.replay-wp svg { display: block; width: 100%; height: 70px; }
+.replay-wp svg { display: block; width: 100%; height: 100px; }
 .replay-legend { font-size: .85rem; }
 .replay-title-match { display: block; margin-top: 8px; font-size: .9rem; font-weight: 400; }
 
 .replay-player { cursor: pointer; }
 .replay-player-name { fill: white; stroke: #09121e; stroke-width: 3px; paint-order: stroke; font-size: 20px; font-weight: 600; pointer-events: none; }
+
+.replay-layout { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(340px, 1fr); align-items: start; gap: 24px; }
+.replay-sidebar { display: grid; gap: 12px; min-width: 0; max-height: calc(100dvh - 180px); overflow: auto; }
+.replay-wp { min-height: 100px; }
+@media (max-width: 850px) { .replay-layout { grid-template-columns: minmax(0, 1fr); } .replay-radar { width: min(100%, 45vh); } .replay-sidebar { max-height: none; } }
+
+.replay-kill { stroke: #9099a6; opacity: .7; stroke-width: 2px; }
+.replay-kill path, .replay-kill-line { vector-effect: non-scaling-stroke; }
+.replay-kill-line { stroke: #ffdc8a; stroke-width: 2; stroke-dasharray: 6 3; pointer-events: none; }
+.replay-player-abbr { fill: #fff; stroke: #09121e; stroke-width: 2; paint-order: stroke; pointer-events: none; }
+.replay-clock { font-size: 1.8rem; font-weight: 700; }
+.replay-clock small { display: block; font-size: .7rem; font-weight: 400; color: #9eafc3; }
+.replay-events { min-height: 100px; height: clamp(100px, 22vh, 220px); display: flex; flex-direction: column; }
+.replay-events h3 { margin: 0 0 8px; font-size: .9rem; }
+.replay-events ol { overflow: auto; padding: 0; margin: 0; list-style: none; }
+.replay-events button { width: 100%; text-align: left; border: 0; background: #080e1880; color: #d6dce5; padding: 7px; cursor: pointer; font: inherit; font-size: .8rem; }
+.replay-killfeed { border-right: 2px solid #f1b46e; margin-bottom: 4px; }
+.replay-events time { color: #8796aa; font-variant-numeric: tabular-nums; }
+.replay-timeline { padding-bottom: 24px; }
+.replay-anchors { position: relative; margin: 0 12px; }
+.replay-anchors button { position: absolute; transform: translateX(-50%); padding: 0; width: 20px; height: 22px; background: #152338; border: 0; border-radius: 4px; color: #efad55; cursor: pointer; }
+.replay-wp [role=button] { cursor: pointer; }
+.replay-wp [role=button]:focus-visible { outline: none; stroke: white; stroke-width: 2; }
+.replay-jumps { display: flex; flex-wrap: wrap; gap: 6px; }
+.replay-jumps button { font-size: .75rem; }
+.replay-legend, .replay-keys { margin: 0; }

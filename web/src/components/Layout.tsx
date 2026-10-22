@@ -1,3 +1,4 @@
+import CommandPalette from "./CommandPalette";
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import RouteTransition from "./RouteTransition";
@@ -62,6 +63,7 @@ export default function Layout() {
             </NavLink>
           </nav>
 
+          <CommandPalette currentMap={map} />
           <button
             type="button"
             className="lang-toggle"

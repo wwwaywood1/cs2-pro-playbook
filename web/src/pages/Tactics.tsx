@@ -1,3 +1,8 @@
+import PracticeCopy from "../components/PracticeCopy";
+import { recipeBind } from "../practice";
+import Num from "../components/Num";
+import Segmented from "../components/Segmented";
+import { ctSetupLabel } from "../labels";
 import { ReplayButton } from "../components/RoundReplay";
 import CountUp from "../components/CountUp";
 import { Reveal } from "../components/Motion";
@@ -80,7 +85,7 @@ function CTOverview({ data }: { data: CTTactics }) {
       <p className="muted">{t("tactics.gun_rounds", { n: fmtInt(data.gun_rounds) })}</p>
       <h3>{t("tactics.setups")}</h3>
       <p className="muted tactics-help">{t("ui.setup_shape_help")}</p>
-      <ShareBars rows={[...data.setups_20s].sort((a, b) => b.rounds - a.rounds).slice(0, 6)} labelFor={(value) => value} />
+      <ShareBars rows={[...data.setups_20s].sort((a, b) => b.rounds - a.rounds).slice(0, 6)} labelFor={ctSetupLabel} />
       <div className="stat-row">
         <Stat label={t("tactics.forward_rate")} value={fmtPct(data.forward_rate)} />
         <Stat label={t("tactics.stack_rate")} value={fmtPct(data.stack_rate)} />
@@ -137,10 +142,11 @@ function RecipeDetails({ recipe, entries, splitDefinition, map, teams }: { recip
   const tempos = (["fast", "mid", "late"] as const).map((value) => ({ value, rounds: recipe.tempo.find((row) => row.value === value)?.rounds ?? 0 }));
   const total = tempos.reduce((n, row) => n + row.rounds, 0);
   return <div className="tactics-recipe-details">
+    <PracticeCopy command={recipeBind(recipe.id, entries.map((entry) => entry.lineup))} label={t("round5.recipe_bind")} tip={t("round5.recipe_bind_tip")} />
     <dl className="tactics-detail-stats">
       <div><dt>{t("ui.matches_title")}</dt><dd>{t("round2.recipe_matches", { n: fmtInt(recipe.n_matches) })}</dd></div>
-      <div><dt>{t("tactics.plant_rate")}</dt><dd>{fmtPct(recipe.plant_rate)}</dd></div>
-      <div><dt tabIndex={0} title={splitDefinition}>多方向进点率 ⓘ</dt><dd>{fmtPct(recipe.split_rate)}</dd></div>
+      <div><dt>{t("tactics.plant_rate")}</dt><dd><Num value={fmtPct(recipe.plant_rate)} /></dd></div>
+      <div><dt tabIndex={0} title={splitDefinition}>多方向进点率 ⓘ</dt><dd><Num value={fmtPct(recipe.split_rate)} /></dd></div>
       <div><dt>{t("tactics.avg_flashes")}</dt><dd>{fmtNum(recipe.avg_flashes)}</dd></div>
     </dl>
     {recipe.wp && recipe.wp.n > 0 && Number.isFinite(recipe.wp.before) && Number.isFinite(recipe.wp.after) ? <p className="recipe-wp">
@@ -180,7 +186,6 @@ export default function Tactics() {
   const { data: lineupData } = useData(() => getLineups(map), [map]);
   const byLineup = useMemo(() => new Map((lineupData ?? []).map((lineup) => [lineup.id, lineup])), [lineupData]);
   const { data: meta } = useData(() => getMeta(map), [map]);
-  const [preview, setPreview] = useState<string | null>(null);
   const [collapsedRecipe, setCollapsedRecipe] = useState<string | null>(null);
   const [setupChoice, setSetupChoice] = useState<string | null>(null);
   const [collapsedSetup, setCollapsedSetup] = useState<string | null>(null);
@@ -189,7 +194,7 @@ export default function Tactics() {
     .sort((a, b) => (sort === "win_rate" ? b.win_rate - a.win_rate : b.n_rounds - a.n_rounds)
       || b.n_rounds - a.n_rounds || a.id.localeCompare(b.id)), [data, site, sort]);
   const selected = recipes.find((recipe) => recipe.id === params.get("recipe")) ?? recipes[0];
-  const shown = recipes.find((recipe) => recipe.id === preview) ?? selected;
+  const shown = selected;
   const entries = useMemo(() => shown ? recipeSpots(map, shown, spotsById, lang, byLineup) : [], [shown, map, spotsById, lang, byLineup]);
   const ctSpots = useMemo<RecipeSpot[]>(() => (data?.spots ?? []).filter((spot) => spot.side === "CT" && (site === "all" || spot.lane === site))
     .sort((a, b) => b.n_throws - a.n_throws || a.spot_id.localeCompare(b.spot_id)).slice(0, 6).map((spot, index) => {
@@ -206,7 +211,7 @@ export default function Tactics() {
   if (data?.map === map && !loading) { if (selected) canonical.set("recipe", selected.id); else canonical.delete("recipe"); }
   const canonicalQuery = canonical.toString();
   useEffect(() => { if (canonicalQuery !== currentQuery) setParams(canonicalQuery, { replace: true }); }, [canonicalQuery, currentQuery, setParams]);
-  useEffect(() => { setPreview(null); setCollapsedRecipe(null); setSetupChoice(null); setCollapsedSetup(null); }, [map, site, sort, side]);
+  useEffect(() => { setCollapsedRecipe(null); setSetupChoice(null); setCollapsedSetup(null); }, [map, site, sort, side]);
   const update = (key: "site" | "sort" | "recipe" | "side", value: string) => setParams((current) => {
     const next = new URLSearchParams(current); next.set(key, value); return next;
   });
@@ -219,9 +224,9 @@ export default function Tactics() {
   return <PageSurface className="tactics-page" data-side={side}>
     <header className="page-head">
       <div><p className="eyebrow">{map}</p><h1>{meta?.display_name ?? map} · {t("ui.nav_tactics")}</h1><PageContext>{t("site.tactics_context")}</PageContext></div>
-      <div className="segmented tactics-sides" role="group" aria-label={t("ui.filter_side")}>
+      <Segmented className="segmented tactics-sides" role="group" aria-label={t("ui.filter_side")}>
         {(["T", "CT"] as const).map((value) => <button key={value} type="button" className={side === value ? "is-active" : ""} aria-pressed={side === value} onClick={() => update("side", value)}>{t(`tactics.side_${value}`)}</button>)}
-      </div>
+      </Segmented>
     </header>
     <dl className="tactics-key-numbers">
       {side === "T" ? <>
@@ -229,7 +234,7 @@ export default function Tactics() {
         <KeyNumber label={t("tactics.avg_commit")} value={fmtSeconds(data.t_overview.avg_commit_s)} context={t("tactics.commit_context")} />
         <KeyNumber label={t("tactics.signature_win")} value={fmtPct(topRecipe?.win_rate)} context={topRecipeName} />
       </> : <>
-        <KeyNumber primary label={t("tactics.default_setup")} value={fmtPct(setups[0]?.share)} context={setups[0]?.value ?? t("tactics.no_data")} />
+        <KeyNumber primary label={t("tactics.default_setup")} value={fmtPct(setups[0]?.share)} context={ctSetupLabel(setups[0]?.value)} />
         <KeyNumber label={t("tactics.setup_win")} value={fmtPct(setups[0]?.win_rate)} context={t("tactics.setup_context")} />
         <KeyNumber label={t("tactics.forward_rate")} value={fmtPct(data.ct_overview.forward_rate)} context={t("tactics.forward_context")} />
         <KeyNumber label={t("tactics.stack_rate")} value={fmtPct(data.ct_overview.stack_rate)} context={t("tactics.stack_context")} />
@@ -238,7 +243,7 @@ export default function Tactics() {
     <MapLinkHint />
     <div className="tactics-workspace">
       <aside className="tactics-map-panel">
-        <Reveal className="motion-radar" key={`${map}:${side}`}><RecipeRadar key={`${map}:${side}`} map={map} scale={scale} spots={side === "T" ? entries : ctSpots} title={side === "T" ? t("tactics.selected_utility") : t("tactics.ct_utility")}
+        <Reveal className="motion-radar" key={`${map}:${side}`}><RecipeRadar key={`${map}:${side}:${selected?.id ?? "ct"}`} map={map} scale={scale} spots={side === "T" ? entries : ctSpots} title={side === "T" ? t("tactics.selected_utility") : t("tactics.ct_utility")}
           routes={side === "T" ? shown?.routes ?? [] : undefined} routeKey={shown?.id}
           site={side === "T" ? shown?.site : site === "all" ? undefined : site}
           selectionLabel={side === "T" && shown ? `${siteLabel(shown.site)} · ${entries.filter((entry) => entry.core).map((entry) => entry.name).join(" + ")}` : undefined} /></Reveal>
@@ -246,20 +251,20 @@ export default function Tactics() {
       <section className="tactics-browser" aria-labelledby="tactics-recipes-title">
         <h2 id="tactics-recipes-title">{t(side === "T" ? "tactics.recipes" : "tactics.setups")}</h2>
         <div className="tactics-controls">
-          <div className="segmented" role="group" aria-label={t("tactics.site")}>
+          <Segmented className="segmented" role="group" aria-label={t("tactics.site")}>
             {(["all", "A", "B"] as const).map((value) => <button key={value} type="button" className={site === value ? "is-active" : ""} aria-pressed={site === value} onClick={() => update("site", value)}>{value === "all" ? t("ui.filter_all") : siteLabel(value)}</button>)}
-          </div>
+          </Segmented>
           {side === "T" && <label><span className="visually-hidden">{t("tactics.sort")}</span><select value={sort} onChange={(event) => update("sort", event.target.value)}><option value="rounds">{t("tactics.sort_rounds")}</option><option value="win_rate">{t("tactics.sort_win_rate")}</option></select></label>}
         </div>
-        {side === "T" ? <div className="tactics-recipes" onMouseLeave={() => setPreview(null)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setPreview(null); }}>
+        {side === "T" ? <div className="tactics-recipes">
           <p className="muted tactics-help">{t("tactics.recipe_count", { n: fmtInt(recipes.length) })} · {t("tactics.preview_hint")}</p>
           {recipes.length ? recipes.map((recipe, index) => {
             const rowEntries = recipeSpots(map, recipe, spotsById, lang, byLineup);
             const active = recipe.id === selected?.id;
             const open = active && collapsedRecipe !== recipe.id;
-            return <article className={`tactics-recipe motion-reveal${active ? " is-selected" : ""}`} data-motion-tilt={active || undefined} style={{ "--stagger": `${Math.min(index * 55, 385)}ms` } as CSSProperties} key={recipe.id} onMouseEnter={() => setPreview(recipe.id)} onFocus={() => setPreview(recipe.id)}>
+            return <article className={`tactics-recipe motion-reveal${active ? " is-selected" : ""}`} data-motion-tilt={active || undefined} style={{ "--stagger": `${Math.min(index * 55, 385)}ms` } as CSSProperties} key={recipe.id} data-recipe-id={recipe.id}>
               <h3><button type="button" className="tactics-recipe-toggle" aria-expanded={open} aria-controls={`details-${recipe.id}`} onClick={() => {
-                setCollapsedRecipe(open ? recipe.id : null); setPreview(null); update("recipe", recipe.id);
+                setCollapsedRecipe(open ? recipe.id : null); update("recipe", recipe.id);
               }}><span className="tactics-recipe-heading"><span className="tactics-chevron" aria-hidden="true">{open ? "▾" : "▸"}</span><span className="tactics-site">{siteLabel(recipe.site)}</span><RecipeTitle entries={rowEntries.filter((entry) => entry.core)} /></span>
                 <span className="tactics-row-meta">{t("tactics.recipe_meta", { rounds: fmtInt(recipe.n_rounds), win: fmtPct(recipe.win_rate), time: fmtSeconds(recipe.median_commit_s) })}</span>
               </button></h3>
@@ -273,7 +278,7 @@ export default function Tactics() {
             const open = active && collapsedSetup !== setup.value;
             return <article className={`tactics-recipe motion-reveal${active ? " is-selected" : ""}`} data-motion-tilt={active || undefined} style={{ "--stagger": `${Math.min(index * 55, 385)}ms` } as CSSProperties} key={setup.value}>
               <h3><button type="button" className="tactics-recipe-toggle" aria-expanded={open} aria-controls={`setup-${index}`} onClick={() => { setSetupChoice(setup.value); setCollapsedSetup(open ? setup.value : null); }}>
-                <span className="tactics-recipe-heading"><span aria-hidden="true">{open ? "▾" : "▸"}</span>{setup.value}</span>
+                <span className="tactics-recipe-heading"><span aria-hidden="true">{open ? "▾" : "▸"}</span>{ctSetupLabel(setup.value)}</span>
                 <span className="tactics-row-meta">{t("tactics.setup_meta", { rounds: fmtInt(setup.rounds), share: fmtPct(setup.share), win: fmtPct(setup.win_rate) })}</span>
               </button></h3>
               <div id={`setup-${index}`} hidden={!open}>{open && <p className="muted tactics-help">{t("ui.setup_shape_help")}</p>}</div>

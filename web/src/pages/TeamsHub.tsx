@@ -1,3 +1,5 @@
+import Segmented from "../components/Segmented";
+import { ctSetupLabel } from "../labels";
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import HeatmapCanvas, { HeatmapMarkers, type HeatmapMarker } from "../components/HeatmapCanvas";
@@ -14,7 +16,7 @@ import PlayerWpa from "../components/PlayerWpa";
 import { Loading } from "../components/Status";
 import { getAssetSlots, getHeatmapBaseline, getHeatmapTeams, getLineups, getMeta, getPlayerQuotes, getPlayers, getTactics, getTeam, getTeamHeatmap, useData } from "../data";
 import { fmtInt, fmtNum, fmtPct } from "../format";
-import { blur, combine, denseLayers, HEAT_PHASES, playerRgba, toDataUrl, VIEW_WEIGHTS, type Dense, type HeatView } from "../heatmap";
+import { blur, combine, denseLayers, differenceRgba, HEAT_PHASES, playerRgba, toDataUrl, VIEW_WEIGHTS, type Dense, type HeatView } from "../heatmap";
 import { calloutLabel, t, useLang } from "../i18n";
 import type { AssetSlots, HeatLayer, HeatPhase, HeatmapBaseline, HeatmapTeamIndexEntry, PlayerProfile, PlayerQuotes, PlayerSideSummary, RosterEntry, Side, TeamHeatmap, TeamProfile, TacticsFile, UtilitySpot } from "../types";
 import { rememberPortrait, usePlayerEntrance } from "./teamsHubMotion";
@@ -57,13 +59,8 @@ function Verse({ text }: { text: string }) {
   const phrases = text.trim().split(/[，,。！？；;\n]+/u).map((part) => part.trim()).filter(Boolean);
   const glyphs = Array.from(phrases[0] ?? "");
   const columns = phrases.length > 1 ? phrases : [glyphs.slice(0, Math.ceil(glyphs.length / 2)).join(""), glyphs.slice(Math.ceil(glyphs.length / 2)).join("")].filter(Boolean);
-  let offset = 0;
-  const total = columns.reduce((sum, column) => sum + Array.from(column).length, 0);
   return <p className="hub-verse-line" lang="zh"><span className="sr-only">{text}</span>
-    <span aria-hidden="true" className="hub-verse-columns">{columns.map((column, columnIndex) => <span className="hub-verse-column" key={columnIndex}>{Array.from(column).map((character) => {
-      const index = offset++;
-      return <span className="hub-verse-character" key={index} style={{ "--character-delay": `${index * Math.min(38, 500 / Math.max(1, total - 1))}ms` } as CSSProperties}>{character}</span>;
-    })}</span>)}</span>
+    <span aria-hidden="true" className="hub-verse-columns">{columns.map((column, index) => <span className="hub-verse-column" key={`${index}:${column}`}>{column}</span>)}</span>
   </p>;
 }
 
@@ -174,7 +171,7 @@ function MapTacticsSummary({ profile, tactics }: { profile: TeamProfile; tactics
   const setup = profile.tactics?.CT.setups_20s[0];
   return <div className="hub-team-layout"><section><h3>{t("tactics.tempo_title")}</h3>
         <ul className="hub-data-list">{(profile.tactics?.T.tempo ?? []).map((row) => <li key={row.value}><span>{t(`tactics.tempo.${row.value}`)}</span><strong>{fmtPct(row.share)}</strong></li>)}</ul>
-        <h3>{t("tactics.default_setup")}</h3><p>{setup ? `${setup.value} · ${fmtPct(setup.share)}` : t("heatmap.no_data")}</p>
+        <h3>{t("tactics.default_setup")}</h3><p>{setup ? `${ctSetupLabel(setup.value)} · ${fmtPct(setup.share)}` : t("heatmap.no_data")}</p>
         <p className="muted">{t("ui.setup_shape_help")}</p>
       </section><section><h3>{t("hub.top_recipes")}</h3>
         {recipes.length ? <ul className="hub-data-list">{recipes.map((rank) => {
@@ -190,10 +187,7 @@ function PlayerCards({ roster, heatmap, profiles, change }: { roster: RosterEntr
   function cards(players: RosterEntry[]) {
     return <div className="hub-player-cards" data-hub-parallax>{players.map((player, index) => <button type="button" className="hub-player-card hub-primary" style={{ "--stagger": `${index * 75}ms` } as CSSProperties} key={player.steamid} id={`hub-player-${player.steamid}`} onClick={(event) => { rememberPortrait(event.currentTarget, reduced); change({ player: player.steamid, side: "T" }); }}>
       <span className="hub-roster-light" aria-hidden="true" /><span className="hub-card-portrait-depth"><Asset path={`players/${player.steamid}.png`} name={player.name} /></span><strong>{player.name}</strong>
-      <small className="hub-portrait-line">{t("round4.portrait_line", {
-        lane: heatmap.summary[player.steamid]?.T?.main_lane.early?.lane ? t(`lane.${heatmap.summary[player.steamid]?.T?.main_lane.early?.lane}`) : "—",
-        kpr: fmtNum(profiles.find((profile) => profile.steamid === player.steamid && profile.team === heatmap.team)?.kpr, 2),
-      })}</small>
+      <small className="hub-portrait-line">{t("round5.portrait_place", { place: calloutLabel(heatmap.map, [...(heatmap.summary[player.steamid]?.T?.zones.early ?? [])].filter((zone) => zone.share != null).sort((a, b) => (b.share ?? 0) - (a.share ?? 0))[0]?.place) })} · 每回合 {fmtNum(profiles.find((profile) => profile.steamid === player.steamid && profile.team === heatmap.team)?.kpr, 2)} 杀</small>
       <small>{t("heatmap.rounds", { n: fmtInt(player.rounds.T + player.rounds.CT) })}</small>
     </button>)}</div>;
   }
@@ -275,8 +269,8 @@ function MapControls({ view, level, levels, setView, setLevel, phase, setPhase }
   view: HeatView; level: number; levels: number; setView: (view: HeatView) => void; setLevel: (level: number) => void;
   phase: HeatPhase; setPhase: (phase: HeatPhase) => void;
 }) {
-  return <div className="hub-map-controls"><fieldset className="hub-segments"><legend>{t("hub.layer")}</legend><div>{VIEWS.map((v) => <button type="button" key={v} aria-pressed={view === v} onClick={() => setView(v)}>{t(`heatmap.view.${v}`)}</button>)}</div></fieldset>
-    <fieldset className="hub-segments hub-time-slices"><legend>{t("heatmap.phases")}</legend><div>{HEAT_PHASES.map((value) => <button type="button" key={value} aria-pressed={phase === value} onClick={() => setPhase(value)}>{t(`round2.time_${value}`)}</button>)}</div><p className="muted">{t("round2.time_help")}</p></fieldset>
+  return <div className="hub-map-controls"><fieldset className="hub-segments"><legend>{t("hub.layer")}</legend><Segmented aria-label={t("hub.layer")}>{VIEWS.map((v) => <button type="button" key={v} aria-pressed={view === v} onClick={() => setView(v)}>{t(`heatmap.view.${v}`)}</button>)}</Segmented></fieldset>
+    <fieldset className="hub-segments hub-time-slices"><legend>{t("heatmap.phases")}</legend><Segmented aria-label={t("heatmap.phases")}>{HEAT_PHASES.map((value) => <button type="button" key={value} aria-pressed={phase === value} onClick={() => setPhase(value)}>{t(`round2.time_${value}`)}</button>)}</Segmented><p className="muted">{t("round2.time_help")}</p></fieldset>
     {levels > 1 ? <label>{t("tactics.floor")}<select value={level} onChange={(event) => setLevel(Number(event.target.value))}><option value={0}>{t("heatmap.level.upper")}</option><option value={1}>{t("heatmap.level.lower")}</option></select></label> : null}
   </div>;
 }
@@ -326,7 +320,7 @@ function TeamMapView({ profile, tactics, heatmap, baseline, profiles, change }: 
     {signature ? <section className="hub-summary-radar">
       <RecipeRadar map={profile.map} spots={signatureSpots} scale={meta.data?.radar.scale} title={t("tactics.selected_utility")} site={signature.site} routes={signature.routes ?? []} routeKey={signature.id} />
     </section> : null}</>} heatmapContent={<section aria-label={t("ui.nav_heatmaps")}>
-      <div className="segmented">{SIDES.map((value) => <button type="button" key={value} data-side={value} aria-pressed={teamSide === value} onClick={() => setTeamSide(value)}>{value}</button>)}</div><MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} phase={phase} setPhase={setPhase} />
+      <Segmented className="segmented">{SIDES.map((value) => <button type="button" key={value} data-side={value} aria-pressed={teamSide === value} onClick={() => setTeamSide(value)}>{value}</button>)}</Segmented><MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} phase={phase} setPhase={setPhase} />
       <HubRadar map={heatmap.map} level={level} overlays={overlays} />
       {!overlays.length ? <p className="muted" role="status">{t("hub.no_layer")}</p> : null}
     </section>} />
@@ -351,6 +345,8 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
   player: RosterEntry; profile?: PlayerProfile; heatmap: TeamHeatmap; baseline: HeatmapBaseline;
   side: HubSide; quote?: PlayerQuotes[string]; change: Change; displayName: string;
 }) {
+  const [params, setParams] = useSearchParams();
+  const ghost = params.get("ghost") === "1";
   const { activeId, bind } = useMapLink();
   const reduced = useContext(ReducedMotion);
   const details = useRef<HTMLDetailsElement>(null);
@@ -398,10 +394,15 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
       }
     }
     const dense = blur(combine(layers, VIEW_WEIGHTS[view], shape), shape, 1.1);
+    if (ghost) {
+      const average = blur(combine(denseLayers(baseline, side, [phase], shape), VIEW_WEIGHTS[view], shape), shape, 1.1);
+      const rgba = differenceRgba(dense, average, shape, level);
+      return rgba.some((value, index) => index % 4 === 3 && value > 0) ? [{ key: `ghost-${side}-${phase}-${view}-${level}`, url: toDataUrl(rgba, shape.grid) }] : [];
+    }
     const floor = dense.subarray(level * shape.grid * shape.grid, (level + 1) * shape.grid * shape.grid);
     if (!floor.some((v) => v > 0)) return [];
     return [{ key: `${player.steamid}-${side}-${phase}-${view}-${level}`, url: toDataUrl(playerRgba(dense, shape, level, SIDE_COLORS[side]), shape.grid) }];
-  }, [heatmap, player, baseline, side, view, level, phase]);
+  }, [heatmap, player, baseline, side, view, level, phase, ghost]);
   const spots = new Map<string, UtilitySpot>();
   for (const summary of summaries) for (const spot of summary.utility.spots) {
     const prev = spots.get(spot.spot_id);
@@ -429,7 +430,7 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
     <section className="hub-player-analysis" aria-label={t("hub.player_analysis")}>
       <header className="hub-analysis-head"><div className="hub-player-title"><Heading>{`${player.name} · ${displayName}`}</Heading><small className="hub-sample-inline">{t("hub.sample_rounds")} · <CountUp value={rounds} format="integer" /></small></div>
       <fieldset className="hub-segments hub-side-switch"><legend className="sr-only">{t("heatmap.side")}</legend>
-        <div style={{ "--side-index": SIDES.indexOf(side) } as CSSProperties}><span className="hub-side-indicator" aria-hidden="true" />{SIDES.map((s) => <button type="button" key={s} aria-pressed={side === s} onClick={() => change({ side: s })}>{t(`side.${s}`)}</button>)}</div>
+        <Segmented aria-label={t("heatmap.side")}>{SIDES.map((s) => <button type="button" key={s} aria-pressed={side === s} onClick={() => change({ side: s })}>{t(`side.${s}`)}</button>)}</Segmented>
       </fieldset></header>
       <div className="hub-analysis-toolbar"><div className="hub-kpis">
         <AnimatedStat label={t("heatmap.kpr")} value={rate((s) => s.fights.kills_pr)} sub={comparison((s) => s.fights.kills_pr)} />
@@ -437,20 +438,16 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
         <AnimatedStat label={t("hub.utility_pr")} value={rate(utilityRate)} sub={comparison(utilityRate)} />
       </div></div>
       <LowSampleBanner low_sample={selectedSides.some((s) => player.low_sample[s])} />
-      {!rounds || !overlays.length ? <p className="hub-low" role="status">{t("hub.no_layer")}</p> : null}
-      <div className="hub-map-stage"><figure className="hub-map-figure"><HubRadar map={heatmap.map} level={level} overlays={view === "utility" ? [] : overlays} markers={view === "utility" ? [] : places.filter((place) => place.level === level)} spots={view === "utility" ? landingSpots : []} />
+      {!rounds || !overlays.length ? <p className="hub-low" role="status">{t(ghost ? "round5.ghost_empty" : "hub.no_layer")}</p> : null}
+      <div className="hub-map-stage"><figure className="hub-map-figure"><HubRadar map={heatmap.map} level={level} overlays={view === "utility" && !ghost ? [] : overlays} markers={view === "utility" ? [] : places.filter((place) => place.level === level)} spots={view === "utility" ? landingSpots : []} />
         <figcaption>
           {view === "utility" ? <div className="hub-mini-legend hub-util-legend">{(["smoke", "flashbang", "molotov", "he"] as const).map((kind) => <span className="grenade-label" key={kind}><GrenadeIcon type={kind} />{t(`grenade.${kind}`)}</span>)}<span>{t("round4.util_legend")}</span></div> : <div className="hub-mini-legend" aria-label={t(`heatmap.view.${view}`)}><span>{t(`side.${side}`)}</span><span className="hub-heat-scale" style={{ background: `linear-gradient(90deg, transparent, ${SIDE_COLORS[side].light}, ${SIDE_COLORS[side].deep})` }} /><span>{t(`heatmap.view.${view}`)} · {t(`round2.time_${phase}`)}</span></div>}
           <details className="hub-map-notes"><summary>{t(`heatmap.view.${view}`)} · {t(`side.${side}`)}</summary><p>{t("round2.time_help")}</p>
         </details></figcaption>
       </figure>
-      <aside className="hub-map-side"><PlayerWpa player={profile} side={side} />
+      <aside className="hub-map-side"><label className="ghost-toggle" title="比较本侧、本阶段的归一化站位分布；全部楼层共用同一色阶"><input type="checkbox" checked={ghost} onChange={(event) => { const checked = event.target.checked; setParams((current) => { const next = new URLSearchParams(current); if (checked) next.set("ghost", "1"); else next.delete("ghost"); return next; }, { replace: true }); }} />{t("round5.ghost_toggle")}</label>{ghost ? <p className="ghost-legend" role="status">{t("round5.ghost_legend")}</p> : null}<PlayerWpa player={profile} side={side} />
         <MapControls view={view} level={level} levels={baseline.levels} setView={setView} setLevel={setLevel} phase={phase} setPhase={setPhase} /></aside></div>
       <details ref={details} className="hub-details"><summary>{t("hub.player_details")}</summary>
-        <div className="hub-kpis">
-          {side !== "CT" ? <Stat label={t("hub.lurk_share")} value={fmtPct(profile?.T.lurk_share)} sub={t("hub.lurk_scope")} /> : null}
-          {side !== "T" ? <Stat label={t("hub.forward_share")} value={fmtPct(profile?.CT.forward_share)} sub={t("hub.forward_scope")} /> : null}
-        </div>
         <h3>{t("heatmap.zones")}</h3>
         <ul className="hub-data-list">{(summaries[0]?.zones[phase] ?? []).slice(0, 5).map((zone) => <li key={zone.place} {...bind(`place:${zone.place}`)} tabIndex={0}><span>{calloutLabel(heatmap.map, zone.place)}</span><strong>{fmtPct(zone.share)}</strong></li>)}</ul>
         <h3>{t("heatmap.holds")}</h3>
@@ -462,6 +459,11 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
           <span className="grenade-label"><GrenadeIcon type={spot.type} />{calloutLabel(heatmap.map, spot.place)}</span><span>{fmtInt(spot.n)}</span>
           {spot.lineups[0] ? <Link to={`/${heatmap.map}/lineups?id=${encodeURIComponent(spot.lineups[0].lineup_id)}`}>{t("heatmap.to_lineup")}</Link> : null}
         </li>)}</ul>{!landingSpots.length ? <p className="muted">{t("heatmap.no_data")}</p> : null}
+        <h3>{t("hub.role_hints")}</h3>
+        <div className="hub-kpis">
+          {side !== "CT" ? <Stat label={t("hub.lurk_share")} value={fmtPct(profile?.T.lurk_share)} sub={t("hub.lurk_scope")} /> : null}
+          {side !== "T" ? <Stat label={t("hub.forward_share")} value={fmtPct(profile?.CT.forward_share)} sub={t("hub.forward_scope")} /> : null}
+        </div>
       </details>
     </section>
   </div></NumberEntrance.Provider>;

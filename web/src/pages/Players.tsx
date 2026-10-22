@@ -1,7 +1,7 @@
 import { Stagger } from "../components/Motion";
 import { PageContext, PageSurface, MetricStrip } from "../components/Page";
 import { useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import Stat from "../components/Stat";
 import PlayerWpa from "../components/PlayerWpa";
 import { ErrorNotice, Loading } from "../components/Status";
@@ -36,6 +36,8 @@ function Lanes({ shares }: { shares: Share[] }) {
 
 export default function Players() {
   useLang();
+  const [params] = useSearchParams();
+  const requestedPlayer = params.get("player");
   const { map = "" } = useParams<{ map: string }>();
   const { data: meta } = useData(() => getMeta(map), [map]);
   const { data: players, error, loading } = useData(() => getPlayers(map), [map]);
@@ -43,6 +45,7 @@ export default function Players() {
   const groups = useMemo(() => {
     const byTeam = new Map<string, PlayerProfile[]>();
     for (const player of players ?? []) {
+      if (requestedPlayer && player.steamid !== requestedPlayer) continue;
       const list = byTeam.get(player.team);
       if (list) list.push(player);
       else byTeam.set(player.team, [player]);
@@ -56,7 +59,7 @@ export default function Players() {
             (b.kpr ?? -1) - (a.kpr ?? -1) || a.name.localeCompare(b.name),
         ),
       }));
-  }, [players]);
+  }, [players, requestedPlayer]);
 
   const title = meta?.display_name ?? map;
 

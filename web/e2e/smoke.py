@@ -134,11 +134,23 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     # Radar -> card selection
     page.locator(".radar .landing-cluster").first.dispatch_event("click")
     smoke.check(page.locator(".radar-reset").count() == 1, "clicking a callout expands its routes")
+    picked = page.evaluate("new URLSearchParams(location.hash.split('?')[1]).get('landing').split(',')")
+    expect(page.locator('.lineup-card')).to_have_count(len(picked))
+    smoke.check(page.locator('.radar .throw-dot').count() == len(picked), 'landing pick filters cards and shows every remaining throw position')
+    target = page.locator('.radar .arrow-group').last
+    target_id = target.get_attribute('data-map-link').removeprefix('lineup:')
+    target.focus()
+    page.keyboard.press('Enter')
+    expect(page.locator('.lineup-card.is-selected')).to_have_attribute('data-map-link', f'lineup:{target_id}')
+    smoke.check('id=' in page.url and 'landing=' in page.url, 'map selection is shareable in the URL')
     sel_card = page.locator(".lineup-card.is-selected .practice-cmd").inner_text()
     smoke.check(sel_card.startswith("setpos "), "clicking a callout selects its most-used lineup")
     smoke.check(page.locator(".radar .throw-direction").count() == 1,
                 "selected lineup shows its recorded view direction")
 
+    page.keyboard.press('Escape')
+    expect(page.locator('.lineup-card')).to_have_count(smoke.expected_count())
+    smoke.check('landing=' not in page.url, 'Escape clears the landing filter')
     card = page.locator('.lineup-card').first
     key = card.get_attribute('data-map-link')
     card.hover()
@@ -152,12 +164,20 @@ def check_lineups(smoke: Smoke, page: Page) -> None:
     # Copy button copies practice_cmd exactly
     first = page.locator(".lineup-card").first
     cmd = first.locator(".practice-cmd").inner_text().strip()
-    btn = first.locator(".practice-row button")
+    btn = first.locator(".practice-row button").first
     label_before = btn.inner_text()
     btn.click()
     clip = page.evaluate("navigator.clipboard.readText()")
     smoke.check(clip == cmd and cmd in {l["practice_cmd"] for l in smoke.lineups}, "copy button puts practice_cmd on the clipboard")
     smoke.check(btn.inner_text() != label_before, "copy button shows the 'copied' label")
+    first.get_by_role('button', name='复制练习绑定', exact=True).click()
+    bound = page.evaluate("navigator.clipboard.readText()")
+    smoke.check(bound.startswith('bind "KP_ENTER" "setpos ') and ';setang ' in bound, 'lineup practice bind copies position and angles under KP_ENTER')
+    tiers = page.locator('#filter-tiers')
+    tiers.locator('button').first.focus()
+    page.keyboard.press('ArrowRight')
+    expect(tiers.locator('button').nth(1)).to_have_attribute('aria-pressed', 'true')
+    smoke.check(tiers.locator('.segment-highlight').evaluate('el => el.getBoundingClientRect().width') > 0, 'shared segmented control supports arrows and positions its highlight')
     page.wait_for_timeout(1700)
     smoke.check(btn.inner_text() == label_before, "copy button label resets after 1.5s")
 
@@ -190,6 +210,7 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         page.wait_for_selector('.tactics-entry-path')
         smoke.check(page.locator('.tactics-entry-path').count() == 1, 'selected recipe draws its player entry route')
         smoke.check('60%' in page.locator('.tactics-route-row').first.inner_text(), 'entry route label includes its share')
+        smoke.check('→' not in page.locator('.tactics-route-row').first.inner_text() and '匪家' not in page.locator('.tactics-route-row').first.inner_text(), 'route names use the first non-spawn choke')
         path = page.locator('.tactics-entry-path')
         smoke.check(path.get_attribute('marker-end') is not None, 'entry route has an arrowhead')
         row = page.locator('.tactics-recipe.is-selected .tactics-spots li').first
@@ -203,10 +224,19 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         smoke.check(page.locator('.map-link-hint').count() == 1, 'tactics has one shared hover hint')
         page.emulate_media(reduced_motion='reduce')
         smoke.check(path.evaluate("el => getComputedStyle(el).animationName") == 'none', 'reduced motion keeps entry paths static')
-        page.locator('.tactics-recipe-toggle').nth(1).click()
+        for index in [1, 0, 1]:
+            page.locator('.tactics-recipe-toggle').nth(index).click()
+        page.locator('.tactics-recipe').first.hover()
+        expect(page.locator('.tactics-radar-wrap')).to_have_attribute('data-recipe-id', 'test-empty')
+        expect(page.locator('.tactics-recipe.is-selected')).to_have_attribute('data-recipe-id', 'test-empty')
+        smoke.check(True, 'rapid recipe switching and hover keep the selected card, radar and routes together')
         expect(page.locator('.tactics-entry-path')).to_have_count(0)
         smoke.check('暂无路线' in page.locator('.tactics-routes-legend').inner_text(), 'empty recipe has a route-specific empty state')
         selected = page.locator('.tactics-recipe.is-selected')
+        selected.get_by_role('button', name='复制整套爆弹练习脚本', exact=True).click()
+        script = page.evaluate("navigator.clipboard.readText()")
+        smoke.check('alias "pp_test_empty_0"' in script and 'bind "KP_ENTER" "pp_next"' in script and ';setang ' in script,
+                    'recipe practice script creates a keyed alias cycle')
         selected.locator('summary', has_text='示例回合').click()
         opener = selected.locator('.replay-open')
         overflow = page.evaluate('document.body.style.overflow')
@@ -222,16 +252,22 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         close = page.locator('.replay-close')
         close.focus()
         page.keyboard.press('Shift+Tab')
-        expect(scrubber).to_be_focused()
+        expect(page.locator('.replay-jumps button').last).to_be_focused()
         page.keyboard.press('Tab')
         expect(close).to_be_focused()
         smoke.check(True, 'replay focus wraps in both directions')
         radar = page.locator('.replay-radar')
         bounds = radar.bounding_box()
-        smoke.check(bounds is not None and abs(bounds['width'] - bounds['height']) < 1
-                    and abs(bounds['height'] - min(page.viewport_size['height'] * .7,
-                                                  page.locator('.round-replay').evaluate('el => el.clientWidth - 40'))) < 3,
-                    'replay radar fills a square up to 70vh and available modal width')
+        smoke.check(bounds is not None and abs(bounds['width'] - bounds['height']) < 1 and bounds['y'] + bounds['height'] <= 900,
+                    'replay radar is square and fits the desktop viewport')
+        wp_bounds = page.locator('.replay-wp svg').bounding_box()
+        dialog_bounds = page.locator('.round-replay').bounding_box()
+        smoke.check(wp_bounds is not None and dialog_bounds is not None and wp_bounds['y'] + wp_bounds['height'] < dialog_bounds['y'] + dialog_bounds['height'] <= 900,
+                    'the entire WP chart fits in the modal at 1440x900')
+        smoke.check(page.locator('.replay-player-abbr').count() == 10, 'every living dot has a short player name')
+        expect(page.locator('.replay-clock')).to_contain_text('1:55')
+        smoke.check(page.locator('.replay-anchors button').count() == 3 and page.locator('.replay-wp [role=button]').count() == 3,
+                    'kill, smoke and plant have anchors on both timelines')
         smoke.check(page.locator('.replay-player-name').count() == 0, 'replay does not label every player')
         dot = page.locator('.replay-player').first
         diameter = dot.evaluate('el => el.r.baseVal.value * el.getScreenCTM().a * 2')
@@ -244,7 +280,7 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         expect(page.locator('.replay-player-name')).to_have_count(1)
         scrubber.focus()
         page.keyboard.press('ArrowRight')
-        expect(scrubber).to_have_value('1')
+        expect(scrubber).to_have_value('3')
         page.keyboard.press('ArrowLeft')
         expect(scrubber).to_have_value('0')
         page.keyboard.press('ArrowLeft')
@@ -253,11 +289,32 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         expect(page.get_by_role('button', name='暂停', exact=True)).to_be_visible()
         page.keyboard.press('Space')
         expect(page.get_by_role('button', name='播放', exact=True)).to_be_visible()
-        smoke.check(True, 'Space toggles playback and arrow keys seek one second with bounds')
+        smoke.check(True, 'Space toggles playback and arrow keys seek three seconds with bounds')
         scrubber.fill('5')
         smoke.check(page.locator('.replay-player').count() == 9 and page.locator('.replay-kill').count() == 1,
                     'scrubbing applies the exact kill time and removes the victim')
         smoke.check(page.locator('.replay-plant').count() == 1, 'scrubbing reveals the plant')
+        expect(page.locator('.replay-clock')).to_contain_text('0:39')
+        expect(page.locator('.replay-killfeed')).to_contain_text('ak47')
+        expect(page.locator('.replay-killfeed')).to_contain_text('爆头')
+        smoke.check(page.locator('.replay-kill-line').count() == 1 and page.locator('.replay-effect-smoke').count() == 1,
+                    'kill line flashes for 1.5 seconds while smoke remains active')
+        scrubber.fill('7')
+        smoke.check(page.locator('.replay-kill-line').count() == 0 and page.locator('.replay-kill').count() == 1,
+                    'kill line expires but death spot remains')
+        scrubber.fill('0')
+        page.keyboard.press('k')
+        expect(scrubber).to_have_value('5')
+        page.keyboard.press('p')
+        expect(scrubber).to_have_value('4')
+        page.keyboard.press('g')
+        expect(scrubber).to_have_value('10')  # recipe median 35 clamps to duration 10
+        page.locator('.replay-anchors button[data-kind=util]').click()
+        expect(scrubber).to_have_value('3')
+        page.locator('.replay-wp [role=button]').first.focus()
+        page.keyboard.press('Enter')
+        expect(scrubber).to_have_value('3')
+        smoke.check(True, 'K/P/G and keyboard event anchors seek and pause')
         page.get_by_role('button', name='4×', exact=True).click()
         expect(page.get_by_role('button', name='4×', exact=True)).to_have_attribute('aria-pressed', 'true')
         smoke.check('replay=' in page.url, 'recipe replay is represented in the URL')
@@ -302,6 +359,8 @@ def check_replay_switching(smoke: Smoke, page: Page) -> None:
         page.wait_for_timeout(100)
         expect(page.locator('.replay-title-match')).to_contain_text('第 2 回合')
         smoke.check(True, 'late replay response cannot replace the selected round')
+        page.keyboard.press('g')
+        expect(page.locator('.replay-scrubber')).to_have_value('5')
         page.locator('.replay-scrubber').fill('3')
         page.get_by_role('button', name='4×', exact=True).click()
         page.locator('.replay-player').first.focus()
@@ -536,6 +595,21 @@ def check_hub_entrance(smoke: Smoke, page: Page) -> None:
         page.wait_for_function("!document.querySelector('.hub-count[data-rolling=\"true\"]')")
         smoke.check(page.locator('.hub-verse-line .sr-only').inner_text() == '一箫一剑平生意，负尽狂名十五年',
                     'full entrance settles with one complete accessible verse')
+        verse = page.locator('.hub-verse-columns').inner_text()
+        smoke.check(page.locator('.hub-verse-character').count() == 0, 'vertical verse has plain text columns without competing glyph transforms')
+        for button in ['道具落点', '站位']:
+            page.get_by_role('button', name=button, exact=True).click()
+        smoke.check(page.locator('.hub-verse-columns').inner_text() == verse and page.locator('.hub-verse').evaluate('el => getComputedStyle(el).animationName') == 'none',
+                    'layer rerenders preserve the verse and never restart its animation')
+        smoke.check(page.locator('.hub-verse').evaluate('el => Number(getComputedStyle(el).opacity)') < .3, 'verse opacity stays below 0.3')
+        details = page.locator('.hub-player-analysis > details')
+        smoke.check(details.evaluate("el => Boolean(el.querySelector('h3').compareDocumentPosition(el.querySelector('.hub-kpis')) & Node.DOCUMENT_POSITION_FOLLOWING)"),
+                    'player details begin with a section heading before the large role statistics')
+        ghost = page.get_by_role('checkbox', name='对比本图同阵营职业平均', exact=True)
+        ghost.check()
+        expect(page.locator('.ghost-legend')).to_contain_text('琥珀色')
+        smoke.check('ghost=1' in page.url and page.locator('.hub-layer-in image').count() > 0, 'ghost comparison is rendered and represented in the URL')
+        ghost.uncheck()
         page.keyboard.press('Escape')
         page.wait_for_selector(f'#hub-player-{player}')
         page.locator(f'#hub-player-{player}').click()
@@ -566,6 +640,29 @@ def check_hub_entrance(smoke: Smoke, page: Page) -> None:
     finally:
         page.emulate_media(reduced_motion='no-preference')
         page.unroute('**/data/player_quotes.json')
+
+
+
+@route('#/de_mirage/tactics', '.tactics-page')
+def check_command_palette(smoke: Smoke, page: Page) -> None:
+    page.locator('.palette-trigger').focus()
+    page.keyboard.press('Control+k')
+    query = page.locator('#palette-query')
+    expect(query).to_be_focused()
+    query.fill('mirage')
+    expect(page.locator('.palette-results [role=option]').first).to_be_visible()
+    expect(page.locator('.palette-results [role=option]').nth(1)).to_be_visible()
+    page.keyboard.press('ArrowDown')
+    smoke.check(query.get_attribute('aria-activedescendant') == 'palette-result-1', 'palette supports keyboard result selection')
+    page.keyboard.press('Escape')
+    expect(page.locator('dialog.command-palette[open]')).to_have_count(0)
+    expect(page.locator('.palette-trigger')).to_be_focused()
+    page.keyboard.press('Control+k')
+    query.fill('Vitality')
+    expect(page.locator('.palette-results [role=option]').first).to_contain_text('Vitality')
+    page.keyboard.press('Enter')
+    page.wait_for_selector('.hub-team-panel')
+    smoke.check('team=vitality' in page.url, 'palette Enter opens the matched team')
 
 
 @route('#/de_mirage/teams/vitality', '.hub-player-card')
@@ -649,7 +746,7 @@ def main() -> int:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         try:
-            desktop = browser.new_context(viewport={"width": 1280, "height": 900})
+            desktop = browser.new_context(viewport={"width": 1440, "height": 900})
             desktop.grant_permissions(["clipboard-read", "clipboard-write"],
                                       origin=f"{origin.scheme}://{origin.netloc}")
             page = desktop.new_page()

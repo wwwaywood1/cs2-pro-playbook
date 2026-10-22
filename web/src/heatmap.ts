@@ -261,3 +261,25 @@ export function perRound(data: HeatGrid, side: Side, phases: HeatPhase[], layers
   }
   return any ? total : null;
 }
+
+/** Signed difference of spatial shares, on a shared symmetric colour scale.
+ * Baseline is per team round, player is per player round: compare distributions,
+ * normalised over all floors, rather than subtracting unlike exposure totals.
+ */
+export function differenceRgba(player: Dense, baseline: Dense, shape: GridShape, level: number): Uint8ClampedArray {
+  const n = shape.grid * shape.grid;
+  const out = new Uint8ClampedArray(n * 4);
+  const playerTotal = player.reduce((sum, value) => sum + Math.max(0, value), 0);
+  const baseTotal = baseline.reduce((sum, value) => sum + Math.max(0, value), 0);
+  if (!playerTotal || !baseTotal) return out;
+  const diff = player.map((value, index) => value / playerTotal - (baseline[index] ?? 0) / baseTotal);
+  const peak = diff.reduce((max, value) => Math.max(max, Math.abs(value)), 0);
+  if (peak < 1e-10) return out;
+  for (let i = 0; i < n; i++) {
+    const value = diff[level * n + i];
+    const alpha = Math.min(.85, Math.pow(Math.abs(value) / peak, .65));
+    const color = value >= 0 ? [245, 180, 76] : [54, 197, 187];
+    out.set([...color, Math.round(alpha * 255)], i * 4);
+  }
+  return out;
+}

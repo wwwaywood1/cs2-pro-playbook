@@ -1,0 +1,42 @@
+body { font-variant-numeric: tabular-nums; }
+.hud-num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.hud-unit { display: inline; margin-left: .12em; font-size: .6em; font-weight: 400; opacity: .5; }
+body .shell :is(button, select, input:not([type=range]), .nav-link) { border-radius: 5px; }
+/* One mechanical track, one moving highlight; only badges retain full pills. */
+body .hud-segmented.hud-segmented { position: relative; isolation: isolate; display: flex; flex-wrap: nowrap; gap: 0; padding: 3px; border: 1px solid #52607766; border-radius: 6px; background: #070e1880; box-shadow: inset 0 2px 6px #0008; max-width: 100%; min-width: 0; }
+body .hud-segmented.hud-segmented > button { position: relative; z-index: 1; flex: 1 1 0; min-width: 0; margin: 0; padding: 7px 9px; border: 0; border-radius: 4px; background: transparent; box-shadow: none; font-size: .8rem; text-align: center; white-space: normal; }
+body .hud-segmented.hud-segmented > button:is([aria-pressed=true], [aria-selected=true], .is-active) { background: transparent; color: #08151f; box-shadow: none; font-weight: 700; }
+.segment-highlight { position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none; border-radius: 4px; background: var(--side-data, var(--accent, #efad55)); box-shadow: inset 0 1px 0 #ffffff40, 0 1px 5px #0006; transition: transform .2s ease, width .2s ease, height .2s ease; }
+body .shell .site-page :is(.tactics-recipe, .lineup-card).is-selected { border-color: #52607755; border-top-color: #9bdaa8aa; background: radial-gradient(ellipse at 15% 0%, #85dca812, transparent 70%), var(--surface, #101b2b); box-shadow: inset 0 1px #b8efbc35; }
+.hud-radar-frame { position: relative; min-width: 0; background: transparent; }
+.hud-radar-frame::before { content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: linear-gradient(#8da5b380, #8da5b380) left top / 18px 1px, linear-gradient(#8da5b380, #8da5b380) left top / 1px 18px, linear-gradient(#8da5b380, #8da5b380) right top / 18px 1px, linear-gradient(#8da5b380, #8da5b380) right top / 1px 18px, linear-gradient(#8da5b380, #8da5b380) left bottom / 18px 1px, linear-gradient(#8da5b380, #8da5b380) left bottom / 1px 18px, linear-gradient(#8da5b380, #8da5b380) right bottom / 18px 1px, linear-gradient(#8da5b380, #8da5b380) right bottom / 1px 18px; background-repeat: no-repeat; }
+.hud-radar-frame::after { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; border: 5px solid transparent; border-image: repeating-linear-gradient(90deg, #8da5b325 0 1px, transparent 1px 32px) 5; background: repeating-linear-gradient(0deg, transparent 0 63px, #ffffff03 63px 64px), repeating-linear-gradient(90deg, transparent 0 63px, #ffffff03 63px 64px); }
+body .hud-radar-frame :is(.radar, .hm-radar, .replay-radar) { background: transparent; border: 0; border-radius: 0; }
+body .hud-radar-frame :is(.radar-bg, .hm-radar-bg) { fill: transparent; }
+.hud-radar-frame svg > image:first-of-type { mask-image: radial-gradient(ellipse at center, #000 52%, #000b 78%, #0003); }
+.replay-layout > .hud-radar-frame { width: min(100%, calc(100dvh - 180px)); margin: 0 auto; }
+.replay-layout .replay-radar { width: 100%; }
+.hub-radar > .hud-radar-frame { width: 100%; height: 100%; }
+/* Reserve caption and the next disclosure heading, instead of exposing a clipped KPI. */
+.hub-player-analysis .hub-radar { width: min(100%, max(1px, calc(100svh - var(--hub-radar-top, 300px) - 112px))); }
+.hub-player-analysis > .hub-details { margin-top: 24px; }
+.hub-player-analysis > .hub-details .stat-value { font-size: 1.8rem; }
+@media (prefers-reduced-motion: reduce) { .segment-highlight { transition: none; } }
+@media (max-width: 850px) { .replay-layout > .hud-radar-frame { width: min(100%, 45vh); } }
+.practice-bind { display: inline-block; max-width: 100%; }
+.practice-bind .practice-cmd { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ghost-toggle { display: flex; align-items: start; gap: 8px; color: var(--ink-muted); font-size: .75rem; }
+.ghost-legend { margin: 0; padding-left: 8px; border-left: 2px solid #f5b44c; color: #9ac9c4; font-size: .75rem; }
+.palette-trigger { margin-left: auto; white-space: nowrap; }
+.command-palette { box-sizing: border-box; padding: 12px; width: min(720px, calc(100vw - 48px)); max-height: min(680px, calc(100dvh - 80px)); margin: 10vh auto 0; color: #d8e2ec; background: #101b2c; border: 1px solid #526077; border-radius: 6px; box-shadow: 0 24px 80px #0009; overflow: hidden; }
+.command-palette::backdrop { background: #020814c9; }
+.command-palette input { box-sizing: border-box; width: 100%; padding: 14px; border: 1px solid #526077; border-radius: 4px; background: #070e18; color: inherit; font: inherit; }
+.palette-results { max-height: min(470px, calc(100dvh - 260px)); overflow: auto; margin-top: 10px; }
+.palette-results [role=option] { display: flex; gap: 12px; padding: 10px; cursor: pointer; border-top: 1px solid #52607733; }
+.palette-results [aria-selected=true] { background: #efad551a; border-top-color: #efad55; }
+.palette-results small { flex: 0 0 4em; color: #93a4b8; }
+.command-palette > p { font-size: .75rem; color: #93a4b8; }
+/* Keep the corner frame on the viewport-sized tactics square, not its caption. */
+.tactics-radar-wrap > .hud-radar-frame { width: min(100%, 760px, var(--tactics-raster-limit, 760px), max(1px, calc(100vh - var(--tactics-radar-top, 320px) - 24px))); }
+body .tactics-radar-wrap > .hud-radar-frame .tactics-radar { width: 100%; }
+@media (max-width: 1000px) { .tactics-radar-wrap > .hud-radar-frame { width: min(100%, 760px, var(--tactics-raster-limit, 760px)); } }

@@ -1,3 +1,5 @@
+import Segmented from "./Segmented";
+import { ctSetupLabel } from "../labels";
 import { Fragment, useState, type ReactNode, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { Stagger } from "./Motion";
@@ -114,7 +116,7 @@ function SetupTables({ side, className = "", style }: { side: TSide | CTSide; cl
               phase.rows.map((row) => (
                 <tr key={`${phase.key}-${row.value}`}>
                   <td>
-                    <code>{row.value}</code>
+                    <span>{ctSetupLabel(row.value)}</span>
                   </td>
                   <td>{fmtInt(row.rounds)}</td>
                   <td>{fmtPct(row.share)}</td>
@@ -260,17 +262,17 @@ export default function TeamDetails({ team, tacticsContent, heatmapContent, deta
       }) : <li className="empty">{t("heatmap.no_data")}</li>}</ul>
     </details>
     <details className="hub-details hub-archive-card hub-team-basis" open={detailsOpen} onToggle={(event) => onDetailsToggle?.(event.currentTarget.open)}>
-      <summary><strong>{t("round4.archive_details")}</strong><small>{t("tactics.summary_basis", { n: fmtInt(team.insights?.length ?? 0) })} · CT {team.tactics?.CT.setups_20s[0]?.value ?? "—"}</small></summary>
+      <summary><strong>{t("round4.archive_details")}</strong><small>{t("tactics.summary_basis", { n: fmtInt(team.insights?.length ?? 0) })} · {ctSetupLabel(team.tactics?.CT.setups_20s[0]?.value)}</small></summary>
       {tacticsContent}
       <ul className="team-insights-rest">{(team.insights ?? []).map((insight) => <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>)}</ul>
-      <div className="tabs" role="tablist" aria-label={t("ui.nav_teams")}>{SIDE_ORDER.map((value) => <button
+      <Segmented className="tabs" role="tablist" aria-label={t("ui.nav_teams")}>{SIDE_ORDER.map((value) => <button
         key={value} type="button" role="tab" id={`tab-${value}`} aria-selected={side === value} aria-controls="team-side-panel" tabIndex={side === value ? 0 : -1}
         onClick={() => setSide(value)} onKeyDown={(event) => {
           if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
           event.preventDefault();
           const next = event.key === "Home" ? "T" : event.key === "End" ? "CT" : side === "T" ? "CT" : "T";
           setSide(next); document.getElementById(`tab-${next}`)?.focus();
-        }}>{t(`side.${value}`)}</button>)}</div>
+        }}>{t(`side.${value}`)}</button>)}</Segmented>
       <div id="team-side-panel" role="tabpanel" aria-labelledby={`tab-${side}`} className={`side-panel side-${side.toLowerCase()}`}>
         {side === "T" ? <TSideView side={team.sides.T} /> : <CTSideView side={team.sides.CT} />}
       </div>

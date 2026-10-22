@@ -12,14 +12,15 @@ interface RadarProps {
   lineups: Lineup[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  pickedIds: Set<string> | null;
+  onPick: (ids: string[] | null) => void;
 }
 
-export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps) {
+export default function Radar({ map, lineups, selectedId, onSelect, pickedIds, onPick }: RadarProps) {
   const { activeId: linkedId, bind } = useMapLink();
   const hoveredId = linkedId?.startsWith("lineup:") ? linkedId.slice(7) : null;
   const [imageOk, setImageOk] = useState(true);
   const activeId = lineups.some((lineup) => lineup.id === hoveredId) ? hoveredId : selectedId;
-  const [selectedPlace, setSelectedPlace] = useState<string | null>(null);
   const placeKey = (lineup: Lineup) => lineup.land_place || lineup.land_region || lineup.land_lane || "";
   const clusters = useMemo(() => {
     const places = new Map<string, Lineup[]>();
@@ -63,11 +64,10 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
   useEffect(() => {
     setImageOk(true);
   }, [map]);
-  useEffect(() => { setSelectedPlace(null); }, [map, lineups]);
 
   return (
     <div className="radar-panel-inner">
-      <svg className="radar" viewBox="0 0 1024 1024" role="group" aria-label={map}>
+<div className="hud-radar-frame">      <svg className="radar" viewBox="0 0 1024 1024" role="group" aria-label={map}>
         <rect className="radar-bg" x="0" y="0" width="1024" height="1024" />
         {imageOk ? (
           <image
@@ -98,9 +98,9 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
           ))}
         </defs>
 
-        {clusters.filter((cell) => cell.key !== selectedPlace).map((cell) => {
+        {clusters.filter(() => !pickedIds).map((cell) => {
           const label = `${[...new Set(cell.rows.map((row) => calloutLabel(map, row.land_place)))].join(" / ")} · ${t("round4.cluster_count", { n: fmtInt(cell.weight) })}`;
-          const expand = () => { setSelectedPlace(cell.key); onSelect(cell.lineup.id); };
+          const expand = () => { onPick([...cell.rows].sort((a, b) => b.n_throws - a.n_throws || a.id.localeCompare(b.id)).map((row) => row.id)); };
           return <g key={cell.key} className="landing-cluster" role="button" tabIndex={0}
             {...bind(`lineup:${cell.rows.find((row) => row.id === hoveredId)?.id ?? cell.lineup.id}`)}
             aria-label={label} onClick={expand} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); expand(); } }}>
@@ -110,7 +110,7 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
             <text x={cell.x} y={cell.y + 7} textAnchor="middle" style={{ fontSize: 22, fontWeight: 800, fill: "#f5f8ff" }}>{fmtInt(cell.weight)}</text>
           </g>;
         })}
-        {lineups.filter((lineup) => clusters.find((cell) => cell.key === selectedPlace)?.rows.some((row) => row.id === lineup.id) || lineup.id === activeId).map((lineup) => {
+        {lineups.filter((lineup) => (pickedIds ? pickedIds.has(lineup.id) : lineup.id === activeId)).map((lineup) => {
           const selected = lineup.id === activeId;
           const dimmed = activeId != null && !selected;
           const x = lineup.throw.radar_x, y = lineup.throw.radar_y;
@@ -149,7 +149,7 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
                 className="throw-dot"
                 cx={lineup.throw.radar_x}
                 cy={lineup.throw.radar_y}
-                r={selected ? 9 : 5.5}
+                r={selected ? 12 : 10}
               />
               {selected && Number.isFinite(lineup.throw.yaw) ? <g className="throw-direction">
                 <title>{t("round2.throw_dir_tip")}</title>
@@ -161,10 +161,10 @@ export default function Radar({ map, lineups, selectedId, onSelect }: RadarProps
             </g>
           );
         })}
-      </svg>
+      </svg></div>
 
-      <p className="radar-hint">{t("round2.throw_dir_tip")}</p>
-      {selectedPlace !== null ? <button type="button" className="button button-ghost radar-reset" onClick={() => setSelectedPlace(null)}>{t("round2.tier_all")}</button> : null}
+      <p className="radar-hint">{t("round5.map_pick_hint")}</p>
+      {pickedIds !== null ? <button type="button" className="button button-ghost radar-reset" onClick={() => onPick(null)}>{t("round2.tier_all")}</button> : null}
       <div className="radar-legend">
         {TYPES.map((type) => (
           <span key={type} className="grenade-label">

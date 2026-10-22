@@ -414,7 +414,7 @@
     "selected_utility": "套路道具",
     "ct_utility": "CT 常用道具",
     "ct_utility_context": "地图展示所选包点投掷最多的六个 CT 道具点位，汇总所有站位。下方站位为 20 秒时全队分布；道具未归属于某个站位。",
-    "preview_hint": "悬停或聚焦预览，点击选中并展开。",
+    "preview_hint": "点击套路，同步查看左侧雷达与进点路线",
     "recipe_meta": "{rounds} 回合 · 胜率 {win} · 进点 {time}",
     "setup_meta": "{rounds} 回合 · 占比 {share} · 胜率 {win}",
     "more_data": "更多数据",
@@ -548,5 +548,28 @@
     "thrower_example": "例：{name}（{team}）",
     "util_legend": "图标为道具类型，点击查看投掷位置",
     "portrait_line": "T 开局常在{lane} · 每回合 {kpr} 杀"
+  },
+  "round5": {
+    "clock": "{clock}",
+    "clock_elapsed": "已进行 {s}s",
+    "keys_hint": "空格 播放/暂停 · ←/→ 3 秒 · K 下一次击杀 · G 进点 · P 下包",
+    "killfeed_hs": "爆头",
+    "next_kill": "跳到下一次击杀",
+    "jump_hit": "跳到进点时刻",
+    "jump_plant": "跳到下包时刻",
+    "smoke_left": "烟雾剩余 {s}s",
+    "ct_setup_fmt": "A 区 {a} 人 · 中路 {mid} 人 · B 区 {b} 人",
+    "bind_copy": "复制练习绑定",
+    "bind_tip": "粘贴到控制台，按该键即可回到投掷位置重练",
+    "recipe_bind": "复制整套爆弹练习脚本",
+    "recipe_bind_tip": "粘贴到控制台；每按一次该键，按投掷顺序移动到下一颗道具的投掷位置",
+    "palette_hint": "快速搜索战术、道具、选手（Ctrl+K）",
+    "palette_empty": "没有找到相关结果",
+    "ghost_toggle": "对比本图同阵营职业平均",
+    "ghost_legend": "琥珀色：比平均多；青色：比平均少",
+    "map_pick_hint": "先点地图上的落点，再点投掷位置，直接找到这颗道具",
+    "route_name": "{via} · {p}% 的队员",
+    "portrait_place": "T 开局最常在{place}",
+    "ghost_empty": "本侧本阶段暂无可显示的分布差异"
   }
 }
