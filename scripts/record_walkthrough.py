@@ -28,81 +28,139 @@ def run():
         b = p.chromium.launch()
         ctx = b.new_context(viewport={"width": 1440, "height": 900}, record_video_dir="/tmp/claude-0/walk/raw",
                             record_video_size={"width": 1440, "height": 900})
+        ctx.grant_permissions(["clipboard-read", "clipboard-write"], origin=BASE.rstrip("/"))
         ctx.add_init_script(CAP)
-        pg = ctx.new_page()
+        pg = ctx.new_page(); pg.set_default_timeout(6000)
         def cap(t, s=""): pg.evaluate("([t,s]) => window.__cap(t,s)", [t, s])
         def glide(x, y, steps=25): pg.mouse.move(x, y, steps=steps)
         def to(loc, steps=25):
-            bb = loc.bounding_box(); glide(bb["x"] + bb["width"] / 2, bb["y"] + bb["height"] / 2, steps); return loc
+            loc.scroll_into_view_if_needed(); bb = loc.bounding_box(); glide(bb["x"] + bb["width"] / 2, bb["y"] + bb["height"] / 2, steps); return loc
         def wait(s): pg.wait_for_timeout(int(s * 1000))
+        def safe(label, fn):
+            try: fn()
+            except Exception as e: print("SKIP", label, repr(e)[:160])
 
+        # 1 home + command palette
         pg.goto(BASE + "#/"); wait(2.5)
-        cap("首页：7 张图池地图", "每张卡片显示 T / CT 回合胜率和最常用的进攻套路；Cache 暂无比赛数据"); wait(2)
+        cap("首页：7 张图池地图", "每张卡片显示 T / CT 回合胜率和最常用的进攻套路；Cache 暂无数据（即将上线）"); wait(2)
         glide(300, 400); wait(1); glide(700, 420); wait(1.5)
-        pg.mouse.wheel(0, 350); wait(2)
-        cap("点击导航「战队」，进入战队总览"); to(pg.get_by_role("link", name="战队").first); wait(1); pg.get_by_role("link", name="战队").first.click(); wait(2.5)
+        def palette():
+            cap("新：Ctrl+K 全站搜索", "地图、套路（按点位名）、道具（起点 → 落点）、战队、选手，回车直达")
+            pg.keyboard.press("Control+k"); wait(1.2)
+            pg.keyboard.type("NiKo", delay=140); wait(1.8)
+            pg.keyboard.press("Control+a"); pg.keyboard.type("Window", delay=120); wait(2.2)
+            pg.keyboard.press("Escape"); wait(1)
+        safe("palette", palette)
+        # 2 team page + dates
+        cap("点击导航「战队」，进入战队总览"); to(pg.get_by_role("link", name="战队").first); wait(0.8); pg.get_by_role("link", name="战队").first.click(); wait(2.5)
         cap("选择样板战队 Falcons")
-        card = pg.locator(".hub-team-card", has_text="Falcons").first; card.scroll_into_view_if_needed(); to(card); wait(1); card.click(); wait(3.5)
-        cap("战队页：队标从模糊到清晰进场，各图胜率依次飞入", "颜色区分强弱图，并标出「王牌图 / 短板图」"); wait(2)
+        card = pg.locator(".hub-team-card", has_text="Falcons").first; to(card); wait(1); card.click(); wait(3.5)
+        cap("战队页：队标进场，各图胜率依次飞入", "颜色区分强弱图，并标出「王牌图 / 短板图」"); wait(2)
         for name in ["Dust II", "Anubis", "Ancient"]:
-            m = pg.locator(".hub-map-card", has_text=name).first; to(m, 15); wait(0.9)
+            safe(name, lambda: (to(pg.locator(".hub-map-card", has_text=name).first, 15), wait(0.8)))
+        def dates():
+            sm = pg.locator(".hub-team-results > summary").first; to(sm); wait(0.6); sm.click(); wait(1)
+            res = pg.locator(".hub-results").first; wait(0.5)
+            cap("新：每场比赛都带时间标签，按时间从新到旧排序", "精确到日 / 只知道赛事（标注 ≈）；数据截至 2026-10-14"); wait(3)
+            btn = res.locator("button", has_text="近 3 个月").first; to(btn, 15); btn.click(); wait(2.2)
+            cap("时间筛选：近 3 个月 / 近 1 个月，看新阵容最近的状态")
+            btn = res.locator("button", has_text="近 1 个月").first; to(btn, 15); btn.click(); wait(2.2)
+            btn = res.locator("button", has_text="全部").first; to(btn, 15); btn.click(); wait(1)
+            pg.mouse.wheel(0, -2000); wait(1.2)
+        safe("dates", dates)
         cap("点击 Mirage，查看这支队在这张图上的打法")
         m = pg.locator(".hub-map-card", has_text="Mirage").first; to(m); wait(0.8); m.click(); wait(3.5)
-        cap("地图页：回合胜率、T / CT 胜率、平均进点时间（数字滚动出现）", "下面是 AI 点评（数字全部来自数据并经过校验），道具名可以点击"); wait(3.5)
+        cap("地图页：回合胜率、T / CT 胜率、平均进点时间", "AI 点评中的数字全部来自数据并经过校验；道具名可点击"); wait(3)
         pg.mouse.wheel(0, 380); wait(2)
-        cap("5 名选手：悬停时人物前移变亮，其余人变暗")
         cards = pg.locator(".hub-player-card")
+        cap("5 名选手：悬停时人物前移变亮，下方显示 T 开局最常站的点位")
         for i in [0, 2, 4, 3]:
-            to(cards.nth(i), 15); wait(0.9)
-        cap("点击 NiKo：选手出场动画", "灯光扫入 → 人像由模糊推近 → 定场诗竖排逐字显现 → 数据面板滑入")
-        cards.nth(3).click(); wait(5.5)
-        cap("选手页：每回合胜率贡献 = 每场约多赢几个回合，并给出同图同阵营排名", "右侧热力图默认显示 T 方开局站位"); wait(4)
+            safe("card", lambda: (to(cards.nth(i), 15), wait(0.9)))
+        cap("点击 NiKo：出场动画 + 定场诗", "定场诗自上而下逐列展开，全亮度保留")
+        cards.nth(3).click(); wait(6)
+        cap("选手页：每回合胜率贡献（WPA）和同图同阵营排名"); wait(3)
+        def radar6():
+            fig = pg.locator(".player-radar6").first; to(fig); wait(1)
+            cap("新：6 维风格画像", "首杀倾向、道具投入、补枪、残局、站位深度等；悬停看百分位和定义")
+            dots = fig.locator(".radar6-dot")
+            for i in range(min(4, dots.count())):
+                to(dots.nth(i), 12); wait(1.1)
+        safe("radar6", radar6)
+        def ghost():
+            g = pg.locator("label.ghost-toggle").first; to(g); wait(0.6)
+            cap("新：对比本图同阵营职业平均", "琥珀色 = 比平均多站，青色 = 比平均少站"); g.click(); wait(3)
+        safe("ghost", ghost)
         for label, txt in [("中期控图", "切换阶段：中期控图"), ("下包后/残局", "切换阶段：下包后 / 残局")]:
-            btn = pg.get_by_role("button", name=label).first; cap(txt); to(btn, 15); btn.click(); wait(2.2)
-        btn = pg.get_by_role("button", name="道具落点").first; cap("切换图层：道具落点（图标即道具类型）"); to(btn, 15); btn.click(); wait(2.5)
-        btn = pg.get_by_role("button", name="CT").first; cap("切换到 CT 方：颜色、数据、热力图同步切换"); to(btn, 15); btn.click(); wait(3)
-        cap("按 Esc 回到上一层"); pg.keyboard.press("Escape"); wait(3)
-        summ = pg.locator("summary", has_text="比赛").first
-        summ.scroll_into_view_if_needed(); wait(0.8)
-        cap("展开「本图比赛记录」：每场比赛按回合画出胜率涨跌", "绿 = 这回合胜率上升，红 = 下降；虚线是半场")
-        to(summ); summ.click(); wait(1.2); pg.mouse.wheel(0, 500); wait(3)
-        bar = pg.locator("g.winprob-round[role=button]").nth(8)
-        if bar.count():
+            safe(label, lambda: (cap(txt), to(pg.get_by_role("button", name=label).first, 15), pg.get_by_role("button", name=label).first.click(), wait(2)))
+        safe("ct", lambda: (cap("切换到 CT 方：颜色、数据、热力图同步切换"), to(pg.get_by_role("button", name="CT").first, 15), pg.get_by_role("button", name="CT").first.click(), wait(2.5)))
+        cap("回到 Falcons 的 Mirage 页"); pg.keyboard.press("Escape"); wait(1.5); pg.goto(BASE + "#/teams-hub?team=falcons&map=de_mirage&side=T"); wait(3)
+        # 3 archive + replay
+        def replay_from_archive():
+            if "map=de_mirage" not in pg.url or "player=" in pg.url:
+                pg.goto(BASE + "#/teams-hub?team=falcons&map=de_mirage&side=T"); wait(3)
+            summ = pg.locator("summary", has_text="本图比赛记录").first
+            summ.scroll_into_view_if_needed(); wait(0.8)
+            cap("本图比赛记录：每场标注日期，按回合画出胜率涨跌", "绿 = 胜率上升，红 = 下降；虚线是半场")
+            to(summ); summ.click(); wait(1.2); pg.mouse.wheel(0, 500); wait(3)
+            bar = pg.locator("g.winprob-round[role=button]").nth(8)
             cap("点击任意一根柱子：打开这一回合的 2D 回放"); to(bar, 20); wait(1); bar.click(); wait(2)
+            cap("升级后的 2D 回放：CS2 倒计时（下包后切换为 C4 40 秒）", "名字缩写、死亡位置留灰色 ×、右侧击杀栏、烟雾按真实半径和剩余时间绘制")
             play = pg.locator("button", has_text="播放").first
-            if play.count():
-                cap("2D 回放：10 名选手按秒移动，击杀、道具、下包依次出现", "下方是 T 方胜率曲线，播放头同步走"); to(play); play.click()
+            if play.count(): to(play); play.click()
+            wait(6)
             sp = pg.locator("button", has_text="4×").first
+            if sp.count(): cap("4 倍速；胜率曲线和进度条上标出击杀 / 烟雾 / 下包"); to(sp, 15); sp.click()
             wait(5)
-            if sp.count(): cap("切到 4 倍速"); to(sp, 15); sp.click()
-            wait(9)
+            cap("快捷键：K 跳到下一次击杀，P 跳到下包，空格暂停"); pg.keyboard.press("Space"); wait(0.6)
+            pg.keyboard.press("k"); wait(2); pg.keyboard.press("k"); wait(2); pg.keyboard.press("p"); wait(2.5)
             cap("按 Esc 关闭回放"); pg.keyboard.press("Escape"); wait(2)
+        safe("replay", replay_from_archive)
+        # 4 tactics
         cap("进入「战术」页：Mirage 的 T 方进攻套路"); pg.goto(BASE + "#/de_mirage/tactics"); wait(3.5)
-        cap("选中的套路：道具按投掷顺序排列，注明从哪里投；橙色线是 T 方进点路线", "胜率变化：这套爆弹前后 T 方回合胜率的变化"); wait(4)
+        cap("选中的套路：道具按投掷顺序排列，注明投掷位置", "新：意图标签（假打转点 / 多向夹击 / 一波流）和进点同步时间"); wait(4)
+        def intent():
+            b_ = pg.locator(".recipe-intent").first; to(b_); wait(2)
+        safe("intent", intent)
         rows = pg.locator(".tactics-route-row")
         for i in range(min(3, rows.count())):
-            cap(f"悬停路线 {'abc'[i]}：只高亮这一条"); to(rows.nth(i), 15); wait(1.6)
+            safe("route", lambda: (cap(f"新：路线用标准点位名命名（经过的主要卡点 · 走这条路的队员比例）", "悬停只高亮这一条"), to(rows.nth(i), 15), wait(1.8)))
         links = pg.locator(".tactics-recipe-details [data-map-link]")
         for i in range(min(3, links.count())):
-            cap("悬停道具行：地图上对应道具同步高亮"); to(links.nth(i), 15); wait(1.4)
-        ex = pg.locator("details summary", has_text="示例").first
-        if ex.count():
-            ex.scroll_into_view_if_needed(); cap("示例回合：每套爆弹都能直接看真实回合的回放"); to(ex); ex.click(); wait(1.2)
-            rb = pg.locator("button", has_text="回放").first
-            if rb.count():
-                to(rb); rb.click(); wait(1.5)
-                play = pg.locator("button", has_text="播放").first
-                if play.count(): play.click()
-                cap("这套 A 点爆弹在比赛里的真实执行过程"); wait(10)
-                pg.keyboard.press("Escape"); wait(1.5)
-        toggles = pg.locator(".tactics-recipe-toggle")
-        if toggles.count() > 3:
-            t3 = toggles.nth(3); t3.scroll_into_view_if_needed(); cap("换一套爆弹：地图和路线跟着切换"); to(t3); t3.click(); wait(3.5)
-        cap("进入「道具库」：所有职业选手用过的道具"); pg.goto(BASE + "#/de_mirage/lineups"); wait(3.5)
-        must = pg.get_by_role("button", name="必学 ≥50次").first; cap("只看「必学」：职业比赛里用过 50 次以上的道具"); to(must); must.click(); wait(2.5)
+            safe("link", lambda: (cap("悬停道具行：地图上对应道具同步高亮"), to(links.nth(i), 15), wait(1.3)))
+        def recipe_bind():
+            btn = pg.locator("button", has_text="复制整套爆弹练习脚本").first; to(btn); wait(0.6)
+            cap("新：一键复制整套爆弹练习脚本", "粘贴到控制台，每按一次小键盘回车，依次传送到下一颗道具的投掷位置"); btn.click(); wait(3)
+        safe("recipe_bind", recipe_bind)
+        def example():
+            ex = pg.locator("details summary", has_text="示例").first
+            cap("示例回合：每套爆弹都能直接看真实比赛回放"); to(ex); ex.click(); wait(1.2)
+            rb = pg.locator("button", has_text="回放").first; to(rb); rb.click(); wait(1.5)
+            play = pg.locator("button", has_text="播放").first
+            if play.count(): play.click()
+            cap("按 G 跳到进点时刻"); wait(3); pg.keyboard.press("g"); wait(6)
+            pg.keyboard.press("Escape"); wait(1.5)
+        safe("example", example)
+        def other():
+            toggles = pg.locator(".tactics-recipe-toggle")
+            t3 = toggles.nth(3); cap("换一套爆弹：左侧地图、标题、路线同步切换"); to(t3); t3.click(); wait(3.5)
+        safe("other", other)
+        # 5 lineups
+        cap("进入「道具库」：所有职业选手用过的道具"); pg.keyboard.press("Escape"); pg.keyboard.press("Escape"); pg.goto(BASE + "#/de_mirage/lineups"); wait(6); pg.set_default_timeout(15000)
+        safe("must", lambda: (cap("只看「必学」：职业比赛里用过 50 次以上的道具"), to(pg.locator("button", has_text="必学").first), pg.locator("button", has_text="必学").first.click(), wait(2.5)))
+        def pick():
+            cl = pg.locator("g.landing-cluster").first
+            cap("新：直接在地图上点选", "先点落点，地图随即显示扔到这里的所有投掷位置"); to(cl); wait(0.8); cl.click(); wait(2.5)
+            cand = pg.locator("g.arrow-group").nth(2)
+            cap("再点一个投掷位置，直接选中这颗道具"); to(cand); wait(0.8); cand.click(force=True); wait(2.5)
+        safe("pick", pick)
+        def bind():
+            btn = pg.locator("button", has_text="复制练习绑定").first; to(btn); wait(0.6)
+            cap("一键复制练习绑定（setpos + setang）", "粘贴到控制台，按小键盘回车即可回到投掷位置重练"); btn.click(); wait(3)
+            pg.keyboard.press("Escape"); wait(1)
+        safe("bind", bind)
         arts = pg.locator("article[data-map-link]")
-        for i in range(min(3, arts.count())):
-            cap("悬停卡片：地图画出站位、朝向和落点；可一键复制练习指令"); to(arts.nth(i), 20); wait(2)
-        cap("演示结束", "CS2 职业战术手册 · 样板战队 Falcons"); wait(3)
+        for i in range(min(2, arts.count())):
+            safe("art", lambda: (cap("悬停卡片：地图画出站位、朝向和落点"), to(arts.nth(i), 20), wait(1.8)))
+        cap("演示结束", "CS2 职业战术手册 v3 · 样板战队 Falcons"); wait(3)
         ctx.close(); b.close()
 run()
