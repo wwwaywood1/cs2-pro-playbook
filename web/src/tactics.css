@@ -137,10 +137,19 @@
 
 /* Player entry paths sit below grenade flight lines and landing icons. */
 .tactics-entry-path { fill: none; stroke: #efad55; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; animation: entry-route-draw 600ms ease-out both; }
-.tactics-entry-label { fill: #ffdaa9; paint-order: stroke; stroke: #0b1220; stroke-width: 3px; stroke-linejoin: round; }
-.tactics-routes-legend { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: .75rem; }
+.tactics-routes-legend { display: flex; flex-direction: column; align-items: stretch; gap: 2px; margin-top: 8px; font-size: .75rem; }
 .tactics-routes-legend strong { cursor: help; }
 .tactics-routes-legend p { margin: 0; }
 .tactics-route-swatch { width: 38px; border-top: 3px solid #efad55; }
 @keyframes entry-route-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @media (prefers-reduced-motion: reduce) { .tactics-entry-path { animation: none; stroke-dashoffset: 0; } }
+
+/* entry routes: numbered dots on the map, labels in the legend (DeepSeek patch) */
+.tactics-route-dot { fill: #efad55; stroke: rgba(6, 9, 13, .85); stroke-width: 1; }
+.tactics-route-num { fill: #0b1220; font-weight: 700; }
+.tactics-route-row { display: flex; align-items: center; gap: 8px; width: 100%; padding: 4px 6px; border: 0; border-radius: 6px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.tactics-route-row:hover, .tactics-route-row:focus-visible { background: rgba(255, 255, 255, .06); }
+.tactics-route-row .tactics-route-swatch { flex: none; }
+.tactics-route-badge { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: #efad55; color: #0b1220; font-size: 10px; font-weight: 700; line-height: 1; }
+.tactics-entry-routes .is-active { opacity: 1; }
+.tactics-entry-routes .is-dimmed { opacity: .25; }

@@ -177,7 +177,7 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
         page.reload()
         page.wait_for_selector('.tactics-entry-path')
         smoke.check(page.locator('.tactics-entry-path').count() == 1, 'selected recipe draws its player entry route')
-        smoke.check('60%' in (page.locator('.tactics-entry-label').first.text_content() or ''), 'entry route label includes its share')
+        smoke.check('60%' in page.locator('.tactics-route-row').first.inner_text(), 'entry route label includes its share')
         path = page.locator('.tactics-entry-path')
         smoke.check(path.get_attribute('marker-end') is not None, 'entry route has an arrowhead')
         row = page.locator('.tactics-recipe.is-selected .tactics-spots li').first

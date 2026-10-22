@@ -90,6 +90,7 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
     && route.points.every((point) => point.length === 2 && point.every(Number.isFinite))), [routes]);
   const [full, setFull] = useState(false);
   const [chosenLevel, setChosenLevel] = useState<number | null>(null);
+  const [activeRoute, setActiveRoute] = useState<number | null>(null);
   const [failedSource, setFailedSource] = useState<string | null>(null);
   const [width, setWidth] = useState(640);
   const [pixelRatio, setPixelRatio] = useState(1);
@@ -185,10 +186,12 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
       <g className="tactics-entry-routes" key={routeKey} pointerEvents="none">{entryRoutes.map((route, index) => {
         const label = t("round3.route_label", { via: route.via.map((place) => calloutLabel(map, place)).join(" → "), p: Math.round(route.share * 100) });
         const [x, y] = routeLabelPoint(route.points);
-        return <g key={index} opacity={Math.max(.3, .9 - index * .17)}>
+        return <g key={index} opacity={Math.max(.3, .9 - index * .17)}
+          className={activeRoute === null ? undefined : activeRoute === index ? "is-active" : "is-dimmed"}>
           <title>{label}</title>
           <path className="tactics-entry-path" d={routePath(route.points)} pathLength={1} strokeWidth={2 + Math.max(0, Math.min(1, route.share)) * 4} markerEnd={`url(#${maskId}-entry-arrow)`} vectorEffect="non-scaling-stroke" />
-          <text className="tactics-entry-label" x={x + 8 * unit} y={y - 8 * unit} fontSize={11 * unit}>{label}</text>
+          <circle className="tactics-route-dot" cx={x} cy={y} r={7 * unit} />
+          <text className="tactics-route-num" x={x} y={y + 3 * unit} textAnchor="middle" fontSize={9 * unit}>{"abcd"[index]}</text>
         </g>;
       })}</g>
       {visible.filter((entry) => entry.lineup).map((entry) => {
@@ -218,7 +221,16 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
       })}
     </svg>
     {routes !== undefined ? <div className="tactics-routes-legend"><strong tabIndex={0} title={t("round3.routes_tip")}>{t("round3.routes_title")} ⓘ</strong>
-      {!entryRoutes.length ? <p className="muted">{t("round3.routes_none")}</p> : <span className="tactics-route-swatch" aria-hidden="true" />}
+      {!entryRoutes.length ? <p className="muted">{t("round3.routes_none")}</p> : entryRoutes.map((route, index) => {
+        const label = t("round3.route_label", { via: route.via.map((place) => calloutLabel(map, place)).join(" → "), p: Math.round(route.share * 100) });
+        return <button key={index} type="button" className="tactics-route-row"
+          onMouseEnter={() => setActiveRoute(index)} onMouseLeave={() => setActiveRoute(null)}
+          onFocus={() => setActiveRoute(index)} onBlur={() => setActiveRoute(null)}>
+          <span className="tactics-route-swatch" aria-hidden="true" style={{ opacity: Math.max(.3, .9 - index * .17) }} />
+          <span className="tactics-route-badge" aria-hidden="true">{"abcd"[index]}</span>
+          <span className="tactics-route-text">{label}</span>
+        </button>;
+      })}
     </div> : null}
     {!visible.length && <p className="muted">{t("tactics.no_spots")}</p>}
     {failedSource === source && <p className="muted">{t("tactics.radar_unavailable")}</p>}

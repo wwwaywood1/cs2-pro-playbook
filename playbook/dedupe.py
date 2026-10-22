@@ -146,7 +146,7 @@ def deduplicate_tables(tables: dict[str, pl.DataFrame], *,
 
 def _pretty_event(slug: str) -> str:
     words = re.split(r"[-_]+", slug)
-    keep_upper = {"iem", "pgl", "esl", "blast", "cct", "esea", "fissure", "ewc", "hltv", "cac", "bc"}
+    keep_upper = {"iem", "pgl", "esl", "blast", "cct", "esea", "fissure", "ewc", "hltv", "cac", "bc", "cs", "epl", "mr15", "wcg"}
     out = []
     for w in words:
         if w.lower() in keep_upper:
