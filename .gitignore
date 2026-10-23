@@ -29,3 +29,8 @@ web/public/players/
 # local static build for previewing the site (python3 -m http.server -d site-preview)
 site-preview/
 data/models/
+
+# owner-supplied in-game map screenshots and the backgrounds built from them (kept out of the public repo)
+web/public/map-bg/
+assets/map-photos/*
+!assets/map-photos/README.md
