@@ -1,0 +1,81 @@
+# Cache overview verified against all eight parsed demos; see scripts/check_cache_radar.py.
+# Overlay: delegation/inputs/cache_radar_check.png; evidence: de_cache_callout_evidence.csv.
+map = "de_cache"
+display_name = "Cache"
+
+[radar]
+pos_x = -2000.0
+pos_y = 3250.0
+scale = 5.5
+
+[regions]
+T_SPAWN = "T_SPAWN"
+A_APPROACH = "A"
+A_SITE = "A"
+MID = "MID"
+B_APPROACH = "B"
+B_SITE = "B"
+CT_SPAWN = "CT_SPAWN"
+
+[callouts]
+
+# T_SPAWN
+TSpawn = "T_SPAWN"
+TYard = "T_SPAWN"
+TTruck = "T_SPAWN"
+
+# A_APPROACH
+OutsideA = "A_APPROACH"
+AMain = "A_APPROACH"
+AHalls = "A_APPROACH"
+AStairs = "A_APPROACH"
+LongA = "A_APPROACH"
+Lockers = "A_APPROACH"
+
+# A_SITE
+BombsiteA = "A_SITE"
+Truck = "A_SITE"
+ForkLift = "A_SITE"
+Squeaky = "A_SITE"  # ? A entrance/door is grouped with A_SITE; plant T samples 879/106, early CT 84/T 14.
+Corner = "A_SITE"
+Quad = "A_SITE"
+Catwalk = "A_SITE"
+ElectricalBox = "A_SITE"
+Toxic = "A_SITE"  # ? Radar median is on A (342,359); A/B plant samples 44/3, despite the name.
+Ladder = "A_SITE"  # ? Radar median is A catwalk (344,397), A/B plant samples 22/1.
+ABoost = "A_SITE"  # ? A-site boost (442,242), 47/0 A/B plant samples; only 120 live samples.
+
+# MID
+Mid = "MID"
+Middle = "MID"  # ? 68 samples above mid boost (z=1861), alias kept distinct from ground Mid.
+Garage = "MID"  # ? 1856 early T / 5 CT; both plant sites (1499/1854); mid approach, not B-only.
+Highway = "MID"  # ? CT-heavy A rotation (716 early CT / 0 T; A/B plant T samples 428/30); shared mid connector.
+Vents = "MID"  # ? B/Mid link; B/A plant T samples 159/53, shared transit so MID.
+Boost = "MID"
+Sandbags = "MID"
+Cubby = "MID"  # ? Mixed early presence (47 T / 24 CT), next to boost on the mid approach.
+MidRoof = "MID"  # ? Elevated mid/vent lip; A/B plant samples 14/7, not a bombsite.
+Red = "MID"
+
+# B_APPROACH
+BMain = "B_APPROACH"
+BHalls = "B_APPROACH"
+SunRoom = "B_APPROACH"
+OutsideB = "B_APPROACH"
+Useless = "B_APPROACH"  # ? 241 early T / 0 CT; B-side approach with mixed A/B plant samples 241/352.
+
+# B_SITE
+BombsiteB = "B_SITE"
+Checkers = "B_SITE"
+TreeRoom = "B_SITE"
+Headshot = "B_SITE"
+Heaven = "B_SITE"
+Rafters = "B_SITE"
+BackHall = "B_SITE"  # ? B heaven/checkers passage; only 331 live samples (A/B plant 0/5).
+
+# CT_SPAWN
+CTSpawn = "CT_SPAWN"
+CTLane = "CT_SPAWN"  # ? 2042 early CT / 0 T; shared spawn rotation, not a dedicated bombsite.
+BusStop = "CT_SPAWN"
+Connector = "CT_SPAWN"  # ? 1317 early CT / 0 T; CT lane/mid link, A/B plant samples 81/26.
+Bear = "CT_SPAWN"  # ? 243 early CT / 0 T; CT lane/B link, A/B plant samples 6/6.

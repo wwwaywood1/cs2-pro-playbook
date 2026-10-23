@@ -1,4 +1,4 @@
-export const ORBIT_CARD_SIZE = { width: 164, height: 210 };
+export const ORBIT_CARD_SIZE = { width: 156, height: 178 };
 
 export type OrbitNodeSize = { width: number; height: number };
 
@@ -24,6 +24,23 @@ export function orbitLayout(width: number, height: number, nodes: OrbitNodeSize[
   const maxWidth = Math.max(...nodes.map((node) => node.width * SCALE));
   const maxHeight = Math.max(...nodes.map((node) => node.height * SCALE));
   const rx = Math.min(520, Math.max(0, (width - maxWidth) / 2 - GAP));
+  // A staggered ring separates the shoulder and side columns horizontally.
+  // A regular seven-point ellipse wastes height separating those same pairs.
+  const shoulder = rx - maxWidth - GAP;
+  if (nodes.length === 7 && shoulder >= maxWidth + GAP) {
+    const minHeight = Math.ceil(2 * (maxHeight + GAP) / 1.7 + maxHeight + GAP * 2);
+    const ry = Math.max(0, (Math.max(height, minHeight) - maxHeight) / 2 - GAP);
+    const cx = width / 2, cy = height / 2;
+    return { minHeight, points: [
+      { x: cx, y: cy - ry },
+      { x: cx + shoulder, y: cy - ry * .70 },
+      { x: cx + rx, y: cy },
+      { x: cx + shoulder, y: cy + ry },
+      { x: cx - shoulder, y: cy + ry },
+      { x: cx - rx, y: cy },
+      { x: cx - shoulder, y: cy - ry * .70 },
+    ] };
+  }
   let minRy = 0;
   for (let i = 0; i < nodes.length; i++) {
     for (let j = i + 1; j < nodes.length; j++) {
@@ -42,4 +59,13 @@ export function orbitLayout(width: number, height: number, nodes: OrbitNodeSize[
     minHeight,
     points: angles.map((angle) => ({ x: width / 2 + rx * Math.cos(angle), y: height / 2 + ry * Math.sin(angle) })),
   };
+}
+
+/** Restrict both sample totals and ranking to the seven rendered pool nodes. */
+export function orbitStats<T extends { map: string; n_matches: number; map_win_rate?: number | null }>(maps: T[], minMatches: number | undefined) {
+  const shown = maps.filter((map) => ORBIT_POOL.some(([id]) => id === map.map));
+  const ranked = shown.filter((map) => minMatches != null && map.n_matches >= minMatches && map.map_win_rate != null)
+    .sort((a, b) => (b.map_win_rate ?? 0) - (a.map_win_rate ?? 0) || a.map.localeCompare(b.map));
+  return { matches: shown.reduce((sum, map) => sum + map.n_matches, 0),
+    best: ranked[0]?.map, worst: ranked.length > 1 ? ranked[ranked.length - 1].map : undefined };
 }

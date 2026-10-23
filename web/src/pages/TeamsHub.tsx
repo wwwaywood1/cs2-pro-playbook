@@ -30,7 +30,7 @@ import { teamTheme } from "../theme";
 import "../heatmap.css";
 import "../teams-hub.css";
 import { useHubRoute } from "./teamsHubRoute";
-import { EMPTY_MAP_GLOW, ORBIT_CARD_SIZE, ORBIT_POOL, orbitLayout } from "./teamsHubOrbit";
+import { EMPTY_MAP_GLOW, ORBIT_CARD_SIZE, ORBIT_POOL, orbitLayout, orbitStats } from "./teamsHubOrbit";
 
 type HubSide = Side;
 type TeamEntry = HeatmapTeamIndexEntry;
@@ -127,12 +127,12 @@ function Results({ team }: { team: TeamEntry }) {
 
 /** The manifest prevents requests for absent photos. A stale/unreadable photo
  * is hidden until decoded and leaves the radar/grid fallback in place. */
-function MapBackdrop({ id, scenic }: { id: string; scenic: boolean }) {
+function MapBackdrop({ id, scenic, available }: { id: string; scenic: boolean; available: boolean }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const photo = assetUrl(`map-bg/${id.replace(/^de_/, "")}.webp`);
   return <>
-    {(!scenic || !loaded || failed) ? <span className="map-card-bg" aria-hidden="true" style={id !== "de_cache" ? { backgroundImage: `url("${assetUrl(`radars/${id}.png`)}")` } : undefined} /> : null}
+    {(!scenic || !loaded || failed) ? <span className="map-card-bg" aria-hidden="true" style={id !== "de_cache" || available ? { backgroundImage: `url("${assetUrl(`radars/${id}.png`)}")` } : undefined} /> : null}
     {scenic && !failed ? <img className="card-scenic-probe" src={photo} alt="" aria-hidden="true" onLoad={() => setLoaded(true)} onError={() => setFailed(true)} /> : null}
     {scenic && loaded && !failed ? <span className="card-scenic-bg" aria-hidden="true" style={{ backgroundImage: `url("${photo}")` }} /> : null}
   </>;
@@ -141,12 +141,14 @@ function MapBackdrop({ id, scenic }: { id: string; scenic: boolean }) {
 function TeamPanel({ team, change, returnMap }: { team: TeamEntry; change: Change; returnMap: string }) {
   const stage = useRef<HTMLDivElement>(null);
   const backgrounds = useData(getMapBackgrounds, []);
+  const overview = useData(getIndex, []);
+  const { matches: shownMatches, best, worst } = orbitStats(team.maps, overview.data?.min_matches_reliable);
   const [size, setSize] = useState({ width: 1100, height: 620, nodes: ORBIT_POOL.map(() => ORBIT_CARD_SIZE) });
   const [hovered, setHovered] = useState("");
   const [focused, setFocused] = useState("");
   const [interaction, setInteraction] = useState<"pointer" | "keyboard">("pointer");
   const active = interaction === "keyboard" ? focused || hovered : hovered || focused;
-  const selected = team.maps.find((map) => active !== "de_cache" && map.map === active && map.n_matches > 0);
+  const selected = team.maps.find((map) => map.map === active && map.n_matches > 0);
   // Both loaders cache requests. Only the active map is requested; stale hover
   // responses are ignored by useData and failures never block opening a map.
   const preview = useData(() => selected ? Promise.all([getTeam(selected.map, team.slug), getTactics(selected.map)]) : Promise.resolve(null), [selected?.map, team.slug]);
@@ -155,9 +157,6 @@ function TeamPanel({ team, change, returnMap }: { team: TeamEntry; change: Chang
   const mostUsed = [...(profile?.tactics?.T.recipes ?? [])].sort((a, b) => b.rounds - a.rounds)[0];
   const recipe = previewData?.[1].recipes.find((item) => item.id === mostUsed?.value);
   const signature = recipe?.core.map((spot) => spot.name?.zh || calloutLabel(selected?.map ?? "", spot.place)).join(" + ");
-  const ranked = [...team.maps].filter((map) => map.n_matches > 0 && map.map_win_rate != null).sort((a, b) => (b.map_win_rate ?? 0) - (a.map_win_rate ?? 0) || a.map.localeCompare(b.map));
-  const best = ranked[0]?.map;
-  const worst = ranked.length > 1 ? ranked[ranked.length - 1]?.map : undefined;
   useLayoutEffect(() => {
     const element = stage.current;
     if (!element) return;
@@ -195,19 +194,20 @@ function TeamPanel({ team, change, returnMap }: { team: TeamEntry; change: Chang
         <div className="hub-orbit-hud" role="status" aria-live="polite" aria-atomic="true">{selected ? <>
           <p className="hub-orbit-preview"><b>{selected.display_name}</b><span>T 胜率 {fmtPct(selected.win_rate_T ?? profile?.sides.T.win_rate)} · CT 胜率 {fmtPct(selected.win_rate_CT ?? profile?.sides.CT.win_rate)}</span><span title={signature}>招牌：{signature || (preview.loading ? "读取中…" : "暂无套路数据")}</span></p>
           <small>点击拆解本图打法 →</small>
-        </> : <p className="muted">{fmtInt(team.n_matches)} 场地图比赛 · 7 张图池</p>}</div>
+        </> : <p className="muted">{fmtInt(shownMatches)} 场地图比赛 · {ORBIT_POOL.length} 张图池</p>}</div>
       </header>
       <div className="hub-map-grid hub-orbit-nodes">{ORBIT_POOL.map(([id, name, glow], index) => {
         const map = team.maps.find((entry) => entry.map === id);
-        const available = id !== "de_cache" && !!map?.n_matches;
-        const rate = id === worst ? "weak" : id === best || (map?.map_win_rate ?? 0) >= .65 ? "strong" : (map?.map_win_rate ?? 1) < .48 ? "weak" : "neutral";
+        const available = !!map?.n_matches;
+        const reliable = overview.data != null && (map?.n_matches ?? 0) >= overview.data.min_matches_reliable;
+        const rate = !reliable ? "neutral" : id === worst ? "weak" : id === best || (map?.map_win_rate ?? 0) >= .65 ? "strong" : (map?.map_win_rate ?? 1) < .48 ? "weak" : "neutral";
         return <button type="button" className="hub-map-card hub-orbit-node orbit-map-card" data-rate={rate} data-active={active === id} data-empty={!available} aria-disabled={!available} style={{ "--map-glow": available ? glow : EMPTY_MAP_GLOW, "--map-theme-color": glow, "--orbit-x": `${points[index].x}px`, "--orbit-y": `${points[index].y}px`, "--stagger": `${index * 40}ms`, "--hub-progress": 100 - Math.max(0, Math.min(1, map?.map_win_rate ?? 0)) * 100, viewTransitionName: returnMap === id ? "team-map-header" : undefined } as CSSProperties} id={`hub-map-${id}`} key={id}
           onMouseEnter={() => { setInteraction("pointer"); setHovered(id); }} onMouseLeave={() => setHovered("")} onFocus={() => { setInteraction("keyboard"); setFocused(id); }} onBlur={() => setFocused("")} onKeyDown={(event) => cycle(event, index)} onClick={() => { if (available) change({ map: id, player: "", side: "T" }); }}>
-          <MapBackdrop id={id} scenic={!!backgrounds.data?.includes(id.replace(/^de_/, ""))} />
+          <MapBackdrop id={id} available={available} scenic={!!backgrounds.data?.includes(id.replace(/^de_/, ""))} />
           <span className="hub-map-name">{name}</span>
           {available && id === best ? <span className="hub-map-badge is-best">{t("round2.best_map")}</span> : available && id === worst ? <span className="hub-map-badge is-weak">{t("round2.weak_map")}</span> : null}
           {available ? <><span className="hub-rate"><svg viewBox="0 0 100 100" aria-hidden="true"><circle className="hub-arc-track" cx="50" cy="50" r="44" /><circle className="hub-arc" cx="50" cy="50" r="44" pathLength="100" /></svg><strong><CountUp value={map?.map_win_rate} format="percent" /></strong></span>
-            <span>{t("hub.map_win_rate")}</span><small>{t("hub.matches", { n: fmtInt(map!.n_matches) })}<LowSampleBanner inline low_sample={!!map?.low_sample} /></small></> : <><span className="hub-orbit-empty" aria-hidden="true">＋</span><small>{id === "de_cache" ? "即将上线" : "暂无数据"}</small></>}
+            <span>{t("hub.map_win_rate")}</span><small>{t("hub.matches", { n: fmtInt(map!.n_matches) })}<LowSampleBanner compact low_sample={overview.data != null && !reliable} /></small></> : <><span className="hub-orbit-empty" aria-hidden="true">＋</span><small>{t("hub.no_map_data")}</small></>}
         </button>;
       })}</div>
     </div>

@@ -50,7 +50,7 @@ export default function Home() {
         <Stagger className="map-grid">
           {maps.map((item) => (
             <MapTile key={item.map} map={item.map} available={!!item.sample?.n_matches}>
-              <img className="map-card-radar" src={`${import.meta.env.BASE_URL}radars/${item.map}.png`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+              {item.sample?.n_matches ? <img className="map-card-radar" src={`${import.meta.env.BASE_URL}radars/${item.map}.png`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} /> : null}
               <div className="map-card-head">
                 <h2>{item.display_name}</h2>
                 <LowSampleBanner inline low_sample={!!item.sample && item.sample.n_matches < data.min_matches_reliable} />
@@ -63,7 +63,7 @@ export default function Home() {
                   <div data-side="CT"><dt>{t("hub.ct_win")}</dt><dd><CountUp value={item.sample.win_rate_CT} format="percent" /></dd></div>
                 </dl>
                 <p className="map-top-recipe"><small>{t("tactics.recipes")}</small><strong>{item.sample.top_recipe?.name[lang] || t("tactics.no_recipes")}</strong></p>
-              </> : <p className="map-no-data">{t("round4.coming_soon")}</p>}
+              </> : <p className="map-no-data">{t("hub.no_map_data")}</p>}
 
               {item.sample?.n_matches ? <span className="map-card-cta">{t("round4.map_to_tactics")} →</span> : null}
             </MapTile>
