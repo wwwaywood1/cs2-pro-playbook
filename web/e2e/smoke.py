@@ -618,8 +618,8 @@ def check_hub_team(smoke: Smoke, page: Page) -> None:
     smoke.check(page.locator('.hub-results li').count() == 1, 'team panel shows the recorded sample result')
     card = page.locator('#hub-map-de_mirage')
     card.hover(position={'x': 24, 'y': 28})
-    page.wait_for_function("parseFloat(getComputedStyle(document.querySelector('#hub-map-de_mirage .hub-map-preview')).opacity) > .3")
-    smoke.check(card.locator('.hub-map-preview').get_attribute('src').endswith('radars/de_mirage.png'),
+    page.wait_for_function("parseFloat(getComputedStyle(document.querySelector('#hub-map-de_mirage .map-card-bg')).opacity) > .3")
+    smoke.check('radars/de_mirage.png' in card.locator('.map-card-bg').evaluate('el => getComputedStyle(el).backgroundImage'),
                 'hover previews the selected map radar')
     expect(page.locator('.hub-orbit-preview')).to_contain_text('T 胜率')
     expect(page.locator('.hub-orbit-preview')).to_contain_text('CT 胜率')
@@ -654,7 +654,7 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
             }
             const el = document.getElementById(a.id), css = getComputedStyle(el);
             const active = document.querySelector('.hub-orbit').hasAttribute('data-active');
-            const expectedScale = el.dataset.active === 'true' ? 1.08 : active ? .96 : 1;
+            const expectedScale = el.dataset.active === 'true' ? (el.dataset.empty === 'true' ? 1 : 1.08) : active ? .96 : 1;
             if (css.position !== 'absolute' || css.transform !== 'none' || Math.abs(Number(css.scale) - expectedScale) > .005 ||
                 (el.dataset.empty === 'true' && css.borderTopStyle !== 'dashed')) styles.push({id: a.id, position: css.position, transform: css.transform, scale: css.scale});
         }
@@ -665,7 +665,7 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
         return {nodes, stage, intersections, gaps, outside, styles,
             introGap: Math.min(...nodes.map(n => n.top)) - intro.bottom,
             stacked: badge.bottom <= name.top + 1 && name.bottom <= hud.top + 1 && core.width <= 301 && hud.width >= core.width - 1 && hud.bottom <= core.bottom + 1,
-            shielded: getComputedStyle(coreEl).backgroundColor === 'rgb(8, 21, 31)' &&
+            shielded: getComputedStyle(coreEl).backgroundImage.startsWith('radial-gradient(') &&
                 rays.every(line => Math.hypot(line.x1.baseVal.value - stage.width / 2, line.y1.baseVal.value - stage.height / 2) >= 119),
             overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth};
     }""")
@@ -677,6 +677,70 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
                 + (f': {diagnostics}' if not valid else ''))
 
 
+def check_orbit_backdrops(smoke: Smoke, page: Page) -> None:
+    page.mouse.move(0, 0)
+    page.evaluate('document.activeElement.blur()')
+    glows = {
+        'de_dust2': 'rgba(217,155,67,.22)', 'de_mirage': 'rgba(225,95,65,.22)',
+        'de_ancient': 'rgba(34,197,94,.22)', 'de_anubis': 'rgba(234,179,8,.24)',
+        'de_inferno': 'rgba(249,115,22,.22)', 'de_nuke': 'rgba(56,189,248,.22)',
+        'de_cache': 'rgba(148,163,184,.10)',
+    }
+    for map_id, glow in glows.items():
+        node = page.locator(f'#hub-map-{map_id}')
+        expect(node.locator('.map-card-bg')).to_have_count(1)
+        report = node.evaluate("""el => {
+            const bg = el.querySelector('.map-card-bg'), css = getComputedStyle(bg);
+            const veil = getComputedStyle(el, '::before');
+            return {image: css.backgroundImage, glow: getComputedStyle(el).getPropertyValue('--map-glow').trim(),
+                layered: css.position === 'absolute' && css.zIndex === '0' && css.pointerEvents === 'none' &&
+                    veil.zIndex === '1' && veil.backgroundImage.startsWith('linear-gradient(') &&
+                    [...el.children].filter(child => child !== bg).every(child => Number(getComputedStyle(child).zIndex) > 1)};
+        }""")
+        empty = node.get_attribute('data-empty') == 'true'
+        expected_glow = glows['de_cache'] if empty else glow
+        smoke.check(report['glow'] == expected_glow and report['layered'],
+                    f'{map_id}: correct ambient glow and backdrop below readable content')
+        expected_url = page.evaluate("path => new URL(path, document.baseURI).href", f'radars/{map_id}.png')
+        smoke.check(('repeating-linear-gradient(' in report['image'] and 'url(' not in report['image'])
+                    if map_id == 'de_cache' else report['image'] == f'url("{expected_url}")',
+                    f'{map_id}: single radar uses deployment base path (Cache uses stripes)')
+        if map_id != 'de_cache':
+            smoke.check(node.locator('.map-card-bg').evaluate("""el => new Promise(resolve => {
+                const image = new Image(); image.onload = () => resolve(image.naturalWidth > 0);
+                image.onerror = () => resolve(false); image.src = getComputedStyle(el).backgroundImage.slice(5, -2);
+            })"""), f'{map_id}: radar asset loads')
+        node.hover(position={'x': 12, 'y': 12})
+        bg = node.locator('.map-card-bg')
+        expect(bg).to_have_css('opacity', '0.16' if empty else '0.32')
+        smoke.check(True, f'{map_id}: hover keeps empty backdrop static' if empty else f'{map_id}: hover raises radar opacity')
+        if empty:
+            expect(node).to_have_css('scale', '1')
+            expect(node).to_have_css('box-shadow', 'none')
+        page.mouse.move(0, 0)
+    smoke.check(page.locator('.hub-map-preview').count() == 0, 'legacy radar image layer is removed')
+    core = page.locator('.hub-orbit-core')
+    smoke.check(core.evaluate("""el => {
+        const css = getComputedStyle(el);
+        return css.backgroundColor === 'rgba(0, 0, 0, 0)' && css.backgroundImage.startsWith('radial-gradient(') &&
+            css.backgroundImage.includes('35%') && css.backgroundImage.includes('65%') && css.backgroundImage.includes('100%') &&
+            ['Top', 'Right', 'Bottom', 'Left'].every(side => css[`border${side}Style`] === 'none') && css.boxShadow === 'none';
+    }"""), 'core has transparent radial edges, no border and no opaque rectangular shadow')
+    card = page.locator('#hub-map-de_mirage')
+    card.focus()
+    expect(card.locator('.map-card-bg')).to_have_css('opacity', '0.32')
+    page.emulate_media(reduced_motion='reduce')
+    card.hover()
+    expect(card.locator('.map-card-bg')).to_have_css('opacity', '0.16')
+    expect(card.locator('.map-card-bg')).to_have_css('transform', 'none')
+    expect(card.locator('.map-card-bg')).to_have_css('transition-duration', '0s')
+    expect(card.locator('.hub-rate svg')).to_have_css('animation-name', 'none')
+    smoke.check(True, 'reduced motion keeps backdrop, hover and win-rate glow static')
+    page.emulate_media(reduced_motion='no-preference')
+    page.mouse.move(0, 0)
+    page.evaluate('document.activeElement.blur()')
+
+
 @route('#/teams-hub?team=vitality', '.hub-orbit-node')
 def check_hub_orbit(smoke: Smoke, page: Page) -> None:
     pool = ['de_dust2', 'de_mirage', 'de_ancient', 'de_anubis', 'de_inferno', 'de_nuke', 'de_cache']
@@ -684,6 +748,7 @@ def check_hub_orbit(smoke: Smoke, page: Page) -> None:
     expect(nodes).to_have_count(7)
     smoke.check(nodes.evaluate_all('(els) => els.map(el => el.id)') == [f'hub-map-{m}' for m in pool],
                 'orbit has seven nodes in stable clockwise pool order, including Cache')
+    check_orbit_backdrops(smoke, page)
     cache = page.locator('#hub-map-de_cache')
     expect(cache).to_have_attribute('aria-disabled', 'true')
     expect(cache).to_contain_text('即将上线')
