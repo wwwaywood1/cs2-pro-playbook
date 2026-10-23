@@ -10,6 +10,8 @@ Install tooling with pip install -r web/e2e/requirements.txt and
 python -m playwright install --with-deps --only-shell chromium.
 Add a route by writing one @route(path, ready_selector) function. Desktop checks,
 mobile overflow checks, console/page errors and screenshots are run automatically.
+Use --orbit-only to check the radial hub against the current export without
+replacing web/public/data with sample data.
 """
 
 from __future__ import annotations
@@ -558,7 +560,7 @@ def check_teams_hub(smoke: Smoke, page: Page) -> None:
     page.keyboard.press('Enter')
     page.wait_for_selector('#hub-map-de_mirage')
     smoke.check('team=vitality' in page.url, 'hub team selection is in URL')
-    smoke.check(page.locator('.hub-map-card strong .sr-only').first.inner_text() == '100%',
+    smoke.check(page.locator('#hub-map-de_mirage strong .sr-only').inner_text() == '100%',
                 'sample Vitality map card shows map wins, not round wins')
     page.wait_for_function("""() => [...document.querySelectorAll('.hub-map-card .hub-count')].every(
         el => el.dataset.rolling === 'false' && el.querySelector('.sr-only').textContent === el.querySelector('.hub-number-final').textContent)""")
@@ -617,14 +619,114 @@ def check_hub_team(smoke: Smoke, page: Page) -> None:
     card = page.locator('#hub-map-de_mirage')
     card.hover(position={'x': 24, 'y': 28})
     page.wait_for_function("parseFloat(getComputedStyle(document.querySelector('#hub-map-de_mirage .hub-map-preview')).opacity) > .3")
-    page.wait_for_function("Math.abs(parseFloat(document.querySelector('#hub-map-de_mirage').style.getPropertyValue('--tilt-h'))) > .5")
     smoke.check(card.locator('.hub-map-preview').get_attribute('src').endswith('radars/de_mirage.png'),
-                'hover previews the selected map radar with spring tilt')
+                'hover previews the selected map radar')
+    expect(page.locator('.hub-orbit-preview')).to_contain_text('T 胜率')
+    expect(page.locator('.hub-orbit-preview')).to_contain_text('CT 胜率')
+    expect(page.locator('.hub-orbit-preview')).to_contain_text('招牌：')
     page.emulate_media(reduced_motion='reduce')
-    page.wait_for_function("getComputedStyle(document.querySelector('#hub-map-de_mirage')).transform === 'none'")
-    smoke.check(card.evaluate("el => getComputedStyle(el).translate") == 'none',
-                'live reduced motion cancels tilt and magnetic translation')
+    page.wait_for_function("getComputedStyle(document.querySelector('.hub-orbit-ring.is-outer')).animationName === 'none'")
+    smoke.check(card.evaluate("el => getComputedStyle(el).transform") == 'none',
+                'reduced motion stops orbit rotation and node tilt while preserving placement')
     page.emulate_media(reduced_motion='no-preference')
+
+
+@route('#/teams-hub?team=vitality', '.hub-orbit-node')
+def check_hub_orbit(smoke: Smoke, page: Page) -> None:
+    pool = ['de_dust2', 'de_mirage', 'de_ancient', 'de_anubis', 'de_inferno', 'de_nuke', 'de_cache']
+    nodes = page.locator('.hub-orbit-node')
+    expect(nodes).to_have_count(7)
+    smoke.check(nodes.evaluate_all('(els) => els.map(el => el.id)') == [f'hub-map-{m}' for m in pool],
+                'orbit has seven nodes in stable clockwise pool order, including Cache')
+    cache = page.locator('#hub-map-de_cache')
+    expect(cache).to_have_attribute('aria-disabled', 'true')
+    expect(cache).to_contain_text('即将上线')
+    before = page.url
+    # aria-disabled keeps placeholders in the orbit's Tab/arrow sequence.
+    # Playwright correctly refuses normal clicks on aria-disabled controls.
+    cache.click(force=True)
+    cache.focus()
+    page.keyboard.press('Enter')
+    smoke.check(page.url == before, 'Cache click/Enter does not navigate')
+    for node in page.locator('.hub-orbit-node[data-empty="true"]').all():
+        node.focus()
+        page.keyboard.press('Enter')
+        smoke.check(page.url == before, f'{node.get_attribute("id")} has no data and cannot open')
+    page.locator('#hub-map-de_dust2').focus()
+    for map_id in pool[1:] + pool[:1]:
+        page.keyboard.press('ArrowRight')
+        expect(page.locator(f'#hub-map-{map_id}')).to_be_focused()
+    page.keyboard.press('ArrowLeft')
+    expect(cache).to_be_focused()
+    smoke.check(True, 'left/right cycle through all seven nodes and wrap')
+    page.locator('#hub-map-de_dust2').focus()
+    for map_id in pool[1:]:
+        page.keyboard.press('Tab')
+        expect(page.locator(f'#hub-map-{map_id}')).to_be_focused()
+    smoke.check(True, 'Tab follows clockwise orbit order, including placeholders')
+    card = page.locator('#hub-map-de_mirage')
+    for width, height in [(1440, 900), (1280, 800)]:
+        page.set_viewport_size({'width': width, 'height': height})
+        card.focus()
+        # Poll through ResizeObserver measurement and the focus scale transition.
+        page.wait_for_function("""() => {
+            const stage = document.querySelector('.hub-orbit').getBoundingClientRect();
+            return [...document.querySelectorAll('.hub-orbit-node')].every(el => {
+                const b = el.getBoundingClientRect();
+                return b.left >= stage.left && b.right <= stage.right && b.top >= stage.top && b.bottom <= stage.bottom;
+            }) && document.documentElement.scrollWidth <= document.documentElement.clientWidth;
+        }""")
+        smoke.check(True, f'{width}x{height}: all orbit nodes fit the stage; no horizontal overflow')
+        details = page.locator('.hub-team-results')
+        if not details.evaluate('el => el.open'):
+            details.locator('summary').click()
+        smoke.check(details.bounding_box()['y'] >= page.locator('.hub-orbit').bounding_box()['y'] + page.locator('.hub-orbit').bounding_box()['height'],
+                    f'{width}x{height}: results drawer expands below the stage')
+        expect(details.locator('.match-time-filter')).to_be_visible()
+        details.locator('summary').click()
+    page.set_viewport_size({'width': 1440, 'height': 900})
+    card.hover()
+    expect(page.locator('.hub-orbit-preview')).to_contain_text('T 胜率')
+    expect(page.locator('.hub-orbit-preview')).to_contain_text('CT 胜率')
+    page.wait_for_function("""() => {
+        const text = document.querySelector('.hub-orbit-preview')?.textContent || '';
+        return text.includes('招牌：') && !text.includes('读取中');
+    }""")
+    smoke.check(True, 'hover shows side rates and a nonblocking tactical preview')
+    card.focus()
+    supports_shared = page.evaluate("typeof document.startViewTransition === 'function'")
+    page.keyboard.press('Enter')
+    page.wait_for_selector('.hub-player-card')
+    expect(page.locator('.hub-stage')).to_have_attribute('data-shared', str(supports_shared).lower())
+    smoke.check('map=de_mirage' in page.url, 'Enter opens the focused map via HashRouter')
+    page.keyboard.press('Escape')
+    expect(card).to_be_focused()
+    expect(card).to_have_attribute('data-active', 'true')
+    smoke.check(True, 'Escape restores selected orbit node focus and highlight')
+    page.keyboard.press('Enter')
+    page.wait_for_selector('.hub-player-card')
+    page.go_back()
+    expect(card).to_be_focused()
+    page.go_forward()
+    page.wait_for_selector('.hub-player-card')
+    smoke.check('map=de_mirage' in page.url, 'Back/Forward restore orbit and map routes')
+    page.keyboard.press('Escape')
+    expect(card).to_be_focused()
+    page.emulate_media(reduced_motion='reduce')
+    page.keyboard.press('Enter')
+    page.wait_for_selector('.hub-player-card')
+    expect(page.locator('.hub-stage')).to_have_attribute('data-shared', 'false')
+    page.keyboard.press('Escape')
+    expect(card).to_be_focused()
+    smoke.check(True, 'reduced motion swaps instantly and preserves return focus')
+    page.emulate_media(reduced_motion='no-preference')
+    page.evaluate('document.startViewTransition = undefined')
+    page.keyboard.press('Enter')
+    page.wait_for_selector('.hub-player-card')
+    expect(page.locator('.hub-stage')).to_have_attribute('data-shared', 'false')
+    page.keyboard.press('Escape')
+    expect(card).to_be_focused()
+    smoke.check(True, 'unsupported View Transitions API uses the existing slide fallback')
 
 
 @route('#/teams-hub?team=vitality&map=de_mirage', '.hub-player-card')
@@ -1104,8 +1206,9 @@ def run_route(smoke: Smoke, case: Route, page: Page, *, mobile: bool = False) ->
                 smoke.check(False, f"could not capture {label}: {error}")
 
 
-def run_routes(smoke: Smoke, context: BrowserContext, *, mobile: bool = False) -> None:
-    for case in ROUTES:
+def run_routes(smoke: Smoke, context: BrowserContext, *, mobile: bool = False,
+               cases: list[Route] | None = None) -> None:
+    for case in ROUTES if cases is None else cases:
         # Removing network routes does not clear data.ts's in-memory fetch cache
         # or close dialogs. A fresh document makes failures independent.
         page = context.new_page()
@@ -1121,7 +1224,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("base", nargs="?", default="http://localhost:4173")
     parser.add_argument("--shots", type=Path, help="save each route, including on exceptions")
+    parser.add_argument("--orbit-only", action="store_true", help="check orbit navigation/layout with current data")
     args = parser.parse_args()
+    cases = [case for case in ROUTES if case.test is check_hub_orbit] if args.orbit_only else None
     if args.shots:
         args.shots.mkdir(parents=True, exist_ok=True)
     root = Path(__file__).resolve().parents[1]
@@ -1134,10 +1239,10 @@ def main() -> int:
             desktop = browser.new_context(viewport={"width": 1440, "height": 900})
             desktop.grant_permissions(["clipboard-read", "clipboard-write"],
                                       origin=f"{origin.scheme}://{origin.netloc}")
-            run_routes(smoke, desktop)
+            run_routes(smoke, desktop, cases=cases)
 
             mobile = browser.new_context(viewport={"width": 375, "height": 812})
-            run_routes(smoke, mobile, mobile=True)
+            run_routes(smoke, mobile, mobile=True, cases=cases)
 
             smoke.check(not smoke.errors,
                         f"no console errors ({len(smoke.errors)}): {smoke.errors[:3]}")
