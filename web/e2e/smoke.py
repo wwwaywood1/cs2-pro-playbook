@@ -631,6 +631,52 @@ def check_hub_team(smoke: Smoke, page: Page) -> None:
     page.emulate_media(reduced_motion='no-preference')
 
 
+def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
+    page.evaluate('document.fonts.ready.then(() => undefined)')
+    page.evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
+    page.wait_for_function("""() => [...document.querySelectorAll('.hub-orbit-node')].every(
+        el => !el.getAnimations().some(a => a.playState === 'running' || a.pending))""")
+    report = page.evaluate("""() => {
+        const box = el => {
+            const r = el.getBoundingClientRect();
+            return Object.fromEntries(['left', 'right', 'top', 'bottom', 'width', 'height'].map(k => [k, r[k]]));
+        };
+        const stage = box(document.querySelector('.hub-orbit'));
+        const intro = box(document.querySelector('.hub-orbit-intro'));
+        const nodes = [...document.querySelectorAll('.hub-orbit-node')].map(el => ({id: el.id, ...box(el)}));
+        const intersections = [], gaps = [], outside = [], styles = [];
+        for (const [i, a] of nodes.entries()) {
+            if (a.left < stage.left || a.right > stage.right || a.top < stage.top || a.bottom > stage.bottom) outside.push(a.id);
+            for (const b of nodes.slice(i + 1)) {
+                const gap = Math.max(b.left - a.right, a.left - b.right, b.top - a.bottom, a.top - b.bottom);
+                if (gap < 0) intersections.push([a.id, b.id]);
+                if (gap < 15.5) gaps.push({pair: [a.id, b.id], gap});
+            }
+            const el = document.getElementById(a.id), css = getComputedStyle(el);
+            const active = document.querySelector('.hub-orbit').hasAttribute('data-active');
+            const expectedScale = el.dataset.active === 'true' ? 1.08 : active ? .96 : 1;
+            if (css.position !== 'absolute' || css.transform !== 'none' || Math.abs(Number(css.scale) - expectedScale) > .005 ||
+                (el.dataset.empty === 'true' && css.borderTopStyle !== 'dashed')) styles.push({id: a.id, position: css.position, transform: css.transform, scale: css.scale});
+        }
+        const coreEl = document.querySelector('.hub-orbit-core'), core = box(coreEl);
+        const badge = box(coreEl.querySelector('.hub-badge')), name = box(coreEl.querySelector('h2'));
+        const hud = box(coreEl.querySelector('.hub-orbit-hud'));
+        const rays = [...document.querySelectorAll('.hub-orbit-rays line')];
+        return {nodes, stage, intersections, gaps, outside, styles,
+            introGap: Math.min(...nodes.map(n => n.top)) - intro.bottom,
+            stacked: badge.bottom <= name.top + 1 && name.bottom <= hud.top + 1 && core.width <= 301 && hud.width >= core.width - 1 && hud.bottom <= core.bottom + 1,
+            shielded: getComputedStyle(coreEl).backgroundColor === 'rgb(8, 21, 31)' &&
+                rays.every(line => Math.hypot(line.x1.baseVal.value - stage.width / 2, line.y1.baseVal.value - stage.height / 2) >= 119),
+            overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth};
+    }""")
+    diagnostics = json.dumps(report, ensure_ascii=False)
+    valid = (not any(report[key] for key in ('intersections', 'gaps', 'outside', 'styles'))
+             and report['introGap'] >= 16 and report['overflow'] <= 0
+             and report['stacked'] and report['shielded'])
+    smoke.check(valid, f'{label}: orbit rects keep 16px gaps/intro clearance, stacked core and shielded rays'
+                + (f': {diagnostics}' if not valid else ''))
+
+
 @route('#/teams-hub?team=vitality', '.hub-orbit-node')
 def check_hub_orbit(smoke: Smoke, page: Page) -> None:
     pool = ['de_dust2', 'de_mirage', 'de_ancient', 'de_anubis', 'de_inferno', 'de_nuke', 'de_cache']
@@ -667,16 +713,15 @@ def check_hub_orbit(smoke: Smoke, page: Page) -> None:
     card = page.locator('#hub-map-de_mirage')
     for width, height in [(1440, 900), (1280, 800)]:
         page.set_viewport_size({'width': width, 'height': height})
-        card.focus()
-        # Poll through ResizeObserver measurement and the focus scale transition.
-        page.wait_for_function("""() => {
-            const stage = document.querySelector('.hub-orbit').getBoundingClientRect();
-            return [...document.querySelectorAll('.hub-orbit-node')].every(el => {
-                const b = el.getBoundingClientRect();
-                return b.left >= stage.left && b.right <= stage.right && b.top >= stage.top && b.bottom <= stage.bottom;
-            }) && document.documentElement.scrollWidth <= document.documentElement.clientWidth;
-        }""")
-        smoke.check(True, f'{width}x{height}: all orbit nodes fit the stage; no horizontal overflow')
+        page.mouse.move(0, 0)
+        page.evaluate('document.activeElement.blur()')
+        check_orbit_geometry(smoke, page, f'{width}x{height} idle')
+        for node in nodes.all():
+            node.focus()
+            check_orbit_geometry(smoke, page, f'{width}x{height} focus {node.get_attribute("id")}')
+            node.hover(position={'x': 12, 'y': 12})
+            check_orbit_geometry(smoke, page, f'{width}x{height} hover {node.get_attribute("id")}')
+            page.mouse.move(0, 0)
         details = page.locator('.hub-team-results')
         if not details.evaluate('el => el.open'):
             details.locator('summary').click()
@@ -693,6 +738,17 @@ def check_hub_orbit(smoke: Smoke, page: Page) -> None:
         return text.includes('招牌：') && !text.includes('读取中');
     }""")
     smoke.check(True, 'hover shows side rates and a nonblocking tactical preview')
+    wraps = page.locator('.hub-orbit-preview > span').last.evaluate("""el => {
+        const original = el.textContent;
+        try {
+            el.textContent = '招牌：连接烟 + 丛林烟 + 警家烟 + 拱门闪光 + 中路控制 + A 点同步进攻';
+            const css = getComputedStyle(el), rect = el.getBoundingClientRect();
+            const line = parseFloat(css.lineHeight);
+            return css.whiteSpace === 'normal' && css.webkitLineClamp === '2' &&
+                rect.height > line * 1.5 && rect.height <= line * 2 + 1 && el.scrollWidth <= el.clientWidth;
+        } finally { el.textContent = original; }
+    }""")
+    smoke.check(wraps, 'signature preview wraps to two lines within the full-width core')
     card.focus()
     supports_shared = page.evaluate("typeof document.startViewTransition === 'function'")
     page.keyboard.press('Enter')

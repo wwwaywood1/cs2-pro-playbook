@@ -30,6 +30,7 @@ import { teamTheme } from "../theme";
 import "../heatmap.css";
 import "../teams-hub.css";
 import { useHubRoute } from "./teamsHubRoute";
+import { orbitLayout } from "./teamsHubOrbit";
 
 type HubSide = Side;
 type TeamEntry = HeatmapTeamIndexEntry;
@@ -132,7 +133,7 @@ const ORBIT_POOL = [
 
 function TeamPanel({ team, change, returnMap }: { team: TeamEntry; change: Change; returnMap: string }) {
   const stage = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ width: 1100, height: 620 });
+  const [size, setSize] = useState({ width: 1100, height: 620, nodes: ORBIT_POOL.map(() => ({ width: 156, height: 176 })) });
   const [hovered, setHovered] = useState("");
   const [focused, setFocused] = useState("");
   const [interaction, setInteraction] = useState<"pointer" | "keyboard">("pointer");
@@ -152,18 +153,19 @@ function TeamPanel({ team, change, returnMap }: { team: TeamEntry; change: Chang
   useLayoutEffect(() => {
     const element = stage.current;
     if (!element) return;
-    const measure = () => setSize({ width: element.clientWidth, height: element.clientHeight });
+    const nodes = [...element.querySelectorAll<HTMLElement>(".hub-orbit-node")];
+    const measure = () => setSize((previous) => {
+      // offset sizes exclude hover transforms; one pixel covers their rounding.
+      const next = { width: element.clientWidth, height: element.clientHeight, nodes: nodes.map((node) => ({ width: node.offsetWidth + 1, height: node.offsetHeight + 1 })) };
+      return previous.width === next.width && previous.height === next.height && previous.nodes.every((node, index) => node.width === next.nodes[index].width && node.height === next.nodes[index].height) ? previous : next;
+    });
     const observer = new ResizeObserver(measure);
     observer.observe(element);
+    nodes.forEach((node) => observer.observe(node));
     measure();
     return () => observer.disconnect();
   }, []);
-  const rx = Math.min(410, Math.max(0, (size.width - 200) / 2));
-  const ry = Math.min(215, Math.max(0, (size.height - 190) / 2));
-  const points = ORBIT_POOL.map((_, index) => {
-    const angle = -Math.PI / 2 + index * 2 * Math.PI / 7;
-    return { x: size.width / 2 + rx * Math.cos(angle), y: size.height / 2 + ry * Math.sin(angle) };
-  });
+  const { points, minHeight } = orbitLayout(size.width, size.height, size.nodes);
   function cycle(event: React.KeyboardEvent<HTMLButtonElement>, index: number) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
@@ -172,9 +174,11 @@ function TeamPanel({ team, change, returnMap }: { team: TeamEntry; change: Chang
   }
   return <section className="hub-panel hub-team-panel" key={team.slug} aria-labelledby="hub-heading">
     <div className="hub-orbit-intro"><h3>{t("hub.choose_map")}</h3><p className="muted">{t("hub.map_rate_help")} · ← / → 切换 · Enter 进入</p></div>
-    <div ref={stage} className="hub-orbit" data-active={active || undefined} aria-label="战队地图池星轨">
+    <div ref={stage} className="hub-orbit" style={{ "--orbit-min-height": `${minHeight}px` } as CSSProperties} data-active={active || undefined} aria-label="战队地图池星轨">
       <svg className="hub-orbit-rays" viewBox={`0 0 ${size.width} ${size.height}`} aria-hidden="true">{ORBIT_POOL.map(([id], index) => {
-        const coordinates = { x1: size.width / 2, y1: size.height / 2, x2: points[index].x, y2: points[index].y };
+        const dx = points[index].x - size.width / 2, dy = points[index].y - size.height / 2;
+        const distance = Math.max(1, Math.hypot(dx, dy));
+        const coordinates = { x1: size.width / 2 + dx / distance * 120, y1: size.height / 2 + dy / distance * 120, x2: points[index].x, y2: points[index].y };
         return <g key={id} data-active={selected?.map === id} data-rate={id === worst ? "weak" : id === best ? "strong" : "neutral"}><line {...coordinates} />{selected?.map === id ? <line className="hub-orbit-flow" {...coordinates} /> : null}</g>;
       })}</svg>
       <header className="hub-team-head hub-orbit-core">

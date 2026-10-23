@@ -37,3 +37,24 @@ python3 web/e2e/smoke.py http://localhost:4173 --orbit-only --shots /tmp/gpt29-s
 ```
 
 This exercises current exported data without changing `playbook/`, `data/` or `web/public/data/`. Full smoke mode continues to expect the sample export documented at the top of the test file.
+
+## Round 2 — lead browser findings (2026-10-22)
+
+Addressed items 1–5 in `delegation/GPT-29_round2.md`, using `delegation/inputs/orbit_1440.png` and `orbit_1280_hover.png` as references.
+
+- **Specificity:** preserved the lead's `.hub-page .hub-orbit .hub-orbit-node` positioning selector. Explicitly reset base scale and strengthened the active, dimmed, empty and mobile selectors. Orbit placement and `transform: none` now win against the shared tilt rule; mobile can still override desktop absolute positioning.
+- **Geometry:** added `web/src/pages/teamsHubOrbit.ts::orbitLayout`. `TeamPanel` observes the stage and all seven cards, measuring untransformed card dimensions with a rounding allowance. Rx uses available width; Ry and the stage's minimum height reserve a **16px gap** for every pair of rectangles at the maximum **1.08** scale. The stage can grow when its nominal height cannot fit those rectangles. Cards shrink to 144px wide with smaller padding/rate rings at desktop widths ≤1280px.
+- **Core:** explicitly restored one column and automatic height, with a maximum 300px width. Badge, name and full-width HUD stack vertically. Removed the short-viewport 180px HUD width and tiny preview font; the 招牌 line can wrap to two lines, retaining its full title tooltip.
+- **Rays:** start 120px from the centre; the core also has an opaque backing so rays cannot cross readable preview text.
+- **Intro:** added 16px between intro and stage, in addition to the geometry's reserved edge clearance.
+- **Smoke:** `web/e2e/smoke.py::check_orbit_geometry` computes actual DOM rectangles and checks all 21 node pairs, stage containment, ≥16px intro clearance, position/transform/scale/empty-border states, stacked core and ray shielding. At **1440×900** and **1280×800**, it runs for idle plus hover and focus on every node. Failures include measured rectangles and offending pairs. A long Chinese signature fixture checks two-line wrapping. Existing drawer/navigation/reduced-motion/mobile checks remain.
+
+Verification:
+
+- `.venv/bin/python -m pytest -q`: **248 passed, 3 skipped**, one existing joblib CPU-count warning (18.00s).
+- Production build: **passed** after the final source edits, using the same installed Node runtime and exact `tsc -b` / `vite build` commands documented above; no npm dependencies added.
+- `.venv/bin/python -m py_compile web/e2e/smoke.py`: **passed**. Extracted JavaScript expressions in the modified smoke functions also parse successfully with Node.
+- Executed the actual `orbitLayout` implementation through TypeScript transpilation in Node: **3,072 synthetic states passed** pairwise ≥16px gap and stage-edge containment assertions. Matrix: both requested viewport widths, all 64 populated/empty combinations for the six available maps, three card-height variants (including extra 24px/48px content), and idle/every active node. This checks geometry calculations, not browser layout.
+- Browser smoke: **blocked before assertions, not passed**. Retried `web/e2e/smoke.py http://localhost:4173 --orbit-only` with the existing sibling checkout's Playwright environment. Chromium still terminates with macOS `bootstrap_check_in … Permission denied (1100)` / `SIGTRAP`. Current log: `/private/tmp/gpt29-round2/orbit-smoke.log`. The lead should run the server and `--orbit-only` command above on Linux to verify real DOM geometry and screenshots.
+
+Only frontend source/smoke files and this report were edited; the build regenerated `web/dist` and TypeScript build metadata. No data export or backend source was edited.
