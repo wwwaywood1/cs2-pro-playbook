@@ -1,3 +1,5 @@
+export const ORBIT_CARD_SIZE = { width: 164, height: 210 };
+
 export type OrbitNodeSize = { width: number; height: number };
 
 // Stable clockwise pool order and ambient colours, independent of match count.

@@ -18,7 +18,7 @@ import PlayerWpa from "../components/PlayerWpa";
 import PlayerRadar6 from "../components/PlayerRadar6";
 import TeamShield from "../components/TeamShield";
 import { Loading } from "../components/Status";
-import { getIndex, getAssetSlots, getHeatmapBaseline, getHeatmapTeams, getLineups, getMeta, getPlayerQuotes, getPlayers, getTactics, getTeam, getTeamHeatmap, useData } from "../data";
+import { assetUrl, getMapBackgrounds, getIndex, getAssetSlots, getHeatmapBaseline, getHeatmapTeams, getLineups, getMeta, getPlayerQuotes, getPlayers, getTactics, getTeam, getTeamHeatmap, useData } from "../data";
 import { fmtInt, fmtNum, fmtPct } from "../format";
 import { blur, combine, denseLayers, differenceRgba, HEAT_PHASES, playerRgba, toDataUrl, VIEW_WEIGHTS, type Dense, type HeatView } from "../heatmap";
 import { calloutLabel, t, useLang } from "../i18n";
@@ -30,7 +30,7 @@ import { teamTheme } from "../theme";
 import "../heatmap.css";
 import "../teams-hub.css";
 import { useHubRoute } from "./teamsHubRoute";
-import { EMPTY_MAP_GLOW, ORBIT_POOL, orbitLayout } from "./teamsHubOrbit";
+import { EMPTY_MAP_GLOW, ORBIT_CARD_SIZE, ORBIT_POOL, orbitLayout } from "./teamsHubOrbit";
 
 type HubSide = Side;
 type TeamEntry = HeatmapTeamIndexEntry;
@@ -92,7 +92,7 @@ function Asset({ path, name, badge = false }: { path: string; name: string; badg
   const stem = path.split("/").pop()?.replace(/\.png$/, "") ?? "";
   const supplied = (badge ? assets.teams : assets.players).includes(stem);
   return <span className={`hub-asset ${badge ? "hub-badge" : "hub-portrait"}${badge && (failed || !supplied) ? " is-fallback" : ""}`}>
-    {!failed && supplied ? <img src={`${import.meta.env.BASE_URL}${path}`} alt="" width={badge ? 80 : 1000} height={badge ? 80 : 666} onError={() => setFailed(true)} /> : badge ?
+    {!failed && supplied ? <img src={assetUrl(path)} alt="" width={badge ? 80 : 1000} height={badge ? 80 : 666} onError={() => setFailed(true)} /> : badge ?
       <TeamShield name={name} /> :
       <svg viewBox="0 0 240 280" aria-hidden="true"><circle cx="120" cy="88" r="42" /><path d="M32 260v-28a88 88 0 0 1 176 0v28Z" /></svg>}
   </span>;
@@ -125,9 +125,23 @@ function Results({ team }: { team: TeamEntry }) {
   </section>;
 }
 
+/** The manifest prevents requests for absent photos. A stale/unreadable photo
+ * is hidden until decoded and leaves the radar/grid fallback in place. */
+function MapBackdrop({ id, scenic }: { id: string; scenic: boolean }) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const photo = assetUrl(`map-bg/${id.replace(/^de_/, "")}.webp`);
+  return <>
+    {(!scenic || !loaded || failed) ? <span className="map-card-bg" aria-hidden="true" style={id !== "de_cache" ? { backgroundImage: `url("${assetUrl(`radars/${id}.png`)}")` } : undefined} /> : null}
+    {scenic && !failed ? <img className="card-scenic-probe" src={photo} alt="" aria-hidden="true" onLoad={() => setLoaded(true)} onError={() => setFailed(true)} /> : null}
+    {scenic && loaded && !failed ? <span className="card-scenic-bg" aria-hidden="true" style={{ backgroundImage: `url("${photo}")` }} /> : null}
+  </>;
+}
+
 function TeamPanel({ team, change, returnMap }: { team: TeamEntry; change: Change; returnMap: string }) {
   const stage = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ width: 1100, height: 620, nodes: ORBIT_POOL.map(() => ({ width: 156, height: 176 })) });
+  const backgrounds = useData(getMapBackgrounds, []);
+  const [size, setSize] = useState({ width: 1100, height: 620, nodes: ORBIT_POOL.map(() => ORBIT_CARD_SIZE) });
   const [hovered, setHovered] = useState("");
   const [focused, setFocused] = useState("");
   const [interaction, setInteraction] = useState<"pointer" | "keyboard">("pointer");
@@ -187,9 +201,9 @@ function TeamPanel({ team, change, returnMap }: { team: TeamEntry; change: Chang
         const map = team.maps.find((entry) => entry.map === id);
         const available = id !== "de_cache" && !!map?.n_matches;
         const rate = id === worst ? "weak" : id === best || (map?.map_win_rate ?? 0) >= .65 ? "strong" : (map?.map_win_rate ?? 1) < .48 ? "weak" : "neutral";
-        return <button type="button" className="hub-map-card hub-orbit-node" data-rate={rate} data-active={active === id} data-empty={!available} aria-disabled={!available} style={{ "--map-glow": available ? glow : EMPTY_MAP_GLOW, "--orbit-x": `${points[index].x}px`, "--orbit-y": `${points[index].y}px`, "--stagger": `${index * 40}ms`, "--hub-progress": 100 - Math.max(0, Math.min(1, map?.map_win_rate ?? 0)) * 100, viewTransitionName: returnMap === id ? "team-map-header" : undefined } as CSSProperties} id={`hub-map-${id}`} key={id}
+        return <button type="button" className="hub-map-card hub-orbit-node orbit-map-card" data-rate={rate} data-active={active === id} data-empty={!available} aria-disabled={!available} style={{ "--map-glow": available ? glow : EMPTY_MAP_GLOW, "--map-theme-color": glow, "--orbit-x": `${points[index].x}px`, "--orbit-y": `${points[index].y}px`, "--stagger": `${index * 40}ms`, "--hub-progress": 100 - Math.max(0, Math.min(1, map?.map_win_rate ?? 0)) * 100, viewTransitionName: returnMap === id ? "team-map-header" : undefined } as CSSProperties} id={`hub-map-${id}`} key={id}
           onMouseEnter={() => { setInteraction("pointer"); setHovered(id); }} onMouseLeave={() => setHovered("")} onFocus={() => { setInteraction("keyboard"); setFocused(id); }} onBlur={() => setFocused("")} onKeyDown={(event) => cycle(event, index)} onClick={() => { if (available) change({ map: id, player: "", side: "T" }); }}>
-          <span className="map-card-bg" aria-hidden="true" style={id !== "de_cache" ? { backgroundImage: `url("${import.meta.env.BASE_URL}radars/${id}.png")` } : undefined} />
+          <MapBackdrop id={id} scenic={!!backgrounds.data?.includes(id.replace(/^de_/, ""))} />
           <span className="hub-map-name">{name}</span>
           {available && id === best ? <span className="hub-map-badge is-best">{t("round2.best_map")}</span> : available && id === worst ? <span className="hub-map-badge is-weak">{t("round2.weak_map")}</span> : null}
           {available ? <><span className="hub-rate"><svg viewBox="0 0 100 100" aria-hidden="true"><circle className="hub-arc-track" cx="50" cy="50" r="44" /><circle className="hub-arc" cx="50" cy="50" r="44" pathLength="100" /></svg><strong><CountUp value={map?.map_win_rate} format="percent" /></strong></span>

@@ -655,7 +655,7 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
             const el = document.getElementById(a.id), css = getComputedStyle(el);
             const active = document.querySelector('.hub-orbit').hasAttribute('data-active');
             const expectedScale = el.dataset.active === 'true' ? (el.dataset.empty === 'true' ? 1 : 1.08) : active ? .96 : 1;
-            if (css.position !== 'absolute' || css.transform !== 'none' || Math.abs(Number(css.scale) - expectedScale) > .005 ||
+            if (el.offsetWidth !== 164 || el.offsetHeight !== 210 || css.position !== 'absolute' || css.transform !== 'none' || Math.abs(Number(css.scale) - expectedScale) > .005 ||
                 (el.dataset.empty === 'true' && css.borderTopStyle !== 'dashed')) styles.push({id: a.id, position: css.position, transform: css.transform, scale: css.scale});
         }
         const coreEl = document.querySelector('.hub-orbit-core'), core = box(coreEl);
@@ -665,19 +665,30 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
         return {nodes, stage, intersections, gaps, outside, styles,
             introGap: Math.min(...nodes.map(n => n.top)) - intro.bottom,
             stacked: badge.bottom <= name.top + 1 && name.bottom <= hud.top + 1 && core.width <= 301 && hud.width >= core.width - 1 && hud.bottom <= core.bottom + 1,
-            shielded: getComputedStyle(coreEl).backgroundImage.startsWith('radial-gradient(') &&
+            transparent: [coreEl, coreEl.parentElement, coreEl.querySelector('.hub-team-anchor'), coreEl.querySelector('.hub-orbit-hud')].every(el => {
+                const css = getComputedStyle(el);
+                return css.backgroundImage === 'none' && css.backgroundColor === 'rgba(0, 0, 0, 0)' &&
+                    css.backdropFilter === 'none' && css.boxShadow === 'none' &&
+                    ['Top', 'Right', 'Bottom', 'Left'].every(side => css[`border${side}Width`] === '0px');
+            }),
+            shielded:
                 rays.every(line => Math.hypot(line.x1.baseVal.value - stage.width / 2, line.y1.baseVal.value - stage.height / 2) >= 119),
             overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth};
     }""")
     diagnostics = json.dumps(report, ensure_ascii=False)
     valid = (not any(report[key] for key in ('intersections', 'gaps', 'outside', 'styles'))
              and report['introGap'] >= 16 and report['overflow'] <= 0
-             and report['stacked'] and report['shielded'])
-    smoke.check(valid, f'{label}: orbit rects keep 16px gaps/intro clearance, stacked core and shielded rays'
+             and report['stacked'] and report['shielded'] and report['transparent'])
+    smoke.check(valid, f'{label}: orbit rects keep 16px gaps/intro clearance, stacked transparent core and unobstructed rings'
                 + (f': {diagnostics}' if not valid else ''))
 
 
 def check_orbit_backdrops(smoke: Smoke, page: Page) -> None:
+    # Force the no-photo deployment even when an owner has supplied real photos.
+    manifest_pattern = '**/map-bg/manifest.json'
+    mock_json(page, manifest_pattern, [])
+    page.reload()
+    page.wait_for_selector('.hub-orbit-node')
     page.mouse.move(0, 0)
     page.evaluate('document.activeElement.blur()')
     glows = {
@@ -695,7 +706,7 @@ def check_orbit_backdrops(smoke: Smoke, page: Page) -> None:
             return {image: css.backgroundImage, glow: getComputedStyle(el).getPropertyValue('--map-glow').trim(),
                 layered: css.position === 'absolute' && css.zIndex === '0' && css.pointerEvents === 'none' &&
                     veil.zIndex === '1' && veil.backgroundImage.startsWith('linear-gradient(') &&
-                    [...el.children].filter(child => child !== bg).every(child => Number(getComputedStyle(child).zIndex) > 1)};
+                    [...el.children].filter(child => child !== bg && !child.classList.contains('card-scenic-probe')).every(child => Number(getComputedStyle(child).zIndex) > 1)};
         }""")
         empty = node.get_attribute('data-empty') == 'true'
         expected_glow = glows['de_cache'] if empty else glow
@@ -719,13 +730,16 @@ def check_orbit_backdrops(smoke: Smoke, page: Page) -> None:
             expect(node).to_have_css('box-shadow', 'none')
         page.mouse.move(0, 0)
     smoke.check(page.locator('.hub-map-preview').count() == 0, 'legacy radar image layer is removed')
-    core = page.locator('.hub-orbit-core')
-    smoke.check(core.evaluate("""el => {
-        const css = getComputedStyle(el);
-        return css.backgroundColor === 'rgba(0, 0, 0, 0)' && css.backgroundImage.startsWith('radial-gradient(') &&
-            css.backgroundImage.includes('35%') && css.backgroundImage.includes('65%') && css.backgroundImage.includes('100%') &&
-            ['Top', 'Right', 'Bottom', 'Left'].every(side => css[`border${side}Style`] === 'none') && css.boxShadow === 'none';
-    }"""), 'core has transparent radial edges, no border and no opaque rectangular shadow')
+    smoke.check(page.locator('.hub-badge').first.evaluate("""badge => {
+        for (let el = badge; el; el = el.parentElement) {
+            const css = getComputedStyle(el);
+            if (css.backgroundColor !== 'rgba(0, 0, 0, 0)' || css.backgroundImage !== 'none' ||
+                css.backdropFilter !== 'none' || css.boxShadow !== 'none' ||
+                !['Top', 'Right', 'Bottom', 'Left'].every(side => css[`border${side}Width`] === '0px')) return false;
+            if (el.classList.contains('hub-orbit')) return getComputedStyle(badge, '::before').display === 'none';
+        }
+        return false;
+    }"""), 'badge and every ancestor through orbit have no fill, backdrop blur, border or shadow')
     card = page.locator('#hub-map-de_mirage')
     card.focus()
     expect(card.locator('.map-card-bg')).to_have_css('opacity', '0.32')
@@ -736,6 +750,76 @@ def check_orbit_backdrops(smoke: Smoke, page: Page) -> None:
     expect(card.locator('.map-card-bg')).to_have_css('transition-duration', '0s')
     expect(card.locator('.hub-rate svg')).to_have_css('animation-name', 'none')
     smoke.check(True, 'reduced motion keeps backdrop, hover and win-rate glow static')
+    page.emulate_media(reduced_motion='no-preference')
+    # Synthetic local image exercises scenic success without downloading photos.
+    from io import BytesIO
+    from PIL import Image
+    image = BytesIO()
+    Image.new('RGB', (480, 600), '#426050').save(image, 'WEBP')
+    photo_pattern = '**/map-bg/*.webp'
+    photo_requests = []
+
+    def photo(intercepted):
+        photo_requests.append(intercepted.request.url)
+        intercepted.fulfill(body=image.getvalue(), content_type='image/webp')
+
+    page.route(photo_pattern, photo)
+    page.unroute(manifest_pattern)
+    mock_json(page, manifest_pattern, [map_id.removeprefix('de_') for map_id in glows])
+    try:
+        page.reload()
+        expect(page.locator('.card-scenic-bg')).to_have_count(7)
+        expect(page.locator('.map-card-bg')).to_have_count(0)
+        page.mouse.move(0, 0)
+        page.evaluate('document.activeElement.blur()')
+        card = page.locator('#hub-map-de_mirage')
+        report = card.evaluate("""el => {
+            const scenic = getComputedStyle(el.querySelector('.card-scenic-bg'));
+            const top = getComputedStyle(el, '::after'), name = getComputedStyle(el.querySelector('.hub-map-name'));
+            const rate = getComputedStyle(el.querySelector('.hub-rate'));
+            return {width: el.offsetWidth, height: el.offsetHeight, scenicHeight: parseFloat(scenic.height) / el.clientHeight,
+                opacity: scenic.opacity, mask: scenic.maskImage, position: scenic.backgroundPosition,
+                gradientHeight: top.height, textShadow: name.textShadow, disc: rate.backgroundColor, blur: rate.backdropFilter};
+        }""")
+        smoke.check(report['width'] == 164 and report['height'] == 210 and abs(report['scenicHeight'] - .78) < .01 and
+                    report['opacity'] == '0.65' and '45%' in report['mask'] and '100%' in report['mask'] and
+                    report['position'] == '50% 0%' and report['gradientHeight'] == '36px' and
+                    report['textShadow'] != 'none' and report['disc'] == 'rgba(8, 12, 16, 0.55)' and report['blur'] == 'blur(4px)',
+                    f'scenic card has 164x210 upper landscape, fade, text protection and frosted disc: {report}')
+        expected_prefix = page.evaluate("new URL('map-bg/', document.baseURI).href")
+        smoke.check(len(set(photo_requests)) == 7 and all(url.startswith(expected_prefix) for url in photo_requests),
+                    'all scenic URLs respect the deployment base path')
+        card.hover()
+        expect(card.locator('.card-scenic-bg')).to_have_css('filter', 'brightness(1.35) contrast(1.1)')
+        expect(card.locator('.card-scenic-bg')).to_have_css('transform', 'matrix(1.12, 0, 0, 1.12, 0, 0)')
+        page.mouse.move(0, 0)
+        page.locator('#hub-map-de_dust2').focus()
+        page.keyboard.press('ArrowRight')
+        expect(card).to_be_focused()
+        expect(card.locator('.card-scenic-bg')).to_have_css('filter', 'brightness(1.35) contrast(1.1)')
+        page.emulate_media(reduced_motion='reduce')
+        expect(card.locator('.card-scenic-bg')).to_have_css('transform', 'none')
+        expect(card.locator('.card-scenic-bg')).to_have_css('filter', 'none')
+        expect(card.locator('.card-scenic-bg')).to_have_css('transition-duration', '0s')
+        smoke.check(True, 'hover and arrow focus zoom scenery; reduced motion keeps it static')
+        page.emulate_media(reduced_motion='no-preference')
+        # Decode failure must remove the hidden probe and restore the fallback.
+        # Serve 200 invalid bytes to avoid an unrelated browser HTTP error log.
+        page.unroute(photo_pattern, photo)
+        page.route(photo_pattern, lambda intercepted: intercepted.fulfill(body=b'not an image', content_type='image/webp'))
+        page.reload()
+        page.wait_for_function(r"""() => performance.getEntriesByType('resource').filter(
+            resource => /map-bg\/[^/]+\.webp$/.test(resource.name)).length >= 7""")
+        expect(page.locator('.map-card-bg')).to_have_count(7)
+        expect(page.locator('.card-scenic-probe')).to_have_count(0)
+        expect(page.locator('.card-scenic-bg')).to_have_count(0)
+        smoke.check(True, 'unreadable photos restore all radar/grid fallbacks without broken-image icons')
+    finally:
+        page.unroute(photo_pattern)
+        page.unroute(manifest_pattern)
+        page.reload()
+        page.wait_for_selector('.hub-orbit-node')
+
     page.emulate_media(reduced_motion='no-preference')
     page.mouse.move(0, 0)
     page.evaluate('document.activeElement.blur()')

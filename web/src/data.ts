@@ -17,6 +17,11 @@ import type {
 } from "./types";
 
 const base = import.meta.env.BASE_URL;
+export function assetUrl(path: string): string { return `${base}${path.replace(/^\/+/, "")}`; }
+
+export function getMapBackgrounds(): Promise<string[]> {
+  return cached("map-backgrounds", () => fetchJson<string[]>("map-bg/manifest.json"));
+}
 const cache = new Map<string, Promise<unknown>>();
 
 async function fetchJson<T>(path: string): Promise<T> {
