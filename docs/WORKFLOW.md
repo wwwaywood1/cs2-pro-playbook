@@ -38,7 +38,7 @@
 1. 数据量：近 6 个月该队全部比赛，目标每张常打图 ≥ 8 场、总计 ≥ 40 张地图。
 2. 素材（你提供）：
    - 队标 → `web/public/logos/teams/<slug>.png`（没有时显示中性盾牌）；
-   - 选手照片 → Claude 统一抠图、补全半身、对齐身高与清晰度；
+   - 选手照片（HLTV 式选手卡即可）→ `python scripts/make_portraits.py <文件夹> --map 名字=steamid …`：去掉左侧徽章栏和悬浮提示框、放大 2 倍、抠图，按头宽统一缩放到 1000×666 透明画布（与 Falcons 同规格），输出到 `web/public/players/<steamid>.png`；队标做成队伍主色、透明底 → `web/public/logos/teams/<slug>.png`。放好后再导出，`asset_slots.json` 会自动登记；
    - 定场诗（可选）→ `config/player_quotes.json`。
 3. 检查清单：战队页 → 地图页 → 选手页 → 回放 → 战术 → 道具库，各点一遍；数字抽查 3 处对照比赛记录。
 
