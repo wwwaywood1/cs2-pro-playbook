@@ -20,16 +20,19 @@ utility     every grenade: thrower, release position + view angles, landing poin
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 import time
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 
 import awpy
 import polars as pl
 from awpy import Demo
 
-from playbook.config import MapMeta, canonical_team, load_map, load_team_aliases
+from playbook.config import CONFIG_DIR, MapMeta, canonical_team, load_map, load_team_aliases
 from playbook.utility import PlaceIndex, attribute_grenades
 from playbook.multipart import GameDemo, game_stem, ordered_paths
 
@@ -48,13 +51,22 @@ def position_yaw(column: str = "m_angEyeAngles") -> pl.Expr:
     return pl.when(value.is_finite()).then(value).otherwise(None).alias("yaw")
 
 
+@lru_cache(maxsize=1)
+def _hltv_legacy_ids() -> dict[str, str]:
+    """Explicit source bindings preserve pre-scope parquet IDs, never new imports."""
+    path = CONFIG_DIR / "hltv_legacy_ids.json"
+    return json.loads(path.read_text()) if path.exists() else {}
+
+
 def demo_identity(path: Path) -> dict:
     """Demo id and HLTV match id from the file location.
 
     - dataset tree: ``.../<hltv_match_id>-<slug>/<team1>-vs-<team2>[-mN]-<map>.dem``
       -> demo_id ``<hltv_match_id>_<file stem>``
     - flat file:    ``<hltv_match_id>_<team1>-vs-<team2>-<map>.dem`` -> its stem
-    - anything else keeps its stem and has no match id.
+    - HLTV archive trees use a hash of the archive directory plus the game stem.
+      Explicit config/hltv_legacy_ids.json bindings retain already parsed IDs.
+    - loose files elsewhere keep their stem and have no match id.
     """
     path = Path(path)
     stem = game_stem(path)
@@ -64,6 +76,15 @@ def demo_identity(path: Path) -> dict:
     parent = re.match(r"^(\d+)-", path.parent.name)
     if parent:
         return {"demo_id": f"{parent[1]}_{stem}", "hltv_match_id": int(parent[1])}
+    for root in path.parents:
+        if root.name == "hltv":
+            rel = path.relative_to(root)
+            if len(rel.parts) >= 2:
+                key = rel.with_name(stem).as_posix()
+                legacy = _hltv_legacy_ids().get(key)
+                scope = hashlib.sha256(rel.parts[0].encode()).hexdigest()[:16]
+                return {"demo_id": legacy or f"hltv-{scope}_{stem}", "hltv_match_id": None}
+            break
     return {"demo_id": stem, "hltv_match_id": None}
 
 
@@ -105,6 +126,25 @@ def _playing(tk: pl.DataFrame, bounds: pl.DataFrame) -> pl.DataFrame:
     live = _live_ticks(tk, bounds)
     players = live.group_by("steamid").agg(pl.col("health").max()).filter(pl.col("health") > 0)["steamid"]
     return tk.filter(pl.col("steamid").is_in(players.implode()))
+
+
+def _leading_round_bounds(rounds: pl.DataFrame) -> pl.DataFrame:
+    """Clip a recording's missing leading start to its observed freeze end.
+
+    awpy can observe freeze-end and the full live round without a round-start
+    transition (notably third maps and recordings resumed during halftime).
+    No live ticks are invented. Missing freeze/end/winner evidence and interior
+    missing starts still fail validation, as do numbering resets and overlaps.
+    """
+    if not rounds.height:
+        return rounds
+    first = rounds["round_num"][0]
+    return rounds.with_columns(
+        pl.when((pl.col("round_num") == first) & pl.col("start_tick").is_null()
+                & pl.col("freeze_end_tick").is_not_null()
+                & pl.col("winner_side").is_in(list(SIDE)))
+        .then(pl.col("freeze_end_tick")).otherwise(pl.col("start_tick")).alias("start_tick")
+    )
 
 
 def _validate_rounds(rounds: pl.DataFrame, *, first_round: int = 1) -> None:
@@ -220,6 +260,7 @@ def parse_demo(path: Path | list[Path] | tuple[Path, ...], aliases: dict[str, st
         .sort("round_num")
         .with_columns(pl.col(c).cast(pl.Int64) for c in ("start_tick", "freeze_end_tick", "end_tick", "official_end_tick"))
     )
+    rounds = _leading_round_bounds(rounds)
     _validate_rounds(rounds)
     bounds = rounds.select("round_num", "start_tick", "freeze_end_tick", "end_tick", "official_end_tick").sort("start_tick")
 

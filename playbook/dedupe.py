@@ -165,9 +165,16 @@ def demo_event_slug(path: Path, raw_dir: Path = RAW_DIR) -> str | None:
         return rel[1]
     if rel[0] == "hltv" and len(rel) >= 3:
         team1 = path.stem.split("-vs-")[0]
-        marker = f"-{team1}-vs-"
-        if marker in rel[1]:
-            return rel[1].split(marker)[0]
+        # Archive slugs sometimes omit punctuation in a team name (virtuspro
+        # versus virtus-pro in members). Only normalize this known spelling;
+        # never split on an arbitrary '-vs-' and guess the event prefix.
+        variants = {team1}
+        if team1 in {"virtus-pro", "virtuspro"}:
+            variants.update({"virtus-pro", "virtuspro"})
+        for team in sorted(variants):
+            marker = f"-{team}-vs-"
+            if marker in rel[1]:
+                return rel[1].split(marker)[0]
     return None
 
 

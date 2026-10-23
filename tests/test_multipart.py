@@ -62,8 +62,8 @@ def test_inconsistent_histories_are_rejected(parts, message):
         _stitch_rounds(parts)
 
 
-def test_mid_round_without_complete_copy_is_rejected():
-    p2 = rounds([2, 3]).with_columns(pl.when(pl.col("round_num") == 2).then(None).otherwise(pl.col("start_tick")).alias("start_tick"))
+def test_mid_round_without_freeze_end_and_complete_copy_is_rejected():
+    p2 = rounds([2, 3]).with_columns(pl.when(pl.col("round_num") == 2).then(None).otherwise(pl.col("freeze_end_tick")).alias("freeze_end_tick"))
     with pytest.raises(ValueError, match="no complete copy"):
         _stitch_rounds([rounds([1]), p2])
 

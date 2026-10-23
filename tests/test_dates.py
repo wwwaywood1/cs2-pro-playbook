@@ -28,7 +28,8 @@ def demo(schedule, mid, name='a-vs-b-m1-mirage', event='event', hltv=False):
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / f'{name}.dem'
     path.touch()
-    return {'demo_id': name if hltv else f'{mid}_{name}', 'hltv_match_id': None if hltv else mid}
+    from playbook.parse import demo_identity
+    return demo_identity(path)
 
 
 def test_rank_interpolation_is_order_independent_and_inclusive(schedule):

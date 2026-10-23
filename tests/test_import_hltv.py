@@ -67,9 +67,9 @@ def test_duplicate_parsed_existing_raw_and_batch(workspace):
     archive(src, "a.zip", **{"existing.dem": "de_nuke", "new.dem": "de_mirage"})
     archive(src, "b.zip", **{"new.dem": "de_mirage"})
     rows = run(workspace)
-    assert [(r.imported, r.duplicate, r.failed) for r in rows] == [(0, 1, 0), (1, 1, 0), (0, 1, 0)]
+    assert [(r.imported, r.duplicate, r.failed) for r in rows] == [(0, 1, 0), (2, 0, 0), (1, 0, 0)]
     assert not (src / "42-hltv").exists()
-    assert not (src / "b").exists()
+    assert (src / "b/new.dem").exists()
     assert (other / "existing.dem").read_text() == "de_nuke"
 
 
@@ -82,7 +82,8 @@ def test_multipart_published_together_and_identity_counted_once(workspace):
     assert len(groups) == 1
     assert [p.name for p in groups[0]] == ["game-p1.dem", "game-p2.dem"]
     assert len({p.parent for p in groups[0]}) == 1
-    assert demo_identity(groups[0][0])["demo_id"] == "game"
+    assert demo_identity(groups[0][0])["demo_id"].startswith("hltv-")
+    assert demo_identity(groups[0][0]) == demo_identity(groups[0][1])
     row, = run(workspace)
     assert (row.imported, row.duplicate) == (0, 1)
 

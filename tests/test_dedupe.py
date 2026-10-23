@@ -5,6 +5,7 @@ import polars as pl
 import pytest
 
 from playbook.dedupe import deduplicate_tables, hltv_demo_ids, match_signature
+from playbook.parse import demo_identity
 
 
 def game(demo_id="archive", sequence=("Falcons", "Spirit", "Falcons"), **updates):
@@ -134,7 +135,7 @@ def test_hltv_preference_uses_raw_location_and_multipart_identity(tmp_path):
         p = tmp_path / name
         p.parent.mkdir(parents=True, exist_ok=True)
         p.touch()
-    assert hltv_demo_ids(tmp_path) == {"42_gotv", "GAME"}
+    assert hltv_demo_ids(tmp_path) == {"42_gotv", demo_identity(tmp_path / "hltv/other/GAME.DEM")["demo_id"]}
     assert hltv_demo_ids(tmp_path / "missing") == set()
 
 
@@ -189,7 +190,7 @@ def test_demo_events_from_paths(tmp_path):
     (h / "falcons-vs-9z-m1-dust2.dem").write_bytes(b"")
     ev = demo_events(tmp_path)
     assert ev["2394905_mouz-vs-legacy-m2-nuke"] == "IEM Cologne Major 2026"
-    assert ev["falcons-vs-9z-m1-dust2"] == "PGL Astana 2026"
+    assert ev[demo_identity(h / "falcons-vs-9z-m1-dust2.dem")["demo_id"]] == "PGL Astana 2026"
 
 
 def test_apply_aliases_renames_team_columns():

@@ -55,7 +55,7 @@ def _stitch_rounds(parts: list[pl.DataFrame]):
     require a complete copy somewhere in the final history; they are never merged.
     Restores within a single recording remain an error (GPT-01).
     """
-    from playbook.parse import SIDE, _validate_rounds
+    from playbook.parse import SIDE, _leading_round_bounds, _validate_rounds
 
     owners: dict[int, int] = {}
     complete_parts = []
@@ -64,7 +64,7 @@ def _stitch_rounds(parts: list[pl.DataFrame]):
     offsets = []
     next_tick = 0
     for part, raw in enumerate(parts):
-        raw = raw.filter(~pl.col("is_knife_round"))
+        raw = _leading_round_bounds(raw.filter(~pl.col("is_knife_round")))
         offsets.append(next_tick)
         last_tick = raw["official_end_tick"].max()
         next_tick += max(int(last_tick or 0), 0) + 1
@@ -72,8 +72,16 @@ def _stitch_rounds(parts: list[pl.DataFrame]):
         if any(n is None or n < 1 for n in nums) or nums != sorted(set(nums)):
             raise ValueError(f"Part {part + 1}: incomplete or restored round history")
         complete = pl.all_horizontal(pl.col(c).is_not_null() for c in TICK_COLUMNS)
-        # A malformed winner is not a recoverable boundary fragment.
-        if raw.filter(pl.col("winner_side").is_not_null() & ~pl.col("winner_side").is_in(list(SIDE))).height:
+        # awpy exposes a tick-1 restart marker as an unassigned boundary round.
+        # Treat only this exact sentinel as a fragment, and still require a
+        # complete copy in final ownership below. Other bad winners are errors.
+        restart = (pl.col("start_tick").is_null() & pl.col("freeze_end_tick").is_null()
+                   & (pl.col("end_tick") == 1) & (pl.col("official_end_tick") == 1)
+                   & (pl.col("winner_side") == "unassigned") & (pl.col("winner") == 0)
+                   & (pl.col("reason") == 0) & (pl.col("reason_name") == "still_in_progress")
+                   if {"winner", "reason", "reason_name"} <= set(raw.columns) else pl.lit(False))
+        if raw.filter(pl.col("winner_side").is_not_null()
+                      & ~pl.col("winner_side").is_in(list(SIDE)) & ~restart).height:
             raise ValueError(f"Part {part + 1}: round has no recognized winner")
         valid = raw.filter(complete & pl.col("winner_side").is_in(list(SIDE)))
         fragment_nums = set(nums) - set(valid["round_num"])
