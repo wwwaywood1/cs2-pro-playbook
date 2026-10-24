@@ -44,6 +44,16 @@ def canonical_team(name: str | None, aliases: dict[str, str]) -> str | None:
     return aliases.get(_norm(name), str(name).strip())
 
 
+def load_player_aliases(path: Path | None = None) -> dict[int, int]:
+    """Verified alternate Steam ID -> canonical Steam ID; names/notes are audit metadata."""
+    path = path or CONFIG_DIR / "player_aliases.csv"
+    if not path.exists():
+        return {}
+    with open(path, newline="", encoding="utf-8") as fh:
+        return {int(row["alias_steamid"]): int(row["canonical_steamid"])
+                for row in csv.DictReader(fh) if row.get("alias_steamid")}
+
+
 def team_slug(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 

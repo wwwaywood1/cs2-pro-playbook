@@ -14,7 +14,7 @@ from pathlib import Path
 
 import polars as pl
 
-from playbook.config import RAW_DIR, canonical_team, load_team_aliases
+from playbook.config import RAW_DIR, canonical_team, load_player_aliases, load_team_aliases
 
 
 def match_signature(match: dict, rounds: pl.DataFrame,
@@ -88,10 +88,15 @@ TEAM_COLUMNS = ("team", "team_a", "team_b", "winner", "winner_team", "ct_team", 
                 "attacker_team", "victim_team", "thrower_team", "assister_team", "opponent")
 
 
-def apply_aliases(tables: dict[str, pl.DataFrame], aliases: dict[str, str] | None = None) -> dict[str, pl.DataFrame]:
-    """Re-apply config/team_aliases.csv to every team-name column at export time, so alias
-    edits take effect without re-parsing demos (parse applies the aliases known at that time)."""
+def apply_aliases(tables: dict[str, pl.DataFrame], aliases: dict[str, str] | None = None,
+                  player_aliases: dict[int, int] | None = None) -> dict[str, pl.DataFrame]:
+    """Re-apply team and player aliases to every identity column before export aggregation.
+
+    Parsed files retain source identities; config edits take effect without re-parsing.
+    Player names are display metadata and never used to infer identity.
+    """
     aliases = load_team_aliases() if aliases is None else aliases
+    player_aliases = load_player_aliases() if player_aliases is None else player_aliases
     out = {}
     for name, df in tables.items():
         cols = [c for c in TEAM_COLUMNS if c in df.columns and df.schema[c] == pl.Utf8]
@@ -103,6 +108,17 @@ def apply_aliases(tables: dict[str, pl.DataFrame], aliases: dict[str, str] | Non
             mapping = {k: v for k, v in mapping.items() if v != k}
             if mapping:
                 df = df.with_columns(pl.col(c).replace(mapping) for c in cols)
+        if player_aliases:
+            replacements = []
+            for c, dtype in df.schema.items():
+                if c != "steamid" and not c.endswith("_steamid"):
+                    continue
+                if dtype.is_integer():
+                    replacements.append(pl.col(c).replace(player_aliases))
+                elif dtype == pl.Utf8:
+                    replacements.append(pl.col(c).replace({str(k): str(v) for k, v in player_aliases.items()}))
+            if replacements:
+                df = df.with_columns(replacements)
         out[name] = df
     return out
 
