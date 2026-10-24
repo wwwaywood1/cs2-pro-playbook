@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, type RefObject } from "react";
 import { orbitLayout } from "./teamsHubOrbit";
 
-const TARGET_OMEGA = .00025;
+const TARGET_OMEGA = .00012;
 
 /** Sole owner of node geometry and ray endpoints, including static/resize paints. */
 export function useOrbitalPhysicsEngine(host: RefObject<HTMLDivElement>, paused: boolean, reduced: boolean) {

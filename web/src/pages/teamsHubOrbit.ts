@@ -1,7 +1,7 @@
 export const ORBIT_CARD_SIZE = { width: 196, height: 252 };
 // Matches the stacked hero logo/name/count in teams-hub.css.
 // The map preview stays below the stage so it cannot enlarge the exclusion box.
-export const ORBIT_CORE_SIZE = { width: 300, height: 260 };
+export const ORBIT_CORE_SIZE = { width: 310, height: 290 };
 
 export type OrbitNodeSize = { width: number; height: number };
 

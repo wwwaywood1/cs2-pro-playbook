@@ -564,12 +564,12 @@ html:has(.hub-stage[data-shared="true"])::view-transition-new(team-hub-stage) { 
   .hub-orbit { height: calc(100svh - 200px); margin-top: 8px; }
   /* Stacked hero bounds shared with ORBIT_CORE_SIZE. */
   .hub-orbit .hub-orbit-core {
-    width: 300px; height: 260px; grid-template-columns: minmax(0, 1fr);
+    width: 310px; height: 290px; grid-template-columns: minmax(0, 1fr);
     gap: 8px; align-content: center; align-items: center;
   }
   .hub-orbit .hub-team-anchor { gap: 8px; }
-  .hub-orbit .particle-logo { width: 176px; height: 176px; flex-basis: 176px; }
-  .hub-orbit .particle-logo-canvas { width: 230.48px; height: 230.48px; top: -27.24px; left: -27.24px; }
+  .hub-orbit .particle-logo { width: 206px; height: 206px; flex-basis: 206px; }
+  .hub-orbit .particle-logo-canvas { width: 269.8px; height: 269.8px; top: -31.9px; left: -31.9px; }
   .hub-orbit .hub-team-head h2 { margin: 0; font-size: 34px; line-height: 40px; letter-spacing: .08em; }
   .hub-orbit .hub-orbit-hud { min-height: 0; font-size: 14px; line-height: 20px; }
 

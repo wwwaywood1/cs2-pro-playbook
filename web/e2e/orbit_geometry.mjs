@@ -33,14 +33,14 @@ for (const width of [900, 960, 1000, 1050, 1100, 1144, 1150, 1200, 1280, 1296]) 
 }
 // The hero is large at both desktop sizes; the fit must reserve its full bounds.
 assert.deepEqual(ORBIT_CARD_SIZE, { width: 196, height: 252 });
-assert.deepEqual(ORBIT_CORE_SIZE, { width: 300, height: 260 });
+assert.deepEqual(ORBIT_CORE_SIZE, { width: 310, height: 290 });
 for (const [viewport, width, height, minimum] of [
-  ['1440x900', 1296, 700, 125], ['1280x800', 1144, 600, 91],
+  ['1440x900', 1296, 700, 112], ['1280x800', 1144, 600, 80],
 ]) {
   const { scale } = orbitLayout(width, height, Array(7).fill({ width: 197, height: 253 }));
   const rendered = ORBIT_CARD_SIZE.width * scale;
   assert(rendered >= minimum && rendered < 196, `${viewport}: rendered width ${rendered}`);
-  console.log(`PASS: ${viewport}: ${rendered.toFixed(1)}x${(252 * scale).toFixed(1)}px at middle depth, full 300x260 hero clearance`);
+  console.log(`PASS: ${viewport}: ${rendered.toFixed(1)}x${(252 * scale).toFixed(1)}px at middle depth, full 310x290 hero clearance`);
 }
 const maps = [
   { map: 'de_ancient', n_matches: 2, map_win_rate: 1 },
@@ -118,7 +118,7 @@ const advance = count => { for (let i = 0; i < count; i++) {
   const pending = [...raf.values()]; raf.clear(); pending.forEach(callback => callback(time));
 } };
 render(); advance(120);
-assert(Number(stage.dataset.phase) > .4, 'rAF must rotate the ring');
+assert(Number(stage.dataset.phase) > .2, 'rAF must rotate the ring');
 render(true); advance(110);
 assert.equal(stage.dataset.running, 'false', 'focus/hover must brake to rest');
 const stopped = stage.dataset.phase;
