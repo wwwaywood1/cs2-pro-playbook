@@ -26,14 +26,11 @@ def darkroom(source: Path, map_id: str) -> Image.Image:
     with Image.open(source) as original:
         image = ImageOps.fit(ImageOps.exif_transpose(original).convert("RGB"), (480, 600),
                              method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
-    image = ImageEnhance.Color(image).enhance(0.55)
-    image = ImageEnhance.Contrast(image).enhance(1.35)
+    # Natural colours: no tint or colour overlay, only a light contrast/brightness pass
+    # so white card text stays readable on top.
+    image = ImageEnhance.Contrast(image).enhance(1.08)
     image = image.filter(ImageFilter.SHARPEN)
-    image = ImageEnhance.Brightness(image).enhance(0.7)
-    # Brightness-compressed luminance keeps even white source pixels subdued.
-    luminance = np.asarray(image.convert("L"), dtype=np.float32)[..., None] / 255
-    toned = rgb("#080D13") * (1 - luminance) + rgb(MAP_COLORS[map_id]) * luminance
-    return Image.fromarray(np.clip(np.rint(toned), 0, 255).astype(np.uint8))
+    return ImageEnhance.Brightness(image).enhance(0.88)
 
 
 def build_backgrounds(source_dir: Path, output_dir: Path, map_id: str | None = None) -> list[str]:
