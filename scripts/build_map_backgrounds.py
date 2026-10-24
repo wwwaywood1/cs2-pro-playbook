@@ -26,10 +26,10 @@ def darkroom(source: Path, map_id: str) -> Image.Image:
     with Image.open(source) as original:
         image = ImageOps.fit(ImageOps.exif_transpose(original).convert("RGB"), (480, 600),
                              method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
-    image = ImageEnhance.Color(image).enhance(0.25)
+    image = ImageEnhance.Color(image).enhance(0.55)
     image = ImageEnhance.Contrast(image).enhance(1.35)
     image = image.filter(ImageFilter.SHARPEN)
-    image = ImageEnhance.Brightness(image).enhance(0.42)
+    image = ImageEnhance.Brightness(image).enhance(0.7)
     # Brightness-compressed luminance keeps even white source pixels subdued.
     luminance = np.asarray(image.convert("L"), dtype=np.float32)[..., None] / 255
     toned = rgb("#080D13") * (1 - luminance) + rgb(MAP_COLORS[map_id]) * luminance
