@@ -179,10 +179,7 @@ function TeamPanel({ team, change, returnMap }: { team: TeamEntry; change: Chang
       <header className="hub-team-head hub-orbit-core">
         <span className="hub-orbit-ring is-inner" aria-hidden="true" /><span className="hub-orbit-ring is-outer" aria-hidden="true" />
         <div className="hub-team-anchor" style={{ viewTransitionName: "team-hub-header" }}><ParticleLogoCanvas slug={team.slug} name={team.team} available={assets.teams.includes(team.slug)} /><Heading>{team.team}</Heading></div>
-        <div className="hub-orbit-hud" role="status" aria-live="polite" aria-atomic="true">{selected ? <>
-          <p className="hub-orbit-preview"><b>{selected.display_name}</b><span>T 胜率 {fmtPct(selected.win_rate_T ?? profile?.sides.T.win_rate)} · CT 胜率 {fmtPct(selected.win_rate_CT ?? profile?.sides.CT.win_rate)}</span><span title={signature}>招牌：{signature || (preview.loading ? "读取中…" : "暂无套路数据")}</span></p>
-          <small>点击拆解本图打法 →</small>
-        </> : <p className="muted">{fmtInt(shownMatches)} 场地图比赛 · {ORBIT_POOL.length} 张图池</p>}</div>
+        <div className="hub-orbit-hud"><p className="muted">{fmtInt(shownMatches)} 场地图比赛 · {ORBIT_POOL.length} 张图池</p></div>
       </header>
       <div className="hub-map-grid hub-orbit-nodes">{ORBIT_POOL.map(([id, name, glow], index) => {
         const map = team.maps.find((entry) => entry.map === id);
@@ -202,6 +199,10 @@ function TeamPanel({ team, change, returnMap }: { team: TeamEntry; change: Chang
         </button>;
       })}</div>
     </div>
+    <div className="hub-orbit-inspector" role="status" aria-live="polite" aria-atomic="true">{selected ? <>
+      <p className="hub-orbit-preview"><b>{selected.display_name}</b><span>T 胜率 {fmtPct(selected.win_rate_T ?? profile?.sides.T.win_rate)} · CT 胜率 {fmtPct(selected.win_rate_CT ?? profile?.sides.CT.win_rate)}</span><span title={signature}>招牌：{signature || (preview.loading ? "读取中…" : "暂无套路数据")}</span></p>
+      <small>点击拆解本图打法 →</small>
+    </> : <p className="muted">悬停或聚焦地图，查看攻防胜率与招牌打法。</p>}</div>
     <details className="hub-details hub-team-results"><summary>{t("hub.results")}</summary><Results team={team} /></details>
   </section>;
 }

@@ -745,23 +745,24 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
             const active = document.querySelector('.hub-orbit').hasAttribute('data-active');
             const emphasis = el.dataset.empty === 'true' ? 1 : el.dataset.active === 'true' ? 1.08 : active ? .96 : 1;
             const expectedScale = Number(css.getPropertyValue('--orbit-depth')) * (matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : emphasis);
-            if (el.offsetWidth !== 224 || el.offsetHeight !== 288 || css.position !== 'absolute' || css.transform !== 'none' || css.translate !== '-50% -50%' || Math.abs(Number(css.scale) - expectedScale) > .005 ||
+            if (el.offsetWidth !== 196 || el.offsetHeight !== 252 || css.position !== 'absolute' || css.transform !== 'none' || css.translate !== '-50% -50%' || Math.abs(Number(css.scale) - expectedScale) > .005 ||
                 (el.dataset.empty === 'true' && css.borderTopStyle !== 'dashed')) styles.push({id: a.id, position: css.position, transform: css.transform, translate: css.translate, scale: css.scale});
         }
         const coreEl = document.querySelector('.hub-orbit-core'), core = box(coreEl);
         const badge = box(coreEl.querySelector('.particle-logo')), name = box(coreEl.querySelector('h2'));
         const hud = box(coreEl.querySelector('.hub-orbit-hud'));
+        const inspector = box(document.querySelector('.hub-orbit-inspector'));
         const coreOverlaps = nodes.filter(a => Math.max(core.left - a.right, a.left - core.right,
             core.top - a.bottom, a.top - core.bottom) < 15.5).map(a => a.id);
-        const minimumCardWidth = innerWidth === 1440 ? 150 : innerWidth === 1280 ? 128 : 0;
+        const minimumCardWidth = innerWidth === 1440 ? 119 : innerWidth === 1280 ? 87 : 0;
         const undersized = nodes.filter(a => a.width < minimumCardWidth *
             (document.querySelector('.hub-orbit').hasAttribute('data-active') ? .96 : 1)).map(a => a.id);
         const rays = [...document.querySelectorAll('.hub-orbit-rays g > line:first-child')];
         const breadcrumbs = box(document.querySelector('.hub-breadcrumbs')), topbar = box(document.querySelector('.topbar'));
         const rayAligned = rays.every((line, i) => Math.abs(line.x2.baseVal.value - (nodes[i].left + nodes[i].width / 2 - stage.left)) < 1 && Math.abs(line.y2.baseVal.value - (nodes[i].top + nodes[i].height / 2 - stage.top)) < 1);
-        return {coreOverlaps, undersized, scrollY, breadcrumbs, topbar, rayAligned, breadcrumbVisible: breadcrumbs.top >= topbar.bottom && breadcrumbs.bottom <= innerHeight, nodes, stage, intersections, gaps, outside, viewportOutside, contentOutside, styles,
+        return {previewBelow: inspector.top >= stage.bottom - 1, coreOverlaps, undersized, scrollY, breadcrumbs, topbar, rayAligned, breadcrumbVisible: breadcrumbs.top >= topbar.bottom && breadcrumbs.bottom <= innerHeight, nodes, stage, intersections, gaps, outside, viewportOutside, contentOutside, styles,
             introGap: Math.min(...nodes.map(n => n.top)) - intro.bottom,
-            stacked: badge.bottom <= name.top + 1 && name.right <= hud.left + 1 && core.width <= 301 && core.height <= 129 && hud.bottom <= core.bottom + 1 && name.bottom <= core.bottom + 1,
+            stacked: badge.bottom <= name.top + 1 && name.bottom <= hud.top + 1 && badge.height >= 170 && badge.height <= 180 && parseFloat(getComputedStyle(coreEl.querySelector('h2')).fontSize) >= 32 && core.width <= 301 && core.height <= 261 && hud.bottom <= core.bottom + 1 && [badge, name, hud].every(r => Math.abs((r.left + r.right) / 2 - (core.left + core.right) / 2) <= 1),
             transparent: [coreEl, coreEl.parentElement, coreEl.querySelector('.hub-team-anchor'), coreEl.querySelector('.hub-orbit-hud')].every(el => {
                 const css = getComputedStyle(el);
                 return css.backgroundImage === 'none' && css.backgroundColor === 'rgba(0, 0, 0, 0)' &&
@@ -775,7 +776,7 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
     diagnostics = json.dumps(report, ensure_ascii=False)
     valid = (not any(report[key] for key in ('coreOverlaps', 'undersized', 'intersections', 'gaps', 'outside', 'viewportOutside', 'contentOutside', 'styles'))
              and report['introGap'] >= 16 and report['overflow'] <= 0
-             and report['stacked'] and report['shielded'] and report['transparent'] and report['rayAligned'] and report['breadcrumbVisible'])
+             and report['previewBelow'] and report['stacked'] and report['shielded'] and report['transparent'] and report['rayAligned'] and report['breadcrumbVisible'])
     smoke.check(valid, f'{label}: seven nodes fit with 16px gaps, aligned rays, visible breadcrumbs and transparent core'
                 + (f': {diagnostics}' if not valid else ''))
 
@@ -1085,7 +1086,7 @@ def check_hub_orbit(smoke: Smoke, page: Page) -> None:
                 rect.height > line * 1.5 && rect.height <= line * 2 + 1 && el.scrollWidth <= el.clientWidth;
         } finally { el.textContent = original; }
     }""")
-    smoke.check(wraps, 'signature preview wraps to two lines within the full-width core')
+    smoke.check(wraps, 'signature preview wraps to two lines below the orbit')
     card.focus()
     supports_shared = page.evaluate("typeof document.startViewTransition === 'function'")
     page.keyboard.press('Enter')
@@ -1627,7 +1628,12 @@ def check_ai_lab(smoke: Smoke, page: Page) -> None:
     smoke.check(page.locator('.lab-reference').evaluate_all("els => els.map(el => el.dataset.referenceId)") ==
                 [r['id'] for r in data['references']], 'AI lab references exactly match the verified export')
     expect(page.locator('.lab-paper-note')).to_contain_text('论文结论（Dust2）')
-    expect(page.locator('.lab-paper-note')).to_contain_text(data['metadata']['paper_scope'])
+    expect(page.locator('.lab-paper-note')).to_contain_text('TAGNet 仅在 Dust2 上进行了验证（697 个回合）')
+    expect(page.locator('.lab-paper-note')).to_contain_text('下方结果均由本项目的比赛录像计算得出')
+    expect(page.locator('.lab-limitations')).to_contain_text('回放中的 T 控图率是独立观测指标')
+    expect(page.locator('.lab-limitations')).to_contain_text('因此归因为零')
+    expect(page.locator('.lab-method').last).to_contain_text('轻量标准化、主成分分析与 K 均值聚类')
+    expect(page.locator('.lab-references a')).to_have_text([r['title'] for r in data['references']])
     smoke.check(True, 'paper claims are confined to a distinct Dust2 note')
     expect(page.locator('.main-nav a[href="#/lab"]')).to_have_count(1)
     for slider in ('SHAP 时间轴', '阵型快照'):

@@ -20,7 +20,7 @@ for (const width of [900, 960, 1000, 1050, 1100, 1144, 1150, 1200, 1280, 1296]) 
         assert(a.y - ah / 2 >= 15.99 && a.y + ah / 2 <= height - 15.99);
         assert(Math.max(Math.abs(a.x - width / 2) - (aw + ORBIT_CORE_SIZE.width) / 2,
                         Math.abs(a.y - height / 2) - (ah + ORBIT_CORE_SIZE.height) / 2) >= 15.99,
-               `${width}x${height} phase ${degree}: card overlaps the centre logo/preview`);
+               `${width}x${height} phase ${degree}: card overlaps the centre logo/name/count`);
         for (const b of points.slice(i + 1)) {
           assert(Math.max(Math.abs(a.x - b.x) - (aw + node.width * b.scale * 1.08) / 2,
                           Math.abs(a.y - b.y) - (ah + node.height * b.scale * 1.08) / 2) >= 15.99,
@@ -31,26 +31,16 @@ for (const width of [900, 960, 1000, 1050, 1100, 1144, 1150, 1200, 1280, 1296]) 
     }
   }
 }
-// Compare rendered size with the previous 168x216 whole-ellipse fit at the
-// measured desktop budgets. Include rounding and every depth/hover extreme.
-function previousScale(width, height) {
-  let low = 0, high = 1;
-  for (let i = 0; i < 24; i++) {
-    const middle = (low + high) / 2, w = 169 * 1.05 * 1.08 * middle, h = 217 * 1.05 * 1.08 * middle;
-    const chord = 2 * Math.sin(Math.PI / 7);
-    const fits = ((w + 16) / (chord * ((width - w) / 2 - 16))) ** 2
-      + ((h + 16) / (chord * ((height - h) / 2 - 16))) ** 2 <= 1;
-    if (fits) low = middle; else high = middle;
-  }
-  return low;
-}
-for (const [viewport, width, oldHeight, height] of [
-  ['1440x900', 1296, 670, 700], ['1280x800', 1144, 570, 600],
+// The hero is large at both desktop sizes; the fit must reserve its full bounds.
+assert.deepEqual(ORBIT_CARD_SIZE, { width: 196, height: 252 });
+assert.deepEqual(ORBIT_CORE_SIZE, { width: 300, height: 260 });
+for (const [viewport, width, height, minimum] of [
+  ['1440x900', 1296, 700, 125], ['1280x800', 1144, 600, 91],
 ]) {
-  const scale = orbitLayout(width, height, Array(7).fill({ width: ORBIT_CARD_SIZE.width + 1, height: ORBIT_CARD_SIZE.height + 1 })).scale;
-  const ratio = ORBIT_CARD_SIZE.width * scale / (168 * previousScale(width, oldHeight));
-  assert(ratio >= 1.35 && ratio <= 1.5, `${viewport}: rendered enlargement ${ratio}`);
-  console.log(`PASS: ${viewport}: ${(ORBIT_CARD_SIZE.width * scale).toFixed(1)}x${(ORBIT_CARD_SIZE.height * scale).toFixed(1)}px at middle depth, ${ratio.toFixed(2)}x previous size`);
+  const { scale } = orbitLayout(width, height, Array(7).fill({ width: 197, height: 253 }));
+  const rendered = ORBIT_CARD_SIZE.width * scale;
+  assert(rendered >= minimum && rendered < 196, `${viewport}: rendered width ${rendered}`);
+  console.log(`PASS: ${viewport}: ${rendered.toFixed(1)}x${(252 * scale).toFixed(1)}px at middle depth, full 300x260 hero clearance`);
 }
 const maps = [
   { map: 'de_ancient', n_matches: 2, map_win_rate: 1 },

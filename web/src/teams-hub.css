@@ -403,7 +403,7 @@
 .hub-orbit-preview > span:last-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .hub-orbit-hud small { font-size: .72rem; color: #a8c5b5; }
 .hub-orbit-nodes { display: contents; }
-.hub-page .hub-orbit .hub-orbit-node { position: absolute; left: var(--orbit-x); top: var(--orbit-y); translate: -50% -50%; transform: none; scale: 1; width: 224px; height: 288px; min-height: 288px; padding: 10px 10px; gap: 4px; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; z-index: 11; backdrop-filter: none; animation: hub-hud-in 320ms var(--hub-ease) var(--stagger) backwards; transition: scale 200ms var(--hub-ease), opacity 180ms, filter 180ms, border-color 180ms, box-shadow 200ms; }
+.hub-page .hub-orbit .hub-orbit-node { position: absolute; left: var(--orbit-x); top: var(--orbit-y); translate: -50% -50%; transform: none; scale: 1; width: 196px; height: 252px; min-height: 252px; padding: 10px 10px; gap: 4px; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; z-index: 11; backdrop-filter: none; animation: hub-hud-in 320ms var(--hub-ease) var(--stagger) backwards; transition: scale 200ms var(--hub-ease), opacity 180ms, filter 180ms, border-color 180ms, box-shadow 200ms; }
 /* Scenic upper layer sits above a neutral text area; missing photos keep the fallback. */
 .hub-page .hub-orbit .hub-orbit-node { overflow: hidden; background: #080c10; }
 .hub-page .hub-orbit .hub-orbit-node > :not(.map-card-bg, .card-scenic-bg, .card-scenic-probe) { z-index: 2; }
@@ -429,7 +429,7 @@
 .hub-page .hub-orbit .hub-orbit-node[data-active="true"] { scale: 1.08; border-color: color-mix(in srgb, var(--rate-color) 60%, transparent); box-shadow: 0 12px 32px -8px rgba(0,0,0,.8), 0 0 20px -4px var(--map-theme-color); }
 .hub-page .hub-orbit .hub-orbit-node[data-empty="true"] { border: 1px dashed #53616b; color: var(--ink-muted); cursor: default; }
 .hub-page .hub-orbit .hub-orbit-node[data-empty="true"]:is(:hover, :focus-visible, [data-active="true"]) { scale: 1; border-color: #87959f; box-shadow: none; }
-.hub-orbit-empty { height: 72px; display: grid; align-items: center; font-size: 2rem; opacity: .25; }
+.hub-orbit-empty { height: 64px; display: grid; align-items: center; font-size: 2rem; opacity: .25; }
 .hub-map-team-anchor { display: inline-flex; align-items: center; gap: 10px; vertical-align: middle; }
 .hub-map-team-anchor .hub-badge { width: 36px; height: 36px; }
 .hub-team-results { position: relative; margin-top: 0; }
@@ -506,16 +506,16 @@ html:has(.hub-stage[data-shared="true"])::view-transition-new(team-hub-stage) { 
 .hub-orbit-node:has([data-landmark="nuke"]) { --landmark-light: #06B6D4; }
 .hub-orbit-node:has([data-landmark="cache"]) { --landmark-light: #64748B; }
 /* Art occupies 55%; reserve every data row inside the fixed card. */
-.hub-page .hub-orbit .hub-orbit-node { padding: 160px 8px 8px; grid-template-rows: 20px 52px 4px 14px 16px; gap: 3px; }
+.hub-page .hub-orbit .hub-orbit-node { padding: 140px 8px 6px; grid-template-rows: 20px 44px 4px 14px 16px; gap: 1px; }
 /* Override the generic card-child positioning rule: artwork is never a grid row. */
 .hub-page .hub-orbit .hub-orbit-node > .map-landmark-art { position: absolute; height: 55%; }
 .hub-page .hub-orbit .hub-orbit-node > .card-scenic-bg { height: 55%; }
-.hub-orbit-node .hub-rate { margin: 0; width: 52px; height: 52px; }
+.hub-orbit-node .hub-rate { margin: 0; width: 44px; height: 44px; }
 .hub-page .hub-orbit-node .hub-map-name { font-size: 16px; line-height: 20px; }
 .hub-page .hub-orbit-node .hub-rate-label { font-size: 12px; line-height: 14px; }
 .hub-page .hub-orbit-node > small { font-size: 12px; line-height: 16px; }
 .hub-page .hub-orbit-node .hub-map-badge { top: 8px; right: 6px; }
-.hub-page .hub-orbit .hub-orbit-node[data-empty="true"] { grid-template-rows: 20px 72px 16px; }
+.hub-page .hub-orbit .hub-orbit-node[data-empty="true"] { grid-template-rows: 20px 64px 16px; }
 .hub-page .hub-orbit .hub-orbit-node .hub-rate :is(.hub-arc, strong) { stroke: var(--rate-color); color: var(--rate-color); }
 .hub-page .hub-orbit .hub-orbit-node .hub-rate svg { animation: none; filter: none; }
 .hub-page .hub-orbit .hub-orbit-node[data-rate="strong"] .hub-rate svg { filter: drop-shadow(0 0 8px rgba(34,197,94,.45)); }
@@ -562,18 +562,22 @@ html:has(.hub-stage[data-shared="true"])::view-transition-new(team-hub-stage) { 
   .hub-orbit-intro { display: flex; align-items: baseline; justify-content: center; gap: 12px; }
   .hub-orbit-intro h3 { margin: 0; }
   .hub-orbit { height: calc(100svh - 200px); margin-top: 8px; }
-  /* Fixed exclusion box shared with ORBIT_CORE_SIZE; no large logo margin. */
+  /* Stacked hero bounds shared with ORBIT_CORE_SIZE. */
   .hub-orbit .hub-orbit-core {
-    width: 300px; height: 128px; grid-template-columns: 144px 144px;
-    gap: 12px; align-items: center;
+    width: 300px; height: 260px; grid-template-columns: minmax(0, 1fr);
+    gap: 8px; align-content: center; align-items: center;
   }
-  .hub-orbit .hub-team-anchor { gap: 2px; }
-  .hub-orbit .particle-logo { width: 72px; height: 72px; flex-basis: 72px; }
-  .hub-orbit .particle-logo-canvas { width: 94px; height: 94px; top: -11px; left: -11px; }
-  .hub-orbit .hub-team-head h2 { font-size: 20px; line-height: 24px; letter-spacing: .03em; }
-  .hub-orbit .hub-orbit-hud { min-height: 0; font-size: 12px; }
-  .hub-orbit .hub-orbit-preview { font-size: 12px; line-height: 1.4; }
-  .hub-orbit .hub-orbit-hud small { font-size: 11px; }
+  .hub-orbit .hub-team-anchor { gap: 8px; }
+  .hub-orbit .particle-logo { width: 176px; height: 176px; flex-basis: 176px; }
+  .hub-orbit .particle-logo-canvas { width: 230.48px; height: 230.48px; top: -27.24px; left: -27.24px; }
+  .hub-orbit .hub-team-head h2 { margin: 0; font-size: 34px; line-height: 40px; letter-spacing: .08em; }
+  .hub-orbit .hub-orbit-hud { min-height: 0; font-size: 14px; line-height: 20px; }
+
 }
 
 .hub-page .hub-orbit[data-active] .hub-orbit-node:has(.card-scenic-bg):not([data-active="true"]) { opacity: 1; }
+
+/* Keep map details readable without displacing the hero or its fitted cards. */
+.hub-orbit-inspector { min-height: 106px; padding: 8px 16px; text-align: center; }
+.hub-orbit-inspector .hub-orbit-preview { max-width: 320px; margin: 0 auto 4px; }
+.hub-orbit-inspector > small { font-size: .72rem; color: #a8c5b5; }
