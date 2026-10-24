@@ -36,7 +36,7 @@ from playbook.store import read_all
 from playbook.semantics import round_plants
 from playbook.dedupe import deduplicate_tables, hltv_demo_ids
 from playbook.dates import DATE_FIELDS, attach_dates, attach_example_dates, match_date_key
-from playbook import replay, winprob
+from playbook import replay, winprob, ai_lab
 from playbook.radar6 import player_radar
 
 SCHEMA_VERSION = 1
@@ -569,6 +569,7 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         print(f"win probability: accuracy {m['model']['accuracy']:.3f} (baseline {m['baseline_alive_time']['accuracy']:.3f}),"
               f" log loss {m['model']['log_loss']:.3f}, {m['matches']} matches")
         _write(out_dir / "winprob_metrics.json", m)
+    ai_lab.export(t, out_dir, wpr)
     export_player_quotes(ROOT / "config" / "player_quotes.json", out_dir)
     export_asset_slots(ROOT / "web" / "public", out_dir)
     team_maps: dict[str, list[dict]] = {}

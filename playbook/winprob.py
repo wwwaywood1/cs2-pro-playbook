@@ -93,7 +93,7 @@ def _metrics(y: np.ndarray, p: np.ndarray) -> dict:
             "accuracy": round(float(np.mean((p >= .5) == y)), 4), "calibration": calib}
 
 
-def fit_oof(d: pl.DataFrame, seed: int = 0) -> tuple[np.ndarray, dict]:
+def fit_oof(d: pl.DataFrame, seed: int = 0, model_artifacts: list | None = None) -> tuple[np.ndarray, dict]:
     """Out-of-fold T win probability for every state, plus metrics vs the baseline."""
     from sklearn.ensemble import HistGradientBoostingClassifier
     from sklearn.linear_model import LogisticRegression
@@ -112,6 +112,9 @@ def fit_oof(d: pl.DataFrame, seed: int = 0) -> tuple[np.ndarray, dict]:
                                            l2_regularization=1.0, random_state=seed)
         m.fit(x[tr], y[tr])
         oof[te] = m.predict_proba(x[te])[:, 1]
+        if model_artifacts is not None:
+            model_artifacts.append({'model': m, 'test_demos': set(groups[te]),
+                                    'train_indices': tr, 'maps': maps, 'names': names})
         b = LogisticRegression(max_iter=1000).fit(xb[tr], y[tr])
         oof_b[te] = b.predict_proba(xb[te])[:, 1]
         # permutation-free importance proxy: drop in log loss when one feature is shuffled (cheap sample)
@@ -123,6 +126,11 @@ def fit_oof(d: pl.DataFrame, seed: int = 0) -> tuple[np.ndarray, dict]:
             xs[:, j] = rng.permutation(xs[:, j])
             importance[j] += _metrics(y[sample], m.predict_proba(xs)[:, 1])["log_loss"] - base_ll
     raw = oof.copy()
+    if model_artifacts is not None:
+        from sklearn.isotonic import IsotonicRegression
+        for artifact in model_artifacts:
+            tr = artifact.pop('train_indices')
+            artifact['calibrator'] = IsotonicRegression(out_of_bounds='clip', y_min=0., y_max=1.).fit(raw[tr], y[tr])
     oof = calibrate_oof(oof, y, groups)
     top = sorted(zip(names, importance / folds.get_n_splits()), key=lambda kv: -kv[1])[:10]
     metrics = {"model_uncalibrated": _metrics(y, raw), "rows": int(len(y)), "matches": int(len(set(groups))), "folds": folds.get_n_splits(),
@@ -246,6 +254,7 @@ def run(t: dict[str, pl.DataFrame]) -> dict | None:
     if d["demo_id"].n_unique() < N_FOLDS or d["t_win"].n_unique() < 2:
         print("win probability skipped: not enough matches")
         return None
-    oof, metrics = fit_oof(d)
+    artifacts = []
+    oof, metrics = fit_oof(d, model_artifacts=artifacts)
     wp = wp_lookup(d, oof)
-    return {"states": d, "oof": oof, "wp": wp, "events": action_values(t, wp), "metrics": metrics}
+    return {"states": d, "oof": oof, "wp": wp, "events": action_values(t, wp), "metrics": metrics, "model_artifacts": artifacts}
