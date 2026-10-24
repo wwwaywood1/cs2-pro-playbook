@@ -1,4 +1,4 @@
-export const ORBIT_CARD_SIZE = { width: 156, height: 178 };
+export const ORBIT_CARD_SIZE = { width: 168, height: 216 };
 
 export type OrbitNodeSize = { width: number; height: number };
 
@@ -14,51 +14,41 @@ export const ORBIT_POOL = [
 ] as const;
 export const EMPTY_MAP_GLOW = ORBIT_POOL[6][2];
 
-// Reserve the largest hover/focus scale for every card, including empty ones.
-// The same gap applies to neighbouring cards and the stage's outside edge.
-const SCALE = 1.08;
-const GAP = 16;
-
-export function orbitLayout(width: number, height: number, nodes: OrbitNodeSize[]) {
-  const angles = nodes.map((_, index) => -Math.PI / 2 + index * 2 * Math.PI / nodes.length);
-  const maxWidth = Math.max(...nodes.map((node) => node.width * SCALE));
-  const maxHeight = Math.max(...nodes.map((node) => node.height * SCALE));
-  const rx = Math.min(520, Math.max(0, (width - maxWidth) / 2 - GAP));
-  // A staggered ring separates the shoulder and side columns horizontally.
-  // A regular seven-point ellipse wastes height separating those same pairs.
-  const shoulder = rx - maxWidth - GAP;
-  if (nodes.length === 7 && shoulder >= maxWidth + GAP) {
-    const minHeight = Math.ceil(2 * (maxHeight + GAP) / 1.7 + maxHeight + GAP * 2);
-    const ry = Math.max(0, (Math.max(height, minHeight) - maxHeight) / 2 - GAP);
-    const cx = width / 2, cy = height / 2;
-    return { minHeight, points: [
-      { x: cx, y: cy - ry },
-      { x: cx + shoulder, y: cy - ry * .70 },
-      { x: cx + rx, y: cy },
-      { x: cx + shoulder, y: cy + ry },
-      { x: cx - shoulder, y: cy + ry },
-      { x: cx - rx, y: cy },
-      { x: cx - shoulder, y: cy - ry * .70 },
-    ] };
-  }
-  let minRy = 0;
-  for (let i = 0; i < nodes.length; i++) {
-    for (let j = i + 1; j < nodes.length; j++) {
-      const dx = Math.abs(Math.cos(angles[i]) - Math.cos(angles[j])) * rx;
-      const dy = Math.abs(Math.sin(angles[i]) - Math.sin(angles[j]));
-      // If X cannot separate the scaled rectangles, Y must. The symmetric
-      // bottom pair shares a Y coordinate and is already separated on desktop.
-      if (dx < (nodes[i].width + nodes[j].width) * SCALE / 2 + GAP && dy > 1e-6) {
-        minRy = Math.max(minRy, ((nodes[i].height + nodes[j].height) * SCALE / 2 + GAP) / dy);
-      }
-    }
-  }
-  const minHeight = Math.ceil(minRy * 2 + maxHeight + GAP * 2);
-  const ry = Math.max(minRy, (height - maxHeight) / 2 - GAP);
-  return {
-    minHeight,
-    points: angles.map((angle) => ({ x: width / 2 + rx * Math.cos(angle), y: height / 2 + ry * Math.sin(angle) })),
+// Fit the *whole* rotating ellipse, including depth and hover, in the stage.
+// For adjacent nodes, a collision is possible iff both separation components
+// fall below the rectangle extents. The ellipse inequality below excludes that
+// for every phase, rather than checking only the initial seven positions.
+export function orbitLayout(width: number, height: number, nodes: OrbitNodeSize[], phase = 0) {
+  const reserve = 1.05 * 1.08;
+  const gap = 16;
+  const maxWidth = Math.max(1, ...nodes.map((node) => node.width));
+  const maxHeight = Math.max(1, ...nodes.map((node) => node.height));
+  const chord = 2 * Math.sin(Math.PI / Math.max(2, nodes.length));
+  const radii = (scale: number) => ({
+    rx: Math.max(1, (width - maxWidth * reserve * scale) / 2 - gap),
+    ry: Math.max(1, (height - maxHeight * reserve * scale) / 2 - gap),
+  });
+  const fits = (scale: number) => {
+    const { rx, ry } = radii(scale);
+    return ((maxWidth * reserve * scale + gap) / (chord * rx)) ** 2
+      + ((maxHeight * reserve * scale + gap) / (chord * ry)) ** 2 <= 1;
   };
+  let low = 0, high = 1;
+  for (let i = 0; i < 24; i++) {
+    const middle = (low + high) / 2;
+    if (fits(middle)) low = middle; else high = middle;
+  }
+  const scale = low;
+  const { rx, ry } = radii(scale);
+  return { minHeight: 0, scale, points: nodes.map((_, index) => {
+    const angle = -Math.PI / 2 + phase + index * 2 * Math.PI / nodes.length;
+    return { x: width / 2 + rx * Math.cos(angle), y: height / 2 + ry * Math.sin(angle),
+      scale: scale * (1 + .05 * Math.sin(angle)) };
+  }) };
+}
+
+export function orbitRate(rate: number | null | undefined) {
+  return rate == null ? "neutral" : rate >= .6 ? "strong" : rate >= .5 ? "neutral" : "weak";
 }
 
 /** Restrict both sample totals and ranking to the seven rendered pool nodes. */

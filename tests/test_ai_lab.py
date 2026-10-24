@@ -50,17 +50,63 @@ def test_determinism_counts_and_shapes():
     a, edges = C.build(sub, load_map('de_mirage'))
     b, _ = C.build({k: v.reverse() for k, v in sub.items()}, load_map('de_mirage'))
     assert a == b
-    assert len(a['clusters']) == 6
-    assert len(set(c['label_zh'] for c in a['clusters'])) == 6
+    k = a['metadata']['k']
+    assert 1 <= k <= 2  # 71 rounds cannot support 3 clusters of >=30.
+    assert len(a['clusters']) == k
+    assert len(set(c['label_zh'] for c in a['clusters'])) == k
+    assert all(c['n'] >= 30 for c in a['clusters'])
     shares = [c['region_shares_15s']['A'] for c in a['clusters']]
     assert shares == sorted(shares)
-    assert sum(c['n'] for c in a['clusters']) == 71
+    assert sum(c['n'] for c in a['clusters']) == 71-a['counts']['dropped_outlier']
     assert sum(c['share'] for c in a['clusters']) == pytest.approx(1.)
     for edge in edges:
         for snap in edge['snapshots']:
             assert np.asarray(snap['positions']).shape == (5, 3)
             np.testing.assert_allclose(np.asarray(snap['alpha']).sum(axis=1), 1.)
     json.dumps(a, allow_nan=False)
+
+
+def test_largest_remainder_compositions_and_distinct_word_labels():
+    np.testing.assert_array_equal(C.player_counts(np.array([.34, .26, .30, .10, 0.])), [2, 1, 2, 0, 0])
+    np.testing.assert_array_equal(C.player_counts(np.full(5, .2)), [1, 1, 1, 1, 1])
+    # Two balanced profiles in the middle depth third require a regional word.
+    shares = np.array([[.30, .30, .40, 0, 0], [.36, .25, .39, 0, 0],
+                       [.20, .20, .60, 0, 0], [.60, .20, .20, 0, 0]])
+    names = C._labels(shares, np.array([.3, .3, .1, .5]))
+    assert len({zh for zh, en in names}) == len({en for zh, en in names}) == 4
+    assert names[0][0].startswith('A2·中1·B2 均衡')
+    assert all('%' not in zh+en for zh, en in names)
+    assert all('前压' not in zh and '回收' not in zh for zh, en in names)
+    for s in shares:
+        assert C.player_counts(s).sum() == 5
+    depths = np.array([.1, .9])
+    names = C._labels(shares[:1].repeat(2, axis=0), depths)
+    assert '回收' in names[0][0] and '前压' in names[1][0]
+
+
+def test_colliding_labels_in_same_depth_third_omit_redundant_depth_word():
+    shares = np.array([[.30, .30, .40, 0, 0], [.36, .25, .39, 0, 0],
+                       [.80, .20, 0, 0, 0], [0, .80, .20, 0, 0],
+                       [.20, 0, .80, 0, 0], [.20, 0, 0, .80, 0]])
+    # Both balanced profiles are in the bottom third; depth cannot separate them.
+    names = C._labels(shares, np.array([.10, .11, .30, .40, .50, .60]))
+    assert len({zh for zh, en in names}) == len({en for zh, en in names}) == 6
+    for zh, en in names[:2]:
+        assert zh.startswith('A2·中1·B2 均衡')
+        assert '回收' not in zh and '前压' not in zh
+        assert 'deep' not in en and 'forward' not in en
+        assert '%' not in zh+en
+
+
+@threadpool_limits.wrap(limits=1)
+def test_singleton_outlier_trimmed_and_cluster_floor_enforced():
+    rng = np.random.default_rng(42)
+    x = np.vstack([rng.normal(i*8, .1, (100, 4)) for i in range(6)] + [np.full((1, 4), 1e6)])
+    keep, _, _, labels, metadata = C._cluster(x)
+    assert not keep[-1]  # A singleton must not hide behind its own KMeans centre.
+    assert metadata['outlier_filter']['dropped'] == int((~keep).sum())
+    assert metadata['k'] == 6 and metadata['k_stayed_6']
+    assert np.bincount(labels).min() >= metadata['min_cluster_size']
 
 
 def test_missing_snapshot_dropped_but_later_death_keeps_original_member():
@@ -133,6 +179,18 @@ def test_retained_fold_model_reproduces_calibrated_oof():
         assert set(names[j] for j in set(range(len(names)))-set(used)) == {'score_diff', 'map_de_mirage', 'map_de_nuke'}
 
 
+def test_lab_examples_exclude_post_round_plants():
+    t = {
+        'matches': pl.DataFrame([{'demo_id': 'falcons', 'map': 'de_mirage'}]),
+        'rounds': pl.DataFrame([dict(demo_id='falcons', round_num=r, t_team='Falcons',
+                                     ct_team='Other', dur_s=40.) for r in (1, 2)]),
+        'plants': pl.DataFrame([dict(demo_id='falcons', round_num=1, t_s=70., site='A'),
+                                dict(demo_id='falcons', round_num=2, t_s=30., site='B')]),
+    }
+    selected = L.choose_rounds(t)
+    assert len(selected) == 1 and selected[0][1]['round_num'] == 2
+
+
 def test_exported_contract():
     root = Path(__file__).resolve().parents[1]/'data'/'site'
     if not (root/'ai_lab.json').exists():
@@ -156,9 +214,17 @@ def test_exported_contract():
     for path in sorted(root.glob('*/ct_patterns.json')):
         a = json.loads(path.read_text())
         assert a['schema_version'] == 1
-        assert a['counts']['total'] == a['counts']['included']+a['counts']['dropped_at_10']+a['counts']['dropped_incomplete']
+        assert a['counts']['total'] == sum(a['counts'][key] for key in ('included', 'dropped_at_10', 'dropped_incomplete', 'dropped_outlier'))
         assert len(a['embedding']['points']) == a['counts']['included']
-        assert len(a['clusters']) == 6
-        assert len({p['cluster_id'] for p in a['embedding']['points']}) == 6
+        k = a['metadata']['k']
+        assert len(a['clusters']) == k
+        assert len({p['cluster_id'] for p in a['embedding']['points']}) == k
+        assert [c['id'] for c in a['clusters']] == [f'C{i}' for i in range(k)]
+        assert len({c['label_zh'] for c in a['clusters']}) == k
+        assert len({c['label_en'] for c in a['clusters']}) == k
+        assert len(a['metadata']['outlier_filter']['excluded_rounds']) == a['counts']['dropped_outlier']
         for c in a['clusters']:
+            assert c['n'] >= a['metadata']['min_cluster_size']
+            assert sum(c['expected_players_15s'].values()) == 5
+            assert '%' not in c['label_zh']+c['label_en']
             assert c['ct_win_ci95'][0] <= c['ct_win_rate'] <= c['ct_win_ci95'][1]

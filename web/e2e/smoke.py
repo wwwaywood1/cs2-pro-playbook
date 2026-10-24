@@ -731,7 +731,7 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
             if (a.left < stage.left || a.right > stage.right || a.top < stage.top || a.bottom > stage.bottom) outside.push(a.id);
             if (a.left < 0 || a.right > innerWidth || a.top < 0 || a.bottom > innerHeight) viewportOutside.push(a.id);
             const node = document.getElementById(a.id);
-            for (const child of node.querySelectorAll('.hub-map-name, .hub-map-badge, .hub-rate, small, .low-sample-chip')) {
+            for (const child of node.querySelectorAll('.hub-map-name, .hub-map-badge, .hub-rate, .hub-side-rate-bar, .hub-rate-label, small, .low-sample-chip')) {
                 const r = child.getBoundingClientRect();
                 if (r.bottom > a.bottom + 1 || r.top < a.top - 1 || r.left < a.left - 1 || r.right > a.right + 1) contentOutside.push(a.id);
             }
@@ -742,15 +742,18 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
             }
             const el = document.getElementById(a.id), css = getComputedStyle(el);
             const active = document.querySelector('.hub-orbit').hasAttribute('data-active');
-            const expectedScale = el.dataset.active === 'true' ? (el.dataset.empty === 'true' ? 1 : 1.08) : active ? .96 : 1;
-            if (el.offsetWidth !== 156 || el.offsetHeight !== 178 || css.position !== 'absolute' || css.transform !== 'none' || Math.abs(Number(css.scale) - expectedScale) > .005 ||
-                (el.dataset.empty === 'true' && css.borderTopStyle !== 'dashed')) styles.push({id: a.id, position: css.position, transform: css.transform, scale: css.scale});
+            const emphasis = el.dataset.empty === 'true' ? 1 : el.dataset.active === 'true' ? 1.08 : active ? .96 : 1;
+            const expectedScale = Number(css.getPropertyValue('--orbit-depth')) * (matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : emphasis);
+            if (el.offsetWidth !== 168 || el.offsetHeight !== 216 || css.position !== 'absolute' || css.transform !== 'none' || css.translate !== '-50% -50%' || Math.abs(Number(css.scale) - expectedScale) > .005 ||
+                (el.dataset.empty === 'true' && css.borderTopStyle !== 'dashed')) styles.push({id: a.id, position: css.position, transform: css.transform, translate: css.translate, scale: css.scale});
         }
         const coreEl = document.querySelector('.hub-orbit-core'), core = box(coreEl);
-        const badge = box(coreEl.querySelector('.hub-badge')), name = box(coreEl.querySelector('h2'));
+        const badge = box(coreEl.querySelector('.particle-logo')), name = box(coreEl.querySelector('h2'));
         const hud = box(coreEl.querySelector('.hub-orbit-hud'));
-        const rays = [...document.querySelectorAll('.hub-orbit-rays line')];
-        return {nodes, stage, intersections, gaps, outside, viewportOutside, contentOutside, styles,
+        const rays = [...document.querySelectorAll('.hub-orbit-rays g > line:first-child')];
+        const breadcrumbs = box(document.querySelector('.hub-breadcrumbs')), topbar = box(document.querySelector('.topbar'));
+        const rayAligned = rays.every((line, i) => Math.abs(line.x2.baseVal.value - (nodes[i].left + nodes[i].width / 2 - stage.left)) < 1 && Math.abs(line.y2.baseVal.value - (nodes[i].top + nodes[i].height / 2 - stage.top)) < 1);
+        return {rayAligned, breadcrumbVisible: breadcrumbs.top >= topbar.bottom && breadcrumbs.bottom <= innerHeight, nodes, stage, intersections, gaps, outside, viewportOutside, contentOutside, styles,
             introGap: Math.min(...nodes.map(n => n.top)) - intro.bottom,
             stacked: badge.bottom <= name.top + 1 && name.bottom <= hud.top + 1 && core.width <= 301 && hud.width >= core.width - 1 && hud.bottom <= core.bottom + 1,
             transparent: [coreEl, coreEl.parentElement, coreEl.querySelector('.hub-team-anchor'), coreEl.querySelector('.hub-orbit-hud')].every(el => {
@@ -766,151 +769,188 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
     diagnostics = json.dumps(report, ensure_ascii=False)
     valid = (not any(report[key] for key in ('intersections', 'gaps', 'outside', 'viewportOutside', 'contentOutside', 'styles'))
              and report['introGap'] >= 16 and report['overflow'] <= 0
-             and report['stacked'] and report['shielded'] and report['transparent'])
-    smoke.check(valid, f'{label}: all seven nodes and their content fit the viewport with 16px gaps, stacked transparent core and unobstructed rings'
+             and report['stacked'] and report['shielded'] and report['transparent'] and report['rayAligned'] and report['breadcrumbVisible'])
+    smoke.check(valid, f'{label}: seven nodes fit with 16px gaps, aligned rays, visible breadcrumbs and transparent core'
                 + (f': {diagnostics}' if not valid else ''))
 
 
 def check_orbit_backdrops(smoke: Smoke, page: Page) -> None:
-    # Force the no-photo deployment even when an owner has supplied real photos.
     manifest_pattern = '**/map-bg/manifest.json'
     mock_json(page, manifest_pattern, [])
     page.reload()
-    page.wait_for_selector('.hub-orbit-node')
-    page.mouse.move(0, 0)
-    page.evaluate('document.activeElement.blur()')
-    glows = {
-        'de_dust2': 'rgba(217,155,67,.22)', 'de_mirage': 'rgba(225,95,65,.22)',
-        'de_ancient': 'rgba(34,197,94,.22)', 'de_anubis': 'rgba(234,179,8,.24)',
-        'de_inferno': 'rgba(249,115,22,.22)', 'de_nuke': 'rgba(56,189,248,.22)',
-        'de_cache': 'rgba(148,163,184,.10)',
-    }
-    for map_id, glow in glows.items():
-        node = page.locator(f'#hub-map-{map_id}')
-        expect(node.locator('.map-card-bg')).to_have_count(1)
-        report = node.evaluate("""el => {
-            const bg = el.querySelector('.map-card-bg'), css = getComputedStyle(bg);
-            const veil = getComputedStyle(el, '::before');
-            return {image: css.backgroundImage, glow: getComputedStyle(el).getPropertyValue('--map-glow').trim(),
-                layered: css.position === 'absolute' && css.zIndex === '0' && css.pointerEvents === 'none' &&
-                    veil.zIndex === '1' && veil.backgroundImage.startsWith('linear-gradient(') &&
-                    [...el.children].filter(child => child !== bg && !child.classList.contains('card-scenic-probe')).every(child => Number(getComputedStyle(child).zIndex) > 1)};
-        }""")
-        empty = node.get_attribute('data-empty') == 'true'
-        expected_glow = glows['de_cache'] if empty else glow
-        smoke.check(report['glow'] == expected_glow and report['layered'],
-                    f'{map_id}: correct ambient glow and backdrop below readable content')
-        expected_url = page.evaluate("path => new URL(path, document.baseURI).href", f'radars/{map_id}.png')
-        smoke.check(('repeating-linear-gradient(' in report['image'] and 'url(' not in report['image'])
-                    if map_id == 'de_cache' and empty else report['image'] == f'url("{expected_url}")',
-                    f'{map_id}: real nodes use the deployment radar; empty Cache retains the grid fallback')
-        if map_id != 'de_cache' or node.get_attribute('data-empty') == 'false':
-            smoke.check(node.locator('.map-card-bg').evaluate("""el => new Promise(resolve => {
-                const image = new Image(); image.onload = () => resolve(image.naturalWidth > 0);
-                image.onerror = () => resolve(false); image.src = getComputedStyle(el).backgroundImage.slice(5, -2);
-            })"""), f'{map_id}: radar asset loads')
-        node.hover(position={'x': 12, 'y': 12})
-        bg = node.locator('.map-card-bg')
-        expect(bg).to_have_css('opacity', '0.16' if empty else '0.32')
-        smoke.check(True, f'{map_id}: hover keeps empty backdrop static' if empty else f'{map_id}: hover raises radar opacity')
-        if empty:
-            expect(node).to_have_css('scale', '1')
-            expect(node).to_have_css('box-shadow', 'none')
-        page.mouse.move(0, 0)
-    smoke.check(page.locator('.hub-map-preview').count() == 0, 'legacy radar image layer is removed')
-    smoke.check(page.locator('.hub-badge').first.evaluate("""badge => {
-        for (let el = badge; el; el = el.parentElement) {
-            const css = getComputedStyle(el);
-            if (css.backgroundColor !== 'rgba(0, 0, 0, 0)' || css.backgroundImage !== 'none' ||
-                css.backdropFilter !== 'none' || css.boxShadow !== 'none' ||
-                !['Top', 'Right', 'Bottom', 'Left'].every(side => css[`border${side}Width`] === '0px')) return false;
-            if (el.classList.contains('hub-orbit')) return getComputedStyle(badge, '::before').display === 'none';
-        }
-        return false;
-    }"""), 'badge and every ancestor through orbit have no fill, backdrop blur, border or shadow')
-    card = page.locator('#hub-map-de_mirage')
-    card.focus()
-    expect(card.locator('.map-card-bg')).to_have_css('opacity', '0.32')
-    page.emulate_media(reduced_motion='reduce')
-    card.hover()
-    expect(card.locator('.map-card-bg')).to_have_css('opacity', '0.16')
-    expect(card.locator('.map-card-bg')).to_have_css('transform', 'none')
-    expect(card.locator('.map-card-bg')).to_have_css('transition-duration', '0s')
-    expect(card.locator('.hub-rate svg')).to_have_css('animation-name', 'none')
-    smoke.check(True, 'reduced motion keeps backdrop, hover and win-rate glow static')
-    page.emulate_media(reduced_motion='no-preference')
-    # Synthetic local image exercises scenic success without downloading photos.
+    expect(page.locator('.map-landmark-art')).to_have_count(7)
+    smoke.check(page.locator('.map-landmark-art').evaluate_all("""els => els.every(el =>
+        el.querySelectorAll('path').length >= 3 && el.querySelector('.landmark-building') &&
+        getComputedStyle(el).position === 'absolute' &&
+        Math.abs(parseFloat(getComputedStyle(el).height) - el.parentElement.clientHeight * .4) < 1 &&
+        getComputedStyle(el).pointerEvents === 'none')"""),
+        'all seven maps have original multi-layer landmark drawings and light rays')
+    smoke.check(page.locator('.hub-orbit-node').evaluate_all("""els => els.every(el => {
+        const strip = getComputedStyle(el, '::after');
+        return strip.height === '2px' && strip.boxShadow !== 'none';
+    })"""), 'each map has a 2px themed top light strip')
     from io import BytesIO
     from PIL import Image
     image = BytesIO()
     Image.new('RGB', (480, 600), '#426050').save(image, 'WEBP')
     photo_pattern = '**/map-bg/*.webp'
-    photo_requests = []
-
-    def photo(intercepted):
-        photo_requests.append(intercepted.request.url)
-        intercepted.fulfill(body=image.getvalue(), content_type='image/webp')
-
-    page.route(photo_pattern, photo)
+    page.route(photo_pattern, lambda intercepted: intercepted.fulfill(body=image.getvalue(), content_type='image/webp'))
     page.unroute(manifest_pattern)
-    mock_json(page, manifest_pattern, [map_id.removeprefix('de_') for map_id in glows])
+    mock_json(page, manifest_pattern, ['dust2', 'mirage', 'ancient', 'anubis', 'inferno', 'nuke', 'cache'])
     try:
         page.reload()
         expect(page.locator('.card-scenic-bg')).to_have_count(7)
         expect(page.locator('.map-card-bg')).to_have_count(0)
-        page.mouse.move(0, 0)
-        page.evaluate('document.activeElement.blur()')
-        card = page.locator('#hub-map-de_mirage')
-        report = card.evaluate("""el => {
-            const scenic = getComputedStyle(el.querySelector('.card-scenic-bg'));
-            const top = getComputedStyle(el, '::after'), name = getComputedStyle(el.querySelector('.hub-map-name'));
-            const rate = getComputedStyle(el.querySelector('.hub-rate'));
-            return {width: el.offsetWidth, height: el.offsetHeight, scenicHeight: parseFloat(scenic.height) / el.clientHeight,
-                opacity: scenic.opacity, mask: scenic.maskImage, position: scenic.backgroundPosition,
-                gradientHeight: top.height, textShadow: name.textShadow, disc: rate.backgroundColor, blur: rate.backdropFilter};
-        }""")
-        smoke.check(report['width'] == 156 and report['height'] == 178 and abs(report['scenicHeight'] - .78) < .01 and
-                    report['opacity'] == '0.65' and '45%' in report['mask'] and '100%' in report['mask'] and
-                    report['position'] == '50% 0%' and report['gradientHeight'] == '36px' and
-                    report['textShadow'] != 'none' and report['disc'] == 'rgba(8, 12, 16, 0.55)' and report['blur'] == 'blur(4px)',
-                    f'scenic card has compact 156x178 upper landscape, fade, text protection and frosted disc: {report}')
-        expected_prefix = page.evaluate("new URL('map-bg/', document.baseURI).href")
-        smoke.check(len(set(photo_requests)) == 7 and all(url.startswith(expected_prefix) for url in photo_requests),
-                    'all scenic URLs respect the deployment base path')
-        card.hover()
-        expect(card.locator('.card-scenic-bg')).to_have_css('filter', 'brightness(1.35) contrast(1.1)')
-        expect(card.locator('.card-scenic-bg')).to_have_css('transform', 'matrix(1.12, 0, 0, 1.12, 0, 0)')
-        page.mouse.move(0, 0)
-        page.locator('#hub-map-de_dust2').focus()
-        page.keyboard.press('ArrowRight')
-        expect(card).to_be_focused()
-        expect(card.locator('.card-scenic-bg')).to_have_css('filter', 'brightness(1.35) contrast(1.1)')
-        page.emulate_media(reduced_motion='reduce')
-        expect(card.locator('.card-scenic-bg')).to_have_css('transform', 'none')
-        expect(card.locator('.card-scenic-bg')).to_have_css('filter', 'none')
-        expect(card.locator('.card-scenic-bg')).to_have_css('transition-duration', '0s')
-        smoke.check(True, 'hover and arrow focus zoom scenery; reduced motion keeps it static')
-        page.emulate_media(reduced_motion='no-preference')
-        # Decode failure must remove the hidden probe and restore the fallback.
-        # Serve 200 invalid bytes to avoid an unrelated browser HTTP error log.
-        page.unroute(photo_pattern, photo)
+        smoke.check(page.locator('.card-scenic-bg').evaluate_all("""els => els.every(el =>
+            getComputedStyle(el).opacity === '0.78' &&
+            !getComputedStyle(el).filter.includes('blur') &&
+            getComputedStyle(el.parentElement.querySelector('.map-landmark-art')).visibility === 'hidden')"""),
+            'owner photographs take precedence at 0.78 opacity without blur')
+        page.unroute(photo_pattern)
         page.route(photo_pattern, lambda intercepted: intercepted.fulfill(body=b'not an image', content_type='image/webp'))
         page.reload()
-        page.wait_for_function(r"""() => performance.getEntriesByType('resource').filter(
-            resource => /map-bg\/[^/]+\.webp$/.test(resource.name)).length >= 7""")
-        expect(page.locator('.map-card-bg')).to_have_count(7)
         expect(page.locator('.card-scenic-probe')).to_have_count(0)
         expect(page.locator('.card-scenic-bg')).to_have_count(0)
-        smoke.check(True, 'unreadable photos restore all radar/grid fallbacks without broken-image icons')
+        expect(page.locator('.map-landmark-art:visible')).to_have_count(7)
+        smoke.check(True, 'failed photos leave all architectural fallbacks visible')
     finally:
         page.unroute(photo_pattern)
         page.unroute(manifest_pattern)
         page.reload()
         page.wait_for_selector('.hub-orbit-node')
 
+
+@route('#/teams-hub?team=vitality', '.hub-orbit-node')
+def check_hub_orbit_v4(smoke: Smoke, page: Page) -> None:
+    """Exercise the live rAF engine at multiple phases, then motion/fallback states."""
+    # Install the clock before mounting the engine; replacing a live clock can
+    # orphan the already-scheduled native rAF and make phase 0 a false failure.
+    page.clock.install()
     page.emulate_media(reduced_motion='no-preference')
+    page.reload()
     page.mouse.move(0, 0)
     page.evaluate('document.activeElement.blur()')
+    orbit = page.locator('.hub-orbit')
+    expect(orbit).to_have_attribute('data-running', 'true')
+    for width, height in [(1440, 900), (1280, 800)]:
+        page.set_viewport_size({'width': width, 'height': height})
+        for sample in range(7):
+            before = float(orbit.get_attribute('data-phase') or 0)
+            page.clock.run_for(4000)
+            page.clock.resume()
+            after = float(orbit.get_attribute('data-phase') or 0)
+            smoke.check(abs(after - before) > .2, f'{width}x{height}: rAF advances phase {sample}')
+            check_orbit_geometry(smoke, page, f'{width}x{height} moving phase {after:.2f}')
+        card = page.locator('#hub-map-de_mirage')
+        # A rotating card cannot satisfy Playwright's pre-hover stability wait.
+        # Move onto its current position, then verify the engine brakes it.
+        card.hover(force=True)
+        page.clock.run_for(1800)
+        page.clock.resume()
+        expect(orbit).to_have_attribute('data-running', 'false')
+        stopped = orbit.get_attribute('data-phase')
+        page.clock.run_for(600)
+        page.clock.resume()
+        smoke.check(orbit.get_attribute('data-phase') == stopped, 'hover brakes to a stable phase')
+        page.mouse.move(0, 0)
+        page.clock.run_for(500)
+        page.clock.resume()
+        smoke.check(orbit.get_attribute('data-phase') != stopped, 'leaving resumes rotation')
+        card.focus()
+        page.keyboard.press('ArrowRight')
+        expect(page.locator('#hub-map-de_ancient')).to_be_focused()
+        page.clock.run_for(1800)
+        page.clock.resume()
+        expect(orbit).to_have_attribute('data-running', 'false')
+        page.evaluate('document.activeElement.blur()')
+        page.emulate_media(reduced_motion='reduce')
+        expect(orbit).to_have_attribute('data-phase', '0')
+        page.clock.run_for(1000)
+        page.clock.resume()
+        expect(orbit).to_have_attribute('data-phase', '0')
+        check_orbit_geometry(smoke, page, f'{width}x{height} reduced-motion static')
+        static_logo = page.locator('.particle-logo-static')
+        expect(static_logo).to_have_css('opacity', '1')
+        expect(page.locator('.particle-logo-canvas')).to_have_css('display', 'none')
+        # Resizing while reduced motion is active must repaint the same fitted
+        # geometry without waiting for an animation frame or React remount.
+        other = (1280, 800) if width == 1440 else (1440, 900)
+        page.set_viewport_size({'width': other[0], 'height': other[1]})
+        check_orbit_geometry(smoke, page, f'{other[0]}x{other[1]} reduced-motion resize')
+        expect(orbit).to_have_attribute('data-phase', '0')
+        expect(orbit).to_have_attribute('data-running', 'false')
+        page.set_viewport_size({'width': width, 'height': height})
+        smoke.check(True, 'reduced motion preserves a static logo and fixed orbit across resize')
+        page.emulate_media(reduced_motion='no-preference')
+
+    # All installed team PNGs use the same sampler, independent of Falcons.
+    assets = page.request.get(f'{smoke.base}/data/asset_slots.json').json()
+    for slug in ('vitality', 'falcons', 'spirit'):
+        if slug not in assets['teams']:
+            continue
+        page.goto(f'{smoke.base}/#/teams-hub?team={slug}')
+        canvas = page.locator('.particle-logo-canvas')
+        page.wait_for_function("Number(document.querySelector('.particle-logo-canvas')?.dataset.particleCount) > 120")
+        report = canvas.evaluate("""el => ({count: Number(el.dataset.particleCount), width: el.width,
+            paused: el.dataset.paused, source: el.parentElement.querySelector('.particle-logo-static img').src})""")
+        smoke.check(120 < report['count'] <= 2000 and report['width'] <= 440 and f'logos/teams/{slug}.png' in report['source'],
+                    f'{slug}: bounded DPR-aware particles sample the actual team PNG')
+        page.locator('.particle-logo').evaluate("el => el.style.transform = 'translateY(2000px)'")
+        expect(canvas).to_have_attribute('data-paused', 'true')
+        page.locator('.particle-logo').evaluate("el => el.style.transform = ''")
+        expect(canvas).to_have_attribute('data-paused', 'false')
+        page.evaluate("""() => {
+            Object.defineProperty(document, 'hidden', {configurable: true, value: true});
+            document.dispatchEvent(new Event('visibilitychange'));
+        }""")
+        expect(canvas).to_have_attribute('data-paused', 'true')
+        expect(page.locator('.hub-orbit')).to_have_attribute('data-running', 'false')
+        page.evaluate("""() => {
+            delete document.hidden;
+            document.dispatchEvent(new Event('visibilitychange'));
+        }""")
+        expect(canvas).to_have_attribute('data-paused', 'false')
+        smoke.check(True, f'{slug}: hidden/offscreen particles pause and resume')
+        expect(page.locator('.particle-logo-static')).to_have_css('opacity', '0.25')
+        page.emulate_media(reduced_motion='reduce')
+        expect(canvas).to_have_css('display', 'none')
+        expect(page.locator('.particle-logo-static')).to_have_css('opacity', '1')
+        page.emulate_media(reduced_motion='no-preference')
+    # Missing assets must never leave an invisible core.
+    mock_json(page, '**/data/asset_slots.json', {**assets, 'teams': []})
+    page.reload()
+    expect(page.locator('.particle-logo')).to_have_attribute('data-logo-source', 'shield')
+    expect(page.locator('.particle-logo-static .team-shield')).to_have_count(1)
+    page.emulate_media(reduced_motion='reduce')
+    expect(page.locator('.particle-logo-canvas')).to_have_css('display', 'none')
+    expect(page.locator('.particle-logo-static')).to_have_css('opacity', '1')
+    page.emulate_media(reduced_motion='no-preference')
+    smoke.check(True, 'missing PNG uses TeamShield and hides the canvas under reduced motion')
+    page.unroute('**/data/asset_slots.json')
+    if assets['teams']:
+        slug = next((slug for slug in ('vitality', 'falcons') if slug in assets['teams']), assets['teams'][0])
+        page.route('**/logos/teams/*.png', lambda intercepted: intercepted.fulfill(body=b'bad PNG', content_type='image/png'))
+        page.goto(f'{smoke.base}/#/teams-hub?team={slug}')
+        page.reload()
+        expect(page.locator('.particle-logo')).to_have_attribute('data-logo-source', 'shield')
+        expect(page.locator('.particle-logo-static .team-shield')).to_have_count(1)
+        page.unroute('**/logos/teams/*.png')
+        smoke.check(True, 'unreadable supplied PNG restores TeamShield')
+
+    # Exercise both inclusive boundaries and low-sample colour independence.
+    teams = page.request.get(f'{smoke.base}/data/heatmap_teams.json').json()
+    team = next(t for t in teams if t['slug'] == 'vitality')
+    rates = [(.4999, 'rgb(244, 63, 94)'), (.5, 'rgb(248, 250, 252)'),
+             (.5999, 'rgb(248, 250, 252)'), (.6, 'rgb(34, 197, 94)'), (.65, 'rgb(34, 197, 94)')]
+    for entry, (rate, _) in zip(team['maps'], rates):
+        entry.update(map_win_rate=rate, n_matches=1)
+    mock_json(page, '**/data/heatmap_teams.json', teams)
+    page.goto(f'{smoke.base}/#/teams-hub?team=vitality')
+    page.reload()
+    for entry, (_, color) in zip(team['maps'], rates):
+        expect(page.locator(f'#hub-map-{entry["map"]} .hub-arc')).to_have_css('stroke', color)
+    smoke.check(True, 'absolute colours include 50% and 60% boundaries even below the badge sample threshold')
+    page.unroute('**/data/heatmap_teams.json')
 
 
 @route('#/teams-hub?team=vitality', '.hub-orbit-node')
@@ -940,12 +980,19 @@ def check_hub_orbit(smoke: Smoke, page: Page) -> None:
         expect(node).to_have_attribute('aria-disabled', str(not available).lower())
         expect(node.locator('.is-best')).to_have_count(int(available and map_id == best))
         expect(node.locator('.is-weak')).to_have_count(int(available and map_id == worst))
+        if available:
+            rate = entry.get('map_win_rate')
+            category = 'neutral' if rate is None else 'strong' if rate >= .6 else 'neutral' if rate >= .5 else 'weak'
+            expect(node).to_have_attribute('data-rate', category)
+            color = {'strong': 'rgb(34, 197, 94)', 'neutral': 'rgb(248, 250, 252)', 'weak': 'rgb(244, 63, 94)'}[category]
+            expect(node.locator('.hub-arc')).to_have_css('stroke', color)
+            expect(node.locator('.hub-side-rate-bar')).to_have_count(1)
+            expect(node.locator('.hub-side-rate-bar i')).to_have_count(2)
         if available and entry['n_matches'] < overview['min_matches_reliable']:
             chip = node.locator('.low-sample-chip')
             expect(chip).to_have_text('!')
             expect(chip).to_have_attribute('title', '样本不足，结果仅供参考。')
             expect(chip).to_have_attribute('aria-label', '样本不足，结果仅供参考。')
-            expect(node).to_have_attribute('data-rate', 'neutral')
     smoke.check(True, 'badges use index minimum sample; low-sample notes are compact accessible chips; subtitle sums shown nodes')
     cache = page.locator('#hub-map-de_cache')
     before = page.url
@@ -1026,7 +1073,10 @@ def check_hub_orbit(smoke: Smoke, page: Page) -> None:
     page.keyboard.press('Escape')
     expect(card).to_be_focused()
     expect(card).to_have_attribute('data-active', 'true')
-    smoke.check(True, 'Escape restores selected orbit node focus and highlight')
+    for width, height in [(1440, 900), (1280, 800)]:
+        page.set_viewport_size({'width': width, 'height': height})
+        check_orbit_geometry(smoke, page, f'{width}x{height} after map return')
+    smoke.check(True, 'Escape restores selected node focus and fully visible breadcrumbs')
     page.keyboard.press('Enter')
     page.wait_for_selector('.hub-player-card')
     page.go_back()
@@ -1550,7 +1600,7 @@ def main() -> int:
     parser.add_argument("--shots", type=Path, help="save each route, including on exceptions")
     parser.add_argument("--orbit-only", action="store_true", help="check orbit navigation/layout with current data")
     args = parser.parse_args()
-    cases = [case for case in ROUTES if case.test in (check_hub_orbit, check_hub_samples, check_cache_pages)] if args.orbit_only else None
+    cases = [case for case in ROUTES if case.test in (check_hub_orbit, check_hub_orbit_v4, check_hub_samples, check_cache_pages)] if args.orbit_only else None
     if args.shots:
         args.shots.mkdir(parents=True, exist_ok=True)
     root = Path(__file__).resolve().parents[1]

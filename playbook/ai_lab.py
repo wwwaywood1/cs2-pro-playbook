@@ -15,6 +15,7 @@ from threadpoolctl import threadpool_limits
 
 from playbook import ct_patterns, replay, winprob
 from playbook.config import load_map
+from playbook.semantics import round_plants
 
 GROUPS = ('alive_diff', 'hp_equipment', 'map_control', 'bomb_state_time',
           'active_utility', 'positional_spread_pinch')
@@ -89,7 +90,7 @@ def choose_rounds(t: dict) -> list[tuple[str, dict]]:
     if 'rounds' not in t or not {'ct_team', 't_team', 'dur_s'} <= set(t['rounds'].columns):
         return []
     matches = dict(t['matches'].select('demo_id', 'map').iter_rows())
-    planted = set(t['plants'].select('demo_id', 'round_num').iter_rows())
+    planted = set(round_plants(t).select('demo_id', 'round_num').iter_rows())
     result = []
     for team in ('Falcons', 'Vitality', 'Spirit'):
         rows = t['rounds'].filter((pl.col('ct_team') == team) | (pl.col('t_team') == team)).sort('demo_id', 'round_num').to_dicts()
@@ -197,7 +198,7 @@ def control_example(t: dict, selected: list[tuple[str, dict]]) -> dict | None:
     def players(second):
         p = pos.filter(pl.col('t_s') == second)
         return tuple(p.filter(pl.col('side') == s).select('x', 'y').to_numpy() for s in ('T', 'CT'))
-    plant = float(t['plants'].filter(_key(demo, rnd))['t_s'].min())
+    plant = float(round_plants(t).filter(_key(demo, rnd))['plant_t_s'].min())
     plan = t['team_rounds'].filter(_key(demo, rnd) & (pl.col('side') == 'T')).row(0, named=True)
     execute = plan.get('exec_start_s')
     before = max(0, int(min(execute if execute is not None else plant-5, plant-1))-1)

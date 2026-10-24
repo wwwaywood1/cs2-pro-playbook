@@ -2,7 +2,7 @@
 
 Implemented `playbook/ct_patterns.py` and `playbook/ai_lab.py`, hooked into `playbook/export.py`. `playbook/winprob.py` optionally retains fold models and their existing isotonic calibrators for exact attribution without retraining a surrogate. Schema: `delegation/GPT-39_schema.md`. No files under `web/` were edited.
 
-- Validation: 293 passed, 3 skipped; every map identical across two independent builds
+- Validation: 294 passed, 3 skipped; every map identical across two independent builds; final live-plant example/control outputs verified
 - Lab step runtime: 35.6 seconds (excludes existing model fitting and the other export steps).
 - Encoder: Torch absent in `.venv`; lightweight 103-feature standardisation → PCA ≤64 → KMeans (K=6, n_init=20, random_state=42), per map. Labels and IDs derive from data; IDs sort by 15s A share.
 - TAGNet paper validation covers Dust2 only (697 rounds). The exported metadata explicitly discloses extrapolation to all parsed maps. No paper outcome percentages or cluster labels are copied.
@@ -196,3 +196,118 @@ Mirage control example: `9z-vs-falcons-m2-mirage` round 3. Smoke at 53s: T contr
 - Sync: `cp -R data/site/. site-preview/data/`.
 - Tests: `OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 LOKY_MAX_CPU_COUNT=4 .venv/bin/python -m pytest -q`.
 - Frontend can consume the TypeScript-ready schema directly. It should keep the method and model-input limitations visible.
+
+## Round 2
+
+Completed against the current parsed dataset, including the new MOUZ imports. Export generated at `2026-10-24T14:50:24+00:00`; win-probability fitting used 615 deduplicated matches (see export log). Earlier tables above describe the previous dataset. No files under `web/` were edited.
+
+Resumed the interrupted implementation in `playbook/ct_patterns.py` and its existing regression checks. Labels use largest-remainder expected player counts summing to five, distinct Chinese/English words, depth thirds only for useful disambiguation, and ascending mean 15s A-share ID order. A new regression covers colliding profiles in the same depth third, preventing redundant depth suffixes. The additive contract is documented in `delegation/GPT-39_schema.md`.
+
+Clustering excludes the reported nearest-pilot-centre distance tail above the 99.5th percentile; pilot fitting first excludes the radial tail so a singleton cannot claim a zero-distance centre. Standardisation/PCA are refit on retained rounds. Minimum size is `max(30, ceil(3% of complete pre-trim CT rounds))`; K decreases from six until the floor holds. Exact excluded round references, cutoffs, attempted K/sizes and final K are exported in per-map metadata.
+
+| Map | K | Stayed 6? | Size floor | Outliers dropped | Included CT rounds | Smallest cluster |
+|---|---:|:---:|---:|---:|---:|---:|
+| de_ancient | 6 | yes | 50 | 9 | 1650 | 100 |
+| de_anubis | 6 | yes | 34 | 6 | 1116 | 108 |
+| de_cache | 6 | yes | 30 | 3 | 443 | 42 |
+| de_dust2 | 6 | yes | 94 | 16 | 3101 | 225 |
+| de_inferno | 6 | yes | 56 | 10 | 1830 | 99 |
+| de_mirage | 6 | yes | 81 | 14 | 2671 | 190 |
+| de_nuke | 6 | yes | 61 | 11 | 2010 | 157 |
+| de_overpass | 2 | no | 30 | 1 | 127 | 58 |
+
+All seven active maps retain K=6 with the expanded dataset; historical Overpass reduces to K=2. Nuke has no singleton: its smallest cluster is 157 rounds (floor 61). Shares and CT win rates below use retained rounds. Overpass is included separately to preserve the existing historical-map output.
+
+### de_ancient
+
+| ID | Label | English | n | Share | CT win |
+|---|---|---|---:|---:|---:|
+| C0 | 中3·B2 中路前顶 | M3-B2 mid pressure | 342 | 20.7% | 56.1% |
+| C1 | A1·B4 重 B | A1-B4 B-heavy | 100 | 6.1% | 26.0% |
+| C2 | A1·中2·B2 均衡 | A1-M2-B2 default | 258 | 15.6% | 60.9% |
+| C3 | A1·中1·B3 重 B | A1-M1-B3 B-heavy | 366 | 22.2% | 55.2% |
+| C4 | A2·中1·B2 均衡 | A2-M1-B2 default | 367 | 22.2% | 59.9% |
+| C5 | A2·B3 重 B | A2-B3 B-heavy | 217 | 13.2% | 45.2% |
+
+### de_anubis
+
+| ID | Label | English | n | Share | CT win |
+|---|---|---|---:|---:|---:|
+| C0 | 中3·B2 中路前顶 | M3-B2 mid pressure | 108 | 9.7% | 52.8% |
+| C1 | A1·中1·B3 重 B | A1-M1-B3 B-heavy | 161 | 14.4% | 44.1% |
+| C2 | A1·中2·B2 均衡 · 回收 | A1-M2-B2 default · deep | 159 | 14.2% | 37.7% |
+| C3 | A1·中2·B2 均衡 | A1-M2-B2 default | 309 | 27.7% | 54.4% |
+| C4 | A2·中1·B2 均衡 | A2-M1-B2 default | 267 | 23.9% | 49.8% |
+| C5 | A2·B3 重 B | A2-B3 B-heavy | 112 | 10.0% | 43.8% |
+
+### de_cache
+
+| ID | Label | English | n | Share | CT win |
+|---|---|---|---:|---:|---:|
+| C0 | A1·中2·B2 均衡 · 前压 | A1-M2-B2 default · forward | 44 | 9.9% | 47.7% |
+| C1 | A1·中1·B2·警家1 均衡 · A 侧最少 | A1-M1-B2-CT1 default · A lowest | 69 | 15.6% | 56.5% |
+| C2 | A1·中2·B2 均衡 | A1-M2-B2 default | 106 | 23.9% | 53.8% |
+| C3 | A1·中1·B2·警家1 均衡 · A 侧最多 | A1-M1-B2-CT1 default · A highest | 103 | 23.3% | 69.9% |
+| C4 | A2·中1·B2 均衡 | A2-M1-B2 default | 79 | 17.8% | 55.7% |
+| C5 | A3·B2 重 A | A3-B2 A-heavy | 42 | 9.5% | 38.1% |
+
+### de_dust2
+
+| ID | Label | English | n | Share | CT win |
+|---|---|---|---:|---:|---:|
+| C0 | A1·中1·B3 重 B | A1-M1-B3 B-heavy | 225 | 7.3% | 42.2% |
+| C1 | A3·中1·B1 重 A · B 侧最多 | A3-M1-B1 A-heavy · B highest | 832 | 26.8% | 54.8% |
+| C2 | A2·中1·B2 均衡 | A2-M1-B2 default | 882 | 28.4% | 55.2% |
+| C3 | A3·中1·B1 重 A · B 侧最少 | A3-M1-B1 A-heavy · B lowest | 235 | 7.6% | 37.0% |
+| C4 | A3·B2 重 A | A3-B2 A-heavy | 654 | 21.1% | 56.4% |
+| C5 | A4·B1 重 A | A4-B1 A-heavy | 273 | 8.8% | 43.6% |
+
+### de_inferno
+
+| ID | Label | English | n | Share | CT win |
+|---|---|---|---:|---:|---:|
+| C0 | A1·中1·B3 重 B | A1-M1-B3 B-heavy | 349 | 19.1% | 51.6% |
+| C1 | A1·中2·B2 均衡 | A1-M2-B2 default | 99 | 5.4% | 53.5% |
+| C2 | A2·中1·B2 均衡 · 回收 | A2-M1-B2 default · deep | 358 | 19.6% | 60.3% |
+| C3 | A2·B3 重 B | A2-B3 B-heavy | 299 | 16.3% | 51.5% |
+| C4 | A2·B2·警家1 均衡 | A2-B2-CT1 default | 271 | 14.8% | 51.3% |
+| C5 | A2·中1·B2 均衡 | A2-M1-B2 default | 454 | 24.8% | 55.5% |
+
+### de_mirage
+
+| ID | Label | English | n | Share | CT win |
+|---|---|---|---:|---:|---:|
+| C0 | A2·中2·B1 均衡 · B 侧最多 | A2-M2-B1 default · B highest | 736 | 27.6% | 68.6% |
+| C1 | A2·中2·B1 均衡 · B 侧最少 | A2-M2-B1 default · B lowest | 413 | 15.5% | 51.1% |
+| C2 | A2·中1·B1·警家1 均衡 · 站位最后 | A2-M1-B1-CT1 default · position lowest | 478 | 17.9% | 60.3% |
+| C3 | A2·中1·B1·警家1 均衡 · 站位最前 | A2-M1-B1-CT1 default · position highest | 528 | 19.8% | 61.0% |
+| C4 | A2·中1·B2 均衡 | A2-M1-B2 default | 190 | 7.1% | 49.5% |
+| C5 | A3·中1·B1 重 A | A3-M1-B1 A-heavy | 326 | 12.2% | 50.3% |
+
+### de_nuke
+
+| ID | Label | English | n | Share | CT win |
+|---|---|---|---:|---:|---:|
+| C0 | A2·中2·B1 均衡 · 前压 | A2-M2-B1 default · forward | 344 | 17.1% | 54.9% |
+| C1 | A2·中2·B1 均衡 | A2-M2-B1 default | 366 | 18.2% | 60.4% |
+| C2 | A2·中2·B1 均衡 · 回收 | A2-M2-B1 default · deep | 328 | 16.3% | 65.2% |
+| C3 | A2·中1·B2 均衡 | A2-M1-B2 default | 157 | 7.8% | 45.2% |
+| C4 | A3·中1·B1 重 A | A3-M1-B1 A-heavy | 473 | 23.5% | 62.8% |
+| C5 | A3·中1·B1 重 A · 回收 | A3-M1-B1 A-heavy · deep | 342 | 17.0% | 59.6% |
+
+### de_overpass (historical)
+
+| ID | Label | English | n | Share | CT win |
+|---|---|---|---:|---:|---:|
+| C0 | A2·中1·B2 均衡 · 回收 | A2-M1-B2 default · deep | 58 | 45.7% | 67.2% |
+| C1 | A2·中1·B2 均衡 · 前压 | A2-M1-B2 default · forward | 69 | 54.3% | 66.7% |
+
+### Validation and handoff
+
+- Full pytest: **297 passed, 3 skipped in 18.79s**.
+- Export: `caffeinate -i env OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 LOKY_MAX_CPU_COUNT=4 PYTHONUNBUFFERED=1 .venv/bin/python -m playbook export` completed successfully. Idle sleep was inhibited for this run.
+- Preview sync: `cp -R data/site/. site-preview/data/` completed; SHA-256 matches for all CT-pattern files, AI lab, metrics and index.
+- Test command: `OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 LOKY_MAX_CPU_COUNT=4 .venv/bin/python -m pytest -q`.
+- Preserved and audited: per-map chi-square tables and sparse-cell warnings, team fingerprints, scatter point counts, 44 attention examples, three SHAP rounds / 313 states (max additivity error 2.22e-16), 225 control cells / three snapshots, model metrics and all six references.
+- Logs: `/private/tmp/cs2-gpt39-round2-export.log`, `/private/tmp/cs2-gpt39-round2-pytest.log`.
+- GPT-41 readiness marker: this exact `## Round 2` section was appended only after export, preview sync and full tests succeeded.

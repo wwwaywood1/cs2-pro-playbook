@@ -13,8 +13,12 @@ const TEAM_PALETTES: Record<string, TeamPalette> = {
 const DEFAULT_PALETTE: TeamPalette = { primary: "#f2b134", secondary: "#e8b75a", tertiary: "#a6b7c9" };
 const UNKNOWN_TEAM_PALETTE: TeamPalette = { primary: "#d4e4f4", secondary: "#e2e8ee", tertiary: "#a6b7c9" };
 
+export function teamPalette(slug: string): TeamPalette {
+  return TEAM_PALETTES[slug] ?? (slug ? UNKNOWN_TEAM_PALETTE : DEFAULT_PALETTE);
+}
+
 export function teamTheme(slug: string): CSSProperties {
-  const palette = TEAM_PALETTES[slug] ?? (slug ? UNKNOWN_TEAM_PALETTE : DEFAULT_PALETTE);
+  const palette = teamPalette(slug);
   return { "--team-primary": palette.primary, "--team-secondary": palette.secondary,
     "--team-tertiary": palette.tertiary } as CSSProperties;
 }

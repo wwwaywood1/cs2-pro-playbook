@@ -22,7 +22,7 @@ DISTANCE_SCALE = 4215.87
 METHOD = 'lightweight_standardised_pca_kmeans'
 METADATA = {
     'paper_scope': 'TAGNet was validated on Dust2 only (697 rounds); this project applies a lightweight method to all parsed maps. Results below are computed from our demos.',
-    'encoder': '5 snapshots × (4 lane shares + 10 sorted XYZ pair distances /4215.87 + 5 sorted CT-to-T depth values) + 8 context values; standardise, PCA <=64, KMeans K=6, n_init=20, random_state=42',
+    'encoder': '5 snapshots × (4 lane shares + 10 sorted XYZ pair distances /4215.87 + 5 sorted CT-to-T depth values) + 8 context values; standardise, PCA <=64, KMeans K<=6, n_init=20, random_state=42; per-map k and exclusions below',
     'depth': 'distance from observed CT spawn centroid / (distance to CT spawn + distance to T spawn); centroids from alive spawn frames t=0..2 per map',
     'unknown_lanes': 'OTHER/T_SPAWN remain in denominator, omitted from four encoder shares; reported as OTHER in summaries',
     'snapshots': list(TIMES), 'later_deaths': 'Use recorded positions of the original five CT members, including dead members after 10s; drop incomplete/non-finite rounds.',
@@ -144,42 +144,130 @@ def extract(sub: dict, mm: MapMeta) -> tuple[list[dict], np.ndarray, dict]:
     return rows, np.array(features).reshape(-1, 103), counts
 
 
+def player_counts(shares: np.ndarray) -> np.ndarray:
+    """Hamilton/largest-remainder apportionment, ties in REGIONS order."""
+    expected = np.asarray(shares, float)
+    expected = expected / expected.sum() * 5
+    counts = np.floor(expected).astype(int)
+    # Decimal lane shares can produce sub-ULP differences in exact ties.
+    order = np.argsort(-np.round(expected-counts, 12), kind='stable')
+    counts[order[:5-int(counts.sum())]] += 1
+    return counts
+
+
 def _labels(shares: np.ndarray, depths: np.ndarray) -> list[tuple[str, str]]:
     result = []
-    for s, d in zip(shares, depths):
-        if d >= np.quantile(depths, .8) and d > .55:
-            label = ('激进前压', 'Forward pressure')
-        elif s[0] >= .48:
-            label = ('A 区重防', 'A-heavy defence')
-        elif s[2] >= .48:
-            label = ('B 区重防', 'B-heavy defence')
-        elif s[1] >= max(s[0], s[2]):
-            label = ('中路联防', 'Mid-oriented defence')
-        elif s[2]+s[1] > .65:
-            label = ('B 区+中路联防', 'B and mid defence')
+    for s in shares:
+        counts = player_counts(s)
+        zh = '·'.join(f'{r}{n}' for r, n in zip(('A', '中', 'B', '警家', '外围'), counts) if n)
+        en = '-'.join(f'{r}{n}' for r, n in zip(('A', 'M', 'B', 'CT', 'O'), counts) if n)
+        if counts[0] >= 3:
+            style = ('重 A', 'A-heavy')
+        elif counts[2] >= 3:
+            style = ('重 B', 'B-heavy')
+        elif counts[1] >= 3:
+            style = ('中路前顶', 'mid pressure')
+        elif counts[3] >= 2:
+            style = ('回防集结', 'spawn support')
+        elif counts[4] >= 2:
+            style = ('外围协防', 'outer support')
         else:
-            label = ('双点均衡', 'Balanced sites')
-        result.append(label)
-    counts = Counter(result)
-    original_labels = result.copy()
-    # Append actual strongest separation from other colliding centroids, not cluster index.
-    for i, label in enumerate(result.copy()):
-        if counts[label] <= 1:
+            style = ('均衡', 'default')
+        result.append((f'{zh} {style[0]}', f'{en} {style[1]}'))
+    # Depth is only useful when the same five-player composition collides.
+    original = result.copy()
+    low, high = np.quantile(depths, [1/3, 2/3])
+    for label, n in Counter(original).items():
+        if n < 2:
             continue
-        vals = np.r_[shares[i], depths[i]]
-        others = np.array([np.r_[shares[j], depths[j]] for j in range(len(shares)) if j != i and original_labels[j] == label])
-        k = int(np.argmax(np.abs(vals-others.mean(axis=0))))
-        zh = (*REGIONS, '前压深度')[k]
-        en = (*REGIONS, 'depth')[k]
-        result[i] = (f'{label[0]} · {zh} {vals[k]:.1%}', f'{label[1]} · {en} {vals[k]:.1%}')
-    # In the rare event of identical displayed feature values, expose full measured profile.
-    seen = set()
-    for i, label in enumerate(result):
-        if label in seen:
-            suffix = '/'.join(f'{x:.4f}' for x in [*shares[i], depths[i]])
-            result[i] = (f'{label[0]} [{suffix}]', f'{label[1]} [{suffix}]')
-        seen.add(result[i])
+        group = [i for i, name in enumerate(original) if name == label]
+        words = [('前压', 'forward') if depths[i] > high else ('回收', 'deep') if depths[i] < low else None for i in group]
+        if len(set(words)) > 1:
+            for i, word in zip(group, words):
+                if word:
+                    result[i] = (f'{label[0]} · {word[0]}', f'{label[1]} · {word[1]}')
+    # Compare remaining collisions in measured regional occupancy and depth.
+    # Rank words make even several same-direction profiles distinct without %s.
+    original = result.copy()
+    profiles = np.column_stack((shares, depths))
+    regions = ('A 侧', '中路', 'B 侧', '警家', '外围', '站位')
+    english = ('A', 'mid', 'B', 'spawn', 'outer', 'position')
+    ranks_zh = ('最少', '偏少', '较少', '较多', '偏多', '最多')
+    ranks_en = ('lowest', 'low', 'lower', 'higher', 'high', 'highest')
+    for label, n in Counter(original).items():
+        if n < 2:
+            continue
+        group = [i for i, name in enumerate(original) if name == label]
+        # Most separating measured feature; stable feature order breaks ties.
+        feature_order = np.argsort(-np.ptp(profiles[group], axis=0), kind='stable')
+        pending = [group]
+        for feature in feature_order:
+            next_pending = []
+            for peers in pending:
+                values = sorted(set(profiles[peers, feature]))
+                if len(values) == 1:
+                    next_pending.append(peers)
+                    continue
+                for rank, value in enumerate(values):
+                    subset = [i for i in peers if profiles[i, feature] == value]
+                    word_rank = round(rank * 5 / (len(values)-1))
+                    for i in subset:
+                        depth_words = ('站位最后', '站位偏后', '站位较后', '站位较前', '站位偏前', '站位最前')
+                        zh = f'{regions[feature]}{ranks_zh[word_rank]}' if feature < 5 else depth_words[word_rank]
+                        en = f'{english[feature]} {ranks_en[word_rank]}'
+                        result[i] = (f'{result[i][0]} · {zh}', f'{result[i][1]} · {en}')
+                    if len(subset) > 1:
+                        next_pending.append(subset)
+            pending = next_pending
+            if not pending:
+                break
+        # Identical summaries cannot support a claimed tactical distinction.
+        for peers in pending:
+            for rank, i in enumerate(peers, 1):
+                result[i] = (f'{result[i][0]} · 同构队形{rank}', f'{result[i][1]} · equivalent formation {rank}')
     return result
+
+
+def _projection(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    scaled = StandardScaler().fit_transform(x)
+    reduced = PCA(n_components=min(64, *scaled.shape), svd_solver='full').fit_transform(scaled)
+    return scaled, reduced
+
+
+def _cluster(x: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, dict]:
+    """Trim a reported .5% tail, then reduce K until all clusters meet the floor.
+
+    Pilot centres exclude the radial tail first: otherwise a singleton outlier
+    can acquire its own centre and misleadingly have zero nearest-centre distance.
+    Refit scaling and PCA after trimming so outliers do not set the final metric.
+    """
+    _, pilot = _projection(x)
+    radius = np.linalg.norm(pilot-np.median(pilot, axis=0), axis=1)
+    central = radius <= np.quantile(radius, .995)
+    pilot_k = min(6, len(np.unique(pilot[central], axis=0)))
+    model = KMeans(n_clusters=pilot_k, n_init=20, random_state=42).fit(pilot[central])
+    distance = model.transform(pilot).min(axis=1)
+    cutoff = float(np.quantile(distance, .995))
+    keep = distance <= cutoff
+    scaled, reduced = _projection(x[keep])
+    floor = max(30, int(np.ceil(.03*len(x))))
+    initial_k = min(6, len(np.unique(x[keep], axis=0)))
+    attempts = []
+    for k in range(initial_k, 0, -1):
+        labels = KMeans(n_clusters=k, n_init=20, random_state=42).fit_predict(reduced)
+        sizes = np.bincount(labels, minlength=k)
+        attempts.append(dict(k=k, sizes=sorted(sizes.tolist())))
+        if sizes.min() >= floor or k == 1:
+            break
+    metadata = dict(k=k, requested_k=6, k_stayed_6=k == 6, min_cluster_size=floor,
+        min_cluster_size_met=bool(sizes.min() >= floor), cluster_attempts=attempts,
+        clustering_note='K=6 retained' if k == 6 else f'K reduced to {k} to enforce minimum cluster size {floor}',
+        outlier_filter=dict(method='robust_pilot_nearest_centre_distance', quantile=.995,
+            pilot='Exclude radial distances above the 99.5th percentile from componentwise median before fitting pilot centres; refit standardisation/PCA after nearest-centre trimming.',
+            distance_cutoff=cutoff, input_rounds=len(x), dropped=int((~keep).sum())))
+    if sizes.min() < floor:
+        metadata['clustering_note'] = f'Only {len(labels)} retained rounds; one cluster, minimum {floor} is infeasible'
+    return keep, scaled, reduced, labels, metadata
 
 
 @threadpool_limits.wrap(limits=1)
@@ -188,12 +276,18 @@ def build(sub: dict, mm: MapMeta) -> tuple[dict, list[dict]]:
     out = dict(schema_version=1, map=mm.name, method=METHOD, metadata=METADATA.copy(), counts=counts,
                clusters=[], chi_square=chi_square(np.empty((0, 0), int), []), fingerprints=[],
                embedding={'method': 'pca_2d', 'points': []})
+    counts['dropped_outlier'] = 0
     if not len(rows):
+        out['metadata'].update(k=0, requested_k=6, k_stayed_6=False, clustering_note='No eligible rounds')
         return out, []
-    scaled = StandardScaler().fit_transform(x)
-    reduced = PCA(n_components=min(64, *scaled.shape), svd_solver='full').fit_transform(scaled)
-    k = min(6, len(np.unique(x, axis=0)))
-    labels = KMeans(n_clusters=k, n_init=20, random_state=42).fit_predict(reduced)
+    keep, scaled, reduced, labels, clustering = _cluster(x)
+    out['metadata'].update(clustering)
+    out['metadata']['labels'] = '15s mean region shares apportioned to five expected players by largest remainders (ties in A/MID/B/CT_SPAWN/OTHER order); depth thirds only distinguish colliding compositions, then strongest observed regional/depth difference in words. IDs retain ascending mean A-share order.'
+    out['metadata']['outlier_filter']['excluded_rounds'] = [round_ref(r) for i, r in enumerate(rows) if not keep[i]]
+    rows = [r for i, r in enumerate(rows) if keep[i]]
+    x = x[keep]
+    counts.update(dropped_outlier=int((~keep).sum()), included=len(rows))
+    k = clustering['k']
     shares = np.stack([r['shares'] for r in rows])
     depths = np.array([r['depth'] for r in rows])
     # Sorting by the spatial centroid resolves equal A shares deterministically.
@@ -222,7 +316,8 @@ def build(sub: dict, mm: MapMeta) -> tuple[dict, list[dict]]:
                  for name, mask in contexts.items()}
         out['clusters'].append(dict(id=ids[c], label_zh=names[i][0], label_en=names[i][1], n=n,
             share=n/len(rows), ct_win_rate=won/n, ct_win_ci95=wilson(won, n),
-            region_shares_15s=dict(zip(REGIONS, means[i].tolist())), push_depth=float(mean_depths[i]),
+            region_shares_15s=dict(zip(REGIONS, means[i].tolist())),
+            expected_players_15s=dict(zip(REGIONS, player_counts(means[i]).tolist())), push_depth=float(mean_depths[i]),
             trajectories=[{'t_s': s, 'positions': trajectory[j].round(3).tolist()} for j, s in enumerate(TIMES)],
             medoid=round_ref(medoid), context_preferences=prefs))
         contingency.append([sum(rows[j]['buy_type'] == b for j in members) for b in eco_types])
