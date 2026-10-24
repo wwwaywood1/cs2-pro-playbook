@@ -24,7 +24,7 @@ const BATCH_SIZE = 60;
 
 
 export default function Lineups() {
-  useLang();
+  const lang = useLang();
   const { map = "" } = useParams<{ map: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedId = searchParams.get("id");
@@ -358,7 +358,7 @@ export default function Lineups() {
                       <span className="route-arrow" aria-hidden="true">
                         →
                       </span>
-                      <span>{calloutLabel(map, lineup.land_place)}</span>
+                      <span>{lineup.name?.[lang] || calloutLabel(map, lineup.land_place)}</span>
                     </h3>
 
                     <p className="lineup-meta">

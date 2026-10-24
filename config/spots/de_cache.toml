@@ -1,0 +1,511 @@
+# Cache landing-spot names reviewed in GPT-35; see delegation/GPT-35_report.md.
+# World x/y from delegation/inputs/spots/de_cache_spots.csv (not radar pixels).
+# Matched by side/type/nearest x-y within radius; low = descriptive location only.
+# Chinese callouts follow web/src/i18n/zh.json (公路 / 棋盘房 / 日光房).
+# CT s021 is unusually high (z=2410.1); do not treat as a standard heaven clear.
+
+[[spot]]
+id = "de_cache-ct-molotov-s010"
+side = "CT"
+type = "molotov"
+x = 895.0
+y = 596.8
+radius = 150
+en = "Mid boost molotov"
+zh = "中路双架火"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-molotov-s011"
+side = "CT"
+type = "molotov"
+x = 360.7
+y = -745.8
+radius = 150
+en = "B main molotov"
+zh = "B 主道火"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-molotov-s012"
+side = "CT"
+type = "molotov"
+x = 542.4
+y = 1271.3
+radius = 150
+en = "A main molotov (site entrance)"
+zh = "A 主道火（包点口）"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-molotov-s013"
+side = "CT"
+type = "molotov"
+x = -204.7
+y = 915.1
+radius = 150
+en = "Highway molotov (A end)"
+zh = "公路火（A 区口）"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-molotov-s014"
+side = "CT"
+type = "molotov"
+x = 886.2
+y = 224.7
+radius = 150
+en = "Garage molotov"
+zh = "车库火"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-molotov-s015"
+side = "CT"
+type = "molotov"
+x = 251.2
+y = 2072.8
+radius = 150
+en = "Squeaky molotov"
+zh = "A 区铁门火"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-molotov-s016"
+side = "CT"
+type = "molotov"
+x = 675.7
+y = -97.0
+radius = 150
+en = "Molotov in mid east of Vents"
+zh = "中路通风管东侧的火"
+confidence = "low"
+
+[[spot]]
+id = "de_cache-ct-molotov-s017"
+side = "CT"
+type = "molotov"
+x = -106.0
+y = -1282.6
+radius = 150
+en = "B site molotov (back site)"
+zh = "B 包点火（后点）"
+confidence = "medium"
+
+[[spot]]
+id = "de_cache-ct-molotov-s018"
+side = "CT"
+type = "molotov"
+x = 546.5
+y = 1668.1
+radius = 150
+en = "A main molotov (deep)"
+zh = "A 主道火（深点）"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-molotov-s019"
+side = "CT"
+type = "molotov"
+x = 385.8
+y = 1396.3
+radius = 150
+en = "Forklift molotov (A main side)"
+zh = "叉车火（A 主道侧）"
+confidence = "medium"
+
+[[spot]]
+id = "de_cache-ct-molotov-s020"
+side = "CT"
+type = "molotov"
+x = 657.0
+y = 725.9
+radius = 150
+en = "A stairs molotov"
+zh = "A 区楼梯火"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-molotov-s021"
+side = "CT"
+type = "molotov"
+x = -449.9
+y = -517.9
+radius = 150
+en = "Molotov above B heaven"
+zh = "B 区天堂上方的火"
+confidence = "low"
+
+[[spot]]
+id = "de_cache-ct-smoke-s000"
+side = "CT"
+type = "smoke"
+x = 941.9
+y = 248.4
+radius = 200
+en = "Garage smoke"
+zh = "车库烟"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-smoke-s001"
+side = "CT"
+type = "smoke"
+x = 463.9
+y = -828.6
+radius = 200
+en = "B main smoke (halls end)"
+zh = "B 主道烟（大厅侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-smoke-s002"
+side = "CT"
+type = "smoke"
+x = 549.6
+y = 1698.9
+radius = 200
+en = "A main smoke (deep)"
+zh = "A 主道烟（深点）"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-smoke-s003"
+side = "CT"
+type = "smoke"
+x = 675.5
+y = 688.4
+radius = 200
+en = "A stairs smoke"
+zh = "A 区楼梯烟"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-smoke-s004"
+side = "CT"
+type = "smoke"
+x = 269.9
+y = -646.2
+radius = 200
+en = "B main smoke (site entrance)"
+zh = "B 主道烟（包点口）"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-smoke-s005"
+side = "CT"
+type = "smoke"
+x = 155.5
+y = 2015.8
+radius = 200
+en = "Squeaky smoke"
+zh = "A 区铁门烟"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-smoke-s006"
+side = "CT"
+type = "smoke"
+x = 683.0
+y = 1455.6
+radius = 200
+en = "A main smoke (site entrance)"
+zh = "A 主道烟（包点口）"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-smoke-s007"
+side = "CT"
+type = "smoke"
+x = -337.2
+y = -808.8
+radius = 200
+en = "Smoke in B site towards Tree room"
+zh = "B 包点内靠树房一侧的烟"
+confidence = "low"
+
+[[spot]]
+id = "de_cache-ct-smoke-s008"
+side = "CT"
+type = "smoke"
+x = -192.3
+y = 1037.1
+radius = 200
+en = "Highway smoke (A end)"
+zh = "公路烟（A 区口）"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-ct-smoke-s009"
+side = "CT"
+type = "smoke"
+x = 759.1
+y = 153.6
+radius = 200
+en = "Garage smoke (mid side)"
+zh = "车库烟（中路侧）"
+confidence = "medium"
+
+[[spot]]
+id = "de_cache-t-molotov-s071"
+side = "T"
+type = "molotov"
+x = -223.5
+y = 425.6
+radius = 150
+en = "White box molotov"
+zh = "中路白箱火"
+confidence = "medium"
+
+[[spot]]
+id = "de_cache-t-molotov-s072"
+side = "T"
+type = "molotov"
+x = 507.8
+y = -253.7
+radius = 150
+en = "Vents molotov"
+zh = "通风管火"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-molotov-s073"
+side = "T"
+type = "molotov"
+x = 288.0
+y = -354.6
+radius = 150
+en = "Checkers molotov (Vents end)"
+zh = "棋盘房火（通风管侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-molotov-s074"
+side = "T"
+type = "molotov"
+x = 26.8
+y = -49.2
+radius = 150
+en = "Sandbags molotov"
+zh = "沙袋火"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-molotov-s075"
+side = "T"
+type = "molotov"
+x = -308.3
+y = -1230.5
+radius = 150
+en = "Headshot molotov"
+zh = "爆头位火"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-molotov-s076"
+side = "T"
+type = "molotov"
+x = -535.7
+y = -696.5
+radius = 150
+en = "B heaven molotov"
+zh = "B 区天堂火"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-molotov-s077"
+side = "T"
+type = "molotov"
+x = -284.8
+y = 2235.3
+radius = 150
+en = "Quad molotov"
+zh = "四箱火"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-molotov-s078"
+side = "T"
+type = "molotov"
+x = 155.6
+y = 1323.6
+radius = 150
+en = "Forklift molotov"
+zh = "叉车火"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-molotov-s079"
+side = "T"
+type = "molotov"
+x = 578.1
+y = 617.6
+radius = 150
+en = "Mid cubby molotov"
+zh = "中路凹槽火"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-molotov-s080"
+side = "T"
+type = "molotov"
+x = -329.2
+y = -310.0
+radius = 150
+en = "Checkers molotov (Heaven end)"
+zh = "棋盘房火（天堂侧）"
+confidence = "medium"
+
+[[spot]]
+id = "de_cache-t-molotov-s081"
+side = "T"
+type = "molotov"
+x = -40.4
+y = 2205.0
+radius = 150
+en = "A corner molotov"
+zh = "A 区底角火"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-molotov-s082"
+side = "T"
+type = "molotov"
+x = -979.7
+y = 1049.4
+radius = 150
+en = "Truck molotov"
+zh = "警家卡车火"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-smoke-s057"
+side = "T"
+type = "smoke"
+x = -411.4
+y = -14.5
+radius = 200
+en = "Z connector smoke"
+zh = "警家连接烟"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-smoke-s058"
+side = "T"
+type = "smoke"
+x = 231.7
+y = -640.6
+radius = 200
+en = "B main smoke (site entrance)"
+zh = "B 主道烟（包点口）"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-smoke-s059"
+side = "T"
+type = "smoke"
+x = -572.1
+y = -926.6
+radius = 200
+en = "Tree room smoke"
+zh = "树房烟"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-smoke-s060"
+side = "T"
+type = "smoke"
+x = -126.7
+y = 1103.2
+radius = 200
+en = "Catwalk smoke (Highway end)"
+zh = "A 区猫道烟（公路侧）"
+confidence = "medium"
+
+[[spot]]
+id = "de_cache-t-smoke-s061"
+side = "T"
+type = "smoke"
+x = -332.8
+y = 1442.0
+radius = 200
+en = "A cross smoke (truck side)"
+zh = "A 区过点烟（卡车侧）"
+confidence = "medium"
+
+[[spot]]
+id = "de_cache-t-smoke-s062"
+side = "T"
+type = "smoke"
+x = -5.1
+y = 1508.9
+radius = 200
+en = "Forklift smoke (site side)"
+zh = "叉车烟（包点侧）"
+confidence = "medium"
+
+[[spot]]
+id = "de_cache-t-smoke-s063"
+side = "T"
+type = "smoke"
+x = -51.2
+y = 1367.4
+radius = 200
+en = "Catwalk smoke (A main end)"
+zh = "A 区猫道烟（A 主道侧）"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-smoke-s064"
+side = "T"
+type = "smoke"
+x = -179.7
+y = 1041.8
+radius = 200
+en = "Highway smoke (A end)"
+zh = "公路烟（A 区口）"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-smoke-s065"
+side = "T"
+type = "smoke"
+x = -563.8
+y = -713.2
+radius = 200
+en = "B heaven smoke"
+zh = "B 区天堂烟"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-smoke-s066"
+side = "T"
+type = "smoke"
+x = -610.2
+y = 1239.8
+radius = 200
+en = "CT smoke (truck)"
+zh = "A 区警家烟（卡车）"
+confidence = "high"
+
+[[spot]]
+id = "de_cache-t-smoke-s067"
+side = "T"
+type = "smoke"
+x = 653.4
+y = 181.6
+radius = 200
+en = "Garage smoke (mid side)"
+zh = "车库烟（中路侧）"
+confidence = "medium"
+
+[[spot]]
+id = "de_cache-t-smoke-s068"
+side = "T"
+type = "smoke"
+x = 14.3
+y = 1995.6
+radius = 200
+en = "Smoke in A site below Squeaky"
+zh = "A 包点内铁门南侧的烟"
+confidence = "low"

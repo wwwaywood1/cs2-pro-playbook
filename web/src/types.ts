@@ -175,6 +175,8 @@ export interface PlayerProfile {
 
 export interface Lineup {
   id: string;
+  /** Community landing name; absent when no configured spot is within range. */
+  name?: { en: string; zh: string };
   side: Side;
   type: GrenadeType;
   throw_place: string | null;

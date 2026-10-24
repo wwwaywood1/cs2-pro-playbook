@@ -583,6 +583,17 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
             for side in ("T", "CT"):
                 player[side]["radar_6d"] = radar.get((player["steamid"], side))
         lineups, nade_lineup = build_lineups(sub, mm)
+        configured_names = load_spot_names(map_name)
+        if lineups and configured_names:
+            # Lineup cards use the same side/type/landing-coordinate names as tactics.
+            landing_names = name_spots(pl.DataFrame([
+                {"spot_id": l["id"], "side": l["side"], "type": l["type"],
+                 "x": l["land"]["x"], "y": l["land"]["y"]}
+                for l in lineups
+            ]), configured_names)
+            for lineup in lineups:
+                if lineup["id"] in landing_names:
+                    lineup["name"] = landing_names[lineup["id"]]
         lineup_ids = {l["id"] for l in lineups}
         mdir = out_dir / map_name
         _write(mdir / "meta.json", {
@@ -598,7 +609,7 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         _write(mdir / "lineups.json", lineups)
         res = analyse_map(sub, mm, nade_lineup)
         attach_example_dates(res["recipes"], sub["matches"])
-        spot_names = name_spots(res["spots"], load_spot_names(map_name))
+        spot_names = name_spots(res["spots"], configured_names)
         for r in res["recipes"]:
             _filter_lineup_refs(r["core"], lineup_ids)
             _filter_lineup_refs(r["options"], lineup_ids)

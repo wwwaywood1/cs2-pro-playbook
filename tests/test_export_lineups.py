@@ -38,7 +38,8 @@ def synthetic_tables():
 
 
 @pytest.mark.parametrize('minimum', [2, 100])
-def test_export_has_no_dangling_lineups(tmp_path, monkeypatch, minimum):
+@pytest.mark.parametrize('named', [False, True])
+def test_export_has_no_dangling_lineups(tmp_path, monkeypatch, minimum, named):
     sub = synthetic_tables()
     monkeypatch.setattr(export, 'LINEUP_MIN_THROWS', minimum)
     lineups, mapping = export.build_lineups(sub, MM)
@@ -52,7 +53,10 @@ def test_export_has_no_dangling_lineups(tmp_path, monkeypatch, minimum):
     # Only unrelated profile builders are stubbed; analysis and export run normally.
     monkeypatch.setattr(export, 'ACTIVE_POOL', {'de_test'})
     monkeypatch.setattr(export, 'load_map', lambda _: MM)
-    monkeypatch.setattr(export, 'load_spot_names', lambda _: [])
+    community_name = {'en': 'CT smoke', 'zh': '警家烟'}
+    configured = [dict(side='T', type='smoke', x=2000., y=2000., radius=200,
+                       **community_name)] if named else []
+    monkeypatch.setattr(export, 'load_spot_names', lambda _: configured)
     monkeypatch.setattr(export, 'team_profiles', lambda *_: [])
     monkeypatch.setattr(export, 'player_profiles', lambda *_: [])
     parsed, site = tmp_path / 'parsed', tmp_path / 'site'
@@ -61,7 +65,15 @@ def test_export_has_no_dangling_lineups(tmp_path, monkeypatch, minimum):
     mdir = site / 'de_test'
     exported = json.loads((mdir / 'lineups.json').read_text())
     ids = {l['id'] for l in exported}
-    assert exported == lineups
+    assert [{k: v for k, v in row.items() if k != 'name'} for row in exported] == lineups
+    named_rows = [row for row in exported if row.get('name')]
+    if named and minimum == 2:
+        assert len(named_rows) == 1
+        assert named_rows[0]['name'] == community_name
+        assert named_rows[0]['type'] == 'smoke'
+        assert named_rows[0]['land']['x'] == 2000.
+    else:
+        assert not named_rows
     tactics = json.loads((mdir / 'tactics.json').read_text())
     groups = [tactics['spots']]
     for recipe in tactics['recipes']:
