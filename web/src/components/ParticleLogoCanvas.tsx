@@ -36,6 +36,8 @@ export default function ParticleLogoCanvas({ slug, name, available }: Props) {
     const node = canvas.current;
     const container = host.current;
     if (!node || !container) return;
+    node.dataset.sampledSource = "";
+    node.dataset.samplingDone = "false";
     node.dataset.paused = "true";
     node.dataset.particleCount = "0";
     if (!supplied || reduced) return;
@@ -151,6 +153,8 @@ export default function ParticleLogoCanvas({ slug, name, available }: Props) {
         if (!count) return;
         node.dataset.particleCount = String(count + DUST_COUNT);
         loaded = true;
+        node.dataset.sampledSource = source;
+        node.dataset.samplingDone = "true";
         setAnimated(true);
         syncAnimation();
       } catch {

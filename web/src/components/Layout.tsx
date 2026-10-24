@@ -1,5 +1,5 @@
 import CommandPalette from "./CommandPalette";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import RouteTransition from "./RouteTransition";
 import { getIndex, useData } from "../data";
@@ -17,6 +17,15 @@ function navClass({ isActive }: { isActive: boolean }): string {
 }
 
 export default function Layout() {
+  const header = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const node = header.current;
+    if (!node) return;
+    const measure = () => node.parentElement?.style.setProperty("--topbar-height", `${node.getBoundingClientRect().height}px`);
+    const observer = new ResizeObserver(measure);
+    observer.observe(node); measure();
+    return () => observer.disconnect();
+  }, []);
   const lang = useLang();
   const { pathname, search } = useLocation();
   const teamSlug = pathname === "/teams-hub" ? new URLSearchParams(search).get("team") ?? ""
@@ -33,7 +42,7 @@ export default function Layout() {
   return (
     <div className="shell" data-team={teamSlug || undefined} style={teamSlug ? teamTheme(teamSlug) : undefined}>
       <button type="button" className="skip-link" onClick={() => document.getElementById("main-content")?.focus()}>{t("ui.skip_content")}</button>
-      <header className="topbar">
+      <header className="topbar" ref={header}>
         <div className="topbar-inner">
           <Link to="/" className="brand">
             <span className="brand-mark" aria-hidden="true">
@@ -61,6 +70,7 @@ export default function Layout() {
             <NavLink to="/heatmaps" className={navClass}>
               {t("ui.nav_heatmaps")}
             </NavLink>
+            <NavLink to="/lab" className={navClass}>🧪 AI 实验室</NavLink>
           </nav>
 
           <CommandPalette currentMap={map} />

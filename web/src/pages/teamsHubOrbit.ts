@@ -1,4 +1,6 @@
-export const ORBIT_CARD_SIZE = { width: 168, height: 216 };
+export const ORBIT_CARD_SIZE = { width: 224, height: 288 };
+// Matches the compact desktop logo/name + preview columns in teams-hub.css.
+export const ORBIT_CORE_SIZE = { width: 300, height: 128 };
 
 export type OrbitNodeSize = { width: number; height: number };
 
@@ -14,36 +16,79 @@ export const ORBIT_POOL = [
 ] as const;
 export const EMPTY_MAP_GLOW = ORBIT_POOL[6][2];
 
-// Fit the *whole* rotating ellipse, including depth and hover, in the stage.
-// For adjacent nodes, a collision is possible iff both separation components
-// fall below the rectangle extents. The ellipse inequality below excludes that
-// for every phase, rather than checking only the initial seven positions.
+// Equal-distance travel around a rounded rectangle uses the wide stage corners.
+// Cache the full-phase fit: rAF only interpolates the fitted path, never refits it.
+const SAMPLES = 2048;
+let cached: { key: string; scale: number; path: { x: number; y: number }[] } | undefined;
 export function orbitLayout(width: number, height: number, nodes: OrbitNodeSize[], phase = 0) {
-  const reserve = 1.05 * 1.08;
-  const gap = 16;
-  const maxWidth = Math.max(1, ...nodes.map((node) => node.width));
-  const maxHeight = Math.max(1, ...nodes.map((node) => node.height));
-  const chord = 2 * Math.sin(Math.PI / Math.max(2, nodes.length));
-  const radii = (scale: number) => ({
-    rx: Math.max(1, (width - maxWidth * reserve * scale) / 2 - gap),
-    ry: Math.max(1, (height - maxHeight * reserve * scale) / 2 - gap),
-  });
-  const fits = (scale: number) => {
-    const { rx, ry } = radii(scale);
-    return ((maxWidth * reserve * scale + gap) / (chord * rx)) ** 2
-      + ((maxHeight * reserve * scale + gap) / (chord * ry)) ** 2 <= 1;
+  const reserve = 1.05 * 1.08, gap = 16;
+  const maxWidth = Math.max(1, ...nodes.map(node => node.width));
+  const maxHeight = Math.max(1, ...nodes.map(node => node.height));
+  const key = `${width}:${height}:${maxWidth}:${maxHeight}:${nodes.length}`;
+  const pointAt = (path: { x: number; y: number }[], turn: number) => {
+    const position = ((turn % 1 + 1) % 1) * SAMPLES;
+    const index = Math.floor(position), fraction = position - index;
+    const a = path[index], b = path[(index + 1) % SAMPLES];
+    return { x: a.x + (b.x - a.x) * fraction, y: a.y + (b.y - a.y) * fraction };
   };
-  let low = 0, high = 1;
-  for (let i = 0; i < 24; i++) {
-    const middle = (low + high) / 2;
-    if (fits(middle)) low = middle; else high = middle;
+  if (cached?.key !== key) {
+    const candidate = (scale: number) => {
+      const cardWidth = maxWidth * reserve * scale, cardHeight = maxHeight * reserve * scale;
+      const rx = Math.max(1, (width - cardWidth) / 2 - gap);
+      const ry = Math.max(1, (height - cardHeight) / 2 - gap);
+      // Polygonal superellipse (power 4), reparameterised by distance measured
+      // in card-width/card-height units. This avoids bunching at the short axis.
+      const outline = Array.from({ length: 257 }, (_, i) => {
+        const angle = -Math.PI / 2 + i / 256 * 2 * Math.PI;
+        const c = Math.cos(angle), s = Math.sin(angle);
+        return { x: rx * Math.sign(c) * Math.sqrt(Math.abs(c)), y: ry * Math.sign(s) * Math.sqrt(Math.abs(s)), distance: 0 };
+      });
+      for (let i = 1; i < outline.length; i++) {
+        outline[i].distance = outline[i - 1].distance + Math.hypot(
+          (outline[i].x - outline[i - 1].x) / (cardWidth + gap),
+          (outline[i].y - outline[i - 1].y) / (cardHeight + gap));
+      }
+      const length = outline[256].distance;
+      let segment = 1;
+      const path = Array.from({ length: SAMPLES }, (_, i) => {
+        const distance = i / SAMPLES * length;
+        while (outline[segment].distance < distance) segment++;
+        const a = outline[segment - 1], b = outline[segment];
+        const f = (distance - a.distance) / (b.distance - a.distance);
+        return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
+      });
+      // A pair can move at most this far between a sampled phase and its
+      // nearest neighbour. Reserve it to cover *continuous* phases, not just
+      // the samples. The same bound covers interpolation and core clearance.
+      const margin = length * Math.max(cardWidth + gap, cardHeight + gap) / SAMPLES;
+      let fits = true;
+      for (let step = 0; fits && step < SAMPLES; step++) {
+        const points = nodes.map((_, i) => pointAt(path, step / SAMPLES + i / nodes.length));
+        for (let i = 0; fits && i < points.length; i++) {
+          const a = points[i];
+          if (Math.max(Math.abs(a.x) - (cardWidth + ORBIT_CORE_SIZE.width) / 2,
+                       Math.abs(a.y) - (cardHeight + ORBIT_CORE_SIZE.height) / 2) < gap + margin) fits = false;
+          for (let j = i + 1; fits && j < points.length; j++) {
+            const b = points[j];
+            if (Math.max(Math.abs(a.x - b.x) - cardWidth, Math.abs(a.y - b.y) - cardHeight) < gap + margin) fits = false;
+          }
+        }
+      }
+      return { fits, path };
+    };
+    let low = 0, high = 1;
+    for (let i = 0; i < 20; i++) {
+      const middle = (low + high) / 2;
+      if (candidate(middle).fits) low = middle; else high = middle;
+    }
+    cached = { key, scale: low, path: candidate(low).path };
   }
-  const scale = low;
-  const { rx, ry } = radii(scale);
+  const { scale, path } = cached;
   return { minHeight: 0, scale, points: nodes.map((_, index) => {
-    const angle = -Math.PI / 2 + phase + index * 2 * Math.PI / nodes.length;
-    return { x: width / 2 + rx * Math.cos(angle), y: height / 2 + ry * Math.sin(angle),
-      scale: scale * (1 + .05 * Math.sin(angle)) };
+    const turn = phase / (2 * Math.PI) + index / nodes.length;
+    const point = pointAt(path, turn);
+    return { x: width / 2 + point.x, y: height / 2 + point.y,
+      scale: scale * (1 + .05 * Math.sin(-Math.PI / 2 + turn * 2 * Math.PI)) };
   }) };
 }
 

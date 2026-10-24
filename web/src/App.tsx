@@ -1,3 +1,4 @@
+import AILab from "./pages/AILab";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import RoundReplay from "./components/RoundReplay";
 import Layout from "./components/Layout";
@@ -26,6 +27,7 @@ export default function App() {
     <MapLinkProvider scope={`${location.pathname}:${location.search}`} initialId={spot ? `spot:${spot}` : null}><Routes>
       <Route element={<Layout />}>
         <Route index element={<Home />} />
+        <Route path="lab" element={<AILab />} />
         <Route path="teams-hub" element={<TeamsHub />} />
         <Route path=":map/lineups" element={<Lineups />} />
         <Route path=":map/tactics" element={<Tactics />} />

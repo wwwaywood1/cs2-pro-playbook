@@ -173,3 +173,10 @@ export function getReplay(map: string, demoId: string, round: number): Promise<R
   return cached(`replay:${map}:${demoId}:${round}`, () =>
     fetchJson<ReplayRound>(`data/${segment(map)}/replay/${segment(demoId)}/${round}.json`));
 }
+
+export function getAILab(): Promise<import("./labTypes").AILab> {
+  return cached("ai-lab", () => fetchJson("data/ai_lab.json"));
+}
+export function getCTPatterns(map: string): Promise<import("./labTypes").CTPatterns> {
+  return cached(`ct-patterns:${map}`, () => fetchJson(`data/${segment(map)}/ct_patterns.json`));
+}

@@ -1,3 +1,4 @@
+import CTDefense from "../components/CTDefense";
 import MatchDate from "../components/MatchDate";
 import { newestMatch } from "../matchDates";
 import PracticeCopy from "../components/PracticeCopy";
@@ -243,6 +244,7 @@ export default function Tactics() {
       </>}
     </dl>
     <MapLinkHint />
+    {side === "CT" && <CTDefense key={map} map={map} />}
     <div className="tactics-workspace">
       <aside className="tactics-map-panel">
         <Reveal className="motion-radar" key={`${map}:${side}`}><RecipeRadar key={`${map}:${side}:${selected?.id ?? "ct"}`} map={map} scale={scale} spots={side === "T" ? entries : ctSpots} title={side === "T" ? t("tactics.selected_utility") : t("tactics.ct_utility")}

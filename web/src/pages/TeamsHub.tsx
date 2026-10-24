@@ -1,3 +1,4 @@
+import TeamFingerprint from "../components/TeamFingerprint";
 import MatchDate, { MatchTimeFilter } from "../components/MatchDate";
 import { inTimeRange, newestMatch, type TimeRange } from "../matchDates";
 import Segmented from "../components/Segmented";
@@ -400,6 +401,7 @@ function TeamMapView({ profile, tactics, heatmap, baseline, change }: {
     <img className="hub-map-backdrop" src={`${import.meta.env.BASE_URL}radars/${heatmap.map}.png`} alt="" aria-hidden="true" />
     <div className="hub-map-context"><MapOverview profile={profile} tactics={tactics} /></div>
     <PlayerCards roster={heatmap.roster} heatmap={heatmap} change={change} />
+    <TeamFingerprint map={profile.map} team={profile.team} />
     <TeamDetails team={profile} detailsOpen={summaryOpen} onDetailsToggle={setSummaryOpen} tacticsContent={<><MapTacticsSummary profile={profile} tactics={tactics} />
     {signature ? <section className="hub-summary-radar">
       <RecipeRadar map={profile.map} spots={signatureSpots} scale={meta.data?.radar.scale} title={t("tactics.selected_utility")} site={signature.site} routes={signature.routes ?? []} routeKey={signature.id} />

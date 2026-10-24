@@ -1,5 +1,5 @@
 import Segmented from "./Segmented";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import GrenadeIcon, { GrenadeGlyph } from "./GrenadeIcon";
 import { useMapLink } from "../mapLink";
@@ -92,7 +92,7 @@ function routeLabelPoint(points: [number, number][]): [number, number] {
 }
 
 /** SVG is rendered by the browser at devicePixelRatio, including all vector overlays. */
-export default function RecipeRadar({ map, spots, scale, site, title, selectionLabel, routes, routeKey }: { routes?: RecipeRoute[]; routeKey?: string; map: string; spots: RecipeSpot[]; scale: number | undefined; site?: Recipe["site"]; title: string; selectionLabel?: string }) {
+export default function RecipeRadar({ map, spots, scale, site, title, selectionLabel, routes, routeKey, overlay, overlayLevels = [] }: { overlay?: (level: number) => ReactNode; overlayLevels?: number[]; routes?: RecipeRoute[]; routeKey?: string; map: string; spots: RecipeSpot[]; scale: number | undefined; site?: Recipe["site"]; title: string; selectionLabel?: string }) {
   const { activeId, bind } = useMapLink();
   const entryRoutes = useMemo(() => (routes ?? []).filter((route) => Number.isFinite(route.share) && route.points.length >= 2
     && route.points.every((point) => point.length === 2 && point.every(Number.isFinite))), [routes]);
@@ -105,12 +105,12 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
   const host = useRef<HTMLElement>(null);
   const radar = useRef<SVGSVGElement>(null);
   const maskId = useId();
-  const levels = [...new Set(spots.flatMap(({ spot }) => spot ? [spot.level] : []))].sort();
+  const levels = [...new Set([...overlayLevels, ...spots.flatMap(({ spot }) => spot ? [spot.level] : [])])].sort();
   const linkedSpot = spots.find((entry) => activeId === `spot:${entry.id}`)?.spot;
   const level = linkedSpot?.level ?? (chosenLevel !== null && levels.includes(chosenLevel) ? chosenLevel : levels[0] ?? 0);
   const visible = useMemo(() => spots.filter(({ spot }) => spot?.level === level), [spots, level]);
   const siteCentre = site ? SITE_CENTRES[map]?.[site] : undefined;
-  const focus = useMemo(() => site && !siteCentre ? FULL_VIEW : fitSpots(visible, scale, siteCentre, entryRoutes.flatMap((route) => route.points.map(([x, y]) => ({ x, y })))), [visible, scale, site, siteCentre, entryRoutes]);
+  const focus = useMemo(() => overlay || (site && !siteCentre) ? FULL_VIEW : fitSpots(visible, scale, siteCentre, entryRoutes.flatMap((route) => route.points.map(([x, y]) => ({ x, y })))), [visible, scale, site, siteCentre, entryRoutes, overlay]);
   // Leave a little context around the focus box so the dimmed perimeter remains visible.
   const target = useMemo(() => {
     if (full) return FULL_VIEW;
@@ -178,7 +178,7 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
     {map === "de_nuke" && <Segmented className="segmented tactics-levels" role="group" aria-label={t("tactics.floor")}>
       {[0, 1].map((value) => <button key={value} type="button" aria-pressed={level === value} disabled={!levels.includes(value)}
         className={level === value ? "is-active" : ""} onClick={() => setChosenLevel(value)}>
-        {t(`heatmap.level.${value === 1 ? "lower" : "upper"}`)} ({fmtInt(spots.filter(({ spot }) => spot?.level === value).length)})
+        {t(`heatmap.level.${value === 1 ? "lower" : "upper"}`)} ({fmtInt((overlay ? overlayLevels.filter(level => level === value) : spots.filter(({ spot }) => spot?.level === value)).length)})
       </button>)}
     </Segmented>}
 <div className="hud-radar-frame">    <svg ref={radar} className="radar tactics-radar" viewBox={`${view.x} ${view.y} ${view.size} ${view.size}`} role="group" aria-label={t("tactics.radar_label", { map })}>
@@ -191,6 +191,7 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
       <rect className="radar-bg" width="1024" height="1024" />
       {failedSource !== source && <image href={source} width="1024" height="1024" onError={() => setFailedSource(source)} />}
       <rect width="1024" height="1024" fill="#060b12" opacity="0.55" mask={`url(#${maskId})`} pointerEvents="none" />
+      {overlay?.(level)}
       <g className="tactics-entry-routes" key={routeKey} pointerEvents="none">{entryRoutes.map((route, index) => {
         const label = t("round5.route_name", { via: routeDisplayName(map, route), p: fmtNum(route.share * 100, 0) });
         const [x, y] = routeLabelPoint(route.points);
@@ -240,10 +241,10 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
         </button>;
       })}
     </div> : null}
-    {!visible.length && <p className="muted">{t("tactics.no_spots")}</p>}
+    {!overlay && !visible.length && <p className="muted">{t("tactics.no_spots")}</p>}
     {failedSource === source && <p className="muted">{t("tactics.radar_unavailable")}</p>}
-    {!scale && <p className="muted">{t("tactics.no_scale")}</p>}
-    <p className="tactics-help muted">{t("tactics.radar_help")} · 细线：最常用起投点 → 落点；非队员移动路线</p>
+    {!overlay && !scale && <p className="muted">{t("tactics.no_scale")}</p>}
+    {!overlay && <p className="tactics-help muted">{t("tactics.radar_help")} · 细线：最常用起投点 → 落点；非队员移动路线</p>}
     {!!visible.length && <details className="tactics-map-spots"><summary>{t("tactics.spot_index", { n: fmtInt(visible.length) })}</summary><SpotList entries={visible} /></details>}
   </figure>;
 }

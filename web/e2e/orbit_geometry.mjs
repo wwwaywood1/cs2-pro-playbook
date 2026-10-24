@@ -5,11 +5,11 @@ import fs from 'node:fs';
 import ts from '../node_modules/typescript/lib/typescript.js';
 const source = fs.readFileSync(new URL('../src/pages/teamsHubOrbit.ts', import.meta.url), 'utf8');
 const compiled = ts.transpile(source, { module: ts.ModuleKind.ES2022 });
-const { orbitLayout, orbitStats, ORBIT_CARD_SIZE, orbitRate } = await import('data:text/javascript;base64,' + Buffer.from(compiled).toString('base64'));
+const { orbitLayout, orbitStats, ORBIT_CARD_SIZE, ORBIT_CORE_SIZE, orbitRate } = await import('data:text/javascript;base64,' + Buffer.from(compiled).toString('base64'));
 let layouts = 0;
 // Include the measured stage budgets at both requested desktop viewports.
 for (const width of [900, 960, 1000, 1050, 1100, 1144, 1150, 1200, 1280, 1296]) {
-  for (const height of [435, 570, 670]) {
+  for (const height of [435, 570, 600, 670, 700]) {
     const node = { width: ORBIT_CARD_SIZE.width + 1, height: ORBIT_CARD_SIZE.height + 1 };
     const nodes = Array(7).fill(node);
     for (let degree = 0; degree < 360; degree++) {
@@ -18,6 +18,9 @@ for (const width of [900, 960, 1000, 1050, 1100, 1144, 1150, 1200, 1280, 1296]) 
         const aw = node.width * a.scale * 1.08, ah = node.height * a.scale * 1.08;
         assert(a.x - aw / 2 >= 15.99 && a.x + aw / 2 <= width - 15.99);
         assert(a.y - ah / 2 >= 15.99 && a.y + ah / 2 <= height - 15.99);
+        assert(Math.max(Math.abs(a.x - width / 2) - (aw + ORBIT_CORE_SIZE.width) / 2,
+                        Math.abs(a.y - height / 2) - (ah + ORBIT_CORE_SIZE.height) / 2) >= 15.99,
+               `${width}x${height} phase ${degree}: card overlaps the centre logo/preview`);
         for (const b of points.slice(i + 1)) {
           assert(Math.max(Math.abs(a.x - b.x) - (aw + node.width * b.scale * 1.08) / 2,
                           Math.abs(a.y - b.y) - (ah + node.height * b.scale * 1.08) / 2) >= 15.99,
@@ -27,6 +30,27 @@ for (const width of [900, 960, 1000, 1050, 1100, 1144, 1150, 1200, 1280, 1296]) 
       layouts++;
     }
   }
+}
+// Compare rendered size with the previous 168x216 whole-ellipse fit at the
+// measured desktop budgets. Include rounding and every depth/hover extreme.
+function previousScale(width, height) {
+  let low = 0, high = 1;
+  for (let i = 0; i < 24; i++) {
+    const middle = (low + high) / 2, w = 169 * 1.05 * 1.08 * middle, h = 217 * 1.05 * 1.08 * middle;
+    const chord = 2 * Math.sin(Math.PI / 7);
+    const fits = ((w + 16) / (chord * ((width - w) / 2 - 16))) ** 2
+      + ((h + 16) / (chord * ((height - h) / 2 - 16))) ** 2 <= 1;
+    if (fits) low = middle; else high = middle;
+  }
+  return low;
+}
+for (const [viewport, width, oldHeight, height] of [
+  ['1440x900', 1296, 670, 700], ['1280x800', 1144, 570, 600],
+]) {
+  const scale = orbitLayout(width, height, Array(7).fill({ width: ORBIT_CARD_SIZE.width + 1, height: ORBIT_CARD_SIZE.height + 1 })).scale;
+  const ratio = ORBIT_CARD_SIZE.width * scale / (168 * previousScale(width, oldHeight));
+  assert(ratio >= 1.35 && ratio <= 1.5, `${viewport}: rendered enlargement ${ratio}`);
+  console.log(`PASS: ${viewport}: ${(ORBIT_CARD_SIZE.width * scale).toFixed(1)}x${(ORBIT_CARD_SIZE.height * scale).toFixed(1)}px at middle depth, ${ratio.toFixed(2)}x previous size`);
 }
 const maps = [
   { map: 'de_ancient', n_matches: 2, map_win_rate: 1 },
@@ -123,11 +147,11 @@ assert.equal(stage.dataset.phase, '0'); assert.equal(stage.dataset.running, 'fal
 // A stopped/reduced orbit must refit immediately on resize, with no React render.
 stage.clientWidth = 1150; stage.clientHeight = 570;
 windowListeners.get('resize')();
-stage.clientWidth = 1296; stage.clientHeight = 670;
+stage.clientWidth = 1296; stage.clientHeight = 700;
 resize();
 const measured = nodes.map(node => ({ width: node.offsetWidth + 1, height: node.offsetHeight + 1 }));
 const expected = orbitLayout(stage.clientWidth, stage.clientHeight, measured).points;
-assert.equal(rays.viewBox, '0 0 1296 670');
+assert.equal(rays.viewBox, '0 0 1296 700');
 assert(nodes.every((node, i) => Math.abs(parseFloat(node.style['--orbit-x']) - expected[i].x) < 1e-6 &&
   Math.abs(parseFloat(node.style['--orbit-y']) - expected[i].y) < 1e-6), 'static resize refits node centres');
 assert(lines.every((line, i) => Math.abs(line.x2 - expected[i].x) < 1e-6 && Math.abs(line.y2 - expected[i].y) < 1e-6), 'rays follow node centres');

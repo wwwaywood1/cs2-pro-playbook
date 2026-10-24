@@ -10,6 +10,7 @@ Install tooling with pip install -r web/e2e/requirements.txt and
 python -m playwright install --with-deps --only-shell chromium.
 Add a route by writing one @route(path, ready_selector) function. Desktop checks,
 mobile overflow checks, console/page errors and screenshots are run automatically.
+Use --lab-only for AI lab, CT defense and fingerprint checks with the current export.
 Use --orbit-only to check the radial hub against the current export without
 replacing web/public/data with sample data.
 """
@@ -744,18 +745,23 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
             const active = document.querySelector('.hub-orbit').hasAttribute('data-active');
             const emphasis = el.dataset.empty === 'true' ? 1 : el.dataset.active === 'true' ? 1.08 : active ? .96 : 1;
             const expectedScale = Number(css.getPropertyValue('--orbit-depth')) * (matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : emphasis);
-            if (el.offsetWidth !== 168 || el.offsetHeight !== 216 || css.position !== 'absolute' || css.transform !== 'none' || css.translate !== '-50% -50%' || Math.abs(Number(css.scale) - expectedScale) > .005 ||
+            if (el.offsetWidth !== 224 || el.offsetHeight !== 288 || css.position !== 'absolute' || css.transform !== 'none' || css.translate !== '-50% -50%' || Math.abs(Number(css.scale) - expectedScale) > .005 ||
                 (el.dataset.empty === 'true' && css.borderTopStyle !== 'dashed')) styles.push({id: a.id, position: css.position, transform: css.transform, translate: css.translate, scale: css.scale});
         }
         const coreEl = document.querySelector('.hub-orbit-core'), core = box(coreEl);
         const badge = box(coreEl.querySelector('.particle-logo')), name = box(coreEl.querySelector('h2'));
         const hud = box(coreEl.querySelector('.hub-orbit-hud'));
+        const coreOverlaps = nodes.filter(a => Math.max(core.left - a.right, a.left - core.right,
+            core.top - a.bottom, a.top - core.bottom) < 15.5).map(a => a.id);
+        const minimumCardWidth = innerWidth === 1440 ? 150 : innerWidth === 1280 ? 128 : 0;
+        const undersized = nodes.filter(a => a.width < minimumCardWidth *
+            (document.querySelector('.hub-orbit').hasAttribute('data-active') ? .96 : 1)).map(a => a.id);
         const rays = [...document.querySelectorAll('.hub-orbit-rays g > line:first-child')];
         const breadcrumbs = box(document.querySelector('.hub-breadcrumbs')), topbar = box(document.querySelector('.topbar'));
         const rayAligned = rays.every((line, i) => Math.abs(line.x2.baseVal.value - (nodes[i].left + nodes[i].width / 2 - stage.left)) < 1 && Math.abs(line.y2.baseVal.value - (nodes[i].top + nodes[i].height / 2 - stage.top)) < 1);
-        return {rayAligned, breadcrumbVisible: breadcrumbs.top >= topbar.bottom && breadcrumbs.bottom <= innerHeight, nodes, stage, intersections, gaps, outside, viewportOutside, contentOutside, styles,
+        return {coreOverlaps, undersized, scrollY, breadcrumbs, topbar, rayAligned, breadcrumbVisible: breadcrumbs.top >= topbar.bottom && breadcrumbs.bottom <= innerHeight, nodes, stage, intersections, gaps, outside, viewportOutside, contentOutside, styles,
             introGap: Math.min(...nodes.map(n => n.top)) - intro.bottom,
-            stacked: badge.bottom <= name.top + 1 && name.bottom <= hud.top + 1 && core.width <= 301 && hud.width >= core.width - 1 && hud.bottom <= core.bottom + 1,
+            stacked: badge.bottom <= name.top + 1 && name.right <= hud.left + 1 && core.width <= 301 && core.height <= 129 && hud.bottom <= core.bottom + 1 && name.bottom <= core.bottom + 1,
             transparent: [coreEl, coreEl.parentElement, coreEl.querySelector('.hub-team-anchor'), coreEl.querySelector('.hub-orbit-hud')].every(el => {
                 const css = getComputedStyle(el);
                 return css.backgroundImage === 'none' && css.backgroundColor === 'rgba(0, 0, 0, 0)' &&
@@ -767,7 +773,7 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
             overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth};
     }""")
     diagnostics = json.dumps(report, ensure_ascii=False)
-    valid = (not any(report[key] for key in ('intersections', 'gaps', 'outside', 'viewportOutside', 'contentOutside', 'styles'))
+    valid = (not any(report[key] for key in ('coreOverlaps', 'undersized', 'intersections', 'gaps', 'outside', 'viewportOutside', 'contentOutside', 'styles'))
              and report['introGap'] >= 16 and report['overflow'] <= 0
              and report['stacked'] and report['shielded'] and report['transparent'] and report['rayAligned'] and report['breadcrumbVisible'])
     smoke.check(valid, f'{label}: seven nodes fit with 16px gaps, aligned rays, visible breadcrumbs and transparent core'
@@ -782,13 +788,13 @@ def check_orbit_backdrops(smoke: Smoke, page: Page) -> None:
     smoke.check(page.locator('.map-landmark-art').evaluate_all("""els => els.every(el =>
         el.querySelectorAll('path').length >= 3 && el.querySelector('.landmark-building') &&
         getComputedStyle(el).position === 'absolute' &&
-        Math.abs(parseFloat(getComputedStyle(el).height) - el.parentElement.clientHeight * .4) < 1 &&
+        Math.abs(parseFloat(getComputedStyle(el).height) - el.parentElement.clientHeight * .55) < 1 &&
         getComputedStyle(el).pointerEvents === 'none')"""),
         'all seven maps have original multi-layer landmark drawings and light rays')
     smoke.check(page.locator('.hub-orbit-node').evaluate_all("""els => els.every(el => {
         const strip = getComputedStyle(el, '::after');
-        return strip.height === '2px' && strip.boxShadow !== 'none';
-    })"""), 'each map has a 2px themed top light strip')
+        return strip.height === '2px' && strip.boxShadow === 'none';
+    })"""), 'each map has a thin themed accent without a coloured glow')
     from io import BytesIO
     from PIL import Image
     image = BytesIO()
@@ -801,11 +807,22 @@ def check_orbit_backdrops(smoke: Smoke, page: Page) -> None:
         page.reload()
         expect(page.locator('.card-scenic-bg')).to_have_count(7)
         expect(page.locator('.map-card-bg')).to_have_count(0)
-        smoke.check(page.locator('.card-scenic-bg').evaluate_all("""els => els.every(el =>
-            getComputedStyle(el).opacity === '0.78' &&
-            !getComputedStyle(el).filter.includes('blur') &&
+        smoke.check(page.locator('.card-scenic-bg').evaluate_all(r"""els => els.every(el =>
+            getComputedStyle(el).opacity === '1' &&
+            getComputedStyle(el).filter === 'none' &&
+            getComputedStyle(el).maskImage === 'none' &&
+            Math.abs(parseFloat(getComputedStyle(el).height) - el.parentElement.clientHeight * .55) < 1 &&
+            (getComputedStyle(el.parentElement, '::before').backgroundImage.match(/rgba?\([^)]+\)/g) || []).every(colour => {
+                const values = colour.match(/[\d.]+/g).map(Number);
+                return values[3] === 0 || values.slice(0, 3).join(',') === '8,12,16';
+            }) &&
             getComputedStyle(el.parentElement.querySelector('.map-landmark-art')).visibility === 'hidden')"""),
-            'owner photographs take precedence at 0.78 opacity without blur')
+            'owner photographs occupy 55% at full opacity with no filter, mask or colour wash')
+        page.locator('#hub-map-de_mirage').focus()
+        smoke.check(page.locator('.card-scenic-bg').evaluate_all('''els => els.every(el =>
+            getComputedStyle(el).filter === 'none' && getComputedStyle(el).opacity === '1' &&
+            getComputedStyle(el.parentElement).opacity === '1')'''),
+            'focusing a card keeps every photograph at natural colour and opacity')
         page.unroute(photo_pattern)
         page.route(photo_pattern, lambda intercepted: intercepted.fulfill(body=b'not an image', content_type='image/webp'))
         page.reload()
@@ -890,7 +907,12 @@ def check_hub_orbit_v4(smoke: Smoke, page: Page) -> None:
             continue
         page.goto(f'{smoke.base}/#/teams-hub?team={slug}')
         canvas = page.locator('.particle-logo-canvas')
-        page.wait_for_function("Number(document.querySelector('.particle-logo-canvas')?.dataset.particleCount) > 120")
+        page.wait_for_function("""slug => {
+            const el = document.querySelector('.particle-logo-canvas');
+            return el?.dataset.samplingDone === 'true' &&
+                el.dataset.sampledSource?.endsWith(`/logos/teams/${slug}.png`) &&
+                Number(el.dataset.particleCount) > 120;
+        }""", arg=slug)
         report = canvas.evaluate("""el => ({count: Number(el.dataset.particleCount), width: el.width,
             paused: el.dataset.paused, source: el.parentElement.querySelector('.particle-logo-static img').src})""")
         smoke.check(120 < report['count'] <= 2000 and report['width'] <= 440 and f'logos/teams/{slug}.png' in report['source'],
@@ -1594,13 +1616,120 @@ def run_routes(smoke: Smoke, context: BrowserContext, *, mobile: bool = False,
             page.close()
 
 
+@route('#/lab', '.ai-lab-page')
+def check_ai_lab(smoke: Smoke, page: Page) -> None:
+    data = page.request.get(f'{smoke.base}/data/ai_lab.json').json()
+    panels = page.locator('[data-lab-panel]')
+    expect(panels).to_have_count(4)
+    smoke.check(set(panels.evaluate_all("els => els.map(el => el.dataset.labPanel)")) ==
+                {'attention', 'shap', 'control', 'references'}, 'AI lab has its four research panels')
+    expect(page.locator('.lab-reference')).to_have_count(len(data['references']))
+    smoke.check(page.locator('.lab-reference').evaluate_all("els => els.map(el => el.dataset.referenceId)") ==
+                [r['id'] for r in data['references']], 'AI lab references exactly match the verified export')
+    expect(page.locator('.lab-paper-note')).to_contain_text('论文结论（Dust2）')
+    expect(page.locator('.lab-paper-note')).to_contain_text(data['metadata']['paper_scope'])
+    smoke.check(True, 'paper claims are confined to a distinct Dust2 note')
+    expect(page.locator('.main-nav a[href="#/lab"]')).to_have_count(1)
+    for slider in ('SHAP 时间轴', '阵型快照'):
+        page.get_by_role('slider', name=slider, exact=True).focus()
+        page.keyboard.press('End')
+    residual = float(page.locator('.shap-additivity').get_attribute('data-residual'))
+    smoke.check(abs(residual) < 1e-6, 'SHAP grouped contributions remain additive after scrubbing')
+    for group in ('active_utility', 'positional_spread_pinch'):
+        expect(page.locator(f'.shap-row[data-group="{group}"]')).to_have_attribute('data-value', '0')
+    control = data['control']
+    if control:
+        expect(page.locator('.lab-control-radar [data-cell]')).to_have_count(
+            sum(cell['occupied'] for cell in control['cells']))
+        page.get_by_role('button', name='💨 烟雾反事实', exact=True).click()
+        expect(page.locator('.lab-control-radar')).to_have_attribute('data-mode', 'before')
+        page.get_by_role('button', name='显示投烟后', exact=True).click()
+        expect(page.locator('.lab-control-radar')).to_have_attribute('data-mode', 'after')
+        actual = page.locator('.lab-control-radar [data-cell]').evaluate_all(
+            "els => els.map(el => [Number(el.dataset.cell), el.querySelector('title').textContent.split(' · ')[0]])")
+        smoke.check(all(owner == control['smoke_simulation']['ownership_after'][i] for i, owner in actual),
+                    'smoke counterfactual paints the exported cell ownership without invented gains')
+
+
+@route('#/de_mirage/tactics?side=CT', '.ct-cluster-card')
+def check_ct_defense(smoke: Smoke, page: Page) -> None:
+    data = page.request.get(f'{smoke.base}/data/de_mirage/ct_patterns.json').json()
+    lab = page.request.get(f'{smoke.base}/data/ai_lab.json').json()
+    cards = page.locator('.ct-cluster-card')
+    expect(cards).to_have_count(len(data['clusters']))
+    shares = cards.evaluate_all("els => els.map(el => Number(el.dataset.share))")
+    smoke.check(abs(sum(shares) - 1) < 1e-6, 'CT cluster cards match the export and shares sum to one')
+    for c in data['clusters']:
+        card = page.locator(f'.ct-cluster-card[data-cluster-id="{c["id"]}"]')
+        expect(card).to_contain_text(c['label_zh'])
+        expect(card).to_contain_text('95% CI')
+    chosen = data['clusters'][-1]
+    page.locator(f'.ct-cluster-card[data-cluster-id="{chosen["id"]}"]').click()
+    expect(page.locator('.ct-cluster-card[aria-pressed="true"]')).to_have_attribute('data-cluster-id', chosen['id'])
+    radar = page.locator('.ct-defense .tactics-radar-wrap')
+    expect(radar).to_have_attribute('data-recipe-id', chosen['id'])
+    expect(radar.locator('path[data-kind="mean"]')).to_have_count(5)
+    if any(a['map'] == data['map'] and a['cluster_id'] == chosen['id'] for a in lab['attention']):
+        expect(radar.locator('path[data-kind="medoid"]')).to_have_count(5)
+    smoke.check(radar.locator('.ct-trajectory-path').evaluate_all(
+        "els => els.length > 0 && els.every(el => el.getAttribute('d').includes('L'))"),
+        'CT card selection draws real multi-snapshot trajectory paths on the existing radar')
+    replay_index = page.request.get(f'{smoke.base}/data/de_mirage/replay/index.json').json()
+    if any(p['cluster_id'] == chosen['id'] and p['round_num'] in replay_index.get(p['demo_id'], [])
+           for p in data['embedding']['points']):
+        expect(radar.locator('path[data-kind="sample"]').first).to_be_attached()
+        smoke.check(True, 'available CT replay sample trajectories are overlaid')
+    expect(page.locator('.ct-chi')).to_contain_text('χ²')
+    if data['chi_square']['caveat'] or (data['chi_square']['min_expected'] or 5) < 5:
+        expect(page.locator('.ct-chi .lab-warning')).to_be_visible()
+
+
+@route('#/teams-hub?team=falcons&map=de_mirage', '.team-fingerprint')
+def check_team_fingerprint(smoke: Smoke, page: Page) -> None:
+    data = page.request.get(f'{smoke.base}/data/de_mirage/ct_patterns.json').json()
+    fingerprint = next(f for f in data['fingerprints'] if f['team'].lower() == 'falcons')
+    panel = page.locator('.team-fingerprint')
+    expect(panel).to_have_attribute('data-n', str(fingerprint['n']))
+    expect(panel.locator('.fingerprint-row')).to_have_count(len(fingerprint['usage']))
+    for row in fingerprint['usage']:
+        item = panel.locator(f'.fingerprint-row[data-cluster-id="{row["cluster_id"]}"]')
+        actual = item.evaluate("el => [Number(el.dataset.share), Number(el.dataset.proShare)]")
+        smoke.check(abs(actual[0] - row['share']) < 1e-9 and abs(actual[1] - row['pro_share']) < 1e-9,
+                    f'fingerprint {row["cluster_id"]}: team and league bars use exported shares')
+    # Reload clears the app cache; test the inclusive visibility threshold in isolation.
+    pattern = '**/data/de_mirage/ct_patterns.json'
+    original_n = fingerprint['n']
+    try:
+        fingerprint['n'] = 30
+        mock_json(page, pattern, data)
+        page.reload()
+        expect(panel).to_have_attribute('data-n', '30')
+        page.unroute(pattern)
+        fingerprint['n'] = 29
+        mock_json(page, pattern, data)
+        with page.expect_response(lambda response: '/data/de_mirage/ct_patterns.json' in response.url):
+            page.reload()
+        page.wait_for_selector('.hub-map-context')
+        page.evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
+        expect(panel).to_have_count(0)
+        smoke.check(True, 'fingerprint is visible at 30 CT rounds and hidden below 30')
+    finally:
+        page.unroute(pattern)
+        fingerprint['n'] = original_n
+        page.reload()
+        expect(panel).to_have_attribute('data-n', str(original_n))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("base", nargs="?", default="http://localhost:4173")
     parser.add_argument("--shots", type=Path, help="save each route, including on exceptions")
+    parser.add_argument("--lab-only", action="store_true", help="check AI lab, CT defense and fingerprints using the current export")
     parser.add_argument("--orbit-only", action="store_true", help="check orbit navigation/layout with current data")
     args = parser.parse_args()
     cases = [case for case in ROUTES if case.test in (check_hub_orbit, check_hub_orbit_v4, check_hub_samples, check_cache_pages)] if args.orbit_only else None
+    if args.lab_only:
+        cases = [case for case in ROUTES if case.test in (check_ai_lab, check_ct_defense, check_team_fingerprint)]
     if args.shots:
         args.shots.mkdir(parents=True, exist_ok=True)
     root = Path(__file__).resolve().parents[1]
