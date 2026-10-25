@@ -1,7 +1,7 @@
 export const ORBIT_CARD_SIZE = { width: 196, height: 252 };
 // Matches the stacked hero logo/name/count in teams-hub.css.
 // The map preview stays below the stage so it cannot enlarge the exclusion box.
-export const ORBIT_CORE_SIZE = { width: 310, height: 290 };
+export const ORBIT_CORE_SIZE = { width: 230, height: 285 };
 
 export type OrbitNodeSize = { width: number; height: number };
 
@@ -22,7 +22,7 @@ export const EMPTY_MAP_GLOW = ORBIT_POOL[6][2];
 const SAMPLES = 2048;
 let cached: { key: string; scale: number; path: { x: number; y: number }[] } | undefined;
 export function orbitLayout(width: number, height: number, nodes: OrbitNodeSize[], phase = 0) {
-  const reserve = 1.05 * 1.08, gap = 16;
+  const reserve = 1.06, gap = 10;
   const maxWidth = Math.max(1, ...nodes.map(node => node.width));
   const maxHeight = Math.max(1, ...nodes.map(node => node.height));
   const key = `${width}:${height}:${maxWidth}:${maxHeight}:${nodes.length}`;
