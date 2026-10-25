@@ -19,15 +19,18 @@ def test_darkroom_synthetic_image(tmp_path, map_id):
     image = darkroom(source, map_id)
     assert image.size == (480, 600)
     assert image.mode == "RGB"
-    assert 20 < np.asarray(image).mean() < 85
-    assert np.asarray(image).max() <= 120
+    # Natural colours: neutral (untinted) and slightly darkened, never brighter than the source.
+    arr = np.asarray(image).astype(int)
+    assert 40 < arr.mean() < 235
+    assert arr.max() <= 230
+    assert np.abs(arr[..., 0] - arr[..., 2]).max() <= 2
     assert build_backgrounds(source_dir, output_dir, map_id) == []
     destination = output_dir / f"{map_id}.webp"
     assert destination.is_file()
     with Image.open(destination) as result:
         assert result.size == (480, 600)
         assert result.mode == "RGB"
-        assert np.asarray(result).max() <= 125
+        assert np.asarray(result).max() <= 235
     before = destination.read_bytes()
     build_backgrounds(source_dir, output_dir, map_id)
     assert destination.read_bytes() == before

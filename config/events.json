@@ -1,5 +1,5 @@
 {
-  "_note": "Event date ranges (main event). Source: esports.gg 'CS2 events in 2026: Full top-tier schedule' (fetched 2026-10-22). Keys are event slugs as found in raw paths; aliases map other spellings. Dates are inclusive, local event dates. Added 2026-10-22: Jan–May 2026 events + StarSeries Fall from the same esports.gg schedule; BLAST Bounty S1 finals 22–25 Jan and online stage ending 18 Jan per exitlag.com (online start approximate). Added 2026-10-24: EPL S23 (season from 27 Feb, finals 13–15 Mar 2026, esports.gg; stage-2 window = online part), Cologne Major stage 2 = whole major range, BLAST Bounty S2 finals 30 Jul–2 Aug (gamingmalta.org).",
+  "_note": "Event date ranges (main event). Source: esports.gg 'CS2 events in 2026: Full top-tier schedule' (fetched 2026-10-22). Keys are event slugs as found in raw paths; aliases map other spellings. Dates are inclusive, local event dates. Added 2026-10-22: Jan\u2013May 2026 events + StarSeries Fall from the same esports.gg schedule; BLAST Bounty S1 finals 22\u201325 Jan and online stage ending 18 Jan per exitlag.com (online start approximate). Added 2026-10-24: EPL S23 (season from 27 Feb, finals 13\u201315 Mar 2026, esports.gg; stage-2 window = online part), Cologne Major stage 2 = whole major range, BLAST Bounty S2 finals 30 Jul\u20132 Aug (gamingmalta.org).",
   "events": {
     "blast-bounty-2026-season-1": {
       "name": "BLAST Bounty 2026 Season 1 (online)",
@@ -12,12 +12,12 @@
       "end": "2026-01-25"
     },
     "iem-krakw-2026": {
-      "name": "IEM Kraków 2026",
+      "name": "IEM Krak\u00f3w 2026",
       "start": "2026-01-28",
       "end": "2026-02-08"
     },
     "iem-krakow-2026": {
-      "name": "IEM Kraków 2026",
+      "name": "IEM Krak\u00f3w 2026",
       "start": "2026-01-28",
       "end": "2026-02-08"
     },
@@ -120,6 +120,16 @@
       "name": "Thunderpick World Championship 2026",
       "start": "2026-10-14",
       "end": "2026-10-18"
+    },
+    "fissure-playground-3": {
+      "name": "FISSURE Playground 3",
+      "start": "2026-09-08",
+      "end": "2026-09-13"
+    },
+    "pgl-masters-bucharest-2026": {
+      "name": "PGL Masters Bucharest 2026",
+      "start": "2026-10-24",
+      "end": "2026-10-31"
     }
   }
 }

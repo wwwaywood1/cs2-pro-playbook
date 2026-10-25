@@ -1,0 +1,36 @@
+RESOLVED at export gate: all listed schedules are now configured. Original missing-event inventory follows.
+
+UNRESOLVED after the required 600-second pre-export wait, ended 2026-10-25T04:04:52.864109+00:00.
+Export proceeds with null dates for the 11 affected parsed maps. No dates were invented.
+Supply verified event schedules in config/events.json and re-export/copy to refresh date-filtered views.
+
+GPT-44 missing event schedules
+Generated 2026-10-25T04:04:52.863022+00:00
+Waiting up to ten minutes before export for valid start/end dates in config/events.json; unresolved dates remain null afterward.
+No dates were invented. HLTV match IDs are unavailable when archive members contain no numeric IDs.
+
+fissure-playground-3
+HLTV match IDs: unavailable (not encoded in archive/member names)
+Archives:
+  fissure-playground-3-furia-vs-g2-bo3-HjCesaOmEm1EmqlkTW_ubg.rar
+  fissure-playground-3-furia-vs-gamerlegion-bo3-ytYJtxdvVOKJPLQfvFobo1.rar
+  fissure-playground-3-legacy-vs-furia-bo3-tWbxU-NnclaZIA3C7t-cT1.rar
+  fissure-playground-3-parivision-vs-furia-bo3-oqaDRCoLbOjhqoalTClzFz.rar
+Demo IDs:
+  hltv-8d9250b0f5986345_legacy-vs-furia-m1-mirage
+  hltv-8d9250b0f5986345_legacy-vs-furia-m2-ancient
+  hltv-96233c2984baeded_furia-vs-gamerlegion-m1-cache
+  hltv-96233c2984baeded_furia-vs-gamerlegion-m2-mirage
+  hltv-96233c2984baeded_furia-vs-gamerlegion-m3-dust2
+  hltv-cf44247d0c38fe08_parivision-vs-furia-m1-ancient
+  hltv-cf44247d0c38fe08_parivision-vs-furia-m2-inferno
+  hltv-eb50b526f68f2787_furia-vs-g2-m1-ancient
+  hltv-eb50b526f68f2787_furia-vs-g2-m2-dust2
+
+pgl-masters-bucharest-2026
+HLTV match IDs: unavailable (not encoded in archive/member names)
+Archives:
+  pgl-masters-bucharest-2026-furia-vs-dendele-bo3-4fiS232Z31yAz9TtPWxxXN.rar
+Demo IDs:
+  hltv-83b84f3d951ae5a7_furia-vs-dendele-m1-ancient
+  hltv-83b84f3d951ae5a7_furia-vs-dendele-m2-inferno
