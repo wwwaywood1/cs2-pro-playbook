@@ -48,8 +48,7 @@
 .hub-compact-title { font-size: 1rem; line-height: 1.2; margin: 0 8px 0 0; }
 .hub-breadcrumbs .hub-close { margin-left: auto; }
 .hub-breadcrumbs button { font-size: .85rem; }
-.hub-stage { --hub-entry-x: 48px; min-width: 0; animation: hub-stage-in var(--duration-stage) var(--hub-ease) both; }
-.hub-stage[data-direction="back"] { --hub-entry-x: -48px; }
+.hub-stage { min-width: 0; }
 .hub-panel { position: relative; min-height: var(--hub-viewport); border: 1px solid var(--hub-border); border-radius: var(--radius-panel); padding: clamp(20px, 3vw, 48px); background: #08151f; isolation: isolate; }
 /* A finite light reveal and a quiet grid add depth without perpetual movement. */
 .hub-panel::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; background: radial-gradient(ellipse at 50% 0%, #9aafc70b, transparent 65%), repeating-linear-gradient(90deg, transparent 0 79px, #b6c5d207 79px 80px); animation: hub-light-in var(--duration-reveal) var(--hub-ease) both; }
@@ -179,7 +178,6 @@
 .hub-low { border-left: 2px solid var(--secondary); padding-left: 12px; color: var(--secondary); font-size: .85rem; }
 .hub-player-analysis .hub-low { margin: 4px 0 8px; }
 .hub-player-analysis > .hub-details { margin: 0; }
-@keyframes hub-stage-in { from { opacity: 0; transform: translateX(var(--hub-entry-x)) scale(.99); filter: blur(8px); } to { opacity: 1; transform: none; filter: blur(0); } }
 @keyframes hub-logo-in { from { opacity: 0; transform: scale(1.08); filter: blur(20px); } to { opacity: 1; transform: scale(1); } }
 @keyframes hub-card-in { from { opacity: 0; transform: translate3d(0, 36px, 0) rotateX(8deg); } to { opacity: 1; transform: none; } }
 @keyframes hub-portrait-in { from { opacity: 0; transform: translateY(32px); filter: blur(4px); } to { opacity: 1; transform: none; filter: blur(0); } }
@@ -433,21 +431,9 @@
 .hub-map-team-anchor { display: inline-flex; align-items: center; gap: 10px; vertical-align: middle; }
 .hub-map-team-anchor .hub-badge { width: 36px; height: 36px; }
 .hub-team-results { position: relative; margin-top: 0; }
-.hub-stage[data-shared="true"] { animation: none; view-transition-name: team-hub-stage; }
-.hub-stage[data-shared="true"] .hub-map-context .hub-kpis > * { animation: hub-map-unfold 240ms var(--hub-ease) 150ms backwards; }
-.hub-stage[data-shared="true"] .hub-map-context .hub-kpis > :nth-child(2) { animation-delay: 190ms; }
-.hub-stage[data-shared="true"] .hub-map-context .hub-kpis > :nth-child(3) { animation-delay: 230ms; }
-.hub-stage[data-shared="true"] .hub-map-context .hub-kpis > :nth-child(4) { animation-delay: 270ms; }
-.hub-stage[data-shared="true"] .hub-summary { animation: hub-map-unfold 240ms var(--hub-ease) 310ms backwards; }
-.hub-stage[data-shared="true"] .hub-player-card { animation: hub-map-unfold 240ms var(--hub-ease) calc(350ms + var(--stagger)) backwards; }
-::view-transition-group(team-hub-header), ::view-transition-group(team-map-header), ::view-transition-group(team-hub-stage) { animation-duration: 320ms; animation-timing-function: cubic-bezier(.2,.8,.2,1); }
-html:has(.hub-stage[data-shared="true"])::view-transition-old(team-hub-stage) { animation: hub-orbit-collapse 180ms ease-in both; }
-html:has(.hub-stage[data-shared="true"])::view-transition-new(team-hub-stage) { animation: hub-hud-in 320ms ease-out both; }
 @keyframes hub-orbit-spin { to { rotate: 360deg; } }
 @keyframes hub-ray-flow { to { stroke-dashoffset: -28; } }
 @keyframes hub-hud-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes hub-map-unfold { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes hub-orbit-collapse { to { opacity: 0; scale: .85; } }
 @media (min-width: 900px) and (max-height: 850px) {
   .hub-orbit .hub-orbit-core { gap: 8px; }
   .hub-team-anchor { gap: 8px; }
@@ -469,7 +455,7 @@ html:has(.hub-stage[data-shared="true"])::view-transition-new(team-hub-stage) { 
   .hub-page .hub-orbit-node { transform: none !important; translate: -50% -50% !important; }
   .hub-page .hub-orbit .hub-orbit-node > .map-card-bg { opacity: .16; }
   .hub-page .hub-orbit .hub-orbit-node[data-empty="false"]:is(:hover, :focus-visible) > .map-card-bg { opacity: .16; }
-  .hub-page .hub-orbit .hub-orbit-node > .card-scenic-bg { transform: none !important; filter: none !important; transition: none !important; }
+  .hub-page .hub-orbit .hub-orbit-node > .card-scenic-bg { transform: none !important; transition: none !important; }
   .hub-page .hub-orbit-ring { animation: none; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
@@ -558,10 +544,13 @@ html:has(.hub-stage[data-shared="true"])::view-transition-new(team-hub-stage) { 
   box-shadow: 0 12px 32px -8px rgba(0,0,0,.8);
 }
 @media (min-width: 900px) {
-  /* Recover 30px for the orbit without pushing its bottom below the viewport. */
+  /* Preserve fitted card sizes: +28px stage, -28px of space above it. */
+  .main:has(.hub-orbit) { padding-top: 0; }
+  .hub-team-panel { padding-top: 0; }
   .hub-orbit-intro { display: flex; align-items: baseline; justify-content: center; gap: 12px; }
   .hub-orbit-intro h3 { margin: 0; }
-  .hub-orbit { height: calc(100svh - 170px); margin-top: 4px; }
+  .hub-orbit { height: calc(100svh - 142px); margin-top: 0; }
+  .hub-page .hub-results-toggle { min-height: 24px; padding: 0 8px; font-size: .8rem; white-space: nowrap; }
   /* Stacked hero bounds shared with ORBIT_CORE_SIZE. */
   .hub-orbit .hub-orbit-core {
     width: 230px; height: 285px; grid-template-columns: minmax(0, 1fr);
@@ -581,3 +570,31 @@ html:has(.hub-stage[data-shared="true"])::view-transition-new(team-hub-stage) { 
 .hub-orbit-inspector { min-height: 106px; padding: 8px 16px; text-align: center; }
 .hub-orbit-inspector .hub-orbit-preview { max-width: 320px; margin: 0 auto 4px; }
 .hub-orbit-inspector > small { font-size: .72rem; color: #a8c5b5; }
+
+/* Empty maps remain visibly inactive even when focused or motion is reduced. */
+.hub-page .hub-orbit .hub-orbit-node[data-empty="true"] > :is(.card-scenic-bg, .map-card-bg, .map-landmark-art) {
+  filter: grayscale(100%) brightness(.35);
+}
+.hub-map-skeleton { padding: 16px 0; }
+.hub-skeleton-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.hub-skeleton-stats > span { height: 90px; border-radius: 12px; background: #ffffff08; }
+.hub-player-skeleton { display: grid; gap: 12px; padding: 16px; border: 1px solid #ffffff12; border-radius: 12px; background: #ffffff04; }
+.hub-portrait-skeleton { display: block; height: 220px; border-radius: 8px; background: linear-gradient(135deg, #ffffff06, #ffffff12); }
+.hub-player-skeleton > span:last-child { height: 20px; width: 60%; background: #ffffff0a; border-radius: 4px; }
+
+.hub-results-toggle { scroll-margin-top: 90px; }
+.hub-team-results { scroll-margin-top: calc(var(--topbar-height, 72px) + 16px); }
+
+/* Cross-fade complete scenes in place; titles and badges have no separate names. */
+:root:has(.hub-stage) { view-transition-name: none; }
+.hub-stage { view-transition-name: hub-scene; }
+::view-transition-group(hub-scene) { animation: none; }
+::view-transition-old(hub-scene) { animation: hub-scene-out 180ms linear both; }
+::view-transition-new(hub-scene) { animation: hub-scene-in 180ms linear both; }
+@keyframes hub-scene-out { to { opacity: 0; } }
+@keyframes hub-scene-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .hub-stage { view-transition-name: none; }
+}
+
+.hub-asset-skeleton { position: absolute; inset: 0; border-radius: 8px; background: linear-gradient(135deg, #ffffff06, #ffffff12); }

@@ -760,9 +760,9 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
         const rays = [...document.querySelectorAll('.hub-orbit-rays g > line:first-child')];
         const breadcrumbs = box(document.querySelector('.hub-breadcrumbs')), topbar = box(document.querySelector('.topbar'));
         const rayAligned = rays.every((line, i) => Math.abs(line.x2.baseVal.value - (nodes[i].left + nodes[i].width / 2 - stage.left)) < 1 && Math.abs(line.y2.baseVal.value - (nodes[i].top + nodes[i].height / 2 - stage.top)) < 1);
-        return {previewBelow: inspector.top >= stage.bottom - 1, coreOverlaps, undersized, scrollY, breadcrumbs, topbar, rayAligned, breadcrumbVisible: breadcrumbs.top >= topbar.bottom && breadcrumbs.bottom <= innerHeight, nodes, stage, intersections, gaps, outside, viewportOutside, contentOutside, styles,
+        return {bottomClearance: stage.bottom - Math.max(...nodes.map(n => n.bottom)), resultsToggle: box(document.querySelector('.hub-results-toggle')), previewBelow: inspector.top >= stage.bottom - 1, coreOverlaps, undersized, scrollY, breadcrumbs, topbar, rayAligned, breadcrumbVisible: breadcrumbs.top >= topbar.bottom && breadcrumbs.bottom <= innerHeight, nodes, stage, intersections, gaps, outside, viewportOutside, contentOutside, styles,
             introGap: Math.min(...nodes.map(n => n.top)) - intro.bottom,
-            stacked: badge.bottom <= name.top + 1 && name.bottom <= hud.top + 1 && badge.height >= 170 && badge.height <= 180 && parseFloat(getComputedStyle(coreEl.querySelector('h2')).fontSize) >= 32 && core.width <= 301 && core.height <= 261 && hud.bottom <= core.bottom + 1 && [badge, name, hud].every(r => Math.abs((r.left + r.right) / 2 - (core.left + core.right) / 2) <= 1),
+            stacked: badge.bottom <= name.top + 1 && name.bottom <= hud.top + 1 && Math.abs(badge.height - 206) <= 1 && parseFloat(getComputedStyle(coreEl.querySelector('h2')).fontSize) >= 32 && Math.abs(core.width - 230) <= 1 && Math.abs(core.height - 285) <= 1 && hud.bottom <= core.bottom + 1 && [badge, name, hud].every(r => Math.abs((r.left + r.right) / 2 - (core.left + core.right) / 2) <= 1),
             transparent: [coreEl, coreEl.parentElement, coreEl.querySelector('.hub-team-anchor'), coreEl.querySelector('.hub-orbit-hud')].every(el => {
                 const css = getComputedStyle(el);
                 return css.backgroundImage === 'none' && css.backgroundColor === 'rgba(0, 0, 0, 0)' &&
@@ -775,8 +775,10 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
     }""")
     diagnostics = json.dumps(report, ensure_ascii=False)
     valid = (not any(report[key] for key in ('coreOverlaps', 'undersized', 'intersections', 'gaps', 'outside', 'viewportOutside', 'contentOutside', 'styles'))
-             and report['introGap'] >= 16 and report['overflow'] <= 0
+             and report['bottomClearance'] >= 15.5 and report['introGap'] >= 16 and report['overflow'] <= 0
              and report['previewBelow'] and report['stacked'] and report['shielded'] and report['transparent'] and report['rayAligned'] and report['breadcrumbVisible'])
+    if page.viewport_size == {'width': 1440, 'height': 900} and page.evaluate('scrollY') == 0:
+        smoke.check(0 <= report['resultsToggle']['top'] and report['resultsToggle']['bottom'] <= 900, '1440x900: recent-results toggle stays visible in the first screen')
     smoke.check(valid, f'{label}: seven nodes fit with 16px gaps, aligned rays, visible breadcrumbs and transparent core'
                 + (f': {diagnostics}' if not valid else ''))
 
@@ -810,7 +812,7 @@ def check_orbit_backdrops(smoke: Smoke, page: Page) -> None:
         expect(page.locator('.map-card-bg')).to_have_count(0)
         smoke.check(page.locator('.card-scenic-bg').evaluate_all(r"""els => els.every(el =>
             getComputedStyle(el).opacity === '1' &&
-            getComputedStyle(el).filter === 'none' &&
+            (getComputedStyle(el).filter === (el.parentElement.dataset.empty === 'true' ? 'grayscale(1) brightness(0.35)' : 'none')) &&
             getComputedStyle(el).maskImage === 'none' &&
             Math.abs(parseFloat(getComputedStyle(el).height) - el.parentElement.clientHeight * .55) < 1 &&
             (getComputedStyle(el.parentElement, '::before').backgroundImage.match(/rgba?\([^)]+\)/g) || []).every(colour => {
@@ -818,12 +820,12 @@ def check_orbit_backdrops(smoke: Smoke, page: Page) -> None:
                 return values[3] === 0 || values.slice(0, 3).join(',') === '8,12,16';
             }) &&
             getComputedStyle(el.parentElement.querySelector('.map-landmark-art')).visibility === 'hidden')"""),
-            'owner photographs occupy 55% at full opacity with no filter, mask or colour wash')
+            'photos occupy 55%; empty maps alone are grayscale and darkened')
         page.locator('#hub-map-de_mirage').focus()
         smoke.check(page.locator('.card-scenic-bg').evaluate_all('''els => els.every(el =>
-            getComputedStyle(el).filter === 'none' && getComputedStyle(el).opacity === '1' &&
+            (getComputedStyle(el).filter === (el.parentElement.dataset.empty === 'true' ? 'grayscale(1) brightness(0.35)' : 'none')) && getComputedStyle(el).opacity === '1' &&
             getComputedStyle(el.parentElement).opacity === '1')'''),
-            'focusing a card keeps every photograph at natural colour and opacity')
+            'focusing a card preserves grayscale empty maps and natural active photographs')
         page.unroute(photo_pattern)
         page.route(photo_pattern, lambda intercepted: intercepted.fulfill(body=b'not an image', content_type='image/webp'))
         page.reload()
@@ -1088,10 +1090,9 @@ def check_hub_orbit(smoke: Smoke, page: Page) -> None:
     }""")
     smoke.check(wraps, 'signature preview wraps to two lines below the orbit')
     card.focus()
-    supports_shared = page.evaluate("typeof document.startViewTransition === 'function'")
     page.keyboard.press('Enter')
     page.wait_for_selector('.hub-player-card')
-    expect(page.locator('.hub-stage')).to_have_attribute('data-shared', str(supports_shared).lower())
+    expect(page.locator('.hub-stage')).to_have_css('view-transition-name', 'hub-scene')
     smoke.check('map=de_mirage' in page.url, 'Enter opens the focused map via HashRouter')
     page.keyboard.press('Escape')
     expect(card).to_be_focused()
@@ -1112,7 +1113,7 @@ def check_hub_orbit(smoke: Smoke, page: Page) -> None:
     page.emulate_media(reduced_motion='reduce')
     page.keyboard.press('Enter')
     page.wait_for_selector('.hub-player-card')
-    expect(page.locator('.hub-stage')).to_have_attribute('data-shared', 'false')
+    expect(page.locator('.hub-stage')).to_have_css('view-transition-name', 'none')
     page.keyboard.press('Escape')
     expect(card).to_be_focused()
     smoke.check(True, 'reduced motion swaps instantly and preserves return focus')
@@ -1120,10 +1121,10 @@ def check_hub_orbit(smoke: Smoke, page: Page) -> None:
     page.evaluate('document.startViewTransition = undefined')
     page.keyboard.press('Enter')
     page.wait_for_selector('.hub-player-card')
-    expect(page.locator('.hub-stage')).to_have_attribute('data-shared', 'false')
+    expect(page.locator('.hub-stage')).to_have_css('view-transition-name', 'hub-scene')
     page.keyboard.press('Escape')
     expect(card).to_be_focused()
-    smoke.check(True, 'unsupported View Transitions API uses the existing slide fallback')
+    smoke.check(True, 'unsupported View Transitions API commits immediately with a 180ms opacity entrance')
 
 
 @route('#/teams-hub?team=vitality&map=de_mirage', '.hub-player-card')
@@ -1628,10 +1629,9 @@ def check_ai_lab(smoke: Smoke, page: Page) -> None:
     smoke.check(page.locator('.lab-reference').evaluate_all("els => els.map(el => el.dataset.referenceId)") ==
                 [r['id'] for r in data['references']], 'AI lab references exactly match the verified export')
     expect(page.locator('.lab-paper-note')).to_contain_text('论文结论（Dust2）')
-    expect(page.locator('.lab-paper-note')).to_contain_text('TAGNet 仅在 Dust2 上进行了验证（697 个回合）')
+    smoke.check(data['metadata']['paper_scope'].split('(')[1].split(' rounds')[0] in page.locator('.lab-paper-note').inner_text(), 'paper sample count comes from the export')
     expect(page.locator('.lab-paper-note')).to_contain_text('下方结果均由本项目的比赛录像计算得出')
     expect(page.locator('.lab-limitations')).to_contain_text('回放中的 T 控图率是独立观测指标')
-    expect(page.locator('.lab-limitations')).to_contain_text('因此归因为零')
     expect(page.locator('.lab-method').last).to_contain_text('轻量标准化、主成分分析与 K 均值聚类')
     expect(page.locator('.lab-references a')).to_have_text([r['title'] for r in data['references']])
     smoke.check(True, 'paper claims are confined to a distinct Dust2 note')
@@ -1641,8 +1641,40 @@ def check_ai_lab(smoke: Smoke, page: Page) -> None:
         page.keyboard.press('End')
     residual = float(page.locator('.shap-additivity').get_attribute('data-residual'))
     smoke.check(abs(residual) < 1e-6, 'SHAP grouped contributions remain additive after scrubbing')
-    for group in ('active_utility', 'positional_spread_pinch'):
-        expect(page.locator(f'.shap-row[data-group="{group}"]')).to_have_attribute('data-value', '0')
+    active_groups = data['shap'].get('active_groups', [g for g in data['shap']['groups']
+        if any(state['shap_values'].get(g, 0) != 0 for r in data['shap']['rounds'] for state in r['states'])])
+    smoke.check(page.locator('.shap-row').evaluate_all("els => els.map(el => el.dataset.group)") == active_groups,
+                'SHAP renders only exported active groups, or nonzero groups for legacy data')
+    if data['shap'].get('inactive_groups_note_zh'):
+        expect(page.locator('.shap-inactive-note')).to_have_text(data['shap']['inactive_groups_note_zh'])
+    accuracy = data.get('model_accuracy')
+    if accuracy:
+        expected = f"{accuracy['folds']} 折按比赛留出验证 · {accuracy['matches']} 场比赛 · {accuracy['rows']:,} 个秒级状态"
+        expect(page.locator('[data-lab-panel=references]')).to_contain_text(expected)
+        smoke.check(True, 'all validation sample counts match model_accuracy JSON')
+    patterns = page.request.get(f'{smoke.base}/data/de_mirage/ct_patterns.json').json()
+    replay_index = page.request.get(f'{smoke.base}/data/de_mirage/replay/index.json').json()
+    points = patterns['embedding']['points']
+    expect(page.locator('.lab-cloud circle')).to_have_count(len(points))
+    unavailable = [i for i, point in enumerate(points) if not point.get('replay_available',
+                   point['round_num'] in replay_index.get(point['demo_id'], []))]
+    expect(page.locator('.lab-cloud circle[aria-disabled=true]')).to_have_count(len(unavailable))
+    if unavailable:
+        dot = page.locator('.lab-cloud circle').nth(unavailable[0])
+        expect(dot.locator('title')).to_contain_text('无回放')
+        smoke.check(float(dot.get_attribute('opacity')) < .2, 'unavailable scatter points are dimmed')
+        selected = page.get_by_label('键盘选择样本')
+        before = selected.input_value()
+        dot.dispatch_event('click')
+        smoke.check(selected.input_value() == before, 'unavailable scatter clicks cannot change the selected round')
+        expect(selected.locator('option').nth(unavailable[0] + 1)).to_be_disabled()
+    available = next((i for i in range(len(points)) if i not in set(unavailable)), None)
+    if available is not None:
+        page.locator('.lab-cloud circle').nth(available).focus()
+        page.keyboard.press('Enter')
+        point = points[available]
+        expect(page.get_by_label('键盘选择样本')).to_have_value(f"{point['demo_id']}:{point['round_num']}:{point['team']}")
+    smoke.check('未导出此回合回放' not in page.inner_text('body'), 'medoids never lead to the missing-replay dead end')
     control = data['control']
     if control:
         expect(page.locator('.lab-control-radar [data-cell]')).to_have_count(
@@ -1674,20 +1706,84 @@ def check_ct_defense(smoke: Smoke, page: Page) -> None:
     expect(page.locator('.ct-cluster-card[aria-pressed="true"]')).to_have_attribute('data-cluster-id', chosen['id'])
     radar = page.locator('.ct-defense .tactics-radar-wrap')
     expect(radar).to_have_attribute('data-recipe-id', chosen['id'])
-    expect(radar.locator('path[data-kind="mean"]')).to_have_count(5)
+    expect(radar.locator('path[data-kind="mean"]')).to_have_count(0)
     if any(a['map'] == data['map'] and a['cluster_id'] == chosen['id'] for a in lab['attention']):
         expect(radar.locator('path[data-kind="medoid"]')).to_have_count(5)
+        expect(radar.locator('.ct-medoid circle')).to_have_count(10)
+        expect(radar.locator('.ct-medoid circle[data-time="10"]')).to_have_count(5)
+        expect(radar.locator('.ct-medoid circle[data-time="20"]')).to_have_count(5)
     smoke.check(radar.locator('.ct-trajectory-path').evaluate_all(
         "els => els.length > 0 && els.every(el => el.getAttribute('d').includes('L'))"),
         'CT card selection draws real multi-snapshot trajectory paths on the existing radar')
-    replay_index = page.request.get(f'{smoke.base}/data/de_mirage/replay/index.json').json()
-    if any(p['cluster_id'] == chosen['id'] and p['round_num'] in replay_index.get(p['demo_id'], [])
-           for p in data['embedding']['points']):
-        expect(radar.locator('path[data-kind="sample"]').first).to_be_attached()
-        smoke.check(True, 'available CT replay sample trajectories are overlaid')
-    expect(page.locator('.ct-chi')).to_contain_text('χ²')
+    expect(radar.locator('path[data-kind="sample"]')).to_have_count(0)
+    toggle = page.get_by_role('checkbox', name='叠加簇均值轨迹', exact=True)
+    expect(toggle).not_to_be_checked()
+    toggle.check()
+    expect(radar.locator('path[data-kind="mean"]')).to_have_count(5)
+    expect(radar.locator('path[data-kind="sample"]')).to_have_count(0)
+    toggle.uncheck()
+    expect(radar.locator('path[data-kind="mean"]')).to_have_count(0)
+    smoke.check(True, 'default CT radar has medoid endpoints only; mean overlay is opt-in and samples are absent')
+    chi = data['chi_square']
+    expect(page.locator('.ct-chi')).to_contain_text(f"χ² = {chi['statistic']:.2f} · df = {chi['dof']}")
+    if chi.get('p_display'):
+        expect(page.locator('.ct-chi')).to_contain_text(chi['p_display'])
+    elif chi['p'] < 1e-4:
+        expect(page.locator('.ct-chi')).to_contain_text('p < 0.0001')
+    if chi.get('cramers_v') is not None:
+        expect(page.locator('.ct-chi')).to_contain_text(f"Cramér's V = {chi['cramers_v']:.2f}")
+    excluded = data['metadata'].get('excluded_pistol_rounds')
+    if excluded is not None:
+        expect(page.locator('.ct-pistol-note')).to_have_text(f'已排除手枪局 {excluded:,} 回合')
     if data['chi_square']['caveat'] or (data['chi_square']['min_expected'] or 5) < 5:
         expect(page.locator('.ct-chi .lab-warning')).to_be_visible()
+
+
+@route('#/lab', '.ai-lab-page')
+def check_lab_legacy_v41(smoke: Smoke, page: Page) -> None:
+    """Exercise compatibility even when the real export already has new fields."""
+    lab = page.request.get(f'{smoke.base}/data/ai_lab.json').json()
+    patterns = page.request.get(f'{smoke.base}/data/de_mirage/ct_patterns.json').json()
+    lab['shap'].pop('active_groups', None)
+    lab['shap'].pop('inactive_groups_note_zh', None)
+    for sample in lab['shap']['rounds']:
+        for state in sample['states']:
+            state['shap_values']['active_utility'] = 0
+            state['shap_values']['positional_spread_pinch'] = 0
+    # A later nonzero example keeps the group visible in the first state too.
+    lab['shap']['rounds'][-1]['states'][-1]['shap_values']['active_utility'] = .1
+    lab['model_accuracy'].update(folds=7, matches=321, rows=123456)
+    patterns['embedding']['points'][0]['replay_available'] = False
+    patterns['chi_square'].pop('p_display', None)
+    patterns['chi_square'].pop('cramers_v', None)
+    patterns['chi_square']['p'] = 1e-107
+    patterns['metadata'].pop('excluded_pistol_rounds', None)
+    lab_pattern, ct_pattern = '**/data/ai_lab.json', '**/data/de_mirage/ct_patterns.json'
+    try:
+        mock_json(page, lab_pattern, lab)
+        mock_json(page, ct_pattern, patterns)
+        page.reload()
+        expect(page.locator('.shap-row[data-group=active_utility]')).to_have_count(1)
+        expect(page.locator('.shap-row[data-group=positional_spread_pinch]')).to_have_count(0)
+        expect(page.locator('[data-lab-panel=references]')).to_contain_text(
+            '7 折按比赛留出验证 · 321 场比赛 · 123,456 个秒级状态')
+        dot = page.locator('.lab-cloud circle').first
+        expect(dot).to_have_attribute('aria-disabled', 'true')
+        dot.dispatch_event('click')
+        expect(page.get_by_label('键盘选择样本')).to_have_value('')
+        page.goto(f'{smoke.base}/#/de_mirage/tactics?side=CT')
+        expect(page.locator('.ct-chi')).to_contain_text('p < 0.0001')
+        observed = patterns['chi_square'].get('observed', [])
+        n = sum(sum(row) for row in observed)
+        dimension = min(len(observed) - 1, len(observed[0]) - 1) if observed else 0
+        if n > 0 and dimension > 0:
+            effect = (patterns['chi_square']['statistic'] / (n * dimension)) ** .5
+            expect(page.locator('.ct-chi')).to_contain_text(f"Cramér's V = {effect:.2f}")
+        expect(page.locator('.ct-pistol-note')).to_have_count(0)
+        smoke.check(True, 'legacy fields fall back across all SHAP examples, replay gating, dynamic validation and CT statistics')
+    finally:
+        page.unroute(lab_pattern)
+        page.unroute(ct_pattern)
 
 
 @route('#/teams-hub?team=falcons&map=de_mirage', '.team-fingerprint')
@@ -1702,6 +1798,23 @@ def check_team_fingerprint(smoke: Smoke, page: Page) -> None:
         actual = item.evaluate("el => [Number(el.dataset.share), Number(el.dataset.proShare)]")
         smoke.check(abs(actual[0] - row['share']) < 1e-9 and abs(actual[1] - row['pro_share']) < 1e-9,
                     f'fingerprint {row["cluster_id"]}: team and league bars use exported shares')
+    profile = page.request.get(f'{smoke.base}/data/de_mirage/teams/falcons.json').json()
+    recipes = len({r['value'] for r in profile.get('tactics', {}).get('T', {}).get('recipes', [])})
+    summary = page.locator('.hub-team-basis > summary')
+    smoke.check('数据依据（0 条）' not in summary.inner_text(), 'team map never presents zero evidence as a basis')
+    if recipes:
+        expect(summary).to_contain_text(f'收录 {recipes} 套进攻套路')
+    if data['clusters']:
+        expect(summary).to_contain_text(f"{len(data['clusters'])} 类 CT 阵型")
+    profile_pattern = '**/data/de_mirage/teams/falcons.json'
+    profile['insights'] = []
+    try:
+        mock_json(page, profile_pattern, profile)
+        page.reload()
+        expect(summary).to_contain_text(f"{len(data['clusters'])} 类 CT 阵型")
+        smoke.check('数据依据（0 条）' not in summary.inner_text(), 'empty evidence retains real tactical coverage counts')
+    finally:
+        page.unroute(profile_pattern)
     # Reload clears the app cache; test the inclusive visibility threshold in isolation.
     pattern = '**/data/de_mirage/ct_patterns.json'
     original_n = fingerprint['n']
@@ -1726,6 +1839,76 @@ def check_team_fingerprint(smoke: Smoke, page: Page) -> None:
         expect(panel).to_have_attribute('data-n', str(original_n))
 
 
+@route('#/teams-hub?team=vitality', '.hub-orbit-node')
+def check_hub_map_loading_v41(smoke: Smoke, page: Page) -> None:
+    held = []
+    pattern = '**/data/de_mirage/heatmaps/teams/vitality.json'
+    page.route(pattern, lambda intercepted: held.append(intercepted))
+    page.evaluate("""() => {
+        window.hubClickAt = performance.now();
+        window.hubShellDelay = null;
+        window.hubFadeDurations = [];
+        window.hubOriginalTransition = document.startViewTransition;
+        window.hubOriginalAnimate = Element.prototype.animate;
+        if (document.startViewTransition) {
+            document.startViewTransition = function(update) {
+                const transition = window.hubOriginalTransition.call(this, update);
+                transition.ready.then(() => {
+                    window.hubFadeDurations = document.getAnimations()
+                        .filter(a => ['hub-scene-in', 'hub-scene-out'].includes(a.animationName))
+                        .map(a => a.effect.getTiming().duration);
+                }).catch(() => {});
+                return transition;
+            };
+        } else {
+            Element.prototype.animate = function(frames, options) {
+                if (this.classList.contains('hub-stage')) window.hubFadeDurations.push(options.duration);
+                return window.hubOriginalAnimate.call(this, frames, options);
+            };
+        }
+        window.hubShellObserver = new MutationObserver(() => {
+            if (document.querySelector('.hub-map-skeleton')) {
+                window.hubShellDelay = performance.now() - window.hubClickAt;
+                window.hubShellObserver.disconnect();
+            }
+        });
+        window.hubShellObserver.observe(document.body, {childList:true, subtree:true});
+    }""")
+    try:
+        page.locator('#hub-map-de_mirage').dispatch_event('click')
+        expect(page.locator('.hub-map-panel')).to_be_visible()
+        expect(page.locator('.hub-player-skeleton')).to_have_count(5)
+        expect(page.locator('.hub-map-panel .loading')).to_have_count(0)
+        expect(page.locator('.hub-orbit-core')).to_have_count(0)
+        expect(page.locator('.hub-section-head h2')).to_have_count(1)
+        delay = page.evaluate('window.hubShellDelay')
+        smoke.check(delay is not None and delay <= 200,
+                    f'slow data: destination shell appears within 200ms ({delay}ms), with portraits and one title')
+        smoke.check(page.locator('.hub-section-head [style*=view-transition-name]').count() == 0,
+                    'team/map titles do not fly independently of the scene')
+        page.wait_for_function('window.hubFadeDurations.length > 0')
+        durations = page.evaluate('window.hubFadeDurations')
+        smoke.check(all(duration == 180 for duration in durations),
+                    f'actual scene fade animations use 180ms opacity timing: {durations}')
+        for intercepted in held:
+            intercepted.continue_()
+        page.unroute(pattern)
+        page.wait_for_selector('.hub-player-card')
+        page.keyboard.press('Escape')
+        expect(page.locator('#hub-map-de_mirage')).to_be_focused()
+        page.emulate_media(reduced_motion='reduce')
+        page.locator('#hub-map-de_mirage').dispatch_event('click')
+        expect(page.locator('.hub-stage')).to_have_css('view-transition-name', 'none')
+        smoke.check(True, 'reduced-motion map swap is instant and return focus survives the fade')
+    finally:
+        page.unroute(pattern)
+        page.evaluate('''() => {
+            window.hubShellObserver?.disconnect();
+            if (window.hubOriginalTransition) document.startViewTransition = window.hubOriginalTransition;
+            Element.prototype.animate = window.hubOriginalAnimate;
+        }''')
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("base", nargs="?", default="http://localhost:4173")
@@ -1733,9 +1916,9 @@ def main() -> int:
     parser.add_argument("--lab-only", action="store_true", help="check AI lab, CT defense and fingerprints using the current export")
     parser.add_argument("--orbit-only", action="store_true", help="check orbit navigation/layout with current data")
     args = parser.parse_args()
-    cases = [case for case in ROUTES if case.test in (check_hub_orbit, check_hub_orbit_v4, check_hub_samples, check_cache_pages)] if args.orbit_only else None
+    cases = [case for case in ROUTES if case.test in (check_hub_orbit, check_hub_orbit_v4, check_hub_samples, check_cache_pages, check_hub_map_loading_v41)] if args.orbit_only else None
     if args.lab_only:
-        cases = [case for case in ROUTES if case.test in (check_ai_lab, check_ct_defense, check_team_fingerprint)]
+        cases = [case for case in ROUTES if case.test in (check_ai_lab, check_lab_legacy_v41, check_ct_defense, check_team_fingerprint)]
     if args.shots:
         args.shots.mkdir(parents=True, exist_ok=True)
     root = Path(__file__).resolve().parents[1]

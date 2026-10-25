@@ -13,6 +13,9 @@
 .lab-attention-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 16px; }
 .lab-cloud { display: block; width: 100%; background: #08151f; border: 1px solid var(--border); border-radius: 10px; }
 .lab-cloud circle { cursor: pointer; }
+.lab-cloud circle[aria-disabled="true"] { cursor: not-allowed; }
+.shap-inactive-note { font-size: .78rem; color: var(--ink-muted); }
+.ct-defense .ct-mean-toggle { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .lab-paper-note { border: 1px solid #d8ad6d; border-left: 4px solid #d8ad6d; border-radius: 8px; background: #d8ad6d12; padding: 14px; margin-top: 18px; color: #ebcb99; }
 .lab-paper-note p { margin-bottom: 0; }
 .lab-method, .lab-provenance { font-size: .78rem; color: var(--ink-muted); overflow-wrap: anywhere; }

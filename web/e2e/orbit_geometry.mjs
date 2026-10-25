@@ -9,7 +9,7 @@ const { orbitLayout, orbitStats, ORBIT_CARD_SIZE, ORBIT_CORE_SIZE, orbitRate } =
 let layouts = 0;
 // Include the measured stage budgets at both requested desktop viewports.
 for (const width of [900, 960, 1000, 1050, 1100, 1144, 1150, 1200, 1280, 1296]) {
-  for (const height of [435, 570, 600, 670, 700]) {
+  for (const height of [435, 570, 600, 658, 670, 700, 758]) {
     const node = { width: ORBIT_CARD_SIZE.width + 1, height: ORBIT_CARD_SIZE.height + 1 };
     const nodes = Array(7).fill(node);
     for (let degree = 0; degree < 360; degree++) {
@@ -17,7 +17,8 @@ for (const width of [900, 960, 1000, 1050, 1100, 1144, 1150, 1200, 1280, 1296]) 
       for (const [i, a] of points.entries()) {
         const aw = node.width * a.scale * 1.0, ah = node.height * a.scale * 1.0;
         assert(a.x - aw / 2 >= 9.99 && a.x + aw / 2 <= width - 9.99);
-        assert(a.y - ah / 2 >= 9.99 && a.y + ah / 2 <= height - 9.99);
+        assert(a.y - ah / 2 >= 15.99 && a.y + ah / 2 <= height - 15.99);
+        assert(height - (a.y + ah * 1.08 / 2) >= 15.99, `${width}x${height}: hover must retain 16px bottom clearance`);
         assert(Math.max(Math.abs(a.x - width / 2) - (aw + ORBIT_CORE_SIZE.width) / 2,
                         Math.abs(a.y - height / 2) - (ah + ORBIT_CORE_SIZE.height) / 2) >= 9.99,
                `${width}x${height} phase ${degree}: card overlaps the centre logo/name/count`);
@@ -35,13 +36,23 @@ for (const width of [900, 960, 1000, 1050, 1100, 1144, 1150, 1200, 1280, 1296]) 
 assert.deepEqual(ORBIT_CARD_SIZE, { width: 196, height: 252 });
 assert.deepEqual(ORBIT_CORE_SIZE, { width: 230, height: 285 });
 for (const [viewport, width, height, minimum] of [
-  ['1440x900', 1296, 730, 140], ['1280x800', 1144, 630, 100],
+  ['1440x900', 1296, 758, 140], ['1280x800', 1144, 658, 100],
 ]) {
   const { scale } = orbitLayout(width, height, Array(7).fill({ width: 197, height: 253 }));
   const rendered = ORBIT_CARD_SIZE.width * scale;
   assert(rendered >= minimum && rendered <= 196, `${viewport}: rendered width ${rendered}`);
   console.log(`PASS: ${viewport}: ${rendered.toFixed(1)}x${(252 * scale).toFixed(1)}px at middle depth, full 230x285 hero clearance`);
 }
+// Recovering 28px above the stage exactly offsets the larger vertical margin.
+// Compare with the former fit so clearance cannot silently shrink existing cards.
+const previousSource = source.replace('(height - cardHeight) / 2 - 24', '(height - cardHeight) / 2 - gap');
+const { orbitLayout: previousLayout } = await import('data:text/javascript;base64,' + Buffer.from(ts.transpile(previousSource, { module: ts.ModuleKind.ES2022 })).toString('base64'));
+for (const [width, before, after] of [[1296, 730, 758], [1144, 630, 658]]) {
+  const nodes = Array(7).fill({width: 197, height: 253});
+  assert.equal(orbitLayout(width, after, nodes).scale, previousLayout(width, before, nodes).scale,
+    'v4.1 must preserve the former fitted card size');
+}
+console.log('PASS: 16px bottom clearance including hover; desktop fitted sizes unchanged');
 const maps = [
   { map: 'de_ancient', n_matches: 2, map_win_rate: 1 },
   { map: 'de_dust2', n_matches: 38, map_win_rate: .84 },

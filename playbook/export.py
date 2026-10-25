@@ -569,7 +569,6 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         print(f"win probability: accuracy {m['model']['accuracy']:.3f} (baseline {m['baseline_alive_time']['accuracy']:.3f}),"
               f" log loss {m['model']['log_loss']:.3f}, {m['matches']} matches")
         _write(out_dir / "winprob_metrics.json", m)
-    ai_lab.export(t, out_dir, wpr)
     export_player_quotes(ROOT / "config" / "player_quotes.json", out_dir)
     export_asset_slots(ROOT / "web" / "public", out_dir)
     team_maps: dict[str, list[dict]] = {}
@@ -655,6 +654,8 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
             **map_card_summary(sub["team_rounds"], res["recipes"]),
         })
         print(f"  {map_name}: {len(ids)} matches, {len(teams)} teams, {len(players)} players, {len(lineups)} lineups")
+    # Lab medoids extend the completed replay indices; export them last.
+    ai_lab.export(t, out_dir, wpr)
     _write(out_dir / "index.json", index)
     _write(out_dir / "heatmap_teams.json", heatmap_team_index(t["player_rounds"], order, team_maps))
     print(f"site data -> {out_dir}")

@@ -13,7 +13,6 @@ const PHASES: Record<string, string> = { round_start: "开局", before_execute: 
 
 // Translate exported explanatory copy at the presentation boundary; preserve data and citations.
 const LAB_COPY_ZH: Record<string, string> = {
-  "TAGNet was validated on Dust2 only (697 rounds); this project applies a lightweight method to all parsed maps. Results below are computed from our demos.": "TAGNet 仅在 Dust2 上进行了验证（697 个回合）；本项目将轻量方法应用于所有已解析地图。下方结果均由本项目的比赛录像计算得出。",
   "Distance kernel, not learned attention; self edges included; tau=0.25": "基于距离的核权重，并非学习得到的注意力；包含自连接；温度参数 τ=0.25",
   "Existing model uses lane occupancies as spatial inputs; replay t_control is observed separately and is not a model feature.": "现有模型以通道占位作为空间输入；回放中的 T 控图率是独立观测指标，不属于模型特征。",
   "Active utility and positional spread/pinch are not inputs to the existing model and have zero attribution.": "场上道具、站位分散与夹击均未作为现有模型的输入，因此归因为零。",
@@ -26,7 +25,11 @@ const METHOD_ZH: Record<string, string> = {
   exact_interventional_group_shapley_64_coalitions: "精确干预式分组 Shapley 归因（64 种组合作用）",
   existing_hist_gradient_boosting_match_oof_plus_isotonic: "现有直方图梯度提升模型，按比赛留出预测并进行保序校准",
 };
-const labCopy = (value: string) => LAB_COPY_ZH[value] ?? value;
+function labCopy(value: string) {
+  const paper = value.match(/^TAGNet was validated on Dust2 only \(([^)]+) rounds\);/);
+  return paper ? `TAGNet 仅在 Dust2 上进行了验证（${paper[1]} 个回合）；本项目将轻量方法应用于所有已解析地图。下方结果均由本项目的比赛录像计算得出。` : LAB_COPY_ZH[value] ?? value;
+}
+
 function Method({ value }: { value: string }) {
   return <>{METHOD_ZH[value] ?? "方法标识"}（<code>{value}</code>）</>;
 }
@@ -47,6 +50,8 @@ function Attention({ data }: { data: LabData }) {
   const minX = Math.min(...cloud.map(p => p.x)), maxX = Math.max(...cloud.map(p => p.x));
   const minY = Math.min(...cloud.map(p => p.y)), maxY = Math.max(...cloud.map(p => p.y));
   const round = point ?? example?.round;
+  // Explicit availability wins; older exports fall back to the replay index.
+  const canReplay = (p: RoundRef) => p.replay_available ?? !!replays.data?.[p.demo_id]?.includes(p.round_num);
   return <section className="lab-panel panel" data-lab-panel="attention" aria-labelledby="lab-attention-title">
     <p className="eyebrow">01 / 阵型</p><h2 id="lab-attention-title">时空距离核 · CT 阵型沙盘</h2>
     <div className="lab-controls"><label>地图 <select value={map} onChange={e => { setMap(e.target.value); setClusterId(""); setTime(0); setFloor(0); setPoint(null); }}>{[...new Set(data.attention.map(a => a.map))].map(m => <option key={m} value={m}>{m}{m === "de_overpass" ? "（历史）" : ""}</option>)}</select></label>
@@ -57,13 +62,13 @@ function Attention({ data }: { data: LabData }) {
       <div className="lab-attention-grid"><svg className="lab-radar" viewBox="0 0 1024 1024" role="img" aria-label={`${map} ${example.cluster_id} 距离核`}>
         <image href={assetUrl(`radars/${map}${map === "de_nuke" && floor === 1 ? "_lower" : ""}.png`)} width="1024" height="1024" />
         <CTTrajectories snapshots={example.snapshots.filter(s => s.t_s <= snapshot.t_s)} level={floor} kind="medoid" />
-        {snapshot.positions.map((p, i) => p[2] === floor && <g key={i}>{snapshot.positions.map((q, j) => i !== j && q[2] === floor && <line key={j} x1={p[0]} y1={p[1]} x2={q[0]} y2={q[1]} stroke="#6edcd0" strokeWidth={snapshot.alpha[i][j] * 22} opacity={snapshot.alpha[i][j] * 2.2}><title>α{ i + 1 }→{ j + 1 } = {snapshot.alpha[i][j].toFixed(4)}</title></line>)}<circle cx={p[0]} cy={p[1]} r={12 + snapshot.alpha[i][i] * 15} fill="#08151f" stroke={CT_COLORS[i]} strokeWidth="5" /><text x={p[0]} y={p[1] + 5} textAnchor="middle" fill="white" fontSize="17">{i + 1}</text></g>)}
-      </svg><div><h3>PCA 二维投影 · 本图完整样本</h3>{patterns.error ? <p role="status">阵型投影加载失败。</p> : <svg className="lab-cloud" viewBox="0 0 400 340" role="group" aria-label="CT 阵型 PCA 投影">{cloud.map((p, i) => <circle key={i} cx={20 + (p.x - minX) / (maxX - minX || 1) * 360} cy={320 - (p.y - minY) / (maxY - minY || 1) * 300} r={p.cluster_id === example.cluster_id ? 3.5 : 2.5} fill={CT_COLORS[Number(p.cluster_id.slice(1)) % CT_COLORS.length]} opacity={p.cluster_id === example.cluster_id ? .85 : .3} role="button" aria-label={`${p.cluster_id} ${p.team} R${p.round_num}`} onClick={() => { setClusterId(p.cluster_id); setPoint(p); }}><title>{p.cluster_id} · {p.team} · R{p.round_num} · CT {p.score.ct}:{p.score.t} T · {economyLabel(p.economy)}</title></circle>)}</svg>}
+        {snapshot.positions.map((p, i) => p[2] === floor && <g key={i}>{snapshot.positions.map((q, j) => i !== j && q[2] === floor && <line key={j} x1={p[0]} y1={p[1]} x2={q[0]} y2={q[1]} stroke="#6edcd0" strokeWidth={snapshot.alpha[i][j] * 22} opacity={snapshot.alpha[i][j] * 2.2}><title>{`α${i + 1}→${j + 1} = ${snapshot.alpha[i][j].toFixed(4)}`}</title></line>)}<circle cx={p[0]} cy={p[1]} r={12 + snapshot.alpha[i][i] * 15} fill="#08151f" stroke={CT_COLORS[i]} strokeWidth="5" /><text x={p[0]} y={p[1] + 5} textAnchor="middle" fill="white" fontSize="17">{i + 1}</text></g>)}
+      </svg><div><h3>PCA 二维投影 · 本图完整样本</h3>{patterns.error ? <p role="status">阵型投影加载失败。</p> : <svg className="lab-cloud" viewBox="0 0 400 340" role="group" aria-label="CT 阵型 PCA 投影">{cloud.map((p, i) => <circle key={i} cx={20 + (p.x - minX) / (maxX - minX || 1) * 360} cy={320 - (p.y - minY) / (maxY - minY || 1) * 300} r={p.cluster_id === example.cluster_id ? 3.5 : 2.5} fill={CT_COLORS[Number(p.cluster_id.slice(1)) % CT_COLORS.length]} opacity={canReplay(p) ? p.cluster_id === example.cluster_id ? .85 : .3 : .12} role="button" aria-disabled={!canReplay(p)} tabIndex={canReplay(p) ? 0 : undefined} aria-label={`${p.cluster_id} ${p.team} R${p.round_num}${canReplay(p) ? "" : " · 无回放"}`} onClick={() => { if (canReplay(p)) { setClusterId(p.cluster_id); setPoint(p); } }} onKeyDown={e => { if (canReplay(p) && ["Enter", " "].includes(e.key)) { e.preventDefault(); setClusterId(p.cluster_id); setPoint(p); } }}><title>{`${p.cluster_id} · ${p.team} · R${p.round_num} · CT ${p.score.ct}:${p.score.t} T · ${economyLabel(p.economy)}${canReplay(p) ? "" : " · 无回放"}`}</title></circle>)}</svg>}
         <p className="muted">点击散点选择其簇与回合；左侧展示该簇的代表回合。PCA 投影并非 UMAP。</p>
-        <label>键盘选择样本 <select value={point ? `${point.demo_id}:${point.round_num}:${point.team}` : ""} onChange={e => { const p = cloud.find(p => `${p.demo_id}:${p.round_num}:${p.team}` === e.target.value); if (p) { setPoint(p); setClusterId(p.cluster_id); } }}><option value="">选择回合</option>{cloud.map((p, i) => <option key={i} value={`${p.demo_id}:${p.round_num}:${p.team}`}>{p.cluster_id} · {p.team} · R{p.round_num} · {p.demo_id}</option>)}</select></label>
+        <label>键盘选择样本 <select value={point ? `${point.demo_id}:${point.round_num}:${point.team}` : ""} onChange={e => { const p = cloud.find(p => `${p.demo_id}:${p.round_num}:${p.team}` === e.target.value); if (p && canReplay(p)) { setPoint(p); setClusterId(p.cluster_id); } }}><option value="">选择回合</option>{cloud.map((p, i) => <option key={i} disabled={!canReplay(p)} value={`${p.demo_id}:${p.round_num}:${p.team}`}>{p.cluster_id} · {p.team} · R{p.round_num} · {p.demo_id}{canReplay(p) ? "" : " · 无回放"}</option>)}</select></label>
       </div></div>
       <p className="lab-provenance">左侧代表：{example.round.team} · R{example.round.round_num} · <code>{example.round.demo_id}</code></p>
-      {round && <p>选中回合：{round.team} · R{round.round_num} · CT {round.score.ct}:{round.score.t} T · {economyLabel(round.economy)} {replays.data?.[round.demo_id]?.includes(round.round_num) ? <ReplayButton map={map} demoId={round.demo_id} round={round.round_num} /> : <span className="muted">（未导出此回合回放）</span>}</p>}
+      {round && <p>选中回合：{round.team} · R{round.round_num} · CT {round.score.ct}:{round.score.t} T · {economyLabel(round.economy)} {canReplay(round) ? <ReplayButton map={map} demoId={round.demo_id} round={round.round_num} /> : null}</p>}
     </> : <p>暂无注意力示例。</p>}
     <aside className="lab-paper-note" role="note"><strong>论文结论（Dust2）</strong><p>{labCopy(data.metadata.paper_scope)}</p></aside>
   </section>;
@@ -74,13 +79,16 @@ function Shap({ data }: { data: LabData }) {
   const [timeIndex, setTimeIndex] = useState(0);
   const round = data.shap.rounds[roundIndex];
   const state = round?.states[Math.min(timeIndex, round.states.length - 1)];
+  const activeGroups = data.shap.active_groups ?? data.shap.groups.filter(group =>
+    data.shap.rounds.some(r => r.states.some(s => (s.shap_values[group] ?? 0) !== 0)));
   const sum = state ? Object.values(state.shap_values).reduce((s, v) => s + v, 0) : 0;
   const residual = state ? state.base_value + sum - state.t_win_prob : 0;
   return <section className="lab-panel panel" data-lab-panel="shap" aria-labelledby="lab-shap-title"><p className="eyebrow">02 / 可解释性</p><h2 id="lab-shap-title">SHAP · 分组胜率归因</h2>
     <label>示例回合 <select value={roundIndex} onChange={e => { setRoundIndex(Number(e.target.value)); setTimeIndex(0); }}>{data.shap.rounds.map((r, i) => <option key={i} value={i}>{r.map} · {r.showcase_team} R{r.round_num} · {r.demo_id}</option>)}</select></label>
     {state ? <><label className="lab-slider">冻结结束后 {state.t_s} 秒 <input type="range" aria-label="SHAP 时间轴" min="0" max={round.states.length - 1} value={Math.min(timeIndex, round.states.length - 1)} onChange={e => setTimeIndex(Number(e.target.value))} /></label>
       <p className="lab-prob">T 胜率 <strong>{fmtPct(state.t_win_prob)}</strong></p>
-      <div className="shap-bars">{data.shap.groups.map(group => { const value = state.shap_values[group] ?? 0; return <div className="shap-row" key={group} data-group={group} data-value={value}><span>{GROUPS[group] ?? group}</span><div className="shap-axis"><i className={value >= 0 ? "positive" : "negative"} style={{ width: `${Math.min(.5, Math.abs(value)) * 100}%`, left: `${value >= 0 ? 50 : 50 - Math.min(.5, Math.abs(value)) * 100}%` }} /></div><strong>{signedPP(value * 100)}</strong></div>; })}</div>
+      <div className="shap-bars">{activeGroups.map(group => { const value = state.shap_values[group] ?? 0; return <div className="shap-row" key={group} data-group={group} data-value={value}><span>{GROUPS[group] ?? group}</span><div className="shap-axis"><i className={value >= 0 ? "positive" : "negative"} style={{ width: `${Math.min(.5, Math.abs(value)) * 100}%`, left: `${value >= 0 ? 50 : 50 - Math.min(.5, Math.abs(value)) * 100}%` }} /></div><strong>{signedPP(value * 100)}</strong></div>; })}</div>
+      {data.shap.inactive_groups_note_zh && <p className="muted shap-inactive-note">{data.shap.inactive_groups_note_zh}</p>}
       <output className="shap-additivity" data-residual={residual}>基准 {state.base_value.toFixed(6)} + Σ贡献 {sum.toFixed(6)} = {(state.base_value + sum).toFixed(6)} · 预测 {state.t_win_prob.toFixed(6)} · 残差 {residual.toExponential(2)}</output>
       <p className="muted">条形刻度：左 −50 个百分点 / 中 0 / 右 +50 个百分点；加性恒等式使用完整精度验证。观测 T 控图率 {fmtPct(state.observed_t_control)}（独立回放指标）。</p>
     </> : <p>暂无归因状态。</p>}
@@ -106,7 +114,7 @@ function Control({ data }: { data: LabData }) {
     <p>T 控图率 <strong>{fmtPct(control)}</strong> · {simulate ? `反事实 ${sim.t_s} 秒 · ${after ? "投烟后" : "投烟前"}` : `观测 ${snapshot.t_s} 秒`}</p>
     <svg className="lab-radar lab-control-radar" viewBox="0 0 1024 1024" role="img" aria-label="离散空间控制场" data-mode={simulate ? after ? "after" : "before" : "observed"}>
       <image href={assetUrl(`radars/${c.map}.png`)} width="1024" height="1024" />
-      {c.cells.filter(cell => cell.occupied).map(cell => <rect key={cell.index} data-cell={cell.index} x={cell.radar_x - cellWidth / 2} y={cell.radar_y - cellHeight / 2} width={cellWidth} height={cellHeight} fill={owners[cell.index] === "T" ? "#ffb46b" : owners[cell.index] === "CT" ? "#75bcff" : "#8a98a5"} opacity=".55" stroke="#08151f" strokeWidth="2"><title>{owners[cell.index]} · {simulate ? "烟雾反事实" : `Δ距离 ${snapshot.delta_distance[cell.index]?.toFixed(1) ?? "—"} 世界单位`}</title></rect>)}
+      {c.cells.filter(cell => cell.occupied).map(cell => <rect key={cell.index} data-cell={cell.index} x={cell.radar_x - cellWidth / 2} y={cell.radar_y - cellHeight / 2} width={cellWidth} height={cellHeight} fill={owners[cell.index] === "T" ? "#ffb46b" : owners[cell.index] === "CT" ? "#75bcff" : "#8a98a5"} opacity=".55" stroke="#08151f" strokeWidth="2"><title>{`${owners[cell.index]} · ${simulate ? "烟雾反事实" : `Δ距离 ${snapshot.delta_distance[cell.index]?.toFixed(1) ?? "—"} 世界单位`}`}</title></rect>)}
       {simulate && <circle cx={sim.center_radar[0]} cy={sim.center_radar[1]} r="12" fill="white"><title>烟雾中心（仅标点，非范围）</title></circle>}
     </svg>
     <p>橙色 T · 蓝色 CT · 灰色中立；未观测网格不计入控图率。</p><p className="lab-smoke-result">投烟前 {fmtPct(sim.t_control_before)} → 投烟后 {fmtPct(sim.t_control_after)} · 变化 {sim.difference_pp === null ? "—" : signedPP(sim.difference_pp)} · 路径惩罚 +{sim.penalty_units} 世界单位 · 半径 {sim.radius_units} 世界单位</p>

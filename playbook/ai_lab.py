@@ -110,7 +110,9 @@ def _observed_control(pos: pl.DataFrame, grid: np.ndarray) -> dict[int, float | 
 @threadpool_limits.wrap(limits=1)
 def shap_rounds(t: dict, wpr: dict | None, selected: list[tuple[str, dict]]) -> dict:
     out = dict(method='exact_interventional_group_shapley_64_coalitions', groups=list(GROUPS),
-        background_size=BACKGROUND_SIZE, limitations=[
+        background_size=BACKGROUND_SIZE, active_groups=[],
+        inactive_groups_note_zh='当前模型只使用 4 组特征：人数差、血量与装备、区域占位、C4 与倒计时',
+        limitations=[
             'Existing model uses lane occupancies as spatial inputs; replay t_control is observed separately and is not a model feature.',
             'Active utility and positional spread/pinch are not inputs to the existing model and have zero attribution.',
             'Map and pre-round score are held fixed; background size is capped at 32 to bound export runtime.',
@@ -149,6 +151,9 @@ def shap_rounds(t: dict, wpr: dict | None, selected: list[tuple[str, dict]]) -> 
             states=[dict(t_s=int(second), base_value=float(base[i]), t_win_prob=float(p[i]),
                          shap_values=dict(zip(GROUPS, phi[i].tolist())), observed_t_control=controls.get(int(second)))
                     for i, second in enumerate(states['t_s'])]))
+    out['active_groups'] = [group for group in GROUPS if any(
+        state['shap_values'][group] != 0.
+        for row in out['rounds'] for state in row['states'])]
     return out
 
 
@@ -233,16 +238,61 @@ def _write(path: Path, obj):
     path.write_text(json.dumps(obj, ensure_ascii=False, allow_nan=False, separators=(',', ':')), encoding='utf-8')
 
 
+def ensure_replays(sub: dict, mm, mdir: Path, required: set[tuple[str, int]],
+                   wpr: dict | None) -> set[tuple[str, int]]:
+    """Extend the freshly exported replay set with every required lab example.
+
+    Called after the regular map exporter so its index cannot overwrite these
+    additions. Missing optional scatter samples remain explicitly unavailable.
+    """
+    replay_dir = mdir/'replay'
+    index_path = replay_dir/'index.json'
+    index = json.loads(index_path.read_text()) if index_path.exists() else {}
+    available = {(demo, int(rnd)) for demo, rounds in index.items() for rnd in rounds
+                 if (replay_dir/demo/f'{rnd}.json').exists()}
+    # Validate required examples even if an older index already lists them.
+    for demo, rnd in required & available:
+        data = json.loads((replay_dir/demo/f'{rnd}.json').read_text())
+        if not data.get('frames') or not any(any(p is not None for p in frame) for frame in data['frames']):
+            available.remove((demo, rnd))
+    missing = required-available
+    if missing:
+        wp = replay.wp_by_round(wpr['states'], wpr['oof'], missing) if wpr else {}
+        grid = replay.control_grid(sub['positions'])
+        place_index = replay.callout_index(sub['positions'])
+        for demo, rnd in sorted(missing):
+            data = replay.build_round(sub, mm, demo, rnd, wp.get((demo, rnd)), grid, place_index)
+            if not data or not data['frames'] or not any(
+                    any(p is not None for p in frame) for frame in data['frames']):
+                raise ValueError(f'Lab example has no replay frames: {mm.name}/{demo}/{rnd}')
+            _write(replay_dir/demo/f'{rnd}.json', data)
+            available.add((demo, rnd))
+    fresh_index = {}
+    for demo, rnd in sorted(available):
+        fresh_index.setdefault(demo, []).append(rnd)
+    _write(index_path, fresh_index)
+    return available
+
+
 def export(t: dict, out_dir: Path, wpr: dict | None) -> dict:
     start = time.monotonic()
     attention = []
+    selected = choose_rounds(t)
     for map_name in sorted(t['matches']['map'].unique().to_list()):
         ids = t['matches'].filter(pl.col('map') == map_name)['demo_id'].to_list()
-        sub = {k: v.filter(pl.col('demo_id').is_in(ids)) for k, v in t.items() if k in ('positions', 'team_rounds')}
+        sub = {k: v.filter(pl.col('demo_id').is_in(ids)) for k, v in t.items() if 'demo_id' in v.columns}
         patterns, edges = ct_patterns.build(sub, load_map(map_name))
+        required = {(c['medoid']['demo_id'], c['medoid']['round_num']) for c in patterns['clusters']}
+        required.update((r['demo_id'], int(r['round_num'])) for _, r in selected if r['map'] == map_name)
+        available = ensure_replays(sub, load_map(map_name), out_dir/map_name, required, wpr)
+        for cluster in patterns['clusters']:
+            cluster['medoid']['replay_available'] = True
+        for point in patterns['embedding']['points']:
+            point['replay_available'] = (point['demo_id'], point['round_num']) in available
+        for edge in edges:
+            edge['round']['replay_available'] = True
         _write(out_dir/map_name/'ct_patterns.json', patterns)
         attention.extend(edges)
-    selected = choose_rounds(t)
     metrics = out_dir/'winprob_metrics.json'
     obj = dict(schema_version=1, method=ct_patterns.METHOD,
         metadata={'paper_scope': ct_patterns.METADATA['paper_scope'],

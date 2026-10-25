@@ -92,11 +92,13 @@ function HeatLayers({ overlays }: { overlays: { key: string; url: string }[] }) 
 
 function Asset({ path, name, badge = false }: { path: string; name: string; badge?: boolean }) {
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const assets = useContext(Assets);
   const stem = path.split("/").pop()?.replace(/\.png$/, "") ?? "";
   const supplied = (badge ? assets.teams : assets.players).includes(stem);
   return <span className={`hub-asset ${badge ? "hub-badge" : "hub-portrait"}${badge && (failed || !supplied) ? " is-fallback" : ""}`}>
-    {!failed && supplied ? <img src={assetUrl(path)} alt="" width={badge ? 80 : 1000} height={badge ? 80 : 666} onError={() => setFailed(true)} /> : badge ?
+    {!badge && supplied && !failed && !loaded && <span className="hub-asset-skeleton" aria-hidden="true" />}
+    {!failed && supplied ? <img src={assetUrl(path)} alt="" width={badge ? 80 : 1000} height={badge ? 80 : 666} style={!badge && !loaded ? { opacity: 0 } : undefined} onLoad={() => setLoaded(true)} onError={() => setFailed(true)} /> : badge ?
       <TeamShield name={name} /> :
       <svg viewBox="0 0 240 280" aria-hidden="true"><circle cx="120" cy="88" r="42" /><path d="M32 260v-28a88 88 0 0 1 176 0v28Z" /></svg>}
   </span>;
@@ -143,8 +145,10 @@ function MapBackdrop({ id, scenic, available }: { id: string; scenic: boolean; a
   </>;
 }
 
-function TeamPanel({ team, change, returnMap }: { team: TeamEntry; change: Change; returnMap: string }) {
+function TeamPanel({ team, change }: { team: TeamEntry; change: Change }) {
   const stage = useRef<HTMLDivElement>(null);
+  const results = useRef<HTMLDetailsElement>(null);
+  const [resultsOpen, setResultsOpen] = useState(false);
   const assets = useContext(Assets);
   const reduced = useReducedMotion();
   const backgrounds = useData(getMapBackgrounds, []);
@@ -171,14 +175,18 @@ function TeamPanel({ team, change, returnMap }: { team: TeamEntry; change: Chang
     document.getElementById(`hub-map-${ORBIT_POOL[next][0]}`)?.focus();
   }
   return <section className="hub-panel hub-team-panel" key={team.slug} aria-labelledby="hub-heading">
-    <div className="hub-orbit-intro"><h3>{t("hub.choose_map")}</h3><p className="muted">{t("hub.map_rate_help")} · ← / → 切换 · Enter 进入</p></div>
+    <div className="hub-orbit-intro"><h3>{t("hub.choose_map")}</h3><p className="muted">{t("hub.map_rate_help")} · ← / → 切换 · Enter 进入</p><button type="button" className="hub-results-toggle" aria-expanded={resultsOpen} aria-controls="hub-orbit-results" onClick={() => {
+      const open = !resultsOpen;
+      setResultsOpen(open);
+      if (open) requestAnimationFrame(() => results.current?.scrollIntoView({ behavior: reduced ? "instant" : "smooth", block: "start" }));
+    }}>{resultsOpen ? "▾" : "▸"} {t("hub.results")}</button></div>
     <div ref={stage} className="hub-orbit" data-active={active || undefined} aria-label="战队地图池星轨">
       <svg className="hub-orbit-rays" aria-hidden="true">{ORBIT_POOL.map(([id]) =>
         <g key={id} data-active={selected?.map === id} data-rate={orbitRate(team.maps.find((map) => map.map === id)?.map_win_rate)}><line /><line className="hub-orbit-flow" /></g>
       )}</svg>
       <header className="hub-team-head hub-orbit-core">
         <span className="hub-orbit-ring is-inner" aria-hidden="true" /><span className="hub-orbit-ring is-outer" aria-hidden="true" />
-        <div className="hub-team-anchor" style={{ viewTransitionName: "team-hub-header" }}><ParticleLogoCanvas slug={team.slug} name={team.team} available={assets.teams.includes(team.slug)} /><Heading>{team.team}</Heading></div>
+        <div className="hub-team-anchor"><ParticleLogoCanvas slug={team.slug} name={team.team} available={assets.teams.includes(team.slug)} /><Heading>{team.team}</Heading></div>
         <div className="hub-orbit-hud"><p className="muted">{fmtInt(shownMatches)} 场地图比赛 · {ORBIT_POOL.length} 张图池</p></div>
       </header>
       <div className="hub-map-grid hub-orbit-nodes">{ORBIT_POOL.map(([id, name, glow], index) => {
@@ -188,7 +196,7 @@ function TeamPanel({ team, change, returnMap }: { team: TeamEntry; change: Chang
         const rate = orbitRate(map?.map_win_rate);
         const tRate = map?.win_rate_T, ctRate = map?.win_rate_CT;
         const totalRate = (tRate ?? 0) + (ctRate ?? 0);
-        return <button type="button" className="hub-map-card hub-orbit-node orbit-map-card" data-rate={rate} data-active={active === id} data-empty={!available} aria-disabled={!available} style={{ "--map-glow": available ? glow : EMPTY_MAP_GLOW, "--map-theme-color": glow, "--stagger": `${index * 40}ms`, "--hub-progress": 100 - Math.max(0, Math.min(1, map?.map_win_rate ?? 0)) * 100, viewTransitionName: returnMap === id ? "team-map-header" : undefined } as CSSProperties} id={`hub-map-${id}`} key={id}
+        return <button type="button" className="hub-map-card hub-orbit-node orbit-map-card" data-rate={rate} data-active={active === id} data-empty={!available} aria-disabled={!available} style={{ "--map-glow": available ? glow : EMPTY_MAP_GLOW, "--map-theme-color": glow, "--stagger": `${index * 40}ms`, "--hub-progress": 100 - Math.max(0, Math.min(1, map?.map_win_rate ?? 0)) * 100 } as CSSProperties} id={`hub-map-${id}`} key={id}
           onMouseEnter={() => { setInteraction("pointer"); setHovered(id); }} onMouseLeave={() => setHovered("")} onFocus={() => { setInteraction("keyboard"); setFocused(id); }} onBlur={() => setFocused("")} onKeyDown={(event) => cycle(event, index)} onClick={() => { if (available) change({ map: id, player: "", side: "T" }); }}>
           <MapBackdrop id={id} available={available} scenic={!!backgrounds.data?.includes(id.replace(/^de_/, ""))} />
           <span className="hub-map-name">{name}</span>
@@ -203,7 +211,7 @@ function TeamPanel({ team, change, returnMap }: { team: TeamEntry; change: Chang
       <p className="hub-orbit-preview"><b>{selected.display_name}</b><span>T 胜率 {fmtPct(selected.win_rate_T ?? profile?.sides.T.win_rate)} · CT 胜率 {fmtPct(selected.win_rate_CT ?? profile?.sides.CT.win_rate)}</span><span title={signature}>招牌：{signature || (preview.loading ? "读取中…" : "暂无套路数据")}</span></p>
       <small>点击拆解本图打法 →</small>
     </> : <p className="muted">悬停或聚焦地图，查看攻防胜率与招牌打法。</p>}</div>
-    <details className="hub-details hub-team-results"><summary>{t("hub.results")}</summary><Results team={team} /></details>
+    <details ref={results} id="hub-orbit-results" className="hub-details hub-team-results" open={resultsOpen} onToggle={event => setResultsOpen(event.currentTarget.open)}><summary>{t("hub.results")}</summary><Results team={team} /></details>
   </section>;
 }
 
@@ -569,14 +577,21 @@ function PlayerView({ player, profile, heatmap, baseline, side, quote, change, d
   </div></NumberEntrance.Provider>;
 }
 
+function MapSkeleton() {
+  return <div className="hub-map-skeleton" role="status" aria-label="正在加载地图与选手" aria-busy="true">
+    <div className="hub-skeleton-stats">{Array.from({ length: 4 }, (_, i) => <span key={i} />)}</div>
+    <div className="hub-player-cards">{Array.from({ length: 5 }, (_, i) => <div className="hub-player-skeleton" key={i}><span className="hub-portrait-skeleton" /><span /></div>)}</div>
+  </div>;
+}
+
 function MapPanel({ team, map, playerId, side, change }: { team: TeamEntry; map: string; playerId: string; side: HubSide; change: Change }) {
   const bundle = useData(() => Promise.all([getTeam(map, team.slug), getPlayers(map), getTeamHeatmap(map, team.slug), getHeatmapBaseline(map), getTactics(map)]), [map, team.slug]);
   const quotes = useData(getPlayerQuotes, []);
   const player = bundle.data?.[2].roster.find((entry) => entry.steamid === playerId);
   const displayName = team.maps.find((entry) => entry.map === map)?.display_name ?? map;
   return <section className="hub-panel hub-map-panel" aria-labelledby="hub-heading">
-    {!playerId || (!bundle.loading && !player) ? <header className="hub-section-head"><h2 id="hub-heading" tabIndex={-1}>{playerId ? `${t("hub.player")} · ${displayName}` : <><span className="hub-map-team-anchor" style={{ viewTransitionName: "team-hub-header" }}><Asset path={`logos/teams/${team.slug}.png`} name={team.team} badge />{team.team}</span><span aria-hidden="true"> · </span><span style={{ viewTransitionName: "team-map-header" }}>{displayName}</span></>}</h2></header> : null}
-    {bundle.loading || (playerId && quotes.loading) ? <Loading /> : bundle.error ? <Failure /> : bundle.data ? <>
+    {!playerId || (!bundle.loading && !player) ? <header className="hub-section-head"><h2 id="hub-heading" tabIndex={-1}>{playerId ? `${t("hub.player")} · ${displayName}` : <><span className="hub-map-team-anchor"><Asset path={`logos/teams/${team.slug}.png`} name={team.team} badge />{team.team}</span><span aria-hidden="true"> · </span><span>{displayName}</span></>}</h2></header> : null}
+    {bundle.loading || (playerId && quotes.loading) ? <MapSkeleton /> : bundle.error ? <Failure /> : bundle.data ? <>
       {!playerId ? <TeamMapView profile={bundle.data[0]} tactics={bundle.data[4]} heatmap={bundle.data[2]} baseline={bundle.data[3]} change={change} /> : player ? <PlayerView key={player.steamid} displayName={displayName} player={player} profile={bundle.data[1].find((p) => p.steamid === player.steamid && p.team === team.team)} heatmap={bundle.data[2]} baseline={bundle.data[3]} side={side} quote={quotes.data?.[player.steamid]} change={change} /> : <p className="notice" role="alert">{t("hub.player_not_found")}</p>}
     </> : null}
   </section>;
@@ -664,14 +679,14 @@ export default function TeamsHub() {
         <button type="button" className="hub-close" onClick={close}>{t("hub.close_level")}</button>
       </nav> : null}
       {map ? <MapLinkHint /> : null}
-      <div className="hub-stage" ref={slide.host} key={routeKey(slide.route)} data-direction={slide.direction < 0 ? "back" : "forward"} data-shared={slide.shared}>
+      <div className="hub-stage" ref={slide.host} key={routeKey(slide.route)}>
       {!teamSlug ? <section aria-label={t("hub.all_teams")}>
         <label className="hub-search">{t("heatmap.search")}<input type="search" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
         <p className="muted" role="status">{t("hub.team_count", { n: fmtInt(filtered.length) })}</p>
         <div className="hub-team-grid">{filtered.map((entry) => <button type="button" className="hub-team-card" style={teamTheme(entry.slug)} id={`hub-team-${entry.slug}`} key={entry.slug} onClick={() => change({ team: entry.slug, map: "", player: "", side: "T" })}>
           <Asset path={`logos/teams/${entry.slug}.png`} name={entry.team} badge /><strong>{entry.team}</strong><span>{t("hub.sample", { matches: fmtInt(entry.n_matches), maps: fmtInt(entry.maps.length) })}</span>
         </button>)}</div>
-      </section> : !team ? <p role="alert">{t("heatmap.team_not_found")}</p> : map && !validMap ? <p role="alert">{t("hub.map_not_found")}</p> : map ? <MapPanel key={`${team.slug}-${map}`} team={team} map={map} playerId={player} side={side} change={change} /> : <TeamPanel team={team} change={change} returnMap={slide.returnMap} />}
+      </section> : !team ? <p role="alert">{t("heatmap.team_not_found")}</p> : map && !validMap ? <p role="alert">{t("hub.map_not_found")}</p> : map ? <MapPanel key={`${team.slug}-${map}`} team={team} map={map} playerId={player} side={side} change={change} /> : <TeamPanel team={team} change={change} />}
       </div>
     </>}
   </div></Assets.Provider></ReducedMotion.Provider>;

@@ -36,7 +36,9 @@ export function orbitLayout(width: number, height: number, nodes: OrbitNodeSize[
     const candidate = (scale: number) => {
       const cardWidth = maxWidth * reserve * scale, cardHeight = maxHeight * reserve * scale;
       const rx = Math.max(1, (width - cardWidth) / 2 - gap);
-      const ry = Math.max(1, (height - cardHeight) / 2 - gap);
+      // Extra vertical margin covers 1.08 hover emphasis and leaves at least 16px.
+      // CSS adds 28px to the stage and recovers it above, preserving fitted size.
+      const ry = Math.max(1, (height - cardHeight) / 2 - 24);
       // Polygonal superellipse (power 4), reparameterised by distance measured
       // in card-width/card-height units. This avoids bunching at the short axis.
       const outline = Array.from({ length: 257 }, (_, i) => {

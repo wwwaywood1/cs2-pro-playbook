@@ -1,5 +1,7 @@
 """Numerical and data-contract checks for CT patterns and the research lab."""
+from collections import Counter
 import json
+import re
 from pathlib import Path
 
 import numpy as np
@@ -17,7 +19,7 @@ def synthetic():
     places = ['BombsiteA', 'Middle', 'BombsiteB', 'CTSpawn', 'TRamp']
     for r in range(1, 73):
         rounds.append(dict(demo_id='fixture', round_num=r, side='CT', team='CT', won=r % 3 != 0,
-                           buy_type=('full', 'force', 'eco', 'pistol')[r % 4], equipment_value=18000,
+                           buy_type='pistol' if r in (1, 13) else ('full', 'force', 'eco')[r % 3], equipment_value=18000,
                            opp_equipment_value=20000, score_for=r//3, score_against=r//4))
         rounds.append(dict(rounds[-1], side='T', team='T', won=r % 3 == 0))
         initial = rng.normal(0, 200, (5, 3))
@@ -45,19 +47,19 @@ def test_features_invariant_under_player_permutation():
 def test_determinism_counts_and_shapes():
     sub = synthetic()
     rows, x, counts = C.extract(sub, load_map('de_mirage'))
-    assert x.shape == (71, 103)
-    assert counts == dict(total=72, eligible_at_10=71, dropped_at_10=1, dropped_incomplete=0, included=71)
+    assert x.shape == (69, 103)
+    assert counts == dict(total=72, excluded_pistol_rounds=2, eligible_at_10=69, dropped_at_10=1, dropped_incomplete=0, included=69)
     a, edges = C.build(sub, load_map('de_mirage'))
     b, _ = C.build({k: v.reverse() for k, v in sub.items()}, load_map('de_mirage'))
     assert a == b
     k = a['metadata']['k']
-    assert 1 <= k <= 2  # 71 rounds cannot support 3 clusters of >=30.
+    assert 1 <= k <= 2  # 69 rounds cannot support 3 clusters of >=30.
     assert len(a['clusters']) == k
     assert len(set(c['label_zh'] for c in a['clusters'])) == k
     assert all(c['n'] >= 30 for c in a['clusters'])
     shares = [c['region_shares_15s']['A'] for c in a['clusters']]
     assert shares == sorted(shares)
-    assert sum(c['n'] for c in a['clusters']) == 71-a['counts']['dropped_outlier']
+    assert sum(c['n'] for c in a['clusters']) == 69-a['counts']['dropped_outlier']
     assert sum(c['share'] for c in a['clusters']) == pytest.approx(1.)
     for edge in edges:
         for snap in edge['snapshots']:
@@ -66,36 +68,96 @@ def test_determinism_counts_and_shapes():
     json.dumps(a, allow_nan=False)
 
 
-def test_largest_remainder_compositions_and_distinct_word_labels():
+def assert_player_labels(names):
+    assert len({zh for zh, en in names}) == len({en for zh, en in names}) == len(names)
+    for zh, en in names:
+        assert not any(word in zh for word in ('最多', '最少', '最前', '最后', '均衡', '重 A', '重 B', '警家1'))
+        assert sum(map(int, re.findall(r'([1-5])', zh.split('（')[0]))) == 5
+        assert sum(map(int, re.findall(r'([1-5])', en.split(' (')[0]))) == 5
+        assert '%' not in zh+en
+
+
+def test_largest_remainder_and_callout_depth_labels():
     np.testing.assert_array_equal(C.player_counts(np.array([.34, .26, .30, .10, 0.])), [2, 1, 2, 0, 0])
     np.testing.assert_array_equal(C.player_counts(np.full(5, .2)), [1, 1, 1, 1, 1])
-    # Two balanced profiles in the middle depth third require a regional word.
-    shares = np.array([[.30, .30, .40, 0, 0], [.36, .25, .39, 0, 0],
-                       [.20, .20, .60, 0, 0], [.60, .20, .20, 0, 0]])
-    names = C._labels(shares, np.array([.3, .3, .1, .5]))
-    assert len({zh for zh, en in names}) == len({en for zh, en in names}) == 4
-    assert names[0][0].startswith('A2·中1·B2 均衡')
-    assert all('%' not in zh+en for zh, en in names)
-    assert all('前压' not in zh and '回收' not in zh for zh, en in names)
-    for s in shares:
-        assert C.player_counts(s).sum() == 5
-    depths = np.array([.1, .9])
-    names = C._labels(shares[:1].repeat(2, axis=0), depths)
-    assert '回收' in names[0][0] and '前压' in names[1][0]
+    shares = np.array([[.4, .4, .2, 0, 0], [.4, .4, .2, 0, 0], [.4, .2, .2, .2, 0]])
+    callouts = [Counter(Catwalk=20, SnipersNest=15, BombsiteA=10),
+                Counter(Connector=20, TRamp=15, BombsiteB=10),
+                Counter(BombsiteA=20, CTSpawn=15)]
+    names = C._labels(shares, np.array([.5, .3, .1]), callouts, C.callout_names(load_map('de_mirage')))
+    assert_player_labels(names)
+    assert names[0][0] == 'A2·中2·B1（B小/VIP 前顶）'
+    assert names[1][0] == 'A2·中2·B1（拱门/A1 斜坡）'
+    assert names[2][0] == 'A2·中1·B1·警1（A包点/警家 保守）'
+    assert names[0][1] == 'A2-M2-B1 (Catwalk/SnipersNest forward)'
 
 
-def test_colliding_labels_in_same_depth_third_omit_redundant_depth_word():
-    shares = np.array([[.30, .30, .40, 0, 0], [.36, .25, .39, 0, 0],
-                       [.80, .20, 0, 0, 0], [0, .80, .20, 0, 0],
-                       [.20, 0, .80, 0, 0], [.20, 0, 0, .80, 0]])
-    # Both balanced profiles are in the bottom third; depth cannot separate them.
-    names = C._labels(shares, np.array([.10, .11, .30, .40, .50, .60]))
-    assert len({zh for zh, en in names}) == len({en for zh, en in names}) == 6
-    for zh, en in names[:2]:
-        assert zh.startswith('A2·中1·B2 均衡')
-        assert '回收' not in zh and '前压' not in zh
-        assert 'deep' not in en and 'forward' not in en
-        assert '%' not in zh+en
+def assert_disjoint_callouts(shares, selected, translations):
+    for i, places in enumerate(selected):
+        assert len(places) <= 2
+        for j in range(i):
+            if np.array_equal(C.player_counts(shares[i]), C.player_counts(shares[j])):
+                assert set(places).isdisjoint(selected[j])
+                assert {translations.get(p, p) for p in places}.isdisjoint(
+                    translations.get(p, p) for p in selected[j])
+
+
+def test_same_prefix_labels_use_lift_drop_common_and_have_disjoint_callouts():
+    shares = np.array([[.4, .4, .2, 0, 0]]*3 + [[.4, .2, .2, .2, 0]])
+    # Unequal sample sizes: rank shares, not raw counts. A and B dominate every
+    # sibling; VIP is less frequent than Catwalk in C1 but has higher lift.
+    callouts = [Counter(BombsiteA=400, BombsiteB=300, Catwalk=180, Connector=90, SnipersNest=30),
+                Counter(BombsiteA=40, BombsiteB=30, Catwalk=14, SnipersNest=12, Connector=4),
+                Counter(BombsiteA=40, BombsiteB=30, PalaceInterior=20, Connector=10),
+                Counter(BombsiteA=80, CTSpawn=20)]
+    translations = C.callout_names(load_map('de_mirage'))
+    selected = C._label_callouts(shares, callouts, translations)
+    assert selected == [['Catwalk'], ['SnipersNest'], ['PalaceInterior', 'Connector'],
+                        ['BombsiteA', 'CTSpawn']]
+    assert_disjoint_callouts(shares, selected, translations)
+    names = C._labels(shares, np.array([.5, .3, .4, .1]), callouts, translations)
+    assert_player_labels(names)
+    assert names[0][0] == 'A2·中2·B1（B小 前顶）'
+    assert names[1][0] == 'A2·中2·B1（VIP）'
+    assert all('A包点' not in zh and 'B包点' not in zh for zh, _ in names[:3])
+    assert C._label_callouts(shares[::-1], callouts[::-1], translations)[::-1] == selected
+    scaled = [Counter({p: n*10 for p, n in counts.items()}) for counts in callouts]
+    assert C._label_callouts(shares, scaled, translations) == selected
+
+
+def test_lift_ownership_is_disjoint_even_with_aliases_and_multiple_positive_peers():
+    shares = np.array([[.4, .4, .2, 0, 0]]*3)
+    callouts = [Counter(A=50, B=40, Shared=8, Only0=2),
+                Counter(A=50, B=40, Shared=7, Only1=3),
+                Counter(A=50, B=40, Alias=1, Only2=9)]
+    translations = {'Shared': '同名', 'Alias': '同名'}
+    selected = C._label_callouts(shares, callouts, translations)
+    assert selected == [['Shared', 'Only0'], ['Only1'], ['Only2']]
+    assert_disjoint_callouts(shares, selected, translations)
+    # Truly identical summaries have no distinguishing callouts; don't invent any.
+    identical = [callouts[0]]*3
+    assert C._label_callouts(shares, identical, translations) == [[], [], []]
+    assert_player_labels(C._labels(shares, np.ones(3), identical, translations))
+
+
+def test_pistols_excluded_before_features_and_overtime_retained():
+    sub = synthetic()
+    rows, x, counts = C.extract(sub, load_map('de_mirage'))
+    rounds = {r['round_num'] for r in rows}
+    assert not rounds & {1, 13}
+    assert {25, 28, 31, 34} <= rounds
+    assert counts['excluded_pistol_rounds'] == 2
+    # Pistol positions cannot influence the spawn reference or any feature.
+    sub['positions'] = sub['positions'].with_columns(
+        x=pl.when(pl.col('round_num').is_in([1, 13])).then(1e9).otherwise(pl.col('x')))
+    _, changed, _ = C.extract(sub, load_map('de_mirage'))
+    np.testing.assert_array_equal(x, changed)
+    result, _ = C.build(sub, load_map('de_mirage'))
+    assert result['metadata']['excluded_pistol_rounds'] == 2
+    assert result['chi_square']['n'] == result['counts']['included']
+    assert set(result['chi_square']['economy_types']) == {'eco', 'force', 'full'}
+    assert all('pistol' not in c['context_preferences'] for c in result['clusters'])
+    assert not {p['round_num'] for p in result['embedding']['points']} & {1, 13}
 
 
 @threadpool_limits.wrap(limits=1)
@@ -117,8 +179,8 @@ def test_missing_snapshot_dropped_but_later_death_keeps_original_member():
     later_death = (pl.col('round_num') == 70) & (pl.col('side') == 'CT') & (pl.col('t_s') >= 12) & (pl.col('steamid') == 0)
     sub['positions'] = p.filter(~missing).with_columns(alive=pl.when(later_death).then(False).otherwise(pl.col('alive')))
     rows, x, counts = C.extract(sub, load_map('de_mirage'))
-    assert counts['included'] == 70 and counts['dropped_incomplete'] == 1
-    assert x.shape == (70, 103)
+    assert counts['included'] == 68 and counts['dropped_incomplete'] == 1
+    assert x.shape == (68, 103)
     assert 70 in {r['round_num'] for r in rows} and 71 not in {r['round_num'] for r in rows}
     assert next(r for r in rows if r['round_num'] == 4)['after_loss']
 
@@ -126,9 +188,16 @@ def test_missing_snapshot_dropped_but_later_death_keeps_original_member():
 def test_chi_square_known_independence_and_dependence():
     independent = C.chi_square(np.array([[10, 20], [20, 40]]), ['eco', 'full'])
     assert independent['statistic'] == 0 and independent['p'] == 1
+    assert independent['n'] == 90 and independent['cramers_v'] == 0
+    assert independent['p_display'] == 'p = 1'
     dependent = C.chi_square(np.array([[90, 10], [10, 90]]), ['eco', 'full'])
     assert dependent['dof'] == 1 and dependent['statistic'] == pytest.approx(128)
     assert dependent['p'] < 1e-20
+    assert dependent['n'] == 200 and dependent['cramers_v'] == pytest.approx(.8)
+    assert dependent['p_display'] == 'p < 0.0001'
+    sparse = C.chi_square(np.array([[0, 0, 0], [90, 10, 0], [10, 90, 0]]), ['eco', 'full', 'force'])
+    assert sparse['cramers_v'] == dependent['cramers_v']
+    assert C.chi_square(np.empty((0, 0), int), [])['n'] == 0
     assert C.chi_square(np.array([[10, 0]]), ['eco', 'full'])['dof'] == 0
     assert C.wilson(0, 10)[1] > 0
     assert C.wilson(10, 10)[0] < 1
@@ -206,6 +275,14 @@ def test_exported_contract():
         for s in r['states']:
             assert set(s['shap_values']) == set(L.GROUPS)
             assert abs(s['base_value']+sum(s['shap_values'].values())-s['t_win_prob']) < 1e-6
+    shap = lab['shap']
+    assert shap['active_groups'] == [g for g in L.GROUPS if any(
+        state['shap_values'][g] != 0 for row in shap['rounds'] for state in row['states'])]
+    assert shap['active_groups'] == list(L.GROUPS[:4])
+    assert shap['inactive_groups_note_zh'] == '当前模型只使用 4 组特征：人数差、血量与装备、区域占位、C4 与倒计时'
+    for edge in lab['attention']:
+        assert edge['round']['replay_available'] is True
+        assert (root/edge['map']/'replay'/edge['round']['demo_id']/f"{edge['round']['round_num']}.json").exists()
     control = lab['control']
     assert control['map'] == 'de_mirage' and len(control['cells']) == 225
     assert len(control['snapshots']) == 3
@@ -214,7 +291,7 @@ def test_exported_contract():
     for path in sorted(root.glob('*/ct_patterns.json')):
         a = json.loads(path.read_text())
         assert a['schema_version'] == 1
-        assert a['counts']['total'] == sum(a['counts'][key] for key in ('included', 'dropped_at_10', 'dropped_incomplete', 'dropped_outlier'))
+        assert a['counts']['total'] == sum(a['counts'][key] for key in ('included', 'excluded_pistol_rounds', 'dropped_at_10', 'dropped_incomplete', 'dropped_outlier'))
         assert len(a['embedding']['points']) == a['counts']['included']
         k = a['metadata']['k']
         assert len(a['clusters']) == k
@@ -223,8 +300,78 @@ def test_exported_contract():
         assert len({c['label_zh'] for c in a['clusters']}) == k
         assert len({c['label_en'] for c in a['clusters']}) == k
         assert len(a['metadata']['outlier_filter']['excluded_rounds']) == a['counts']['dropped_outlier']
+        assert a['metadata']['excluded_pistol_rounds'] == a['counts']['excluded_pistol_rounds']
+        chi = a['chi_square']
+        assert chi['n'] == a['counts']['included']
+        assert set(chi['economy_types']) <= {'eco', 'force', 'full'}
+        assert 0 <= chi['cramers_v'] <= 1
+        assert chi['p_display'] == ('p < 0.0001' if chi['p'] < 1e-4 else f"p = {chi['p']:.3g}")
+        assert_player_labels([(c['label_zh'], c['label_en']) for c in a['clusters']])
+        shares = np.array([list(c['region_shares_15s'].values()) for c in a['clusters']])
+        selected = [c['label_callouts_15_20s'] for c in a['clusters']]
+        translations = C.callout_names(load_map(a['map']))
+        assert_disjoint_callouts(shares, selected, translations)
+        callouts = [Counter({v['place']: v['n'] for v in c['callouts_15_20s']}) for c in a['clusters']]
+        assert selected == C._label_callouts(shares, callouts, translations)
+        for c, places in zip(a['clusters'], selected):
+            assert all(p in c['label_en'] for p in places)
+            assert all(translations.get(p, p) in c['label_zh'] for p in places)
+            siblings = [j for j, other in enumerate(a['clusters']) if other['expected_players_15s'] == c['expected_players_15s']]
+            if len(siblings) > 1:
+                common = set.intersection(*(set(p for p, n in callouts[j].most_common(2)) for j in siblings))
+                assert set(places).isdisjoint(common)
+        index = json.loads((path.parent/'replay'/'index.json').read_text())
+        for point in a['embedding']['points']:
+            assert point['round_num'] not in (1, 13)
+            assert point['replay_available'] == (point['round_num'] in index.get(point['demo_id'], []))
+            if point['replay_available']:
+                replay_path = path.parent/'replay'/point['demo_id']/f"{point['round_num']}.json"
+                data = json.loads(replay_path.read_text())
+                assert data['frames'] and any(any(p is not None for p in frame) for frame in data['frames'])
         for c in a['clusters']:
+            ref = c['medoid']
+            assert ref['replay_available'] is True
+            data = json.loads((path.parent/'replay'/ref['demo_id']/f"{ref['round_num']}.json").read_text())
+            assert data['frames'] and any(any(p is not None for p in frame) for frame in data['frames'])
             assert c['n'] >= a['metadata']['min_cluster_size']
             assert sum(c['expected_players_15s'].values()) == 5
             assert '%' not in c['label_zh']+c['label_en']
             assert c['ct_win_ci95'][0] <= c['ct_win_rate'] <= c['ct_win_ci95'][1]
+
+
+def test_missing_lab_replays_exported_and_index_repaired(tmp_path):
+    sub = synthetic()
+    sub['positions'] = sub['positions'].filter(pl.col('round_num').is_in([2, 3])).with_columns(
+        steamid=pl.col('steamid')+pl.when(pl.col('side') == 'T').then(5).otherwise(0),
+        name=pl.col('steamid').cast(pl.String), team=pl.col('side'))
+    sub['rounds'] = pl.DataFrame([dict(demo_id='fixture', round_num=r, dur_s=20.,
+                                     t_team='T', ct_team='CT', winner_side='CT') for r in (2, 3)])
+    sub['kills'] = pl.DataFrame(schema={'demo_id': pl.String, 'round_num': pl.Int64, 'is_post_round': pl.Boolean})
+    sub['utility'] = pl.DataFrame(schema={'demo_id': pl.String, 'round_num': pl.Int64, 'is_post_round': pl.Boolean,
+                                        'pop_t_s': pl.Float64, 'land_x': pl.Float64})
+    sub['plants'] = pl.DataFrame(schema={'demo_id': pl.String, 'round_num': pl.Int64})
+    mm = load_map('de_mirage')
+    required = {('fixture', 2)}
+    available = L.ensure_replays(sub, mm, tmp_path, required, None)
+    assert available == required  # Round 3 stays disabled rather than pretending it has frames.
+    path = tmp_path/'replay'/'fixture'/'2.json'
+    data = json.loads(path.read_text())
+    assert data['frames'] and len(data['players']) == 10
+    assert any(any(p is not None for p in frame) for frame in data['frames'])
+    index_path = tmp_path/'replay'/'index.json'
+    assert json.loads(index_path.read_text()) == {'fixture': [2]}
+    # A listed medoid with empty frames is rebuilt; nonexistent index entries are removed.
+    path.write_text(json.dumps({'frames': []}))
+    index_path.write_text(json.dumps({'fixture': [2, 99]}))
+    assert L.ensure_replays(sub, mm, tmp_path, required, None) == required
+    assert json.loads(path.read_text()) == data
+    assert json.loads(index_path.read_text()) == {'fixture': [2]}
+    # A second required example extends the index without losing existing replays.
+    assert L.ensure_replays(sub, mm, tmp_path, {('fixture', 3)}, None) == {('fixture', 2), ('fixture', 3)}
+    assert json.loads(index_path.read_text()) == {'fixture': [2, 3]}
+
+
+def test_shap_no_model_has_no_active_groups():
+    shap = L.shap_rounds({}, None, [])
+    assert shap['active_groups'] == [] and shap['rounds'] == []
+    assert shap['inactive_groups_note_zh'] == '当前模型只使用 4 组特征：人数差、血量与装备、区域占位、C4 与倒计时'

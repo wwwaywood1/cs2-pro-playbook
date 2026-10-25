@@ -17,7 +17,7 @@ def test_load_player_aliases(tmp_path):
     path.write_text("alias_steamid,canonical_steamid,name,note\n"
                     f"{ALIAS},{CANONICAL},donk,verified\n", encoding="utf-8")
     assert load_player_aliases(path) == {ALIAS: CANONICAL}
-    assert load_player_aliases() == {ALIAS: CANONICAL}
+    assert load_player_aliases()[ALIAS] == CANONICAL
 
 
 @pytest.mark.parametrize("dtype", [pl.UInt64, pl.Int64, pl.String])

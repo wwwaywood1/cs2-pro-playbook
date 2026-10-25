@@ -1,5 +1,5 @@
 import MatchDate, { MatchTimeFilter } from "./MatchDate";
-import { getIndex, useData } from "../data";
+import { getCTPatterns, getIndex, useData } from "../data";
 import { inTimeRange, newestMatch, type TimeRange } from "../matchDates";
 import Segmented from "./Segmented";
 import { ctSetupLabel } from "../labels";
@@ -255,6 +255,11 @@ export default function TeamDetails({ team, tacticsContent, heatmapContent, deta
   useEffect(() => { if (matchId) setRange("all"); }, [matchId]);
   const matches = [...team.matches].sort(newestMatch);
   const visible = matches.filter((match) => inTimeRange(match, range, index.data?.data_through));
+  const patterns = useData(() => getCTPatterns(team.map), [team.map]);
+  const recipeCount = new Set((team.tactics?.T.recipes ?? []).map(r => r.value)).size;
+  const clusterCount = patterns.data?.clusters.length ?? 0;
+  const coverage = [recipeCount ? `收录 ${fmtInt(recipeCount)} 套进攻套路` : "", clusterCount ? `${fmtInt(clusterCount)} 类 CT 阵型` : ""].filter(Boolean).join(" · ");
+  const basis = team.insights?.length ? t("tactics.summary_basis", { n: fmtInt(team.insights.length) }) : "";
   const wins = team.matches.filter((match) => match.score_for > match.score_against).length;
   const losses = team.matches.filter((match) => match.score_for < match.score_against).length;
   return <div className="hub-archive-cards">
@@ -273,7 +278,7 @@ export default function TeamDetails({ team, tacticsContent, heatmapContent, deta
       }) : <li className="empty">{t("heatmap.no_data")}</li>}</ul>
     </details>
     <details className="hub-details hub-archive-card hub-team-basis" open={detailsOpen} onToggle={(event) => onDetailsToggle?.(event.currentTarget.open)}>
-      <summary><strong>{t("round4.archive_details")}</strong><small>{t("tactics.summary_basis", { n: fmtInt(team.insights?.length ?? 0) })} · {ctSetupLabel(team.tactics?.CT.setups_20s[0]?.value)}</small></summary>
+      <summary><strong>{t("round4.archive_details")}</strong><small>{coverage || [basis, ctSetupLabel(team.tactics?.CT.setups_20s[0]?.value)].filter(Boolean).join(" · ")}</small></summary>
       {tacticsContent}
       <ul className="team-insights-rest">{(team.insights ?? []).map((insight) => <li key={`${insight.side}:${insight.id}`}>{insight.text[lang]}</li>)}</ul>
       <Segmented className="tabs" role="tablist" aria-label={t("ui.nav_teams")}>{SIDE_ORDER.map((value) => <button

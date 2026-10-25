@@ -6,6 +6,8 @@ No upstream code is copied. This is not a trained GAT/GRU reproduction.
 from __future__ import annotations
 
 from collections import Counter
+import json
+import re
 import numpy as np
 import polars as pl
 from scipy.stats import chi2_contingency
@@ -14,7 +16,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from threadpoolctl import threadpool_limits
 
-from playbook.config import MapMeta
+from playbook.config import CONFIG_DIR, MapMeta
 
 TIMES = (10, 12, 15, 18, 20)
 REGIONS = ('A', 'MID', 'B', 'CT_SPAWN', 'OTHER')
@@ -28,6 +30,7 @@ METADATA = {
     'snapshots': list(TIMES), 'later_deaths': 'Use recorded positions of the original five CT members, including dead members after 10s; drop incomplete/non-finite rounds.',
     'trajectory_slots': '15s lane A/MID/B/CT_SPAWN/OTHER, depth, steamid; fixed member identity across snapshots',
     'torch_available': False,
+    'pistol_exclusion': 'MR12 regulation rounds 1 and 13 only; overtime half starts are retained.',
 }
 
 
@@ -47,11 +50,14 @@ def chi_square(table: np.ndarray, economy_types: list[str]) -> dict:
     keep = a.sum(axis=0) > 0
     a = a[:, keep]
     types = [e for e, k in zip(economy_types, keep) if k]
+    n = int(a.sum())
     if min(a.shape, default=0) < 2:
-        return dict(statistic=0., dof=0, p=1., economy_types=types,
+        return dict(statistic=0., dof=0, p=1., p_display='p = 1', n=n, cramers_v=0., economy_types=types,
                     observed=a.tolist(), min_expected=None, caveat='Insufficient nonempty categories')
     stat, p, dof, expected = chi2_contingency(a, correction=False)
-    return dict(statistic=float(stat), dof=int(dof), p=float(p), economy_types=types,
+    return dict(statistic=float(stat), dof=int(dof), p=float(p),
+                p_display='p < 0.0001' if p < 1e-4 else f'p = {p:.3g}',
+                n=n, cramers_v=float(np.sqrt(stat/(n*min(a.shape[0]-1, a.shape[1]-1)))), economy_types=types,
                 observed=a.tolist(), min_expected=float(expected.min()),
                 caveat='Expected cells below 5; asymptotic p-value may be unreliable' if expected.min() < 5 else None)
 
@@ -82,12 +88,16 @@ def round_ref(row: dict) -> dict:
 def extract(sub: dict, mm: MapMeta) -> tuple[list[dict], np.ndarray, dict]:
     tr = sub['team_rounds'].filter(pl.col('side') == 'CT').sort('demo_id', 'round_num')
     positions = sub['positions']
-    counts = dict(total=tr.height, eligible_at_10=0, dropped_at_10=0, dropped_incomplete=0, included=0)
+    pistols = tr.filter(pl.col('round_num').is_in([1, 13])).height
+    counts = dict(total=tr.height, excluded_pistol_rounds=pistols, eligible_at_10=0,
+                  dropped_at_10=0, dropped_incomplete=0, included=0)
+    tr = tr.filter(~pl.col('round_num').is_in([1, 13]))
     if positions.is_empty() or tr.is_empty():
-        counts['dropped_at_10'] = counts['total']
+        counts['dropped_at_10'] = tr.height
         return [], np.empty((0, 103)), counts
+    positions = positions.filter(~pl.col('round_num').is_in([1, 13]))
     ct_spawn, t_spawn = _spawn(positions, 'CT'), _spawn(positions, 'T')
-    pos = positions.filter((pl.col('side') == 'CT') & pl.col('t_s').is_in(TIMES))
+    pos = positions.filter((pl.col('side') == 'CT') & pl.col('t_s').is_in(sorted(set(TIMES) | set(range(15, 21)))))
     grouped = {key: g for key, g in pos.group_by('demo_id', 'round_num', maintain_order=True)}
     # Previous result follows this team, not a fixed side, including half transitions.
     previous = {}
@@ -109,6 +119,7 @@ def extract(sub: dict, mm: MapMeta) -> tuple[list[dict], np.ndarray, dict]:
             continue
         sids = sorted(at10['steamid'].to_list())
         snapshots, fs, depths, lanes15 = [], [], [], []
+        callouts = Counter()
         for second in TIMES:
             p = g.filter((pl.col('t_s') == second) & pl.col('steamid').is_in(sids)).sort('steamid')
             if p.height != 5 or p['steamid'].to_list() != sids:
@@ -125,6 +136,9 @@ def extract(sub: dict, mm: MapMeta) -> tuple[list[dict], np.ndarray, dict]:
         if len(snapshots) != 5:
             counts['dropped_incomplete'] += 1
             continue
+        callouts.update(place for place in g.filter(
+            pl.col('t_s').is_between(15, 20) & pl.col('steamid').is_in(sids))['place'].to_list()
+            if place in mm.callout_region)
         lanes15 = [lane if lane in REGIONS else 'OTHER' for lane in lanes15]
         order = sorted(range(5), key=lambda i: (REGIONS.index(lanes15[i]), depths[i], sids[i]))
         xyz = np.stack(snapshots)[:, order]
@@ -134,7 +148,7 @@ def extract(sub: dict, mm: MapMeta) -> tuple[list[dict], np.ndarray, dict]:
         radar[:, :, 2] = (xyz[:, :, 2] < mm.radar.get('lower_level_max_z', -np.inf)).astype(int)
         after_loss = previous.get((row['demo_id'], row['round_num'], row['team'])) is False
         row.update(xyz=xyz, radar=radar, shares=np.array([lanes15.count(l)/5 for l in REGIONS]),
-                   depth=float(np.mean(depths)), after_loss=after_loss)
+                   depth=float(np.mean(depths)), after_loss=after_loss, callouts=callouts)
         context = [row['equipment_value']/25000, row['opp_equipment_value']/25000,
                    (row['score_for']-row['score_against'])/12, float(after_loss),
                    *[float(row['buy_type'] == b) for b in ('full', 'force', 'eco', 'pistol')]]
@@ -155,77 +169,131 @@ def player_counts(shares: np.ndarray) -> np.ndarray:
     return counts
 
 
-def _labels(shares: np.ndarray, depths: np.ndarray) -> list[tuple[str, str]]:
-    result = []
-    for s in shares:
-        counts = player_counts(s)
-        zh = '·'.join(f'{r}{n}' for r, n in zip(('A', '中', 'B', '警家', '外围'), counts) if n)
-        en = '-'.join(f'{r}{n}' for r, n in zip(('A', 'M', 'B', 'CT', 'O'), counts) if n)
-        if counts[0] >= 3:
-            style = ('重 A', 'A-heavy')
-        elif counts[2] >= 3:
-            style = ('重 B', 'B-heavy')
-        elif counts[1] >= 3:
-            style = ('中路前顶', 'mid pressure')
-        elif counts[3] >= 2:
-            style = ('回防集结', 'spawn support')
-        elif counts[4] >= 2:
-            style = ('外围协防', 'outer support')
-        else:
-            style = ('均衡', 'default')
-        result.append((f'{zh} {style[0]}', f'{en} {style[1]}'))
-    # Depth is only useful when the same five-player composition collides.
-    original = result.copy()
-    low, high = np.quantile(depths, [1/3, 2/3])
-    for label, n in Counter(original).items():
-        if n < 2:
-            continue
-        group = [i for i, name in enumerate(original) if name == label]
-        words = [('前压', 'forward') if depths[i] > high else ('回收', 'deep') if depths[i] < low else None for i in group]
-        if len(set(words)) > 1:
-            for i, word in zip(group, words):
-                if word:
-                    result[i] = (f'{label[0]} · {word[0]}', f'{label[1]} · {word[1]}')
-    # Compare remaining collisions in measured regional occupancy and depth.
-    # Rank words make even several same-direction profiles distinct without %s.
-    original = result.copy()
-    profiles = np.column_stack((shares, depths))
-    regions = ('A 侧', '中路', 'B 侧', '警家', '外围', '站位')
-    english = ('A', 'mid', 'B', 'spawn', 'outer', 'position')
-    ranks_zh = ('最少', '偏少', '较少', '较多', '偏多', '最多')
-    ranks_en = ('lowest', 'low', 'lower', 'higher', 'high', 'highest')
-    for label, n in Counter(original).items():
-        if n < 2:
-            continue
-        group = [i for i, name in enumerate(original) if name == label]
-        # Most separating measured feature; stable feature order breaks ties.
-        feature_order = np.argsort(-np.ptp(profiles[group], axis=0), kind='stable')
-        pending = [group]
-        for feature in feature_order:
-            next_pending = []
-            for peers in pending:
-                values = sorted(set(profiles[peers, feature]))
-                if len(values) == 1:
-                    next_pending.append(peers)
+# Cache has no route_names entry; these callout names follow the reviewed Cache
+# spot vocabulary (config/spots/de_cache.toml) and the existing callout translations.
+CACHE_CALLOUT_ZH = {
+    'TSpawn': '匪家', 'TYard': '匪家外院', 'TTruck': '匪家卡车',
+    'OutsideA': 'A区外场', 'AMain': 'A区主通道', 'AHalls': 'A区大厅',
+    'AStairs': 'A区楼梯', 'LongA': 'A区长廊', 'Lockers': '更衣室',
+    'BombsiteA': 'A包点', 'Truck': '警家卡车', 'ForkLift': '叉车',
+    'Squeaky': 'A区铁门', 'Corner': 'A区底角', 'Quad': '四箱',
+    'Catwalk': 'A区猫道', 'ElectricalBox': '电箱', 'Toxic': 'A区毒箱',
+    'Ladder': 'A区梯子', 'ABoost': 'A区双架', 'Mid': '中路',
+    'Middle': '中路高台', 'Garage': '车库', 'Highway': '公路',
+    'Vents': '通风管', 'Boost': '中路双架', 'Sandbags': '沙袋',
+    'Cubby': '中路凹槽', 'MidRoof': '中路屋顶', 'Red': '红箱',
+    'BMain': 'B区主通道', 'BHalls': 'B区大厅', 'SunRoom': '日光房',
+    'OutsideB': 'B区外场', 'Useless': '无用房', 'BombsiteB': 'B包点',
+    'Checkers': '棋盘房', 'TreeRoom': '树房', 'Headshot': '爆头位',
+    'Heaven': 'B区天堂', 'Rafters': 'B区横梁', 'BackHall': 'B区后廊',
+    'CTSpawn': '警家', 'CTLane': '警家通道', 'BusStop': '公交站',
+    'Connector': '警家连接', 'Bear': '熊位',
+}
+
+
+# Existing Overpass callout vocabulary; this historical map has no route config.
+OVERPASS_CALLOUT_ZH = {'UpperPark': '上公园',
+ 'Restroom': '厕所',
+ 'BombsiteA': 'A 包点',
+ 'Playground': '游乐场',
+ 'Lobby': '大厅',
+ 'StorageRoom': '储藏室',
+ 'Fountain': '喷泉',
+ 'LowerPark': '下公园',
+ 'BackofA': 'A 后',
+ 'UnderA': 'A 下',
+ 'SnipersNest': '狙位',
+ 'Connector': '连接',
+ 'Walkway': '走道',
+ 'Stairs': '楼梯',
+ 'Tunnels': '隧道',
+ 'Water': '水域',
+ 'Bridge': '桥',
+ 'TSpawn': '匪家',
+ 'Construction': '工地',
+ 'Pipe': '管道',
+ 'BombsiteB': 'B 包点',
+ 'TStairs': 'T 楼梯',
+ 'Alley': '小巷',
+ 'Canal': '水渠',
+ 'SideAlley': '侧巷'}
+
+
+def callout_names(mm: MapMeta) -> dict[str, str]:
+    """Reuse configured callout translations, removing route-only wording."""
+    path = CONFIG_DIR / 'route_names.json'
+    routes = json.loads(path.read_text()).get(mm.name, {}) if path.exists() else {}
+    names = {place: re.sub(r'(?:主攻|夹击|进攻|出发)?线$', '', name)
+             for place, name in routes.items() if place in mm.callout_region}
+    if mm.name == 'de_cache':
+        names.update(CACHE_CALLOUT_ZH)
+    elif mm.name == 'de_overpass':
+        names.update(OVERPASS_CALLOUT_ZH)
+    return names
+
+
+def _label_callouts(shares: np.ndarray, callouts: list[Counter],
+                    names_zh: dict[str, str]) -> list[list[str]]:
+    """Select at most two distinctive callouts per five-player count prefix.
+
+    Lift is own observation share minus the unweighted mean of sibling shares.
+    Shared top-two callouts are background noise; mere presence in every large
+    cluster is not enough to call a place common. Each translated callout belongs
+    only to its strongest positive-lift sibling, keeping label sets disjoint.
+    Singleton prefixes use observation share (the peer baseline is zero).
+    """
+    groups = {}
+    for i, share in enumerate(shares):
+        groups.setdefault(tuple(player_counts(share)), []).append(i)
+    selected = [[] for _ in shares]
+    for siblings in groups.values():
+        frequency = {i: {p: n/max(1, callouts[i].total()) for p, n in callouts[i].items() if n > 0}
+                     for i in siblings}
+        top = {i: set(sorted(frequency[i], key=lambda p: (-frequency[i][p], p))[:2])
+               for i in siblings}
+        common = set.intersection(*(top[i] for i in siblings)) if len(siblings) > 1 else set()
+        # Compare display names too: aliases must not appear in sibling labels.
+        common_zh = {names_zh.get(p, p) for p in common}
+        owners = {}
+        for i in siblings:
+            peers = [j for j in siblings if j != i]
+            for place, own in frequency[i].items():
+                zh = names_zh.get(place, place)
+                if zh in common_zh:
                     continue
-                for rank, value in enumerate(values):
-                    subset = [i for i in peers if profiles[i, feature] == value]
-                    word_rank = round(rank * 5 / (len(values)-1))
-                    for i in subset:
-                        depth_words = ('站位最后', '站位偏后', '站位较后', '站位较前', '站位偏前', '站位最前')
-                        zh = f'{regions[feature]}{ranks_zh[word_rank]}' if feature < 5 else depth_words[word_rank]
-                        en = f'{english[feature]} {ranks_en[word_rank]}'
-                        result[i] = (f'{result[i][0]} · {zh}', f'{result[i][1]} · {en}')
-                    if len(subset) > 1:
-                        next_pending.append(subset)
-            pending = next_pending
-            if not pending:
-                break
-        # Identical summaries cannot support a claimed tactical distinction.
-        for peers in pending:
-            for rank, i in enumerate(peers, 1):
-                result[i] = (f'{result[i][0]} · 同构队形{rank}', f'{result[i][1]} · equivalent formation {rank}')
-    return result
+                lift = own - sum(frequency[j].get(place, 0.) for j in peers)/max(1, len(peers))
+                if lift <= 1e-12:
+                    continue
+                candidate = (lift, own, -i, place)
+                if zh not in owners or candidate > owners[zh][0]:
+                    owners[zh] = (candidate, i, place)
+        for i in siblings:
+            candidates = [(candidate, place) for candidate, owner, place in owners.values() if owner == i]
+            selected[i] = [place for _, place in sorted(candidates, key=lambda item: (
+                -item[0][0], -item[0][1], item[1]))[:2]]
+    return selected
+
+
+def _labels(shares: np.ndarray, depths: np.ndarray, callouts: list[Counter],
+            names_zh: dict[str, str]) -> list[tuple[str, str]]:
+    """Five-player prefix + up to two sibling-exclusive lift callouts + depth."""
+    low, high = np.quantile(depths, [1/3, 2/3])
+    selected = _label_callouts(shares, callouts, names_zh)
+    labels = []
+    for s, depth, places in zip(shares, depths, selected):
+        counts = player_counts(s)
+        prefix_zh = '·'.join(f'{r}{n}' for r, n in zip(('A', '中', 'B', '警', '外围'), counts) if n)
+        prefix_en = '-'.join(f'{r}{n}' for r, n in zip(('A', 'M', 'B', 'CT', 'O'), counts) if n)
+        word = ('前顶', 'forward') if depth > high else ('保守', 'conservative') if depth < low else ('', '')
+        zh = '/'.join(names_zh.get(p, p) for p in places) or '开局'
+        en = '/'.join(places) or 'opening'
+        labels.append((f'{prefix_zh}（{zh}{" " if word[0] else ""}{word[0]}）',
+                       f'{prefix_en} ({en}{" " if word[1] else ""}{word[1]})'))
+    # No invented geographic distinctions when identical summaries have no lift.
+    return [(zh[:-1]+f' #{i+1}）', en[:-1]+f' #{i+1})') if any(
+        i != j and (zh == other_zh or en == other_en)
+        for j, (other_zh, other_en) in enumerate(labels)) else (zh, en)
+        for i, (zh, en) in enumerate(labels)]
 
 
 def _projection(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -273,7 +341,7 @@ def _cluster(x: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndar
 @threadpool_limits.wrap(limits=1)
 def build(sub: dict, mm: MapMeta) -> tuple[dict, list[dict]]:
     rows, x, counts = extract(sub, mm)
-    out = dict(schema_version=1, map=mm.name, method=METHOD, metadata=METADATA.copy(), counts=counts,
+    out = dict(schema_version=1, map=mm.name, method=METHOD, metadata={**METADATA, 'excluded_pistol_rounds': counts['excluded_pistol_rounds']}, counts=counts,
                clusters=[], chi_square=chi_square(np.empty((0, 0), int), []), fingerprints=[],
                embedding={'method': 'pca_2d', 'points': []})
     counts['dropped_outlier'] = 0
@@ -282,7 +350,7 @@ def build(sub: dict, mm: MapMeta) -> tuple[dict, list[dict]]:
         return out, []
     keep, scaled, reduced, labels, clustering = _cluster(x)
     out['metadata'].update(clustering)
-    out['metadata']['labels'] = '15s mean region shares apportioned to five expected players by largest remainders (ties in A/MID/B/CT_SPAWN/OTHER order); depth thirds only distinguish colliding compositions, then strongest observed regional/depth difference in words. IDs retain ascending mean A-share order.'
+    out['metadata']['labels'] = '15s mean region shares apportioned to five players by largest remainders; up to two callouts ranked by positive share lift over the mean of other same-prefix clusters; shared top-two callouts omitted, each translated callout owned by its highest-lift sibling; singleton prefixes use frequency; cluster mean depth thirds (forward/conservative); identical summaries receive neutral sample numbers. IDs retain ascending mean A-share order.'
     out['metadata']['outlier_filter']['excluded_rounds'] = [round_ref(r) for i, r in enumerate(rows) if not keep[i]]
     rows = [r for i, r in enumerate(rows) if keep[i]]
     x = x[keep]
@@ -294,14 +362,17 @@ def build(sub: dict, mm: MapMeta) -> tuple[dict, list[dict]]:
     order = sorted(range(k), key=lambda c: tuple(shares[labels == c].mean(axis=0)) + tuple(x[labels == c].mean(axis=0)))
     means = np.array([shares[labels == c].mean(axis=0) for c in order])
     mean_depths = np.array([depths[labels == c].mean() for c in order])
-    names = _labels(means, mean_depths)
+    callouts = [sum((rows[j]['callouts'] for j in np.flatnonzero(labels == c)), Counter()) for c in order]
+    translations = callout_names(mm)
+    names = _labels(means, mean_depths, callouts, translations)
+    label_places = _label_callouts(means, callouts, translations)
     ids = {c: f'C{i}' for i, c in enumerate(order)}
-    contexts = {b: np.array([r['buy_type'] == b for r in rows]) for b in ('full', 'force', 'eco', 'pistol')}
+    contexts = {b: np.array([r['buy_type'] == b for r in rows]) for b in ('full', 'force', 'eco')}
     contexts.update(trailing=np.array([r['score_for'] < r['score_against'] for r in rows]),
                     leading=np.array([r['score_for'] > r['score_against'] for r in rows]),
                     after_loss=np.array([r['after_loss'] for r in rows]))
     attention = []
-    eco_types = sorted({r['buy_type'] for r in rows})
+    eco_types = ['eco', 'force', 'full']
     contingency = []
     for i, c in enumerate(order):
         members = np.flatnonzero(labels == c)
@@ -319,6 +390,10 @@ def build(sub: dict, mm: MapMeta) -> tuple[dict, list[dict]]:
             region_shares_15s=dict(zip(REGIONS, means[i].tolist())),
             expected_players_15s=dict(zip(REGIONS, player_counts(means[i]).tolist())), push_depth=float(mean_depths[i]),
             trajectories=[{'t_s': s, 'positions': trajectory[j].round(3).tolist()} for j, s in enumerate(TIMES)],
+            label_callouts_15_20s=label_places[i],
+            callouts_15_20s=[dict(place=p, label_zh=callout_names(mm).get(p, p), n=int(count),
+                                  share=count/max(1, callouts[i].total()))
+                              for p, count in sorted(callouts[i].items(), key=lambda item: (-item[1], item[0]))],
             medoid=round_ref(medoid), context_preferences=prefs))
         contingency.append([sum(rows[j]['buy_type'] == b for j in members) for b in eco_types])
         snaps = []
