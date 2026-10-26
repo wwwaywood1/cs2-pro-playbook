@@ -16,16 +16,23 @@ nothing to host.
 ## Architecture
 
 ```
-cs2povarchive (HF) ──fetch──> data/raw/**/*.dem
-                              │ parse.py      (awpy 3.1: one demo -> normalized tables)
+HLTV.org match pages ──(downloaded by hand)──> ~/Downloads/*.rar|zip
+   │ scripts/refresh.sh: import_hltv.py (extract, dedupe, map pool) ──> data/raw/hltv/<archive>/*.dem
+   │                     register_hltv_dates.py (archive -> HLTV match, exact date)
+   │                     archive_downloads.py   (original archives -> external drive)
+cs2povarchive (HF) ──fetch──> data/raw/cs2povarchive/<event>/<hltv id>-<slug>/*.dem   (legacy source)
+                              │ parse.py      (awpy 3.1: one demo -> normalized tables, 1 Hz frames, eye yaw)
                               │ semantics.py  (team_rounds, player_rounds)
                               ▼
                        data/parsed/<table>/<demo_id>.parquet
-                              │ export.py     (aggregate across demos, per map;
-                              │                heatmap.py, tactics.py)
+                              │ export.py     dedupe.py (cross-source duplicates), dates.py (event ranges,
+                              │               config/match_dates.csv), winprob.py, replay.py, radar6.py,
+                              │               heatmap.py, zones.py, tactics.py, insights.py, ct_patterns.py, ai_lab.py
                               ▼
-                       data/site/**.json  ──copy──> web/public/data  ──> static site (GitHub Pages)
+                       data/site/**.json  ──sync──> web/public/data  ──> static site
 ```
+
+`data/raw` may be a symlink to an external drive (`config/storage.toml`, `scripts/relocate_raw.py`).
 
 All analysis is precomputed offline; the website only reads JSON. Each stage is rerunnable
 on stored output: `export` never touches demos, and `parse` skips demos already parsed.
@@ -34,36 +41,44 @@ callout mapping to the stored tables and rebuilds the semantic tables (no demo n
 
 | Module | Role |
 |---|---|
-| `playbook/fetch.py` | Lists and downloads demos from Hugging Face matching `config/targets.toml` (standalone copy: `scripts/download_batch1.py`) |
-| `playbook/parse.py` | One demo to tables; teams, sides, rounds, positions, kills, plants, grenades |
+| `playbook/parse.py` | One demo to tables; teams, sides, rounds, positions (1 Hz, eye yaw), kills, plants, grenades |
+| `playbook/multipart.py` | Recordings split into parts (`-p1`, `-p2`) parsed as one game |
 | `playbook/utility.py` | Grenade thrower recovery; callout lookup for arbitrary points |
 | `playbook/semantics.py` | Round semantics (labels per round x team, and per round x player) |
-| `playbook/export.py` | Site JSON: team profiles, player profiles, lineup library, heatmaps |
+| `playbook/dedupe.py` | Cross-source duplicates (map + teams + per-round winner sequence); event slug of a demo |
+| `playbook/dates.py` | Match dates: exact (`config/match_dates.csv`), else HLTV id interpolation within a finished event, else event start |
+| `playbook/export.py` | Site JSON: team/player profiles, lineup library, tactics, heatmaps, replays, WP timelines (written fresh, swapped in) |
+| `playbook/winprob.py` | Round win-probability model (out-of-fold), WPA per action (drift-adjusted), recipe WP swing |
+| `playbook/replay.py` | 2D replay per round (positions, yaw, events, WP, territory) |
+| `playbook/radar6.py` | Six-axis player radar with peer percentiles |
 | `playbook/heatmap.py` | Team heatmaps per player: presence, holding, shots, kills, deaths, utility landing by type (cleaned frames) |
 | `playbook/zones.py` | Per-player summaries on the cleaned frames: zones, holding spots, fights, utility spots; team setup |
-| `playbook/tactics.py` | M2: landing spots, T plans (commit, tempo, split, lurk, fake), execute recipes, CT setups; site summaries |
-| `config/spots/*.toml` | Optional human names for landing spots, matched by position (survive re-clustering) |
+| `playbook/tactics.py` | Landing spots, T plans (commit, tempo, split, lurk, fake), execute recipes, CT setups; site summaries |
+| `playbook/insights.py` | Team insight facts (tested against the other teams, FDR-controlled) for the written summaries |
+| `playbook/ct_patterns.py` | CT defence formations (clustering on positions), economy association, team fingerprints |
+| `playbook/ai_lab.py` | AI Lab: grouped Shapley explanations of the WP model, attention-style CT examples |
+| `playbook/hltv.py` | Parsers for HLTV results/match/team pages saved from a browser; tier-1 filter; download planning |
+| `playbook/fetch.py` | Lists and downloads demos from Hugging Face matching `config/targets.toml` (legacy source) |
 | `playbook/store.py` | Parquet storage, one file per demo per table |
 | `config/maps/*.toml` | Callout to region to lane mapping, radar transform, per map |
-| `config/team_aliases.csv` | In-game clan names to canonical team names |
+| `config/spots/*.toml` | Optional human names for landing spots, matched by position (survive re-clustering) |
+| `config/team_aliases.csv`, `player_aliases.csv` | In-game clan names / alternate accounts to canonical identities |
+| `config/events.json`, `match_dates.csv`, `hltv_archives.json` | Event date ranges; exact dates; which HLTV match each archive is |
+| `config/hltv.toml`, `storage.toml`, `site.toml` | Download scope (2026, tier-1); where bulky data lives; showcase teams |
 
 ## Data sources
 
-- **cs2povarchive/cs2-demos** (huggingface.co/datasets/cs2povarchive/cs2-demos), Apache-2.0:
-  GOTV demos of IEM Cologne Major 2026 (219 files) and CAC 2026 (64 files), about 120 GB,
-  262 games over the 7-map pool (Ancient, Anubis, Dust2, Inferno, Mirage, Nuke, Overpass).
-  Layout `<event>/<hltv_match_id>-<slug>/<team1>-vs-<team2>[-mN]-<map>[-pK].dem`; 19 games
-  are split into parts (`-p1`, `-p2`); fetch downloads every part and parse groups them
-  into one game (see Multipart recordings below).
-  It replaced CounterQuant CS2 Demos, which was taken down in October 2026: a reminder that
-  single-maintainer sources disappear. Keep the raw demos you download, and keep the GRID
-  Open Access application as the long-term option.
-- Hugging Face is not on the network allowlist of the development sandboxes, so downloads
-  run on the user's machine (`scripts/download_batch1.py`, needs only `huggingface_hub`).
-- **awpy test fixtures** (github.com/pnxenopoulos/awpy-fixtures): used for tests
-  (B8 vs Vitality on Mirage, 9z vs PARIVISION on Inferno).
+- **HLTV.org** GOTV archives (`<event>-<team1>-vs-<team2>-<bo3|map>-<id>.rar`), downloaded by hand from
+  match pages: the main source (about 580 of 745 maps). HLTV's robots.txt disallows automated access to
+  `/download/demo`, so the tools never request HLTV; they plan, list the links and ingest what was downloaded.
+  Scope in `config/hltv.toml`: matches since 2026-01-01, tier-1 events, most popular first.
+- **cs2povarchive/cs2-demos** (Hugging Face, Apache-2.0): IEM Cologne Major 2026 and CAC 2026 GOTV demos
+  (about 165 maps), layout `<event>/<hltv_match_id>-<slug>/<team1>-vs-<team2>[-mN]-<map>[-pK].dem`.
+- **Match start times**: HLTV match pages and bo3.gg (cross-checked: median difference 0 min, no day
+  mismatches over 159 matches); stored per HLTV match in `config/hltv_archives.json`.
+- **awpy test fixtures** (github.com/pnxenopoulos/awpy-fixtures): used for tests.
 - **awpy-data** releases: radar images and world-to-radar transforms (release 2000933).
-- Fallback: GRID Open Access (official CS2 data; free for students and pre-revenue projects).
+- Credits and licences: `docs/CREDITS.md`.
 
 ## Tables (data/parsed)
 
@@ -232,8 +247,9 @@ heatmap_teams.json              [{ team, slug, n_matches, maps: [{ map, display_
 - Hub metadata is additive within schema 1. `map_win_rate` counts maps won / maps played;
   `round_win_rate` counts rounds won / all rounds (not the mean of T/CT rates).
   Existing `rounds{T,CT}` in the heatmap index remains the gun-round sample; `all_rounds`
-  is the separate all-buy sample. `results` contains up to five match records per map,
-  ordered by source match ID; dates are not available.
+  is the separate all-buy sample. `results` holds every match record of the map, newest
+  first; each carries `date`, `date_precision` (`exact` from `config/match_dates.csv`, `day`
+  from HLTV-id interpolation within a finished event, `event` = event start) and `event`.
 - `sides.T` includes `plant_sites`, `execute_timing` (`fast` before 35s,
   `default_then_execute` 35 to 65s, `late`, `no_clear_execute`), `execute_lane`,
   `setups_15s`, `setups_30s`.
@@ -326,19 +342,19 @@ Verified by GPT-03 on MOUZ vs Legacy Nuke (2394905: 13-6, 19 rounds); B8 vs TYLO
 | Milestone | Content | Status |
 |---|---|---|
 | M0 | Pipeline: fetch, parse, semantics, export, tests | done |
-| M1 | Map configs (all 7 active-duty maps), team aliases, first 65 demos (Cologne Major: 28 Mirage, 32 Inferno, 1 each of the other five) | done |
-| M2 | Team heatmaps and player summaries (done; page via DS-06). Tactic identification exported (tactics.json, team tactics); blind-labelled validation set (20 rounds); spot names (GPT-06); role thresholds against a sourced role table (GPT-05) | in progress |
-| M3 | Website v1: lineup library, team and player pages, bilingual (zh/en) | done on sample data; GitHub Pages deploy pending |
-| M4 | Natural-language summaries generated from the computed numbers (the LLM rewrites, never invents) | fact layer done (insights.py); rewriting next |
-| M5 | Full map pool, weekly incremental update | later |
+| M1 | Map configs (7-map pool incl. Cache), team/player aliases | done |
+| M2 | Heatmaps, player summaries, tactics (recipes, routes, CT setups), spot names, role checks | done |
+| M3 | Website: teams hub (orbit), tactics, lineup library, heatmaps, 2D replay with view cones and WP, AI Lab; zh/en | done (desktop, Chinese first) |
+| M4 | Natural-language team summaries from checked facts (`scripts/insight_text.py`) | done for 6 maps; rewritten when facts change |
+| M5 | HLTV ingest: planning, manual download list, scripted import, exact dates, archive to external drive | done (2026-10) |
+| M6 | Win probability model, WPA, recipe swing, AI Lab explanations | done |
+| M7 | More showcase teams (2026 tier-1 events, most popular teams first) | in progress (Aurora next) |
+| M8 | Public site repository (built site only, no third-party images) | planned |
 
 ## Work split
 
-- Claude: architecture, parsing and semantics, tactic identification (M2), review and
-  integration of delegated work, tests.
-- DeepSeek: map callout configs, team alias table, i18n labels, frontend implementation
-  to a fixed spec (see `delegation/`).
-- GPT: one robustness review of the parsing edge cases (GPT-01).
+Built with AI assistance: Claude (architecture, pipeline, review, integration) with helper models for
+delegated implementation tasks; briefs and reports are kept under `delegation/`.
 
 
 ## Round win probability and action value (playbook/winprob.py)
@@ -347,12 +363,11 @@ Inspired by Szmida & Toka (MIT Sloan 2025, temporal heterogeneous GNN) and Xenop
 
 - **States**: one per second of live play from `positions` (1 Hz), T-side view: alive and HP per side, equipment value of alive players (round buy ÷ players × alive), time left (round timer 115 s, then the 40 s bomb timer after the plant), planted / site A, score difference, alive players per lane per side, map one-hot. Label: T wins the round.
 - **Model**: `HistGradientBoostingClassifier`, 5-fold `GroupKFold` by match; isotonic calibration cross-fitted by match. Every exported probability is out-of-fold — no match is scored by a model that saw it. Baseline: logistic regression on alive counts, time left, planted.
-- **Current result** (289 de-duplicated matches, 576,886 states): accuracy 0.741 vs 0.697 baseline, log loss 0.469 vs 0.520, Brier 0.159 vs 0.179; calibration within ±0.02 in every decile. Most informative: HP T/CT, equipment difference, alive difference, planted. Metrics: `data/site/winprob_metrics.json`.
-- **Action value (ΔWP)**: WP 2 s after the event minus WP in the last full second before it, from the actor's team view. Kills credit the attacker, deaths debit the victim, utility credits the thrower at the pop. Per player and side in `players.json` (`T.wpa`, `CT.wpa`: per round, duels, utility). Utility values are small and noisy: a grenade's effect is often delayed beyond 2 s.
+- **Current result**: see `data/site/winprob_metrics.json` (2026-10-25: 745 maps, 1,484,022 states, accuracy 0.752 vs 0.694 baseline, log loss 0.457, Brier 0.155). Folds group by map (`demo_id`); maps of one series can fall in different folds (no team identity features, so leakage is small). Most informative: HP T/CT, equipment difference, alive difference, planted.
+- **Action value (ΔWP)**: WP 2 s after the event minus WP in the last full second before it, from the actor's team view; when the round ends inside the window, the outcome is the state after. The game clock alone moves WP (towards CT before a plant, towards T after it), so the mean change of *quiet* 2 s windows (no kill, grenade pop or plant) of the same map, plant state and 10 s time bucket (5 s after a plant) is subtracted. Kills credit the attacker, deaths debit the victim, utility (smoke, flashbang, molotov, HE) credits the thrower at the pop; events before freeze end are ignored. Per player, team and side in `players.json` (`T.wpa`, `CT.wpa`: per round, duels, utility). Utility values are small and noisy: a grenade's effect is often delayed beyond 2 s.
 - **Presentation**: `wpa.rounds_per_match` (= per round × 24, extra rounds won per match) and `wpa.percentile` among players of the same map and side with ≥ 50 rounds. The utility split stays in the data but is not headlined on the site.
-- **Recipe swing**: mean WP 5 s before the commit vs 10 s after (`tactics.json` › `recipes[].wp`). Biased upward (rounds that reach a commit are already going well): use it to compare recipes, not as an absolute effect.
-- **Timelines**: `data/site/<map>/winprob/<demo_id>.json` for showcase teams (`SHOWCASE_TEAMS` in export.py, currently Falcons).
-- Export runs the model when scikit-learn is installed (≈1.5 min), otherwise prints a skip line.
+- **Recipe swing**: mean WP 5 s before the commit vs 10 s after, or the round outcome when the round ends sooner (`tactics.json` › `recipes[].wp`). Biased upward (rounds that reach a commit are already going well): use it to compare recipes, not as an absolute effect.
+- **Timelines**: `data/site/<map>/winprob/<demo_id>.json` and full 2D replays for every match of the showcase teams (`config/site.toml`, listed in `index.json` › `showcase`).
 
 
 ## Entry routes (playbook/tactics.py `recipe_routes`)
@@ -454,6 +469,5 @@ to four decimals; the UI displays signed percentage points. Multiple actions in
 the window can share a swing: this is not causal attribution. WP arrays preserve
 second indexes, including null holes. Positions remain integer radar pixels.
 
-View cones are intentionally skipped. The parser would need each player's eye
-or view **yaw per sampled second**, keyed by demo/round/player/time (and preferably
-pitch for vertical aim); grenade throw yaw cannot substitute for player view yaw.
+View cones use each player's eye yaw per sampled second (`m_angEyeAngles`, parsed into
+`positions.yaw`; tests in `tests/test_view_cones.py`).
