@@ -5,6 +5,8 @@
 SRC_DIR holds one image per player named <name>.png|jpg (e.g. HLTV-style player cards).
 Each card is cleaned (left badge column and light tooltip boxes removed), upscaled 2x,
 cut out with rembg (isnet-general-use), then placed on a 1000x666 transparent canvas:
+(--transparent: the images are already cut-outs with an alpha channel, e.g. HLTV
+"bodyshot" PNGs; they are only upscaled and placed, no cleaning or rembg.)
 head ~215 px wide, hair top at y=100, centred, with a soft fade at the bottom.
 Requires: pip install "rembg[cpu]" opencv-python pillow numpy.
 """
@@ -83,14 +85,29 @@ def place(cut: Image.Image) -> Image.Image:
     return canvas
 
 
+def upscale_cutout(img: Image.Image) -> Image.Image:
+    """Already transparent cut-out: upscale 2x with a gentle sharpen, keep its alpha."""
+    rgba = img.convert("RGBA")
+    rgba = rgba.resize((rgba.width * 2, rgba.height * 2), Image.LANCZOS)
+    rgb, alpha = rgba.convert("RGB"), rgba.split()[-1]
+    rgb = rgb.filter(ImageFilter.UnsharpMask(radius=2, percent=50, threshold=2))
+    out = rgb.convert("RGBA")
+    out.putalpha(alpha)
+    return out
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("src", type=Path)
     ap.add_argument("--map", nargs="+", required=True, help="name=steamid")
     ap.add_argument("--out", type=Path, default=Path("web/public/players"))
+    ap.add_argument("--transparent", action="store_true",
+                    help="inputs are already transparent cut-outs (skip card cleaning and rembg)")
     args = ap.parse_args()
-    from rembg import new_session
-    session = new_session("isnet-general-use")
+    session = None
+    if not args.transparent:
+        from rembg import new_session
+        session = new_session("isnet-general-use")
     args.out.mkdir(parents=True, exist_ok=True)
     for pair in args.map:
         name, sid = pair.split("=")
@@ -98,7 +115,9 @@ def main() -> None:
         if src is None:
             print(f"missing card for {name}")
             continue
-        out = place(cutout(clean_card(Image.open(src)), session))
+        img = Image.open(src)
+        cut = upscale_cutout(img) if args.transparent else cutout(clean_card(img), session)
+        out = place(cut)
         out.save(args.out / f"{sid}.png", optimize=True)
         print(f"{name} → {args.out / f'{sid}.png'}")
 

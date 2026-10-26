@@ -59,7 +59,8 @@ def read_map(path: Path) -> str:
 
 
 def _demos(root: Path) -> list[Path]:
-    return sorted(p for p in root.rglob("*") if p.is_file() and p.suffix.lower() == ".dem")
+    return sorted(p for p in root.rglob("*") if p.is_file() and p.suffix.lower() == ".dem"
+                  and not p.name.startswith("._"))
 
 
 def _safe_member(name: str) -> None:
@@ -193,7 +194,8 @@ def import_downloads(src: Path = RAW_DIR / "hltv", *, parsed: Path = PARSED_DIR,
         return []
     if not src.is_dir():
         raise ValueError(f"Source is not a directory: {src}")
-    inputs = sorted(p for p in src.iterdir() if p.is_file() and p.suffix.lower() in ARCHIVES | {".dem"})
+    inputs = sorted(p for p in src.iterdir() if p.is_file() and p.suffix.lower() in ARCHIVES | {".dem"}
+                    and not p.name.startswith("._"))
     loose = [p for p in inputs if p.suffix.lower() == ".dem"]
     loose_set = set(loose)
     seen = {p.stem for p in parsed.glob("*/*.parquet")}
@@ -223,6 +225,11 @@ def import_downloads(src: Path = RAW_DIR / "hltv", *, parsed: Path = PARSED_DIR,
             json.dump(sorted(loose_ids), handle)
         Path(handle.name).replace(manifest)
 
+    # Archives imported without failures (including all-duplicate ones); lets
+    # scripts/archive_downloads.py move them off the internal disk afterwards.
+    processed_path = src / ".import_hltv_archives.json"
+    processed = set(json.loads(processed_path.read_text(encoding="utf-8"))) if processed_path.exists() else set()
+    processed_before = set(processed)
     for archive in inputs:
         if archive.suffix.lower() not in ARCHIVES:
             continue
@@ -240,11 +247,17 @@ def import_downloads(src: Path = RAW_DIR / "hltv", *, parsed: Path = PARSED_DIR,
                 if not demos:
                     raise ValueError("archive contains no .dem files")
                 _process(demos, extracted, destination, seen, row)
+            if not row.failed:
+                processed.add(archive.name)
             if delete_archives and not row.failed:
                 archive.unlink()
         except Exception as exc:
             row.failed += 1
             row.reasons.append(str(exc))
+    if not dry_run and processed != processed_before:
+        with tempfile.NamedTemporaryFile(mode="w", dir=src, prefix=".import_hltv-", delete=False) as handle:
+            json.dump(sorted(processed), handle)
+        Path(handle.name).replace(processed_path)
     print_summary(rows)
     return rows
 

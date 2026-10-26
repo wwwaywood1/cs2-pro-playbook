@@ -81,7 +81,7 @@ def hltv_demo_ids(raw_dir: Path = RAW_DIR) -> set[str]:
     from playbook.parse import demo_identity
 
     return {demo_identity(p)["demo_id"] for p in (raw_dir / "hltv").rglob("*")
-            if p.is_file() and p.suffix.lower() == ".dem"}
+            if p.is_file() and p.suffix.lower() == ".dem" and not p.name.startswith("._")}
 
 
 TEAM_COLUMNS = ("team", "team_a", "team_b", "winner", "winner_team", "ct_team", "t_team",
@@ -200,6 +200,8 @@ def demo_events(raw_dir: Path = RAW_DIR) -> dict[str, str]:
 
     out: dict[str, str] = {}
     for path in sorted(raw_dir.rglob("*.dem")):
+        if path.name.startswith("._"):  # macOS AppleDouble sidecar on exFAT/FAT volumes
+            continue
         slug = demo_event_slug(path, raw_dir)
         if slug:
             out.setdefault(demo_identity(path)["demo_id"], _pretty_event(slug))

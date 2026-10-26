@@ -30,12 +30,14 @@ def _demo_paths(inputs: list[Path]) -> list[list[Path]]:
     found = set()
     for p in inputs:
         if p.is_dir():
-            found.update(q for q in p.rglob("*") if q.is_file() and q.suffix.lower() == ".dem")
-        elif p.is_file() and p.suffix.lower() == ".dem" and not DUPLICATE_RE.search(p.stem):
+            found.update(q for q in p.rglob("*") if q.is_file() and q.suffix.lower() == ".dem"
+                         and not q.name.startswith("._"))
+        elif p.is_file() and p.suffix.lower() == ".dem" and not DUPLICATE_RE.search(p.stem) and not p.name.startswith("._"):
             found.add(p)
             if PART_RE.search(p.stem):
                 found.update(q for q in p.parent.iterdir()
-                             if q.is_file() and q.suffix.lower() == ".dem" and game_stem(q) == game_stem(p))
+                             if q.is_file() and q.suffix.lower() == ".dem" and not q.name.startswith("._")
+                             and game_stem(q) == game_stem(p))
     groups = {}
     for p in sorted(found):
         if not DUPLICATE_RE.search(p.stem):

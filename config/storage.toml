@@ -1,0 +1,8 @@
+# Where bulky data lives on the owner's Mac. Paths outside the repo are optional:
+# every script that uses them skips its step when the volume is not mounted.
+
+[archive]
+# Original HLTV downloads (.rar/.zip) are moved here after a successful import
+# (scripts/archive_downloads.py, run by scripts/refresh.sh). They are backups only:
+# the extracted demos under data/raw/hltv/<archive>/ are what the pipeline reads.
+dir = "/Volumes/My PSSD/cs2-pro-playbook-data/hltv-archives"

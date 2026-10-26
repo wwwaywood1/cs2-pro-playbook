@@ -13,12 +13,21 @@ PY=.venv/bin/python
 mkdir -p data/raw/hltv
 shopt -s nullglob
 moved=0
-for f in "$HOME"/Downloads/*-bo[135]-*.rar "$HOME"/Downloads/*-bo[135]-*.zip; do
+# series archives (<event>-<a>-vs-<b>-bo3-<id>.rar) and single-map ones (<event>-<a>-vs-<b>-<map>-<id>.rar)
+for f in "$HOME"/Downloads/*-bo[135]-*.rar "$HOME"/Downloads/*-bo[135]-*.zip \
+         "$HOME"/Downloads/*-vs-*-{nuke,mirage,inferno,dust2,ancient,anubis,cache,overpass,train,vertigo}-*.{rar,zip}; do
+  [ -e "$f" ] || continue
   mv -n "$f" data/raw/hltv/ && moved=$((moved + 1))
 done
 echo "== moved $moved archive(s) from ~/Downloads"
 
 echo "== import"; "$PY" scripts/import_hltv.py || echo "(import reported problems, continuing)"
+echo "== dates"   # exact dates for archives we planned ourselves (scripts/hltv plan + download log)
+for plan in _sync/*_plan.json; do
+  log="${plan%_plan.json}_download.log"
+  [ -f "$log" ] && { "$PY" scripts/register_hltv_dates.py --plan "$plan" --log "$log" --apply || echo "(date registration failed for $plan)"; }
+done
+echo "== archive"; "$PY" scripts/archive_downloads.py --apply || echo "(archiving reported problems, continuing)"
 echo "== parse";  "$PY" -m playbook parse 2>&1 | tail -3 || true
 echo "== export"; "$PY" -m playbook export || { echo "export failed"; exit 1; }
 "$PY" scripts/insight_text.py brief de_mirage de_inferno de_nuke de_dust2 de_ancient de_anubis >/dev/null

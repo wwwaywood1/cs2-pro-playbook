@@ -63,6 +63,8 @@ def demo_dates(matches: pl.DataFrame, raw_dir: Path = RAW_DIR,
     # Include raw but not yet parsed matches in the event's ordered population.
     records = {}
     for path in sorted(raw_dir.rglob("*.dem")):
+        if path.name.startswith("._"):  # macOS AppleDouble sidecar on exFAT/FAT volumes
+            continue
         ident = demo_identity(path)
         slug = demo_event_slug(path, raw_dir)
         record = {**ident, "slug": slug, "archive": str(path.parent)}
