@@ -286,10 +286,10 @@ def ensure_replays(sub: dict, mm, mdir: Path, required: set[tuple[str, int]],
     missing = required-available
     if missing:
         wp = replay.wp_by_round(wpr['states'], wpr['oof'], missing) if wpr else {}
-        grid = replay.control_grid(sub['positions'])
-        place_index = replay.callout_index(sub['positions'])
+        grid, place_index = replay.map_context(sub['positions'])  # cache hit after the map export
+        tables = replay.RoundTables(sub, missing)
         for demo, rnd in sorted(missing):
-            data = replay.build_round(sub, mm, demo, rnd, wp.get((demo, rnd)), grid, place_index)
+            data = replay.build_round(sub, mm, demo, rnd, wp.get((demo, rnd)), grid, place_index, tables)
             if not data or not data['frames'] or not any(
                     any(p is not None for p in frame) for frame in data['frames']):
                 raise ValueError(f'Lab example has no replay frames: {mm.name}/{demo}/{rnd}')
