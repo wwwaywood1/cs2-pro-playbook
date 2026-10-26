@@ -8,7 +8,7 @@ teams' matches and the example rounds of every execute recipe. Coordinates are r
      "players": [{"name", "side", "team"}],          # index = column in frames
      "frames": [[[x, y] | null, ...], ...],          # one row per second; null = dead / not seen
      "yaw": [[degrees | null, ...], ...],          # parallel to frames; SVG/radar clockwise from +x
-     "events": [{"t", "kind": "kill"|"util"|"plant", ...}],
+     "events": [{"t", "kind": "kill"|"util"|"plant", ...}],   # no kills before freeze end, no pops after duration + 1
      "wp_t": [p, ...]}                               # T win probability per second (may be empty)
 """
 
@@ -237,8 +237,12 @@ def build_round(sub: dict[str, pl.DataFrame], mm: MapMeta, demo: str, rnd: int,
     if place_index is None:
         place_index = callout_index(sub["positions"])
     events: list[dict] = []
+    # Kills before freeze end (t_s < 0: "world" self-kills of a round restart or pause) are
+    # not part of the round; as events they would mark every victim dead from t = 0.
     k = table("kills").filter(~pl.col("is_post_round"))
     for row in k.iter_rows(named=True):
+        if row["t_s"] < 0:
+            continue
         events.append({"t": round(float(row["t_s"]), 1), "kind": "kill",
                        "by": index.get(row["attacker_steamid"]), "victim": index.get(row["victim_steamid"]),
                        "at": _px(mm, row["victim_x"], row["victim_y"]), "weapon": row["weapon"],
@@ -251,8 +255,9 @@ def build_round(sub: dict[str, pl.DataFrame], mm: MapMeta, demo: str, rnd: int,
                                 & pl.col("land_x").is_not_null())
     for row in u.iter_rows(named=True):
         kind = UTIL_KINDS.get(str(row["type"]).lower())
-        if kind:
-            events.append({"t": round(float(row["pop_t_s"]), 1), "kind": "util", "nade": kind,
+        t = round(float(row["pop_t_s"]), 1)
+        if kind and t <= dur + 1:  # grenades popping after the round end are not shown
+            events.append({"t": t, "kind": "util", "nade": kind,
                            "by": index.get(row["thrower_steamid"]), "at": _px(mm, row["land_x"], row["land_y"]),
                            "from": _px(mm, row.get("throw_x"), row.get("throw_y")),
                            "side": row.get("thrower_side") or sides.get(row["thrower_steamid"]),
