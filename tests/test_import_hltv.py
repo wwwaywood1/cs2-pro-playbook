@@ -256,3 +256,22 @@ def test_case_insensitive_demo_extension_is_discovered(workspace):
     row, = run(workspace)
     assert row.imported == 1
     assert _demo_paths([raw]) == [[src / "game.DEM"]]
+
+
+def test_damaged_download_is_set_aside_not_retried(workspace, monkeypatch):
+    src, _, _ = workspace
+    (src / "cut-short.zip").write_bytes(b"PK\x03\x04 truncated")
+    row, = run(workspace)
+    assert row.failed == 1 and "download it again" in row.reasons[0]
+    assert (src / ".bad" / "cut-short.zip").exists() and not (src / "cut-short.zip").exists()
+    assert run(workspace) == []          # nothing left to retry
+
+
+def test_rar_that_every_extractor_rejects_is_set_aside(workspace, monkeypatch):
+    src, _, _ = workspace
+    (src / "match.rar").write_bytes(b"rar")
+    monkeypatch.setattr(hltv.shutil, "which", lambda tool: f"/fake/{tool}")
+    monkeypatch.setattr(hltv.subprocess, "run",
+                        lambda cmd, **kw: subprocess.CompletedProcess(cmd, 1, "", "Truncated input file"))
+    row, = run(workspace)
+    assert row.failed == 1 and (src / ".bad" / "match.rar").exists()

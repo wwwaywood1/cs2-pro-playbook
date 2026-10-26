@@ -69,6 +69,10 @@ def _safe_member(name: str) -> None:
         raise ValueError(f"unsafe archive member: {name}")
 
 
+class DamagedArchive(ValueError):
+    """Every available extractor failed: an incomplete download, a damaged or an unsafe archive."""
+
+
 def extract_archive(archive: Path, stage: Path) -> Path:
     """Try native extractors in order, discarding each failed attempt's files."""
     suffix = archive.suffix.lower()
@@ -83,7 +87,11 @@ def extract_archive(archive: Path, stage: Path) -> Path:
 
     # Validate ZIP paths/links even when a native tool will do the extraction.
     if suffix == ".zip":
-        with zipfile.ZipFile(archive) as zf:
+        try:
+            zf = zipfile.ZipFile(archive)
+        except zipfile.BadZipFile as exc:
+            raise DamagedArchive(f"not a readable zip: {exc}") from exc
+        with zf:
             for member in zf.infolist():
                 _safe_member(member.filename)
                 if stat.S_ISLNK(member.external_attr >> 16):
@@ -127,7 +135,9 @@ def extract_archive(archive: Path, stage: Path) -> Path:
         with zipfile.ZipFile(archive) as zf:
             zf.extractall(dest)
         return dest
-    raise ValueError(RAR_HELP + (" " + "; ".join(errors) if errors else ""))
+    if errors:
+        raise DamagedArchive("; ".join(errors))
+    raise ValueError(RAR_HELP)
 
 
 def _groups(paths: list[Path]) -> list[list[Path]]:
@@ -251,6 +261,16 @@ def import_downloads(src: Path = RAW_DIR / "hltv", *, parsed: Path = PARSED_DIR,
                 processed.add(archive.name)
             if delete_archives and not row.failed:
                 archive.unlink()
+        except DamagedArchive as exc:
+            # Incomplete or damaged download: set it aside so refresh doesn't retry it forever.
+            row.failed += 1
+            bad = src / ".bad"
+            bad.mkdir(exist_ok=True)
+            target = bad / archive.name
+            if not target.exists():
+                archive.replace(target)
+            row.reasons.append(f"damaged or incomplete download, moved to {bad.name}/ - download it again "
+                               f"({str(exc).splitlines()[0][:160]})")
         except Exception as exc:
             row.failed += 1
             row.reasons.append(str(exc))

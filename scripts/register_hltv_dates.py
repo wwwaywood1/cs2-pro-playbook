@@ -294,7 +294,7 @@ def merge_dates(path: Path, new: dict[str, str]) -> tuple[list[tuple[str, str]],
 
 
 def from_plan(plan: dict, log: dict[int, str]) -> tuple[dict[str, dict], dict[str, str], list[str]]:
-    by_demo = {int(m["demo_id"]): m for m in plan.get("matches", [])}
+    by_demo = {int(m["demo_id"]): m for m in plan.get("matches", []) if m.get("demo_id") is not None}
     matches, archives, notes = {}, {}, []
     for hltv_demo, name in sorted(log.items()):
         match = by_demo.get(hltv_demo)
