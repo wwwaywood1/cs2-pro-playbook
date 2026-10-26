@@ -81,6 +81,22 @@ fetch_safari() {  # $1 demo -> prints the archive name once Safari has finished 
   return 1
 }
 
+# team images listed in _sync/<team>_assets.txt ("<file name> <url>" per line): logo and player
+# photos for the portraits; small files, fetched once with curl (identifies itself as this tool)
+ASSETS="$ROOT/_sync/${TEAM}_assets.txt"
+if [ -f "$ASSETS" ]; then
+  mkdir -p "$ROOT/_sync/${TEAM}_assets"
+  while read -r name url; do
+    [ -z "${name:-}" ] || [ -s "$ROOT/_sync/${TEAM}_assets/$name" ] && continue
+    if curl -sS -L --fail -A "$UA" -o "$ROOT/_sync/${TEAM}_assets/$name" "$url" 2>>"$LOG"; then
+      echo "ASSET $name" | tee -a "$LOG"
+    else
+      rm -f "$ROOT/_sync/${TEAM}_assets/$name"; echo "ASSET-FAIL $name" | tee -a "$LOG"
+    fi
+    sleep 2
+  done < "$ASSETS"
+fi
+
 n=0; ok=0; skip=0; fail=0
 while read -r demo match _; do
   [ -z "${demo:-}" ] && continue
