@@ -4,7 +4,6 @@ from __future__ import annotations
 from collections import defaultdict
 import math
 
-import numpy as np
 import polars as pl
 
 KEYS = ["demo_id", "round_num"]
@@ -19,6 +18,12 @@ def _finite(value):
 
 def _round(value):
     return round(float(value), 4) if _finite(value) else None
+
+
+def _mean(values: list[float]) -> float | None:
+    """Mean that does not depend on the order of ``values`` (math.fsum is exactly rounded); samples
+    arrive in group-by order, which varies between runs, and 4-decimal rounding would show it."""
+    return math.fsum(values) / len(values) if values else None
 
 
 def percentile(value: float | None, peers: list[float]) -> float | None:
@@ -177,17 +182,17 @@ def player_radar(sub: dict[str, pl.DataFrame], wp: pl.DataFrame | None = None) -
         saved = s["traded_deaths"] / s["deaths"] if s["deaths"] else None
         traded = s["traded_teammate_deaths"] / s["teammate_deaths"] if s["teammate_deaths"] else None
         components = [v for v in (saved, traded) if v is not None]
-        raw = {"entry": s["openings"] / n, "trade": float(np.mean(components)) if components else None,
-               "lurk_distance": float(np.mean(observations["lurk_distance"])) if observations["lurk_distance"] else None,
+        raw = {"entry": s["openings"] / n, "trade": _mean(components),
+               "lurk_distance": _mean(observations["lurk_distance"]),
                "space_gain": s["advance"] / n if s["advance_rounds"] else None,
                "utility_impact": (s["flash_assists"] + s["molotov_displacements"]) / n,
-               "clutch_wpa": float(np.mean(observations["clutch_wpa"])) if observations["clutch_wpa"] else None}
+               "clutch_wpa": _mean(observations["clutch_wpa"])}
         result[(str(sid), side)] = {"rounds": n, "eligible": n >= MIN_ROUNDS,
             **{axis: {"raw": _round(raw[axis]), "percentile": None} for axis in AXES},
             "trade_components": {"own_deaths_traded_rate": _round(saved), "teammate_deaths_traded_rate": _round(traded)},
             "utility_counts": {"flash_assists": int(s["flash_assists"]), "molotov_displacements": int(s["molotov_displacements"])},
             "clutch_situations": len(observations["clutch_wpa"]),
-            "clutch_wpa_sum": _round(sum(observations["clutch_wpa"])) if observations["clutch_wpa"] else None}
+            "clutch_wpa_sum": _round(math.fsum(observations["clutch_wpa"])) if observations["clutch_wpa"] else None}
     for (_, side), profile in result.items():
         for axis in AXES:
             peers = [p[axis]["raw"] for (_, s), p in result.items() if s == side and p["eligible"] and p[axis]["raw"] is not None]

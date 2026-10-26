@@ -22,8 +22,14 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
+
+try:
+    import fcntl
+except ImportError:  # Windows
+    fcntl = None
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -37,6 +43,10 @@ from playbook.parse import demo_identity
 
 ARCHIVES = {".rar", ".zip", ".gz", ".bz2"}
 RAR_HELP = "Cannot open RAR: install an extractor with `brew install sevenzip` (7z/7zz), then retry."
+# An extractor gets this long before it is stopped and the next one is tried: a fixed allowance
+# plus the archive size at a deliberately slow rate (bsdtar has hung on some HLTV RARs for hours).
+EXTRACT_TIMEOUT_S = 300
+EXTRACT_MIN_RATE = 2e6  # bytes per second
 
 
 @dataclass
@@ -97,7 +107,8 @@ def extract_archive(archive: Path, stage: Path) -> Path:
                 if stat.S_ISLNK(member.external_attr >> 16):
                     raise ValueError(f"archive symlink: {member.filename}")
 
-    errors = []
+    errors, timeouts = [], 0
+    limit = extract_timeout(archive)
     commands = [
         ("bsdtar", lambda dest: ["-xf", str(archive), "-C", str(dest)]),
         ("unar", lambda dest: ["-quiet", "-force-overwrite", "-no-directory", "-output-directory", str(dest), str(archive)]),
@@ -114,18 +125,24 @@ def extract_archive(archive: Path, stage: Path) -> Path:
         try:
             # bsdtar's default extraction protections also reject escaping links.
             if tool == "bsdtar":
-                listing = subprocess.run([executable, "-tf", str(archive)], capture_output=True, text=True)
+                listing = subprocess.run([executable, "-tf", str(archive)], capture_output=True, text=True,
+                                         timeout=limit)
                 if listing.returncode:
                     raise ValueError(listing.stderr.strip() or "cannot list archive")
                 for name in listing.stdout.splitlines():
                     _safe_member(name)
-            proc = subprocess.run([executable, *arguments(dest)], capture_output=True, text=True)
+            # run() kills the extractor when the time is up; the next tool gets a fresh try.
+            proc = subprocess.run([executable, *arguments(dest)], capture_output=True, text=True, timeout=limit)
             if proc.returncode:
                 raise ValueError(proc.stderr.strip() or proc.stdout.strip() or f"exit {proc.returncode}")
             for path in dest.rglob("*"):
                 if path.is_symlink():
                     raise ValueError(f"archive symlink: {path.relative_to(dest)}")
             return dest
+        except subprocess.TimeoutExpired:
+            timeouts += 1
+            errors.append(f"{tool}: stopped after {limit:.0f} s without finishing")
+            shutil.rmtree(dest)
         except (OSError, ValueError) as exc:
             errors.append(f"{tool}: {str(exc).splitlines()[0]}")
             shutil.rmtree(dest)
@@ -135,9 +152,17 @@ def extract_archive(archive: Path, stage: Path) -> Path:
         with zipfile.ZipFile(archive) as zf:
             zf.extractall(dest)
         return dest
+    if errors and timeouts == len(errors):
+        # Nothing said the archive is broken, the tools only ran out of time: keep it for a retry.
+        raise ValueError("extraction timed out (" + "; ".join(errors) + "); the archive is kept, run again")
     if errors:
         raise DamagedArchive("; ".join(errors))
     raise ValueError(RAR_HELP)
+
+
+def extract_timeout(archive: Path) -> float:
+    """Seconds one extractor may take on ``archive`` (see EXTRACT_TIMEOUT_S)."""
+    return EXTRACT_TIMEOUT_S + archive.stat().st_size / EXTRACT_MIN_RATE
 
 
 def _groups(paths: list[Path]) -> list[list[Path]]:
@@ -204,6 +229,11 @@ def import_downloads(src: Path = RAW_DIR / "hltv", *, parsed: Path = PARSED_DIR,
         return []
     if not src.is_dir():
         raise ValueError(f"Source is not a directory: {src}")
+    with (nullcontext() if dry_run else import_lock(src)):
+        return _import_downloads(src, parsed, raw, dry_run, delete_archives)
+
+
+def _import_downloads(src: Path, parsed: Path, raw: Path, dry_run: bool, delete_archives: bool) -> list[Result]:
     inputs = sorted(p for p in src.iterdir() if p.is_file() and p.suffix.lower() in ARCHIVES | {".dem"}
                     and not p.name.startswith("._"))
     loose = [p for p in inputs if p.suffix.lower() == ".dem"]
@@ -238,8 +268,7 @@ def import_downloads(src: Path = RAW_DIR / "hltv", *, parsed: Path = PARSED_DIR,
     # Archives imported without failures (including all-duplicate ones); lets
     # scripts/archive_downloads.py move them off the internal disk afterwards.
     processed_path = src / ".import_hltv_archives.json"
-    processed = set(json.loads(processed_path.read_text(encoding="utf-8"))) if processed_path.exists() else set()
-    processed_before = set(processed)
+    processed = _load_processed(processed_path)
     for archive in inputs:
         if archive.suffix.lower() not in ARCHIVES:
             continue
@@ -263,6 +292,7 @@ def import_downloads(src: Path = RAW_DIR / "hltv", *, parsed: Path = PARSED_DIR,
                 _process(demos, extracted, destination, seen, row)
             if not row.failed:
                 processed.add(archive.name)
+                _save_processed(processed_path, processed)  # after each archive: a stopped run keeps its work
             if delete_archives and not row.failed:
                 archive.unlink()
         except DamagedArchive as exc:
@@ -278,12 +308,37 @@ def import_downloads(src: Path = RAW_DIR / "hltv", *, parsed: Path = PARSED_DIR,
         except Exception as exc:
             row.failed += 1
             row.reasons.append(str(exc))
-    if not dry_run and processed != processed_before:
-        with tempfile.NamedTemporaryFile(mode="w", dir=src, prefix=".import_hltv-", delete=False) as handle:
-            json.dump(sorted(processed), handle)
-        Path(handle.name).replace(processed_path)
     print_summary(rows)
     return rows
+
+
+def _load_processed(path: Path) -> set[str]:
+    return set(json.loads(path.read_text(encoding="utf-8"))) if path.exists() else set()
+
+
+def _save_processed(path: Path, processed: set[str]) -> None:
+    """Atomic update, merged with the file on disk so entries written meanwhile are kept."""
+    current = _load_processed(path)
+    if processed <= current:
+        return
+    with tempfile.NamedTemporaryFile(mode="w", dir=path.parent, prefix=".import_hltv-", delete=False) as handle:
+        json.dump(sorted(current | processed), handle)
+    Path(handle.name).replace(path)
+
+
+@contextmanager
+def import_lock(src: Path):
+    """One import per download folder at a time (two runs would extract the same archives)."""
+    with (src / ".import_hltv.lock").open("a") as handle:
+        if fcntl is not None:
+            try:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise ValueError("another import is already running on this folder; "
+                                 "let it finish (or stop it) and run again") from None
+            except OSError:
+                pass  # a filesystem without locks: carry on unlocked
+        yield
 
 
 def main(argv: list[str] | None = None) -> int:

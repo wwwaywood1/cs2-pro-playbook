@@ -286,3 +286,79 @@ def test_archive_imported_before_is_not_extracted_again(workspace, monkeypatch):
     monkeypatch.setattr(hltv, "extract_archive", lambda *a: calls.append(a))
     row, = run(workspace)
     assert calls == [] and row.reasons == ["already imported"] and not row.failed
+
+
+def test_hung_extractor_is_stopped_and_the_next_one_tried(workspace, monkeypatch):
+    src, _, _ = workspace
+    (src / "match.rar").write_bytes(b"rar")
+    monkeypatch.setattr(hltv.shutil, "which", lambda tool: f"/fake/{tool}" if tool != "7z" else None)
+    calls = []
+
+    def extract(command, **kwargs):
+        calls.append((command[0], kwargs.get("timeout")))
+        if command[0] == "/fake/bsdtar" and "-tf" in command:
+            return subprocess.CompletedProcess(command, 0, "game.dem\n", "")
+        if command[0] == "/fake/bsdtar":
+            raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+        dest = Path(command[command.index("-output-directory") + 1])
+        (dest / "game.dem").write_text("de_nuke")
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(hltv.subprocess, "run", extract)
+    row, = run(workspace)
+    assert (row.imported, row.failed) == (1, 0)
+    assert [tool for tool, _ in calls] == ["/fake/bsdtar", "/fake/bsdtar", "/fake/unar"]
+    assert all(limit and limit >= hltv.EXTRACT_TIMEOUT_S for _, limit in calls)
+    assert not (src / "match" / "bsdtar").exists()
+
+
+def test_archive_whose_extractors_all_time_out_is_kept_for_a_retry(workspace, monkeypatch):
+    src, _, _ = workspace
+    (src / "match.rar").write_bytes(b"rar")
+    monkeypatch.setattr(hltv.shutil, "which", lambda tool: f"/fake/{tool}" if tool in {"unar", "7z"} else None)
+
+    def hang(command, **kwargs):
+        raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+
+    monkeypatch.setattr(hltv.subprocess, "run", hang)
+    row, = run(workspace)
+    assert row.failed == 1 and "timed out" in row.reasons[0]
+    assert (src / "match.rar").exists() and not (src / ".bad").exists()
+
+
+def test_extract_timeout_grows_with_the_archive(tmp_path):
+    small, big = tmp_path / "s.rar", tmp_path / "b.rar"
+    small.write_bytes(b"x")
+    big.write_bytes(b"x" * 4_000_000)
+    assert hltv.extract_timeout(small) >= hltv.EXTRACT_TIMEOUT_S
+    assert hltv.extract_timeout(big) - hltv.extract_timeout(small) == pytest.approx(4_000_000 / hltv.EXTRACT_MIN_RATE, abs=0.01)
+
+
+def test_registry_is_saved_after_each_archive_and_merged(workspace, monkeypatch):
+    src, _, _ = workspace
+    archive(src, "a.zip", **{"game.dem": "de_nuke"})
+    archive(src, "b.zip", **{"other.dem": "de_mirage"})
+    registry = src / ".import_hltv_archives.json"
+    registry.write_text('["written-by-another-run.rar"]')
+    original = hltv._process
+
+    def stop_on_second(paths, source, destination, seen, row, **kwargs):
+        if destination.name == "b":
+            assert '"a.zip"' in registry.read_text()   # the first archive is on record already
+            raise KeyboardInterrupt
+        return original(paths, source, destination, seen, row, **kwargs)
+
+    monkeypatch.setattr(hltv, "_process", stop_on_second)
+    with pytest.raises(KeyboardInterrupt):
+        run(workspace)
+    assert set(hltv._load_processed(registry)) == {"a.zip", "written-by-another-run.rar"}
+
+
+def test_second_import_on_the_same_folder_is_refused(workspace):
+    src, _, _ = workspace
+    archive(src, **{"game.dem": "de_nuke"})
+    with hltv.import_lock(src.resolve()):
+        with pytest.raises(ValueError, match="another import"):
+            run(workspace)
+    row, = run(workspace)                     # lock released
+    assert row.imported == 1
