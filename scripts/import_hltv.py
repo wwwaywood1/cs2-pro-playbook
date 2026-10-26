@@ -44,7 +44,7 @@ from playbook.parse import demo_identity
 ARCHIVES = {".rar", ".zip", ".gz", ".bz2"}
 RAR_HELP = "Cannot open RAR: install an extractor with `brew install sevenzip` (7z/7zz), then retry."
 # An extractor gets this long before it is stopped and the next one is tried: a fixed allowance
-# plus the archive size at a deliberately slow rate (bsdtar has hung on some HLTV RARs for hours).
+# plus the archive size at a deliberately slow rate (a healthy run takes ~25 s per GB).
 EXTRACT_TIMEOUT_S = 300
 EXTRACT_MIN_RATE = 2e6  # bytes per second
 
