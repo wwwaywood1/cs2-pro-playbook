@@ -348,11 +348,17 @@ Verified by GPT-03 on MOUZ vs Legacy Nuke (2394905: 13-6, 19 rounds); B8 vs TYLO
   Measured 2026-10-26: 14 of 847 games are rejected (list: `_sync/failure_types.log` on the Mac).
   - 10 split recordings (`-p1`/`-p2`): awpy 3.1.0 returns **no rounds for part 1** although
     the part holds `begin_new_match`, the match-start announcement and one `round_freeze_end`
-    per round. These demos carry no `round_start`/`round_end`/`round_officially_ended`
-    events at all, so awpy derives rounds from game-rules state, and that fails for the first
-    recording; awpy's own multipart `Demo([p1, p2])` stops with "part 0 has no completed match
-    rounds". Rebuilding part-1 rounds from the freeze-end events and the score/round props
-    would recover them (6 involve a showcase team).
+    per round. These demos carry no `round_start`/`round_end`/`round_officially_ended` events,
+    so awpy rebuilds rounds from the game-rules entity (`RoundTracker` in
+    `crates/awpy/src/datasets.rs`): a round is emitted when `m_totalRoundsPlayed` goes up by one,
+    and **when the counter goes down it clears every round seen so far** (meant for a restart
+    after warmup or a knife round). Most likely part 1 ends with the admins' restart before the
+    backup is loaded (it has one `cs_pre_restart` more than freeze ends; not yet confirmed from
+    the counter itself), so all of its real rounds are thrown away; awpy's own multipart
+    `Demo([p1, p2])` then stops with "part 0 has no completed match rounds". Fix to try: keep
+    the last non-empty segment instead of clearing (an awpy patch or an upstream issue;
+    rebuilding the rounds in Python would need a per-tick dump of every entity, which is too
+    slow). 6 of the 10 involve a showcase team.
   - 1 split recording restarted from round 1 in part 2 (Spirit vs Liquid, Ancient) and 1 with
     a partial first part (Monte vs Legacy): ambiguous histories, kept out.
   - 1 single recording starts at round 4 (MOUZ vs PARIVISION, Dust2): rounds 1–3 missing.
