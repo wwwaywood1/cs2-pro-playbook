@@ -8,8 +8,12 @@ export interface CTPatterns {
   clusters: { id: string; label_zh: string; label_en: string; n: number; share: number;
     ct_win_rate: number; ct_win_ci95: [number, number]; trajectories: Snapshot[]; medoid: RoundRef;
     context_preferences: Record<string, { n: number; share: number | null; map_share: number; difference_pp: number | null }> }[];
-  chi_square: { statistic: number; dof: number; p: number; p_display?: string; cramers_v?: number | null; observed?: number[][]; min_expected: number | null; caveat: string | null };
-  fingerprints: { team: string; n: number; usage: { cluster_id: string; share: number; pro_share: number; difference_pp: number }[] }[];
+  /** formation × CT buy type, post hoc (clusters use geometry only); p from match-block permutations, p_asymptotic assumes independent rounds */
+  chi_square: { statistic: number; dof: number; p: number; p_display?: string; cramers_v?: number | null; observed?: number[][]; min_expected: number | null; caveat: string | null;
+    p_method?: string; permutations?: number; p_asymptotic?: number };
+  /** reliable: >= 5 matches and >= 60 rounds; share_ci95: Wilson interval widened for rounds clustered in matches */
+  fingerprints: { team: string; n: number; matches?: number; reliable?: boolean;
+    usage: { cluster_id: string; share: number; share_ci95?: [number, number]; pro_share: number; difference_pp: number }[] }[];
   embedding: { method: string; points: (RoundRef & { cluster_id: string; x: number; y: number })[] };
 }
 interface Metrics { accuracy: number; log_loss: number; brier: number }

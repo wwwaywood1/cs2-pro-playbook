@@ -81,6 +81,14 @@ def exact_shapley(predict, x: np.ndarray, background: np.ndarray,
     return values[:, 0], phi, values[:, -1]
 
 
+def background_rows(candidates: pl.DataFrame, size: int, rng: np.random.Generator) -> list[int]:
+    """Row indices of one random state from each of up to `size` distinct training matches."""
+    groups = candidates.with_row_index('_row').group_by('demo_id').agg(pl.col('_row').sort()).sort('demo_id')
+    rows = groups['_row'].to_list()
+    picked = sorted(rng.choice(len(rows), min(size, len(rows)), replace=False).tolist())
+    return sorted(int(rows[j][rng.integers(len(rows[j]))]) for j in picked)
+
+
 def _key(demo: str, rnd: int) -> pl.Expr:
     return (pl.col('demo_id') == demo) & (pl.col('round_num') == rnd)
 
@@ -129,8 +137,7 @@ def shap_rounds(t: dict, wpr: dict | None, selected: list[tuple[str, dict]]) -> 
         candidates = d.filter((pl.col('map') == map_name) & ~pl.col('demo_id').is_in(sorted(artifact['test_demos']))).sort('demo_id', 'round_num', 't_s')
         if candidates.is_empty() or states.is_empty():
             continue
-        rng = np.random.default_rng(42)
-        background = candidates[rng.choice(candidates.height, min(BACKGROUND_SIZE, candidates.height), replace=False).tolist()]
+        background = candidates[background_rows(candidates, BACKGROUND_SIZE, np.random.default_rng(42))]
         x, names = winprob.feature_matrix(states, artifact['maps'])
         bg, _ = winprob.feature_matrix(background, artifact['maps'])
         def predict(xs):

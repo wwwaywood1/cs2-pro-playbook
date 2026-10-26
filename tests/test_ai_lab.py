@@ -47,7 +47,7 @@ def test_features_invariant_under_player_permutation():
 def test_determinism_counts_and_shapes():
     sub = synthetic()
     rows, x, counts = C.extract(sub, load_map('de_mirage'))
-    assert x.shape == (69, 103)
+    assert x.shape == (69, 95)
     assert counts == dict(total=72, excluded_pistol_rounds=2, eligible_at_10=69, dropped_at_10=1, dropped_incomplete=0, included=69)
     a, edges = C.build(sub, load_map('de_mirage'))
     b, _ = C.build({k: v.reverse() for k, v in sub.items()}, load_map('de_mirage'))
@@ -180,9 +180,102 @@ def test_missing_snapshot_dropped_but_later_death_keeps_original_member():
     sub['positions'] = p.filter(~missing).with_columns(alive=pl.when(later_death).then(False).otherwise(pl.col('alive')))
     rows, x, counts = C.extract(sub, load_map('de_mirage'))
     assert counts['included'] == 68 and counts['dropped_incomplete'] == 1
-    assert x.shape == (68, 103)
+    assert x.shape == (68, 95)
     assert 70 in {r['round_num'] for r in rows} and 71 not in {r['round_num'] for r in rows}
     assert next(r for r in rows if r['round_num'] == 4)['after_loss']
+
+
+def test_pistol_rounds_follow_economy_labels_mr15():
+    sub = synthetic()
+    sub['team_rounds'] = sub['team_rounds'].with_columns(
+        buy_type=pl.when(pl.col('round_num').is_in([1, 16])).then(pl.lit('pistol'))
+        .when(pl.col('round_num') == 13).then(pl.lit('full')).otherwise(pl.col('buy_type')))
+    rows, x, counts = C.extract(sub, load_map('de_mirage'))
+    rounds = {r['round_num'] for r in rows}
+    assert not rounds & {1, 16} and 13 in rounds
+    assert counts['excluded_pistol_rounds'] == 2 and len(rows) == 69
+    sub['positions'] = sub['positions'].with_columns(
+        x=pl.when(pl.col('round_num').is_in([1, 16])).then(1e9).otherwise(pl.col('x')))
+    np.testing.assert_array_equal(C.extract(sub, load_map('de_mirage'))[1], x)
+
+
+def test_clustering_uses_geometry_only():
+    sub = synthetic()
+    mm = load_map('de_mirage')
+    _, x, _ = C.extract(sub, mm)
+    a, _ = C.build(sub, mm)
+    tr = sub['team_rounds']
+    rng = np.random.default_rng(0)
+    # Scramble every context value (pistols stay pistols): features and clusters must not move.
+    sub['team_rounds'] = tr.with_columns(
+        buy_type=pl.when(pl.col('buy_type') == 'pistol').then(pl.lit('pistol'))
+        .otherwise(pl.Series(rng.choice(['eco', 'force', 'full'], tr.height))),
+        equipment_value=pl.Series(rng.integers(500, 30000, tr.height)),
+        opp_equipment_value=pl.Series(rng.integers(500, 30000, tr.height)),
+        score_for=pl.Series(rng.integers(0, 13, tr.height)), score_against=pl.Series(rng.integers(0, 13, tr.height)),
+        won=pl.Series(rng.random(tr.height) < .5))
+    _, scrambled, _ = C.extract(sub, mm)
+    np.testing.assert_array_equal(x, scrambled)
+    b, _ = C.build(sub, mm)
+    assert a['metadata']['feature_count'] == b['metadata']['feature_count'] == 95
+    assert [(c['id'], c['label_zh'], c['n']) for c in a['clusters']] == [(c['id'], c['label_zh'], c['n']) for c in b['clusters']]
+    assert [p['cluster_id'] for p in a['embedding']['points']] == [p['cluster_id'] for p in b['embedding']['points']]
+
+
+def test_attention_kernel_is_one_softmax_of_distance():
+    xyz = np.array([[0, 0, 0], [50, 0, 0], [100, 0, 0], [4000, 0, 0], [4050, 0, 0]], float)
+    alpha = C.attention_weights(xyz, tau=.25)
+    np.testing.assert_allclose(alpha.sum(axis=1), 1.)
+    assert (alpha.argmax(axis=1) == np.arange(5)).all()  # self edge is the strongest
+    assert alpha[0, 3] < .05 and alpha[3, 0] < .05 and alpha[4, 1] < .05  # far-apart players
+    assert alpha[0, 1] > .3
+    logits = -np.linalg.norm(xyz[:, None]-xyz[None], axis=2)/(C.DISTANCE_SCALE*.25)
+    np.testing.assert_allclose(alpha, np.exp(logits)/np.exp(logits).sum(axis=1, keepdims=True))
+    # tau matters: a wider kernel spreads attention.
+    assert C.attention_weights(xyz, tau=4.)[0, 3] > .15
+
+
+def test_economy_permutation_is_within_matches():
+    rng = np.random.default_rng(0)
+    blocks = np.repeat(np.arange(40), 10)
+    # Association only between matches (one formation and one buy type per match):
+    # textbook chi-square is overwhelming, the within-match permutation cannot move it.
+    per_match = rng.integers(0, 3, 40)
+    clusters = economy = np.repeat(per_match, 10)
+    table = np.array([[np.sum((clusters == c) & (economy == e)) for e in range(3)] for c in range(3)])
+    assert C.chi_square(table, C.ECONOMY_TYPES)['p'] < 1e-50
+    assert C.block_permutation_p(clusters, economy, blocks, 199) == 1.
+    # Formation follows the buy type round by round inside matches: smallest attainable p.
+    economy = rng.integers(0, 3, 400)
+    assert C.block_permutation_p(economy.copy(), economy, blocks, 199) == pytest.approx(1/200)
+    # No association.
+    assert C.block_permutation_p(rng.integers(0, 3, 400), economy, blocks, 199) > .05
+    # A single economy type: nothing to test.
+    assert C.block_permutation_p(economy, np.zeros(400, int), blocks, 199) == 1.
+
+
+def test_fingerprint_intervals_and_reliability():
+    sizes = np.full(6, 10)
+    wilson = C.wilson(18, 60)
+    assert C.clustered_share_ci(np.full(6, 3), sizes) == pytest.approx(wilson)  # matches agree: Wilson
+    low, high = C.clustered_share_ci(np.array([0, 0, 0, 6, 6, 6]), sizes)     # same share, matches disagree
+    assert low < wilson[0] and high > wilson[1]
+    assert C.clustered_share_ci(np.zeros(6), sizes)[0] == 0. and 0 < C.clustered_share_ci(np.zeros(6), sizes)[1] < .1
+    one = synthetic()
+    result, _ = C.build(one, load_map('de_mirage'))
+    (fp,) = result['fingerprints']
+    assert fp['n'] == result['counts']['included'] and fp['matches'] == 1 and fp['reliable'] is False
+    assert sum(u['share'] for u in fp['usage']) == pytest.approx(1.)
+    assert all(0 <= u['share_ci95'][0] <= u['share'] <= u['share_ci95'][1] <= 1 for u in fp['usage'])
+    # Six matches of the same team: reliable.
+    many = {k: pl.concat([v.with_columns(demo_id=pl.lit(f'm{i}')) for i in range(6)]) for k, v in one.items()}
+    result, _ = C.build(many, load_map('de_mirage'))
+    (fp,) = result['fingerprints']
+    assert fp['matches'] == 6 and fp['n'] >= C.RELIABLE_ROUNDS and fp['reliable'] is True
+    chi = result['chi_square']
+    assert chi['p_method'] == 'match_block_cyclic_shift' and chi['permutations'] == C.PERMUTATIONS
+    assert 1/(C.PERMUTATIONS+1) <= chi['p'] <= 1 and chi['p_display'].startswith('p ')
+    json.dumps(result, allow_nan=False)
 
 
 def test_chi_square_known_independence_and_dependence():
@@ -217,6 +310,15 @@ def test_shapley_interaction_exactness_and_dummy_groups():
     base, phi, p = L.exact_shapley(lambda a: a[:, 0]*a[:, 1]+a[:, 2], x, bg, [[0], [1], [], [], [], []])
     np.testing.assert_allclose(base, x[:, 2])
     np.testing.assert_allclose(base+phi.sum(axis=1), p, atol=1e-6)
+
+
+def test_shap_background_takes_one_state_per_training_match():
+    states = pl.DataFrame({'demo_id': [f'd{i // 5:02d}' for i in range(200)], 't_s': list(range(200))})
+    rows = L.background_rows(states, L.BACKGROUND_SIZE, np.random.default_rng(42))
+    assert len(rows) == L.BACKGROUND_SIZE == states[rows]['demo_id'].n_unique()
+    assert rows == L.background_rows(states, L.BACKGROUND_SIZE, np.random.default_rng(42))
+    few = states.filter(pl.col('demo_id').is_in(['d00', 'd01', 'd02']))
+    assert sorted(few[L.background_rows(few, L.BACKGROUND_SIZE, np.random.default_rng(0))]['demo_id']) == ['d00', 'd01', 'd02']
 
 
 def test_smoke_changes_computed_ownership_and_penalty_before_minimum():
@@ -305,7 +407,15 @@ def test_exported_contract():
         assert chi['n'] == a['counts']['included']
         assert set(chi['economy_types']) <= {'eco', 'force', 'full'}
         assert 0 <= chi['cramers_v'] <= 1
-        assert chi['p_display'] == ('p < 0.0001' if chi['p'] < 1e-4 else f"p = {chi['p']:.3g}")
+        if 'p_method' in chi:  # match-block permutation p value
+            assert chi['permutations'] >= 999 and 1/(chi['permutations']+1) <= chi['p'] <= 1
+            assert chi['p_display'].startswith('p ') and chi['p_asymptotic'] <= 1
+        else:  # export from before the permutation test
+            assert chi['p_display'] == ('p < 0.0001' if chi['p'] < 1e-4 else f"p = {chi['p']:.3g}")
+        for fp in a['fingerprints']:
+            if 'share_ci95' in fp['usage'][0]:
+                assert fp['reliable'] == (fp['matches'] >= C.RELIABLE_MATCHES and fp['n'] >= C.RELIABLE_ROUNDS)
+                assert all(u['share_ci95'][0] <= u['share'] <= u['share_ci95'][1] for u in fp['usage'])
         assert_player_labels([(c['label_zh'], c['label_en']) for c in a['clusters']])
         shares = np.array([list(c['region_shares_15s'].values()) for c in a['clusters']])
         selected = [c['label_callouts_15_20s'] for c in a['clusters']]
