@@ -30,8 +30,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      # Pillow is needed by tests/test_map_backgrounds.py until it joins the dev extra.
-      - run: pip install -e ".[dev]" pillow
+      - run: pip install -e ".[dev]"
       - run: pytest -q
 
   web:
