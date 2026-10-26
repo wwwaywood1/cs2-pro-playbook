@@ -30,8 +30,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: pip install -e ".[dev]"
-      - run: pytest -q
+      # failures also become annotations on the run (readable through the API without the raw log)
+      - run: pip install -e ".[dev]" pytest-github-actions-annotate-failures
+      - run: pytest -q -rf
 
   web:
     runs-on: ubuntu-24.04
