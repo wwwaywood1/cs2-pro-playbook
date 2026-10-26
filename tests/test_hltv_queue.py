@@ -1,8 +1,11 @@
-"""The manual HLTV download flow: saved pages -> plan -> a page the owner clicks through."""
+"""The manual HLTV download flow: saved pages -> plan -> a page the owner clicks through -> refresh."""
 import importlib.util
 import json
+import os
 import plistlib
 import re
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -179,6 +182,49 @@ def test_hltv_plan_lists_a_rematch_it_cannot_attribute(tmp_path, monkeypatch, ca
     assert plan["matches"] == [] and [m["hltv_match_id"] for m in plan["ambiguous"]] == [2, 1]
     assert (out / "aurora_queue.txt").read_text() == ""
     assert "待确认" in (out / "aurora_queue.html").read_text(encoding="utf-8")
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="needs bash")
+def test_refresh_counts_only_moved_archives_and_registers_every_plan(tmp_path):
+    root = tmp_path / "repo"
+    (root / "scripts").mkdir(parents=True)
+    shutil.copy(REPO / "scripts" / "refresh.sh", root / "scripts" / "refresh.sh")
+    venv = root / ".venv" / "bin"
+    venv.mkdir(parents=True)
+    (venv / "python").write_text('#!/bin/bash\nprintf "%s\\n" "$*" >> "$PY_LOG"\n')   # every python step: log only
+    (venv / "python").chmod(0o755)
+    shims = tmp_path / "bin"   # macOS mv: "mv -n" skips a taken name silently and still exits 0
+    shims.mkdir()
+    (shims / "mv").write_text('#!/bin/bash\nif [ "$1" = -n ]; then\n  t="$3"; [ -d "$t" ] && t="$t/${2##*/}"\n'
+                              f'  [ -e "$t" ] && exit 0\n  shift\nfi\nexec {shutil.which("mv")} "$@"\n')
+    (shims / "mv").chmod(0o755)
+    downloads = tmp_path / "home" / "Downloads"
+    downloads.mkdir(parents=True)
+    new = "iem-cologne-major-2026-aurora-vs-spirit-bo3-AAAAAAAAAAAAAAAAAAAA.rar"
+    taken = "iem-cologne-major-2026-aurora-vs-g2-bo3-BBBBBBBBBBBBBBBBBBBB.rar"
+    single = "esports-world-cup-2026-vitality-vs-mouz-nuke-CCCCCCCCCCCCCCCCCCCC.zip"
+    for name in (new, taken, single):
+        (downloads / name).write_bytes(b"new")
+    hltv_raw = root / "data" / "raw" / "hltv"
+    hltv_raw.mkdir(parents=True)
+    (hltv_raw / taken).write_bytes(b"old")
+    (root / "_sync").mkdir()
+    for name in ("aurora_plan.json", "g2_plan.json", "g2_download.log"):
+        (root / "_sync" / name).write_text("{}")
+    env = {**os.environ, "HOME": str(tmp_path / "home"), "PY_LOG": str(tmp_path / "py.log"),
+           "PATH": f"{shims}{os.pathsep}{os.environ.get('PATH', '')}"}
+    proc = subprocess.run([shutil.which("bash"), str(root / "scripts" / "refresh.sh")], env=env,
+                          capture_output=True, text=True, timeout=60)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "== moved 2 archive(s) from ~/Downloads; 1 already present in data/raw/hltv" in proc.stdout
+    assert f"already in data/raw/hltv, left in ~/Downloads: {taken}" in proc.stdout
+    assert (downloads / taken).read_bytes() == b"new" and (hltv_raw / taken).read_bytes() == b"old"
+    assert (hltv_raw / new).exists() and (hltv_raw / single).exists()
+    calls = (tmp_path / "py.log").read_text().splitlines()
+    assert "scripts/register_hltv_dates.py --plan _sync/aurora_plan.json --apply" in calls      # no log needed
+    assert "scripts/register_hltv_dates.py --plan _sync/g2_plan.json --log _sync/g2_download.log --apply" in calls
+    assert calls.index("scripts/archive_downloads.py --apply") < calls.index("scripts/hltv_queue.py aurora")
+    assert "scripts/hltv_queue.py g2" in calls
 
 
 def test_nothing_in_the_hltv_tooling_contacts_hltv():
