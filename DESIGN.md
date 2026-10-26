@@ -222,10 +222,26 @@ position data, not video ground truth; it needs to grow (especially for recipes)
 ### Team facts (playbook/insights.py)
 
 Per team and map, `insights[]` in the team profile: differences from all other teams on
-that map (tempo, site, split, lurk, fake; CT forward, stack, rotation) that are at least
-10 points and |z| >= 2 in a two-proportion test, plus signature facts (go-to execute,
-main lurker, default CT setup) above a minimum share. Each carries its numbers and a
-template sentence in zh/en. Written analysis (M4) may rephrase these, never add to them.
+that map (tempo, site, split, lurk, fake; CT forward, stack, rotation), plus signature facts
+(go-to execute, main lurker, default CT setup) above a minimum share. Each carries its numbers
+and a template sentence in zh/en. Written analysis (M4) may rephrase these, never add to them.
+
+A comparison is tested with the match as the unit (rounds of one match are not independent):
+the variance of "team share minus everyone else's share" is, for each side, the larger of the
+match-clustered (sandwich) variance and the design-effect variance under the null (intra-match
+correlation estimated on the map). Only teams with at least 5 matches are tested; Benjamini-
+Hochberg controls the false discovery rate at q = 0.10 across all team x fact tests of a map,
+and a fact also needs a difference of at least 10 points. Facts export `matches`, `z`, `p`, `q`.
+Under shuffled team labels this yields 0.07 facts per map (the old round-level |z| >= 2 rule:
+about 8, close to the 11 observed).
+
+### CT defence patterns (playbook/ct_patterns.py)
+
+Pistol rounds excluded (economy `buy_type`); formations are clustered on position features
+only (standardise, PCA, KMeans, K <= 6 per map). The economy x formation association is
+reported afterwards (chi-square, Cramer's V) with a p-value from within-match block
+permutations. Team fingerprints carry Wilson 95% intervals on a design-effect-adjusted n and
+a `reliable` flag (>= 5 matches and >= 60 rounds).
 
 ## Site data contract (data/site, schema_version 1)
 

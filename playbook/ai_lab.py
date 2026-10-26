@@ -14,7 +14,7 @@ import polars as pl
 from threadpoolctl import threadpool_limits
 
 from playbook import ct_patterns, replay, winprob
-from playbook.config import load_map
+from playbook.config import load_map, load_site
 from playbook.semantics import round_plants
 
 GROUPS = ('alive_diff', 'hp_equipment', 'map_control', 'bomb_state_time',
@@ -93,20 +93,41 @@ def _key(demo: str, rnd: int) -> pl.Expr:
     return (pl.col('demo_id') == demo) & (pl.col('round_num') == rnd)
 
 
-def choose_rounds(t: dict) -> list[tuple[str, dict]]:
-    """One planted Mirage round for Falcons and each additional showcase team."""
+def showcase_teams() -> list[str]:
+    """Showcase teams from config/site.toml, Falcons first (the control example uses it)."""
+    teams = list(load_site().get('showcase', ['Falcons']))
+    return sorted(teams, key=lambda team: team != 'Falcons')
+
+
+def choose_rounds(t: dict, teams: list[str] | None = None) -> list[tuple[str, dict]]:
+    """One planted gun round (no pistol round) per showcase team, on Mirage when possible, from the
+    team's most recent match."""
     if 'rounds' not in t or not {'ct_team', 't_team', 'dur_s'} <= set(t['rounds'].columns):
         return []
     matches = dict(t['matches'].select('demo_id', 'map').iter_rows())
+    dates = dict(t['matches'].select('demo_id', 'date').iter_rows()) if 'date' in t['matches'].columns else {}
     planted = set(round_plants(t).select('demo_id', 'round_num').iter_rows())
+    pistol = set()
+    if 'economy' in t and 'buy_type' in t['economy'].columns:
+        pistol = set(t['economy'].filter(pl.col('buy_type') == 'pistol').select('demo_id', 'round_num').iter_rows())
     result = []
-    for team in ('Falcons', 'Vitality', 'Spirit'):
+    for team in teams or showcase_teams():
         rows = t['rounds'].filter((pl.col('ct_team') == team) | (pl.col('t_team') == team)).sort('demo_id', 'round_num').to_dicts()
-        rows = [r for r in rows if (r['demo_id'], r['round_num']) in planted and r['dur_s'] >= 25]
-        rows.sort(key=lambda r: (matches[r['demo_id']] != 'de_mirage', r['demo_id'], r['round_num']))
+        rows = [r for r in rows if (r['demo_id'], r['round_num']) in planted and r['dur_s'] >= 25
+                and (r['demo_id'], r['round_num']) not in pistol]
+        rows.sort(key=lambda r: (matches[r['demo_id']] != 'de_mirage', -_day(dates.get(r['demo_id'])),
+                                 r['demo_id'], r['round_num']))
         if rows:
             result.append((team, dict(rows[0], map=matches[rows[0]['demo_id']])))
     return result
+
+
+def _day(value) -> int:
+    """Sortable day number of an ISO date (0 when unknown)."""
+    try:
+        return int(str(value).replace('-', '')[:8])
+    except (TypeError, ValueError):
+        return 0
 
 
 def _observed_control(pos: pl.DataFrame, grid: np.ndarray) -> dict[int, float | None]:
