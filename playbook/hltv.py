@@ -118,31 +118,34 @@ class ResultRow:
 
 
 def parse_results(html: str) -> list[ResultRow]:
-    """Rows of an HLTV ``/results`` page (featured duplicates are dropped)."""
+    """Rows of an HLTV ``/results`` page, one per match. Featured matches are listed twice,
+    once without a date (``data-zonedgrouping-entry-unix="0"``): the dated copy is kept,
+    whichever of the two comes first."""
     root = parse_html(html)
-    rows, seen = [], set()
+    rows: list[ResultRow] = []
+    dated: dict[int, bool] = {}  # match id -> whether the copy kept so far has a date
     for con in root.find_all(cls="result-con"):
         link = next((a for a in con.find_all("a") if MATCH_HREF.search(a.attrs.get("href", ""))), None)
         if link is None:
             continue
         m = MATCH_HREF.search(link.attrs["href"])
         mid = int(m[1])
-        unix = con.attrs.get("data-zonedgrouping-entry-unix")
-        if mid in seen and not unix:
-            continue
+        unix = con.attrs.get("data-zonedgrouping-entry-unix", "")
+        unix_ms = int(unix) if unix.isdigit() and int(unix) > 0 else None
+        if mid in dated and (dated[mid] or unix_ms is None):
+            continue  # a duplicate that adds no date
         stars_box = con.find(cls="stars")
         row = ResultRow(
-            match_id=mid, slug=m[2],
-            unix_ms=int(unix) if unix and unix.isdigit() and int(unix) > 0 else None,
+            match_id=mid, slug=m[2], unix_ms=unix_ms,
             stars=sum(1 for _ in stars_box.find_all("i")) if stars_box else 0,
             event=(con.find(cls="event-name").text() if con.find(cls="event-name") else ""),
             fmt=(con.find(cls="map-text").text() if con.find(cls="map-text") else ""),
             teams=[t.text() for t in con.find_all(cls="team")][:2],
             score=(con.find(cls="result-score").text().replace(" ", "") if con.find(cls="result-score") else ""),
         )
-        if mid in seen:  # keep the dated copy of a featured row
+        if mid in dated:  # the dated copy replaces the undated featured one
             rows = [r for r in rows if r.match_id != mid]
-        seen.add(mid)
+        dated[mid] = unix_ms is not None
         rows.append(row)
     return rows
 
@@ -225,12 +228,19 @@ def load_config(path: Path | None = None) -> dict:
     return tomllib.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
 
 
+def has_term(event: str, term: str) -> bool:
+    """Case-insensitive: ``term`` occurs in ``event`` starting at a word, so "Series" matches
+    "Europe Series 12" but not "StarSeries", while "Qualifier" still matches "Qualifiers"."""
+    start = r"(?<!\w)" if re.match(r"\w", term) else ""
+    return re.search(start + re.escape(term), event, re.IGNORECASE) is not None
+
+
 def is_tier1(event: str, cfg: dict) -> bool:
     tiers = cfg.get("tier1", {})
-    if any(x.lower() in event.lower() for x in tiers.get("exclude", [])):
+    if any(has_term(event, x) for x in tiers.get("exclude", [])):
         return False
     include = tiers.get("include", [])
-    return not include or any(x.lower() in event.lower() for x in include)
+    return not include or any(has_term(event, x) for x in include)
 
 
 ARCHIVE_RE = re.compile(r"^(?P<prefix>.*)-(?P<fmt>bo[135]|nuke|mirage|inferno|dust2|ancient|anubis|cache|"

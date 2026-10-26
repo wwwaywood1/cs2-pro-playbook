@@ -17,6 +17,24 @@ def test_parse_results_rows_stars_and_featured_duplicate():
     assert big.fmt == "cch" and big.stars == 2
 
 
+def _result(mid, unix, event="PGL Masters Bucharest 2026", fmt="bo3"):
+    return (f'<div class="result-con" data-zonedgrouping-entry-unix="{unix}">'
+            f'<a href="/matches/{mid}/g2-vs-aurora-pgl-masters-bucharest-2026"><table><tr>'
+            f'<td><div class="team">G2</div></td><td class="result-score">0 - 2</td><td><div class="team">Aurora</div></td>'
+            f'<td><span class="event-name">{event}</span></td><td><div class="stars"><i></i><i></i></div>'
+            f'<div class="map-text">{fmt}</div></td></tr></table></a></div>')
+
+
+def test_featured_copy_never_replaces_the_dated_one_in_either_order():
+    featured_first = hltv.parse_results(_result(1, 0) + _result(1, 1792933200000) + _result(2, 1792900000000))
+    dated_first = hltv.parse_results(_result(1, 1792933200000) + _result(1, 0) + _result(2, 1792900000000))
+    for rows in (featured_first, dated_first):
+        assert [r.match_id for r in rows] == [1, 2]
+        assert rows[0].unix_ms == 1792933200000
+    only_featured = hltv.parse_results(_result(3, 0) + _result(3, 0))
+    assert [(r.match_id, r.unix_ms) for r in only_featured] == [(3, None)]
+
+
 def test_parse_match_demo_date_maps():
     page = hltv.parse_match((FIX / "match.html").read_text())
     assert page.demo_id == 112905 and page.unix_ms == 1792323000000
@@ -32,11 +50,23 @@ def test_parse_team_roster_and_logo():
     assert team.roster[0]["status"] == "STARTER" and "playerbodyshot" in team.roster[0]["bodyshot"]
 
 
+TIER1 = ["StarLadder StarSeries Fall 2026", "Thunderpick World Championship 2026", "ESL Pro League Season 24",
+         "PGL Masters Bucharest 2026", "IEM Cologne Major 2026", "BLAST Open Porto 2026", "Esports World Cup 2026",
+         "FISSURE Playground 3", "CS Asia Championships 2026"]
+NOT_TIER1 = ["Thunderpick World Championship 2026 North America Series", "ESL Pro League Season 24 Conference",
+             "BLAST Premier All-Star Showcase", "StarLadder StarSeries Fall 2026 Europe Closed Qualifier",
+             "Digital Crusade DraculaN Season 6", "CCT Season 3 Europe Series 12"]
+
+
 def test_tier1_filter():
-    assert hltv.is_tier1("IEM Cologne Major 2026", CFG)
-    assert hltv.is_tier1("PGL Masters Bucharest 2026", CFG)
-    assert not hltv.is_tier1("StarLadder StarSeries Fall 2026 Europe Closed Qualifier", CFG)
-    assert not hltv.is_tier1("Digital Crusade DraculaN Season 6", CFG)
+    assert [e for e in TIER1 if not hltv.is_tier1(e, CFG)] == []
+    assert [e for e in NOT_TIER1 if hltv.is_tier1(e, CFG)] == []
+
+
+def test_terms_start_at_a_word():
+    assert hltv.has_term("CCT Season 3 Europe Series 12", "Series")
+    assert not hltv.has_term("StarLadder StarSeries Fall 2026", "Series")
+    assert hltv.has_term("ESL Pro League Season 23 Qualifiers", "qualifier")
 
 
 def test_slug_prefixes_and_archive_matching():
