@@ -140,3 +140,14 @@ def test_replay_exports_actor_side_destination_place_and_filterable_flashes():
     assert kill['side'] == 'T' and kill['place'] == 'Victim' and kill['wpa'] == .2
     plant = next(e for e in r['events'] if e['kind'] == 'plant')
     assert plant['side'] == 'T' and plant['site'] == 'A' and r['players'][plant['by']]['name'] == 'a'
+
+
+def test_wpa_side_baselines_are_round_weighted_and_center_each_side():
+    from playbook.export import side_baselines
+    rows = {("1", "A", "T"): (100, -0.03, -0.02, -0.01), ("2", "B", "T"): (300, -0.01, -0.01, 0.0),
+            ("3", "A", "CT"): (200, 0.02, 0.015, 0.005), ("4", "C", "T"): (0, 9.0, 9.0, 9.0)}
+    base = side_baselines(rows)
+    assert base["T"] == pytest.approx((-0.015, -0.0125, -0.0025))   # (100*-0.03 + 300*-0.01) / 400
+    assert base["CT"] == pytest.approx((0.02, 0.015, 0.005))
+    centered = sum(v[0] * (v[1] - base["T"][0]) for k, v in rows.items() if k[2] == "T")
+    assert centered == pytest.approx(0)

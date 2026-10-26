@@ -459,6 +459,21 @@ def map_card_summary(team_rounds: pl.DataFrame, recipes: list[dict]) -> dict:
     } if top else None}
 
 
+def side_baselines(rows: dict[tuple, tuple]) -> dict[str, tuple[float, float, float]]:
+    """Round-weighted average WPA per round (total, duels, utility) of all players on each side.
+
+    Raw per-round WPA is not side-neutral: plants are credited to nobody and action windows
+    overlap (trades, utility before an entry), so on every map the average T player comes out
+    near -0.02 per round and the average CT player near +0.02. Player values are reported
+    against the average player of the same map and side; percentiles do not change."""
+    out = {}
+    for side in ("T", "CT"):
+        vals = [v for (_sid, _team, sd), v in rows.items() if sd == side and v[0]]
+        n = sum(v[0] for v in vals)
+        out[side] = tuple(sum(v[0] * v[k] for v in vals) / n if n else 0.0 for k in (1, 2, 3))
+    return out
+
+
 def _add_winprob(mdir: Path, ids: list[str], teams: list[dict], players: list[dict], res: dict,
                  sub: dict[str, pl.DataFrame], wpr: dict) -> None:
     """Win probability added per player and side, recipe WP swing, showcase-team timelines."""
@@ -471,14 +486,19 @@ def _add_winprob(mdir: Path, ids: list[str], teams: list[dict], players: list[di
     # percentile among players of this map and side with a reliable sample
     pool = {side: sorted(v[1] for (sid, team, sd), v in rows.items() if sd == side and v[0] and v[0] >= WPA_MIN_ROUNDS)
             for side in ("T", "CT")}
+    base = side_baselines(rows)
     for p in players:
         for side in ("T", "CT"):
             r = rows.get((str(p["steamid"]), p["team"], side))
             if r and r[0]:
                 ref = pool[side]
                 pct = (sum(1 for v in ref if v <= r[1]) / len(ref)) if (ref and r[0] >= WPA_MIN_ROUNDS) else None
-                p[side]["wpa"] = {"rounds": int(r[0]), "per_round": r[1], "duels": r[2], "utility": r[3],
-                                  "rounds_per_match": round(r[1] * 24, 2),
+                b = base[side]
+                per_round = round(r[1] - b[0], 4)
+                p[side]["wpa"] = {"rounds": int(r[0]), "per_round": per_round,
+                                  "duels": round(r[2] - b[1], 4), "utility": round(r[3] - b[2], 4),
+                                  "rounds_per_match": round(per_round * 24, 2),
+                                  "side_average_per_round": round(b[0], 4),
                                   "percentile": round(pct, 2) if pct is not None else None,
                                   "peers": len(ref)}
     wp_map = wpr["wp"].filter(pl.col("demo_id").is_in(ids))

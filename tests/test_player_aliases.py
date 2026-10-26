@@ -137,7 +137,8 @@ def test_export_applies_player_aliases_to_all_derived_views(tmp_path, monkeypatc
     player = red_players[0]
     assert player["steamid"] == str(CANONICAL)
     assert player["rounds"]["total"] == player["T"]["radar_6d"]["rounds"] == player["T"]["wpa"]["rounds"] == 10
-    assert player["T"]["wpa"]["per_round"] > 0
+    wpa = player["T"]["wpa"]  # reported against the side's average player; the raw value is positive
+    assert wpa["per_round"] + wpa["side_average_per_round"] > 0
     replay_files = list((site / "de_test/replay").glob("*/*.json"))
     assert len(replay_files) == 10
     for path in replay_files:
