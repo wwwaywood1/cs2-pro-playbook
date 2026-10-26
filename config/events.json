@@ -130,6 +130,12 @@
       "name": "PGL Masters Bucharest 2026",
       "start": "2026-10-24",
       "end": "2026-10-31"
+    },
+    "iem-krakw-2026-stage-1": {
+      "name": "IEM Kraków 2026 Stage 1",
+      "start": "2026-01-28",
+      "end": "2026-01-30",
+      "source": "hltv-plan"
     }
   }
 }

@@ -1,6 +1,22 @@
 {
  "_note": "HLTV matches we know the start time of, and which HLTV match each imported archive came from. Written by scripts/register_hltv_dates.py; drives exact dates in config/match_dates.csv.",
  "matches": {
+  "2389255": {
+   "start_unix_ms": 1768332000000,
+   "event": "BLAST Bounty 2026 Season 1",
+   "hltv_event_id": 8876,
+   "maps": [
+    "Mirage",
+    "Nuke",
+    "Overpass"
+   ],
+   "source": "plan",
+   "teams": [
+    "HOTU",
+    "Aurora"
+   ],
+   "stars": 1
+  },
   "2389261": {
    "start_unix_ms": 1768582800000,
    "event": "BLAST Bounty 2026 Season 1",
@@ -45,6 +61,22 @@
     "Spirit"
    ],
    "bo3_match_id": 107562
+  },
+  "2389269": {
+   "start_unix_ms": 1768666200000,
+   "event": "BLAST Bounty 2026 Season 1",
+   "hltv_event_id": 8876,
+   "maps": [
+    "Inferno",
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "plan",
+   "teams": [
+    "GamerLegion",
+    "Aurora"
+   ],
+   "stars": 1
   },
   "2389272": {
    "start_unix_ms": 1768740300000,
@@ -170,6 +202,52 @@
    ],
    "bo3_match_id": 107598
   },
+  "2389469": {
+   "start_unix_ms": 1769594400000,
+   "event": "IEM Kraków 2026 Stage 1",
+   "hltv_event_id": 8575,
+   "maps": [
+    "Nuke",
+    "Dust2"
+   ],
+   "source": "plan",
+   "teams": [
+    "Aurora",
+    "GamerLegion"
+   ],
+   "stars": 2
+  },
+  "2389625": {
+   "start_unix_ms": 1769691600000,
+   "event": "IEM Kraków 2026 Stage 1",
+   "hltv_event_id": 8575,
+   "maps": [
+    "Mirage",
+    "Anubis",
+    "Dust2"
+   ],
+   "source": "plan",
+   "teams": [
+    "Aurora",
+    "PARIVISION"
+   ],
+   "stars": 2
+  },
+  "2389636": {
+   "start_unix_ms": 1769789400000,
+   "event": "IEM Kraków 2026 Stage 1",
+   "hltv_event_id": 8575,
+   "maps": [
+    "Mirage",
+    "Overpass"
+   ],
+   "source": "plan",
+   "teams": [
+    "paiN",
+    "Aurora"
+   ],
+   "stars": 2
+  },
   "2389637": {
    "start_unix_ms": 1769873400000,
    "event": "IEM Kraków 2026",
@@ -211,6 +289,22 @@
    ],
    "source": "bo3.gg",
    "bo3_match_id": 108785
+  },
+  "2389644": {
+   "start_unix_ms": 1769950800000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": 8240,
+   "maps": [
+    "Anubis",
+    "Mirage",
+    "Inferno"
+   ],
+   "source": "plan",
+   "teams": [
+    "Falcons",
+    "Aurora"
+   ],
+   "stars": 2
   },
   "2389646": {
    "start_unix_ms": 1769962796000,
@@ -4290,6 +4384,21 @@
    "source": "bo3.gg",
    "bo3_match_id": 131662
   },
+  "2399408": {
+   "start_unix_ms": 1792053300000,
+   "event": "Thunderpick World Championship 2026",
+   "hltv_event_id": 8932,
+   "maps": [
+    "Cache",
+    "Dust2"
+   ],
+   "source": "plan",
+   "teams": [
+    "Aurora",
+    "Ninjas in Pyjamas"
+   ],
+   "stars": 1
+  },
   "2399409": {
    "start_unix_ms": 1792063800000,
    "event": "Thunderpick World Championship 2026",
@@ -4384,6 +4493,8 @@
   "blast-bounty-2026-season-1-finals-parivision-vs-spirit-bo3-CpEROJyXP8nd1x7BTCyu61": "2389278",
   "blast-bounty-2026-season-1-finals-vitality-vs-falcons-bo3-m75xkiVwc3YZkEbdtP1s9_": "2389279",
   "blast-bounty-2026-season-1-fut-vs-furia-bo3-Ooo2A2Cr6F8fALvRMag2iD": "2389274",
+  "blast-bounty-2026-season-1-gamerlegion-vs-aurora-bo3-s_bQqKzYsqQRsRcpDSJGfL": "2389269",
+  "blast-bounty-2026-season-1-hotu-vs-aurora-bo3-w2RwJRsiiyT7NOuMy47ke6": "2389255",
   "blast-bounty-2026-season-1-inner-circle-vs-spirit-bo3-MfhEGJq5Wo_xqc_g50_1iQ": "2389272",
   "blast-bounty-2026-season-1-sinners-vs-spirit-bo3-cTn_H9juISZmERJ0ZmI2l0": "2389265",
   "blast-bounty-2026-season-1-virtuspro-vs-vitality-bo3-q1MsDOb5aD1l3u9zoYMQdQ": "2389263",
@@ -4540,6 +4651,7 @@
   "iem-cologne-major-2026-vitality-vs-mouz-bo3-E9khg_TX6BxGaIZNKJ3X1O": "2394983",
   "iem-krakw-2026-3dmax-vs-vitality-bo3-wRh04OCAJb0TLZWmLhz1tg": "2389649",
   "iem-krakw-2026-astralis-vs-furia-bo3-xudgaKgYU0Ln3aG94b9Zq9": "2389657",
+  "iem-krakw-2026-falcons-vs-aurora-bo3-6BjXc6lD7K4hiXyUIrURM7": "2389644",
   "iem-krakw-2026-falcons-vs-mouz-bo3-0NmDSYe_8UmJAHamjCMBo8": "2389660",
   "iem-krakw-2026-furia-vs-aurora-bo3-0SHtb-SP2eItuD9F4xOrf3": "2389661",
   "iem-krakw-2026-furia-vs-fut-bo3-2YAkzpe_twYrzQp5b7_6q_": "2389637",
@@ -4554,6 +4666,9 @@
   "iem-krakw-2026-spirit-vs-astralis-bo3-qoyf4tbtOCZaGnut4o9qFv": "2389640",
   "iem-krakw-2026-spirit-vs-furia-bo3-xg2IF7BkV4uvqIFjZDhn6_": "2389663",
   "iem-krakw-2026-spirit-vs-mouz-bo3-CEc0ZCsgWfgqi6LSlIvIKf": "2389665",
+  "iem-krakw-2026-stage-1-aurora-vs-gamerlegion-bo3-W-CSOfqlsWv8BDMh4kzkBB": "2389469",
+  "iem-krakw-2026-stage-1-aurora-vs-parivision-bo3-7jil6mkyyQ0cFOizW60N0Q": "2389625",
+  "iem-krakw-2026-stage-1-pain-vs-aurora-bo3-39oqiTkp5848eoTZVm8RBz": "2389636",
   "iem-krakw-2026-the-mongolz-vs-furia-bo3-osQQ2qb5QmTGPogNefNFS2": "2389646",
   "iem-krakw-2026-vitality-vs-aurora-bo3--mY74mcLmUrEjY-ofCuhG0": "2389658",
   "iem-krakw-2026-vitality-vs-bcgame-bo3-1bS_vkLXGu0uvf773So7g-": "2389641",
@@ -4627,6 +4742,7 @@
   "starladder-starseries-fall-2026-vitality-vs-magic-bo3-qBHOW2KPqxQBIay8cnoYpu": "2398089",
   "thunderpick-world-championship-2026-9z-vs-falcons-bo3-89PVzaV96rjGMAZ9xQYJw0": "2399409",
   "thunderpick-world-championship-2026-aurora-vs-falcons-bo3-LV8B-4C-lmh52HCDcAZYpn": "2399416",
+  "thunderpick-world-championship-2026-aurora-vs-ninjas-in-pyjamas-bo3-YPgNKrLt9f2QwtUqt9vDaD": "2399408",
   "thunderpick-world-championship-2026-falcons-vs-betboom-bo3-mm_gEjepl9iqTc-LcnYcYf": "2399415",
   "thunderpick-world-championship-2026-falcons-vs-ninjas-in-pyjamas-bo3-d7ow5nl8mvZ8nPGtcHtVz3": "2399385",
   "thunderpick-world-championship-2026-furia-vs-aurora-bo3-EvTUc7zohJvV3jcFASmDIT": "2399414",
