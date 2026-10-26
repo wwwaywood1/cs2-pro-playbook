@@ -57,5 +57,5 @@ for plan in _sync/*_plan.json; do  # the download pages grey out what is here no
 done
 echo "== parse";  "$PY" -m playbook parse 2>&1 | tail -3 || true
 echo "== export"; "$PY" -m playbook export || { echo "export failed"; exit 1; }
-"$PY" scripts/insight_text.py brief de_mirage de_inferno de_nuke de_dust2 de_ancient de_anubis >/dev/null
+"$PY" scripts/insight_text.py brief de_mirage de_inferno de_nuke de_dust2 de_ancient de_anubis de_cache >/dev/null
 echo "== done. Tell Claude so the team summaries can be rewritten for teams whose facts changed."
