@@ -55,7 +55,17 @@ def fetch(url: str, delay: float) -> str:
     return body
 
 
+def registered_archives() -> dict[str, int]:
+    """config/hltv_archives.json "archives": archive stem -> HLTV match id."""
+    registry = ROOT / "config" / "hltv_archives.json"
+    if not registry.exists():
+        return {}
+    return {s: int(m) for s, m in json.loads(registry.read_text(encoding="utf-8")).get("archives", {}).items()}
+
+
 def existing_stems() -> list[str]:
+    """Archive stems we have that are not registered to a match id (registered ones are
+    covered by known_match_ids, and must not stand in for another match)."""
     stems = []
     raw = ROOT / "data" / "raw" / "hltv"
     if raw.is_dir():
@@ -67,15 +77,13 @@ def existing_stems() -> list[str]:
         if adir.is_dir():
             stems += [p.stem for p in adir.iterdir() if p.suffix.lower() in (".rar", ".zip")
                       and not p.name.startswith("._")]
-    return stems
+    registered = registered_archives()
+    return [s for s in stems if s not in registered]
 
 
 def known_match_ids() -> set[int]:
     """HLTV match ids we already have: registered archives and dataset folders named <id>-..."""
-    ids: set[int] = set()
-    registry = ROOT / "config" / "hltv_archives.json"
-    if registry.exists():
-        ids |= {int(m) for m in json.loads(registry.read_text(encoding="utf-8")).get("archives", {}).values()}
+    ids: set[int] = set(registered_archives().values())
     raw = ROOT / "data" / "raw"
     if raw.is_dir():
         for source in raw.iterdir():
@@ -117,8 +125,8 @@ def main(argv: list[str] | None = None) -> int:
                     break
         for path in args.results_html:
             rows += hltv.parse_results(path.read_text(encoding="utf-8"))
-        want, have, skipped = hltv.plan_matches(rows, existing_stems(), since=since, cfg=cfg,
-                                                known_ids=known_match_ids())
+        plan = hltv.plan_matches(rows, existing_stems(), since=since, cfg=cfg, known_ids=known_match_ids())
+        want, have, skipped, ambiguous = plan
         if args.limit:
             want = want[: args.limit]
         entries = []
@@ -146,8 +154,14 @@ def main(argv: list[str] | None = None) -> int:
     hltv.write_plan(plan_path, {"slug": args.team, "hltv_team_id": team_id, "since": since}, entries)
     queue = args.out_dir / f"{args.team}_queue.txt"
     queue.write_text(hltv.queue_text(entries), encoding="utf-8")
-    print(f"{len(entries)} to download, {len(have)} already have, {len(skipped)} not tier-1 -> {plan_path.name}, "
-          f"{queue.name}")
+    print(f"{len(entries)} to download, {len(have)} already have, {len(ambiguous)} ambiguous, "
+          f"{len(skipped)} not tier-1 -> {plan_path.name}, {queue.name}")
+    if ambiguous:
+        print("Not queued, decide by hand: these share event, teams and format with archives we have, but there "
+              "are more such matches than archives (a rematch?), so it is unclear which ones we have:")
+        for row in ambiguous:
+            print(f"  {row.match_id} {hltv.row_dict(row)['date']} {' vs '.join(row.teams)} ({row.event}, {row.fmt}) "
+                  f"{hltv.HLTV}/matches/{row.match_id}/{row.slug}")
     print(f"Next: caffeinate -i bash scripts/hltv_download.sh {args.team}")
     return 0
 

@@ -17,10 +17,12 @@ from __future__ import annotations
 import json
 import re
 import tomllib
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
+from typing import NamedTuple
 
 from playbook.config import CONFIG_DIR
 
@@ -247,14 +249,25 @@ ARCHIVE_RE = re.compile(r"^(?P<prefix>.*)-(?P<fmt>bo[135]|nuke|mirage|inferno|du
                         r"overpass|train|vertigo)-[A-Za-z0-9_-]{18,26}$")
 
 
-def archive_keys(stems: list[str]) -> dict[tuple[str, str], int]:
-    """(event-teams prefix, bo-type or 'map') -> count, from archive stems/folder names."""
+def format_key(fmt: str) -> str:
+    """Format used to compare matches with archive names: "bo3"/"bo5" as they are; a bo1 and a
+    single-map match are both "map" (results pages show the map instead of "bo1", and an
+    archive may be named either way)."""
+    fmt = fmt.strip().lower()
+    if not fmt:
+        return ""
+    return fmt if fmt.startswith("bo") and fmt != "bo1" else "map"
+
+
+def archive_keys(stems: Iterable[str]) -> dict[tuple[str, str], int]:
+    """(event-teams prefix, format key) -> number of distinct archives, from archive stems and
+    extracted folder names (an archive and its extracted folder share the stem: counted once)."""
     out: dict[tuple[str, str], int] = {}
-    for stem in stems:
+    for stem in set(stems):
         m = ARCHIVE_RE.match(stem)
         if m:
-            fmt = m["fmt"] if m["fmt"].startswith("bo") else "map"
-            out[(m["prefix"], fmt)] = out.get((m["prefix"], fmt), 0) + 1
+            key = (m["prefix"], format_key(m["fmt"]))
+            out[key] = out.get(key, 0) + 1
     return out
 
 
@@ -269,43 +282,60 @@ def slug_prefixes(slug: str) -> list[str]:
     return out
 
 
-def plan_matches(rows: list[ResultRow], existing_stems: list[str], *, since: str, until: str | None = None,
-                 cfg: dict | None = None, known_ids: set[int] | frozenset[int] = frozenset()
-                 ) -> tuple[list[ResultRow], list[ResultRow], list[ResultRow]]:
-    """(to_download ordered by stars desc then newest first, already_have, skipped_not_tier1).
+class Plan(NamedTuple):
+    want: list[ResultRow]       # to download: most stars first, then newest
+    have: list[ResultRow]       # already here
+    skipped: list[ResultRow]    # not a tier-1 event
+    ambiguous: list[ResultRow]  # archive names cannot tell (a rematch at the same event): a human decides
 
-    A match is already had when its HLTV id is in ``known_ids`` (registered archives, dataset
-    folders named ``<id>-...``) or, failing that, when an archive with the same event/teams/format
-    prefix exists (archive names carry no match id)."""
+
+def plan_matches(rows: list[ResultRow], existing_stems: Iterable[str], *, since: str, until: str | None = None,
+                 cfg: dict | None = None, known_ids: set[int] | frozenset[int] = frozenset()) -> Plan:
+    """Sort the result rows inside [since, until] into a Plan.
+
+    A match is had when its HLTV id is in ``known_ids`` (registered archives, dataset folders
+    named ``<id>-...``). Otherwise archive names, which carry no match id, are compared by
+    event/teams/format prefix; ``existing_stems`` should leave out archives already registered
+    to a match id. When more matches share a prefix than there are archives with it (a rematch
+    at the same event, same format), the archives cannot be attributed, so none of those
+    matches counts as had and all of them come back in ``ambiguous``. Matches outside the date
+    window count for that comparison too: an archive may be theirs."""
     cfg = cfg or {}
     keys = archive_keys(existing_stems)
-    used: dict[tuple[str, str], int] = {}
     lo = datetime.fromisoformat(since).replace(tzinfo=timezone.utc).timestamp() * 1000
     hi = datetime.fromisoformat(until).replace(tzinfo=timezone.utc).timestamp() * 1000 if until else None
-    want, have, skipped = [], [], []
-    for row in rows:
+    unique: dict[int, ResultRow] = {}
+    for row in rows:  # overlapping results pages list a match more than once
+        kept = unique.get(row.match_id)
+        if kept is None or (kept.unix_ms is None and row.unix_ms is not None):
+            unique[row.match_id] = row
+
+    def key_of(row: ResultRow) -> tuple[str, str] | None:
+        fmt = format_key(row.fmt)
+        return next(((p, fmt) for p in slug_prefixes(row.slug) if (p, fmt) in keys), None)
+
+    claims: dict[tuple[str, str], int] = {}
+    for row in unique.values():
+        key = None if row.match_id in known_ids else key_of(row)
+        if key is not None:
+            claims[key] = claims.get(key, 0) + 1
+    plan = Plan([], [], [], [])
+    for row in unique.values():
         if row.unix_ms is None or row.unix_ms < lo or (hi is not None and row.unix_ms > hi):
             continue
+        key = key_of(row)
         if not is_tier1(row.event, cfg):
-            skipped.append(row)
-            continue
-        if row.match_id in known_ids:
-            have.append(row)
-            continue
-        fmt = row.fmt if row.fmt.startswith("bo") else "map"
-        hit = None
-        for prefix in slug_prefixes(row.slug):
-            key = (prefix, fmt)
-            if keys.get(key, 0) - used.get(key, 0) > 0:
-                hit = key
-                break
-        if hit:
-            used[hit] = used.get(hit, 0) + 1
-            have.append(row)
+            plan.skipped.append(row)
+        elif row.match_id in known_ids:
+            plan.have.append(row)
+        elif key is None:
+            plan.want.append(row)
+        elif claims[key] <= keys[key]:
+            plan.have.append(row)
         else:
-            want.append(row)
-    want.sort(key=lambda r: (-r.stars, -(r.unix_ms or 0)))
-    return want, have, skipped
+            plan.ambiguous.append(row)
+    plan.want.sort(key=lambda r: (-r.stars, -(r.unix_ms or 0)))
+    return plan
 
 
 def queue_text(entries: list[dict]) -> str:

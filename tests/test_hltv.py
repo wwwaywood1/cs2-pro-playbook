@@ -79,18 +79,69 @@ def test_slug_prefixes_and_archive_matching():
 
 def test_plan_orders_by_stars_then_recency_and_skips_known():
     rows = hltv.parse_results((FIX / "results.html").read_text())
-    want, have, skipped = hltv.plan_matches(
+    want, have, skipped, ambiguous = hltv.plan_matches(
         rows, ["iem-cologne-major-2026-aurora-vs-spirit-bo3--Sux_g3FZEXx-GCHN3oYPP"], since="2026-01-01", cfg=CFG)
     assert [r.match_id for r in have] == [2394977]
     assert [r.match_id for r in skipped] == [2396053]          # closed qualifier
     assert [r.match_id for r in want] == [2399731, 2396562]    # 3 stars first, then 2
     assert all(r.unix_ms >= 1767225600000 for r in want)       # 2025 match excluded by --since
+    assert ambiguous == []
 
 
 def test_plan_skips_known_match_ids():
     rows = hltv.parse_results((FIX / "results.html").read_text())
-    want, have, _ = hltv.plan_matches(rows, [], since="2026-01-01", cfg=CFG, known_ids={2399731})
-    assert 2399731 in [r.match_id for r in have] and 2399731 not in [r.match_id for r in want]
+    plan = hltv.plan_matches(rows, [], since="2026-01-01", cfg=CFG, known_ids={2399731})
+    assert 2399731 in [r.match_id for r in plan.have] and 2399731 not in [r.match_id for r in plan.want]
+
+
+def _row(mid, unix_ms, fmt="bo3", slug="aurora-vs-spirit-iem-cologne-major-2026"):
+    return hltv.ResultRow(mid, slug, unix_ms, 3, "IEM Cologne Major 2026", fmt, ["Aurora", "Spirit"], "2-1")
+
+
+BO3 = "iem-cologne-major-2026-aurora-vs-spirit-bo3--Sux_g3FZEXx-GCHN3oYPP"
+BO3_B = "iem-cologne-major-2026-aurora-vs-spirit-bo3-Zz9_k2LmQpRs7TuVwXy0"
+
+
+def test_rematch_with_fewer_archives_than_matches_is_ambiguous():
+    final, groups = _row(2, 1781395131000), _row(1, 1781295131000)     # same event, teams, format
+    plan = hltv.plan_matches([final, groups], [BO3], since="2026-01-01", cfg=CFG)
+    assert plan.have == [] and plan.want == []
+    assert [r.match_id for r in plan.ambiguous] == [2, 1]
+    # an archive and its extracted folder (same stem) are one archive, not two
+    plan = hltv.plan_matches([final, groups], [BO3, BO3], since="2026-01-01", cfg=CFG)
+    assert [r.match_id for r in plan.ambiguous] == [2, 1]
+    # one archive per match: both are had
+    plan = hltv.plan_matches([final, groups], [BO3, BO3_B], since="2026-01-01", cfg=CFG)
+    assert [r.match_id for r in plan.have] == [2, 1] and plan.ambiguous == []
+
+
+def test_rematch_counts_matches_outside_the_date_window():
+    inside, before = _row(2, 1767400000000), _row(1, 1767100000000)    # 2026-01-03 and 2025-12-30
+    plan = hltv.plan_matches([inside, before], [BO3], since="2026-01-01", cfg=CFG)
+    assert [r.match_id for r in plan.ambiguous] == [2] and plan.have == []
+
+
+def test_registered_match_id_settles_a_rematch():
+    final, groups = _row(2, 1781395131000), _row(1, 1781295131000)
+    # the one archive is registered to match 1, so the caller leaves its stem out
+    plan = hltv.plan_matches([final, groups], [], since="2026-01-01", cfg=CFG, known_ids={1})
+    assert [r.match_id for r in plan.have] == [1] and [r.match_id for r in plan.want] == [2]
+
+
+def test_a_match_listed_twice_is_one_match():
+    row = _row(2, 1781395131000)
+    plan = hltv.plan_matches([row, row], [BO3], since="2026-01-01", cfg=CFG)
+    assert [r.match_id for r in plan.have] == [2] and plan.ambiguous == []
+
+
+def test_bo1_and_single_map_are_the_same_format():
+    assert hltv.format_key("bo1") == hltv.format_key("nuke") == hltv.format_key("cch") == "map"
+    assert hltv.format_key("bo3") == "bo3" and hltv.format_key("") == ""
+    map_archive = "iem-cologne-major-2026-aurora-vs-spirit-nuke-xgmnZlKoCUg1rSdM6g5Q-g"
+    bo1_archive = "iem-cologne-major-2026-aurora-vs-spirit-bo1-xgmnZlKoCUg1rSdM6g5Q-g"
+    assert hltv.plan_matches([_row(5, 1781295131000, fmt="bo1")], [map_archive], since="2026-01-01", cfg=CFG).have
+    assert hltv.plan_matches([_row(5, 1781295131000, fmt="nuke")], [bo1_archive], since="2026-01-01", cfg=CFG).have
+    assert hltv.plan_matches([_row(5, 1781295131000, fmt="nuke")], [BO3], since="2026-01-01", cfg=CFG).want
 
 
 def test_queue_text():
