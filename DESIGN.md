@@ -345,6 +345,18 @@ Verified by GPT-03 on MOUZ vs Legacy Nuke (2394905: 13-6, 19 rounds); B8 vs TYLO
   inside a live round, or players whose team cannot be resolved are rejected, not repaired.
   A real backup-restore demo and a late-joined GOTV demo still need to be collected to see
   how often this triggers on Tier 1/2 data.
+  Measured 2026-10-26: 14 of 847 games are rejected (list: `_sync/failure_types.log` on the Mac).
+  - 10 split recordings (`-p1`/`-p2`): awpy 3.1.0 returns **no rounds for part 1** although
+    the part holds `begin_new_match`, the match-start announcement and one `round_freeze_end`
+    per round. These demos carry no `round_start`/`round_end`/`round_officially_ended`
+    events at all, so awpy derives rounds from game-rules state, and that fails for the first
+    recording; awpy's own multipart `Demo([p1, p2])` stops with "part 0 has no completed match
+    rounds". Rebuilding part-1 rounds from the freeze-end events and the score/round props
+    would recover them (6 involve a showcase team).
+  - 1 split recording restarted from round 1 in part 2 (Spirit vs Liquid, Ancient) and 1 with
+    a partial first part (Monte vs Legacy): ambiguous histories, kept out.
+  - 1 single recording starts at round 4 (MOUZ vs PARIVISION, Dust2): rounds 1–3 missing.
+  - 1 game with two clan names on one team (FURIA vs Aurora, Mirage, ESL Pro League S24).
 - Two-level maps (Nuke, Train, Vertigo) need the lower radar when z < `lower_level_max_z`
   (heatmaps and holding spots already split levels; the lineup radar does not yet).
 - Tactic labels (playbook/tactics.py) only name a target once two T players reach the bomb
