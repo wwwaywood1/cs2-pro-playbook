@@ -40,6 +40,7 @@ lineup_index.json and the frontend falls back to an empty index.
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -84,7 +85,8 @@ def _name_pair(value: Any) -> list[str | None] | None:
 
 
 def _number(value: Any) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and value == value
+    """A finite JSON number (json.loads accepts NaN and Infinity)."""
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
 def _active_maps(index: Any) -> list[dict]:

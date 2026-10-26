@@ -6,8 +6,15 @@ from pathlib import Path
 import pytest
 
 from playbook import site_index
-from playbook.site_index import (LINEUP_COLUMNS, MATCH_COLUMNS, PLAYER_COLUMNS, RECIPE_COLUMNS,
-                                 build_lineup_index, build_search_index, write_site_indexes)
+from playbook.site_index import (
+    LINEUP_COLUMNS,
+    MATCH_COLUMNS,
+    PLAYER_COLUMNS,
+    RECIPE_COLUMNS,
+    build_lineup_index,
+    build_search_index,
+    write_site_indexes,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -35,8 +42,10 @@ def site(tmp_path):
         {'map': 'de_mirage', 'display_name': 'Mirage', 'n_matches': 3},
         {'map': 'de_cache', 'display_name': 'Cache', 'n_matches': 0},  # no data: skipped
     ]})
-    result = lambda demo, opp, date: {'demo_id': demo, 'hltv_match_id': None, 'opponent': opp, 'score_for': 13,  # noqa: E731
-                                      'score_against': 7, 'date': date, 'date_precision': 'event', 'event': 'Major'}
+    def result(demo, opp, date):
+        return {'demo_id': demo, 'hltv_match_id': None, 'opponent': opp, 'score_for': 13,
+                'score_against': 7, 'date': date, 'date_precision': 'event', 'event': 'Major'}
+
     _write(out / 'heatmap_teams.json', [
         {'team': 'Vitality', 'slug': 'vitality', 'n_matches': 2, 'roster': [], 'maps': [
             {'map': 'de_mirage', 'display_name': 'Mirage', 'n_matches': 2, 'results': [result('m1', 'B8', '2026-05-01'), result('m2', 'FaZe', None)]},
@@ -46,9 +55,10 @@ def site(tmp_path):
             {'map': 'de_mirage', 'display_name': 'Mirage', 'n_matches': 1, 'results': [result('m1', 'Vitality', '2026-05-01')]},
         ]},
     ])
-    ref = lambda spot, order, lineups, name=None, label=None: {  # noqa: E731
-        'spot_id': spot, 'type': 'smoke', 'label': label or 'BombsiteA #3', 'place': 'BombsiteA', 'order': order,
-        'name': name, 'share': .8, 'lineups': [{'lineup_id': i, 'n_throws': 9} for i in lineups]}
+    def ref(spot, order, lineups, name=None, label=None):
+        return {'spot_id': spot, 'type': 'smoke', 'label': label or 'BombsiteA #3', 'place': 'BombsiteA', 'order': order,
+                'name': name, 'share': .8, 'lineups': [{'lineup_id': i, 'n_throws': 9} for i in lineups]}
+
     _write(out / 'de_mirage/tactics.json', {
         'map': 'de_mirage', 'definitions': {}, 't_overview': {}, 'ct_overview': {'setups_20s': []},
         'recipes': [{'id': 'de_mirage-a-r01', 'site': 'A', 'n_rounds': 20,

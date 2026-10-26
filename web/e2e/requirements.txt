@@ -1,2 +1,4 @@
 # Test tooling only; no frontend or pipeline runtime dependency.
 playwright==1.64.0
+# smoke.py builds a test WebP for the orbit map backgrounds.
+pillow>=10

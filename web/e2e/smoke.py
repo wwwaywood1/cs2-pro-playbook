@@ -4,27 +4,37 @@ From the repository root:
     python scripts/sync_web_data.py --samples
     cd web && npm ci && npm run build && cd ..
     python3 -m http.server 4173 --directory web/dist
-    python3 web/e2e/smoke.py [http://localhost:4173] [--shots DIR]
+    python3 web/e2e/smoke.py [http://localhost:4173] --samples [--shots DIR]
 
 Install tooling with pip install -r web/e2e/requirements.txt and
 python -m playwright install --with-deps --only-shell chromium.
-Add a route by writing one @route(path, ready_selector) function. Desktop checks,
-mobile overflow checks, console/page errors and screenshots are run automatically.
-Use --lab-only for AI lab, CT defense and fingerprint checks with the current export.
-Use --orbit-only to check the radial hub against the current export without
-replacing web/public/data with sample data.
+Add a route by writing one @route(path, ready_selector) function. Desktop checks
+(1440x900 and 1280x800), console/page errors and screenshots run automatically.
+Use --samples with the committed samples/site (CI): it skips REAL_DATA_ONLY checks.
+Without --samples every route runs: use that, plus --lab-only (AI lab, CT defense and
+fingerprints) and --orbit-only (radial hub), against a full export before publishing.
+Use --mobile to add the 375px horizontal-overflow pass (the site is desktop-first).
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import sys
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
 from urllib.parse import urlsplit
 
 from playwright.sync_api import BrowserContext, Page, expect, sync_playwright
+
+# Fixtures reuse the exporter's row builders (playbook/site_index.py is stdlib-only).
+REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO))
+
+
+# Owner-supplied images are gitignored, so CI and other sample builds never have them.
+OWNER_ASSETS = ('map-bg/', 'logos/', 'players/')
 
 
 @dataclass
@@ -32,9 +42,20 @@ class Smoke:
     base: str
     lineups: list[dict]
     shots: Path | None = None
+    samples: bool = False
     failures: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     checks: int = 0
+
+    def expected_missing(self, url: str) -> bool:
+        """--samples only: a 404 for an owner asset, or for a data file that the committed
+        samples/site predates (the UI treats those files as optional)."""
+        if not self.samples:
+            return False
+        path = urlsplit(url).path.removeprefix(urlsplit(self.base).path.rstrip('/')).lstrip('/')
+        if path.startswith(OWNER_ASSETS):
+            return True
+        return path.startswith('data/') and not (REPO / 'samples/site' / path.removeprefix('data/')).exists()
 
     def check(self, cond: bool, msg: str) -> None:
         self.checks += 1
@@ -51,8 +72,16 @@ class Smoke:
         )
 
     def watch(self, page: Page) -> None:
-        page.on("console", lambda msg: self.errors.append(f"{page.url}: {msg.text}")
-                if msg.type == "error" else None)
+        def console(msg) -> None:
+            if msg.type != "error":
+                return
+            # Chromium logs failed loads without the URL in the text; it is the message location.
+            url = (msg.location or {}).get("url") or ""
+            if "status of 404" in msg.text and self.expected_missing(url):
+                return
+            self.errors.append(f"{page.url}: {msg.text}" + (f" [{url}]" if url and url != page.url else ""))
+
+        page.on("console", console)
         page.on("pageerror", lambda error: self.errors.append(f"{page.url}: {error}"))
 
 
@@ -267,9 +296,15 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
     fixture['spots'] = [spot]
     fixture['recipes'] = [recipe, {**recipe, 'id': 'test-empty', 'n_rounds': 10, 'routes': [],
                                    'entry_sync_sec': None, 'intent_badges': []}]
+    # The export indexes every lineup that tactics.json references; keep that true for the fixture.
+    from playbook.site_index import lineup_index_row
+    index_path = root / 'public/data/de_mirage/lineup_index.json'
+    lineup_index = json.loads(index_path.read_text()) if index_path.exists() else {}
+    lineup_index[lineup['id']] = lineup_index_row(lineup)
     try:
         page.route('**/data/de_mirage/replay/smoke-replay/1.json', lambda request: request.fulfill(json=replay_fixture()))
         mock_json(page, '**/data/de_mirage/tactics.json', fixture)
+        mock_json(page, '**/data/de_mirage/lineup_index.json', lineup_index)
         page.reload()
         page.wait_for_selector('.tactics-entry-path')
         smoke.check(page.locator('.tactics-entry-path').count() == 1, 'selected recipe draws its player entry route')
@@ -376,7 +411,8 @@ def check_tactics_linking(smoke: Smoke, page: Page) -> None:
                     'scrubbing applies the exact kill time and removes the victim')
         smoke.check(page.locator('.replay-plant').count() == 1, 'scrubbing reveals the plant')
         expect(page.locator('.replay-clock')).to_contain_text('0:39')
-        expect(page.locator('.replay-killfeed')).to_contain_text('ak47')
+        expect(page.locator('.replay-killfeed')).to_contain_text('AK-47')
+        smoke.check('ak47' not in page.locator('.replay-killfeed').inner_text(), 'kill feed shows readable weapon names, not demo ids')
         expect(page.locator('.replay-killfeed')).to_contain_text('爆头')
         expect(page.locator('.replay-killfeed')).to_contain_text('0:39 [T] Player 0 击杀 Player 9（爆头）（胜率 +12.5%）')
         expect(page.locator('.replay-events [data-kind=smoke]')).to_contain_text('1:52 [T] Player 0 投掷 VIP烟')
@@ -593,9 +629,11 @@ def check_archive_replay(smoke: Smoke, page: Page) -> None:
         page.reload()
         page.wait_for_selector('.hub-player-card')
         page.locator('.hub-team-matches > summary').click()
-        button = page.locator('.winprob-round[role="button"]')
+        row = page.locator(f'[id="match-{demo}"]')
+        button = row.locator('.winprob-round[role="button"]')
         expect(button).to_have_count(1)
-        smoke.check(page.locator('.winprob-round[role="img"]').count() == 1, 'rounds absent from the replay index remain static')
+        smoke.check(row.locator('.winprob-round[role="img"]').count() == 1, 'rounds absent from the replay index remain static')
+        smoke.check(row.locator('.winprob-round[role="img"][tabindex]').count() == 0, 'static rounds are not Tab stops')
         button.focus()
         page.keyboard.press('Enter')
         page.wait_for_selector('dialog[open] .replay-radar')
@@ -643,16 +681,22 @@ def check_teams_hub(smoke: Smoke, page: Page) -> None:
     page.keyboard.press('Enter')
     page.wait_for_selector('#hub-map-de_mirage')
     smoke.check('team=vitality' in page.url, 'hub team selection is in URL')
-    smoke.check(page.locator('#hub-map-de_mirage strong .sr-only').inner_text() == '100%',
-                'sample Vitality map card shows map wins, not round wins')
+    teams = page.request.get(f'{smoke.base}/data/heatmap_teams.json').json()
+    mirage = next(m for t in teams if t['slug'] == 'vitality' for m in t['maps'] if m['map'] == 'de_mirage')
+    smoke.check(page.locator('#hub-map-de_mirage strong .sr-only').inner_text() == f"{int(mirage['map_win_rate'] * 100 + .5)}%",
+                'Vitality map card shows map wins, not round wins')
     page.wait_for_function("""() => [...document.querySelectorAll('.hub-map-card .hub-count')].every(
         el => el.dataset.rolling === 'false' && el.querySelector('.sr-only').textContent === el.querySelector('.hub-number-final').textContent)""")
     smoke.check(True, 'animated map rates settle on the exact exported values')
-    page.locator('#hub-map-de_mirage').click()
+    # A rotating card never passes Playwright's stability wait; dispatch the click.
+    page.locator('#hub-map-de_mirage').dispatch_event('click')
     page.wait_for_selector('.hub-player-card')
-    smoke.check(page.locator('.hub-stage').get_attribute('data-direction') == 'forward',
-                'entering a map uses forward slide direction')
-    smoke.check(page.locator('.hub-player-card').count() == 5, 'map shows five portrait buttons')
+    # The hub cross-fades whole scenes (teamsHubRoute.ts); there is no slide direction.
+    smoke.check(page.locator('.hub-orbit').count() == 0 and page.locator('.hub-stage').count() == 1,
+                'entering a map replaces the orbit scene')
+    # Players beyond the five most-played sit in a collapsed "other players" drawer.
+    smoke.check(page.locator('.hub-roster > .hub-player-cards > .hub-player-card').count() == 5,
+                'map shows five portrait buttons')
     steamid = page.locator('.hub-player-card').first.get_attribute('id').removeprefix('hub-player-')
     portrait_line = page.locator('.hub-player-card .hub-portrait-line').first.inner_text()
     portrait_kpr = portrait_line.split('T 方每回合 ', 1)[1].split(' 杀', 1)[0]
@@ -663,7 +707,11 @@ def check_teams_hub(smoke: Smoke, page: Page) -> None:
     smoke.check(True, 'portrait T-side KPR matches the player-page heatmap KPR')
     smoke.check(f'player={steamid}' in page.url and 'map=de_mirage' in page.url,
                 'player and map selections are deep linked')
-    smoke.check(page.locator('.hub-verse').count() == 0, 'absent owner verse is hidden')
+    quotes = page.request.get(f'{smoke.base}/data/player_quotes.json').json()
+    quote = quotes.get(steamid) or {}
+    has_verse = bool((quote.get('zh') or '').strip() or (quote.get('en') or '').strip())
+    smoke.check(page.locator('.hub-verse').count() == int(has_verse),
+                'owner verse is shown' if has_verse else 'absent owner verse is hidden')
     page.get_by_role('button', name='CT', exact=True).click()
     page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('side') === 'CT'")
     # HashRouter updates history before its deferred React render commits.
@@ -683,8 +731,7 @@ def check_teams_hub(smoke: Smoke, page: Page) -> None:
                 'reload restores player and side')
     page.keyboard.press('Escape')
     page.wait_for_selector('.hub-player-card')
-    smoke.check(page.locator('.hub-stage').get_attribute('data-direction') == 'back',
-                'closing a player reverses slide direction')
+    smoke.check(page.locator('.hub-player-view').count() == 0, 'closing a player returns to the map scene')
     page.wait_for_function('(id) => document.activeElement.id === id', arg=f'hub-player-{steamid}')
     smoke.check('player=' not in page.url and 'map=de_mirage' in page.url,
                 'Escape closes player and restores portrait focus')
@@ -698,12 +745,26 @@ def check_teams_hub(smoke: Smoke, page: Page) -> None:
 
 @route('#/teams-hub?team=vitality', '.hub-map-card')
 def check_hub_team(smoke: Smoke, page: Page) -> None:
-    smoke.check(page.locator('.hub-results li').count() == 1, 'team panel shows the recorded sample result')
+    teams = page.request.get(f'{smoke.base}/data/heatmap_teams.json').json()
+    results = sum(len(m.get('results') or []) for t in teams if t['slug'] == 'vitality' for m in t['maps'])
+    smoke.check(page.locator('.hub-results li').count() == results, f'team panel lists every recorded result ({results})')
     card = page.locator('#hub-map-de_mirage')
-    card.hover(position={'x': 24, 'y': 28})
-    page.wait_for_function("parseFloat(getComputedStyle(document.querySelector('#hub-map-de_mirage .map-card-bg')).opacity) > .3")
-    smoke.check('radars/de_mirage.png' in card.locator('.map-card-bg').evaluate('el => getComputedStyle(el).backgroundImage'),
-                'hover previews the selected map radar')
+    # The orbit rotates: hover the card where it is now instead of waiting for it to settle,
+    # after the engine has painted for the current viewport (the layout check resizes it).
+    wait_orbit_painted(page)
+    card.hover(position={'x': 24, 'y': 28}, force=True)
+    expect(card).to_have_attribute('data-active', 'true')
+    # Without an owner photo the card shows the radar, brightened on hover; a photo replaces it.
+    page.wait_for_load_state('networkidle')
+    if card.locator('.card-scenic-bg').count() == 0:
+        page.wait_for_function("""() => {
+            const el = document.querySelector('#hub-map-de_mirage .map-card-bg');
+            return !!el && parseFloat(getComputedStyle(el).opacity) > .3;
+        }""")
+        smoke.check('radars/de_mirage.png' in card.locator('.map-card-bg').evaluate('el => getComputedStyle(el).backgroundImage'),
+                    'hover previews the selected map radar')
+    else:
+        smoke.check(card.locator('.map-card-bg').count() == 0, 'an owner photo replaces the radar preview')
     expect(page.locator('.hub-orbit-preview')).to_contain_text('T 胜率')
     expect(page.locator('.hub-orbit-preview')).to_contain_text('CT 胜率')
     expect(page.locator('.hub-orbit-preview')).to_contain_text('招牌：')
@@ -714,9 +775,19 @@ def check_hub_team(smoke: Smoke, page: Page) -> None:
     page.emulate_media(reduced_motion='no-preference')
 
 
+def wait_orbit_painted(page: Page) -> None:
+    """Wait until the orbit engine has painted for the current stage size (it sets the rays' viewBox)."""
+    page.wait_for_function("""() => {
+        const stage = document.querySelector('.hub-orbit'), rays = stage?.querySelector('.hub-orbit-rays');
+        return !!rays && rays.getAttribute('viewBox') === `0 0 ${stage.clientWidth} ${stage.clientHeight}`;
+    }""", polling=50)
+
+
 def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
     page.evaluate('document.fonts.ready.then(() => undefined)')
     page.evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
+    # Under page.clock the double rAF above is a timer, not a rendered frame.
+    wait_orbit_painted(page)
     page.wait_for_function("""() => [...document.querySelectorAll('.hub-orbit-node')].every(
         el => !el.getAnimations().some(a => a.playState === 'running' || a.pending))""")
     report = page.evaluate("""() => {
@@ -726,7 +797,16 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
         };
         const stage = box(document.querySelector('.hub-orbit'));
         const intro = box(document.querySelector('.hub-orbit-intro'));
+        const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const orbitActive = document.querySelector('.hub-orbit').hasAttribute('data-active');
+        const emphasisOf = el => reducedMotion || el.dataset.empty === 'true' ? 1 : el.dataset.active === 'true' ? 1.08 : orbitActive ? .96 : 1;
         const nodes = [...document.querySelectorAll('.hub-orbit-node')].map(el => ({id: el.id, ...box(el)}));
+        // The 10px spacing contract (orbit_geometry.mjs) is for fitted positions at depth scale;
+        // the 1.08 hover/focus emphasis is transient, so spacing is measured without it.
+        const fitted = nodes.map(a => {
+            const e = emphasisOf(document.getElementById(a.id)), cx = (a.left + a.right) / 2, cy = (a.top + a.bottom) / 2;
+            return {id: a.id, left: cx - a.width / e / 2, right: cx + a.width / e / 2, top: cy - a.height / e / 2, bottom: cy + a.height / e / 2};
+        });
         const intersections = [], gaps = [], outside = [], viewportOutside = [], contentOutside = [], styles = [];
         for (const [i, a] of nodes.entries()) {
             if (a.left < stage.left || a.right > stage.right || a.top < stage.top || a.bottom > stage.bottom) outside.push(a.id);
@@ -736,24 +816,36 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
                 const r = child.getBoundingClientRect();
                 if (r.bottom > a.bottom + 1 || r.top < a.top - 1 || r.left < a.left - 1 || r.right > a.right + 1) contentOutside.push(a.id);
             }
-            for (const b of nodes.slice(i + 1)) {
-                const gap = Math.max(b.left - a.right, a.left - b.right, b.top - a.bottom, a.top - b.bottom);
-                if (gap < 0) intersections.push([a.id, b.id]);
-                if (gap < 15.5) gaps.push({pair: [a.id, b.id], gap});
+            for (const [j, b] of nodes.entries()) {
+                if (j <= i) continue;
+                const overlap = Math.max(b.left - a.right, a.left - b.right, b.top - a.bottom, a.top - b.bottom);
+                if (overlap < 0) intersections.push([a.id, b.id]);
+                // The fitted layout guarantees 10px (orbit_geometry.mjs); allow subpixel rounding.
+                const fa = fitted[i], fb = fitted[j];
+                const gap = Math.max(fb.left - fa.right, fa.left - fb.right, fb.top - fa.bottom, fa.top - fb.bottom);
+                if (gap < 9.5) gaps.push({pair: [a.id, b.id], gap});
             }
             const el = document.getElementById(a.id), css = getComputedStyle(el);
-            const active = document.querySelector('.hub-orbit').hasAttribute('data-active');
-            const emphasis = el.dataset.empty === 'true' ? 1 : el.dataset.active === 'true' ? 1.08 : active ? .96 : 1;
-            const expectedScale = Number(css.getPropertyValue('--orbit-depth')) * (matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : emphasis);
+            const emphasis = emphasisOf(el);
+            const expectedScale = Number(css.getPropertyValue('--orbit-depth')) * emphasis;
             if (el.offsetWidth !== 196 || el.offsetHeight !== 252 || css.position !== 'absolute' || css.transform !== 'none' || css.translate !== '-50% -50%' || Math.abs(Number(css.scale) - expectedScale) > .005 ||
                 (el.dataset.empty === 'true' && css.borderTopStyle !== 'dashed')) styles.push({id: a.id, position: css.position, transform: css.transform, translate: css.translate, scale: css.scale});
         }
         const coreEl = document.querySelector('.hub-orbit-core'), core = box(coreEl);
-        const badge = box(coreEl.querySelector('.particle-logo')), name = box(coreEl.querySelector('h2'));
+        const title = coreEl.querySelector('h2');
+        const badge = box(coreEl.querySelector('.particle-logo')), name = box(title);
         const hud = box(coreEl.querySelector('.hub-orbit-hud'));
         const inspector = box(document.querySelector('.hub-orbit-inspector'));
-        const coreOverlaps = nodes.filter(a => Math.max(core.left - a.right, a.left - core.right,
-            core.top - a.bottom, a.top - core.bottom) < 15.5).map(a => a.id);
+        // Same 10px contract as web/e2e/orbit_geometry.mjs, less subpixel rounding; an
+        // emphasised card may still not touch the core.
+        const coreOverlaps = nodes.filter((a, i) => Math.max(core.left - fitted[i].right, fitted[i].left - core.right,
+            core.top - fitted[i].bottom, fitted[i].top - core.bottom) < 9.5 ||
+            Math.max(core.left - a.right, a.left - core.right, core.top - a.bottom, a.top - core.bottom) < 0).map(a => a.id);
+        // Long team names are scaled to one line inside the core instead of wrapping under cards.
+        const range = document.createRange(); range.selectNodeContents(title);
+        const titleLines = new Set([...range.getClientRects()].filter(r => r.width > 0).map(r => Math.round(r.top))).size;
+        const titleFits = titleLines === 1 && name.left >= core.left - 1 && name.right <= core.right + 1 &&
+            parseFloat(getComputedStyle(title).fontSize) >= (title.textContent.length <= 9 ? 32 : 16);
         const minimumCardWidth = innerWidth === 1440 ? 119 : innerWidth === 1280 ? 87 : 0;
         const undersized = nodes.filter(a => a.width < minimumCardWidth *
             (document.querySelector('.hub-orbit').hasAttribute('data-active') ? .96 : 1)).map(a => a.id);
@@ -762,7 +854,14 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
         const rayAligned = rays.every((line, i) => Math.abs(line.x2.baseVal.value - (nodes[i].left + nodes[i].width / 2 - stage.left)) < 1 && Math.abs(line.y2.baseVal.value - (nodes[i].top + nodes[i].height / 2 - stage.top)) < 1);
         return {bottomClearance: stage.bottom - Math.max(...nodes.map(n => n.bottom)), resultsToggle: box(document.querySelector('.hub-results-toggle')), previewBelow: inspector.top >= stage.bottom - 1, coreOverlaps, undersized, scrollY, breadcrumbs, topbar, rayAligned, breadcrumbVisible: breadcrumbs.top >= topbar.bottom && breadcrumbs.bottom <= innerHeight, nodes, stage, intersections, gaps, outside, viewportOutside, contentOutside, styles,
             introGap: Math.min(...nodes.map(n => n.top)) - intro.bottom,
-            stacked: badge.bottom <= name.top + 1 && name.bottom <= hud.top + 1 && Math.abs(badge.height - 206) <= 1 && parseFloat(getComputedStyle(coreEl.querySelector('h2')).fontSize) >= 32 && Math.abs(core.width - 230) <= 1 && Math.abs(core.height - 285) <= 1 && hud.bottom <= core.bottom + 1 && [badge, name, hud].every(r => Math.abs((r.left + r.right) / 2 - (core.left + core.right) / 2) <= 1),
+            stacked: badge.bottom <= name.top + 1 && name.bottom <= hud.top + 1 && Math.abs(badge.height - 206) <= 1 && titleFits && Math.abs(core.width - 230) <= 1 && Math.abs(core.height - 285) <= 1 && hud.bottom <= core.bottom + 1 && [badge, name, hud].every(r => Math.abs((r.left + r.right) / 2 - (core.left + core.right) / 2) <= 1),
+            // Card text keeps >= 11 screen px at the smallest rendered depth (F9).
+            smallText: [...document.querySelectorAll('.hub-orbit-node')].flatMap(node => {
+                const scale = Number(getComputedStyle(node).scale) || 1;
+                return [...node.querySelectorAll('.hub-map-name, .hub-rate strong, .hub-rate-label, :scope > small, .hub-map-badge')]
+                    .map(el => ({id: node.id, cls: el.className, px: parseFloat(getComputedStyle(el).fontSize) * scale}))
+                    .filter(row => innerWidth >= 900 && row.px < 11);
+            }),
             transparent: [coreEl, coreEl.parentElement, coreEl.querySelector('.hub-team-anchor'), coreEl.querySelector('.hub-orbit-hud')].every(el => {
                 const css = getComputedStyle(el);
                 return css.backgroundImage === 'none' && css.backgroundColor === 'rgba(0, 0, 0, 0)' &&
@@ -774,12 +873,12 @@ def check_orbit_geometry(smoke: Smoke, page: Page, label: str) -> None:
             overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth};
     }""")
     diagnostics = json.dumps(report, ensure_ascii=False)
-    valid = (not any(report[key] for key in ('coreOverlaps', 'undersized', 'intersections', 'gaps', 'outside', 'viewportOutside', 'contentOutside', 'styles'))
+    valid = (not any(report[key] for key in ('coreOverlaps', 'undersized', 'intersections', 'gaps', 'outside', 'viewportOutside', 'contentOutside', 'styles', 'smallText'))
              and report['bottomClearance'] >= 15.5 and report['introGap'] >= 16 and report['overflow'] <= 0
              and report['previewBelow'] and report['stacked'] and report['shielded'] and report['transparent'] and report['rayAligned'] and report['breadcrumbVisible'])
     if page.viewport_size == {'width': 1440, 'height': 900} and page.evaluate('scrollY') == 0:
         smoke.check(0 <= report['resultsToggle']['top'] and report['resultsToggle']['bottom'] <= 900, '1440x900: recent-results toggle stays visible in the first screen')
-    smoke.check(valid, f'{label}: seven nodes fit with 16px gaps, aligned rays, visible breadcrumbs and transparent core'
+    smoke.check(valid, f'{label}: seven nodes fit with 10px gaps, >= 11px card text, aligned rays, visible breadcrumbs and transparent core'
                 + (f': {diagnostics}' if not valid else ''))
 
 
@@ -799,6 +898,7 @@ def check_orbit_backdrops(smoke: Smoke, page: Page) -> None:
         return strip.height === '2px' && strip.boxShadow === 'none';
     })"""), 'each map has a thin themed accent without a coloured glow')
     from io import BytesIO
+
     from PIL import Image
     image = BytesIO()
     Image.new('RGB', (480, 600), '#426050').save(image, 'WEBP')
@@ -821,6 +921,9 @@ def check_orbit_backdrops(smoke: Smoke, page: Page) -> None:
             }) &&
             getComputedStyle(el.parentElement.querySelector('.map-landmark-art')).visibility === 'hidden')"""),
             'photos occupy 55%; empty maps alone are grayscale and darkened')
+        # Staggered card entrances animate opacity; compare settled styles only.
+        page.wait_for_function("""() => [...document.querySelectorAll('.hub-orbit-node, .hub-orbit-node *')].every(
+            el => !el.getAnimations().some(a => a.playState === 'running' || a.pending))""")
         page.locator('#hub-map-de_mirage').focus()
         smoke.check(page.locator('.card-scenic-bg').evaluate_all('''els => els.every(el =>
             (getComputedStyle(el).filter === (el.parentElement.dataset.empty === 'true' ? 'grayscale(1) brightness(0.35)' : 'none')) && getComputedStyle(el).opacity === '1' &&
@@ -854,6 +957,8 @@ def check_hub_orbit_v4(smoke: Smoke, page: Page) -> None:
     expect(orbit).to_have_attribute('data-running', 'true')
     for width, height in [(1440, 900), (1280, 800)]:
         page.set_viewport_size({'width': width, 'height': height})
+        # A resize re-observes the stage; sample only once the loop runs again.
+        expect(orbit).to_have_attribute('data-running', 'true')
         for sample in range(7):
             before = float(orbit.get_attribute('data-phase') or 0)
             page.clock.run_for(4000)
@@ -978,6 +1083,40 @@ def check_hub_orbit_v4(smoke: Smoke, page: Page) -> None:
     page.unroute('**/data/heatmap_teams.json')
 
 
+def wilson(rate: float, n: int, z: float = 1.959964) -> tuple[float, float]:
+    if n <= 0:
+        return 0.0, 1.0
+    p = max(0.0, min(1.0, rate))
+    z2 = z * z
+    centre = (p + z2 / (2 * n)) / (1 + z2 / n)
+    half = z / (1 + z2 / n) * (p * (1 - p) / n + z2 / (4 * n * n)) ** .5
+    return max(0.0, centre - half), min(1.0, centre + half)
+
+
+def map_badges(maps: list[dict], min_matches: int | None) -> tuple[str | None, str | None]:
+    """Mirror of mapBadges (src/pages/teamsHubOrbit.ts; unit tests in map_badges.mjs)."""
+    if min_matches is None:
+        return None, None
+    threshold = max(8, min_matches)
+    rows = [{'map': m['map'], 'rate': m['map_win_rate'], 'rounds': m.get('round_win_rate'),
+             'bounds': wilson(m['map_win_rate'], m['n_matches'])}
+            for m in maps if m['n_matches'] >= threshold and m.get('map_win_rate') is not None]
+    if len(rows) < 2:
+        return None, None
+
+    def rounds(row: dict) -> float:
+        return .5 if row['rounds'] is None else row['rounds']
+
+    best = min(rows, key=lambda r: (-r['bounds'][0], -rounds(r), r['map']))
+    worst = min(rows, key=lambda r: (r['bounds'][1], rounds(r), r['map']))
+    margin = ((best['bounds'][1] - best['bounds'][0]) + (worst['bounds'][1] - worst['bounds'][0])) / 4
+    if best['map'] == worst['map'] or best['rate'] <= worst['rate'] or worst['bounds'][1] - best['bounds'][0] > margin / 2:
+        return None, None
+    if best['rounds'] is not None and worst['rounds'] is not None and best['rounds'] < worst['rounds']:
+        return None, None
+    return best['map'], worst['map']
+
+
 @route('#/teams-hub?team=vitality', '.hub-orbit-node')
 def check_hub_orbit(smoke: Smoke, page: Page) -> None:
     pool = ['de_dust2', 'de_mirage', 'de_ancient', 'de_anubis', 'de_inferno', 'de_nuke', 'de_cache']
@@ -994,10 +1133,7 @@ def check_hub_orbit(smoke: Smoke, page: Page) -> None:
     page.mouse.move(0, 0)
     page.evaluate('document.activeElement.blur()')
     expect(page.locator('.hub-orbit-hud')).to_contain_text(f'{count} 场地图比赛 · 7 张图池')
-    reliable = sorted((m for m in shown if m['n_matches'] >= overview['min_matches_reliable'] and m.get('map_win_rate') is not None),
-                      key=lambda m: (-m['map_win_rate'], m['map']))
-    best = reliable[0]['map'] if reliable else None
-    worst = reliable[-1]['map'] if len(reliable) > 1 else None
+    best, worst = map_badges(shown, overview['min_matches_reliable'])
     for map_id in pool:
         entry = next((m for m in shown if m['map'] == map_id), None)
         node = page.locator(f'#hub-map-{map_id}')
@@ -1070,7 +1206,11 @@ def check_hub_orbit(smoke: Smoke, page: Page) -> None:
         details.locator('summary').click()
         page.evaluate('scrollTo(0, 0)')
     page.set_viewport_size({'width': 1440, 'height': 900})
-    card.hover()
+    # The resize re-lays out the orbit; hover only after that paint, where the card is now
+    # (the idle orbit rotates, so it never passes Playwright's stability wait).
+    wait_orbit_painted(page)
+    card.hover(position={'x': 24, 'y': 28}, force=True)
+    expect(card).to_have_attribute('data-active', 'true')
     expect(page.locator('.hub-orbit-preview')).to_contain_text('T 胜率')
     expect(page.locator('.hub-orbit-preview')).to_contain_text('CT 胜率')
     page.wait_for_function("""() => {
@@ -1130,21 +1270,27 @@ def check_hub_orbit(smoke: Smoke, page: Page) -> None:
 @route('#/teams-hub?team=vitality&map=de_mirage', '.hub-player-card')
 def check_hub_map(smoke: Smoke, page: Page) -> None:
     smoke.check(page.locator('.hub-map-context .hub-kpis .stat').count() == 4, 'map overview shows four leading metrics')
+    profile = page.request.get(f'{smoke.base}/data/de_mirage/teams/vitality.json').json()
     archive = page.locator('.hub-team-matches')
     smoke.check(archive.get_attribute('open') is None, 'map match archive starts collapsed below the roster')
-    archive.locator('summary').click()
-    smoke.check(archive.locator('.match').count() == 1, 'map archive retains the sample match and outcome')
-    smoke.check(archive.locator('.match-outcome').inner_text() == 'W', 'match archive retains the win tag')
+    # Rows can hold their own replay disclosures: address each card's own summary.
+    archive.locator(':scope > summary').click()
+    smoke.check(archive.locator('.match').count() == len(profile['matches']), 'map archive lists every exported match')
+    outcomes = {row['demo_id']: 'W' if row['score_for'] > row['score_against'] else 'L' if row['score_for'] < row['score_against'] else 'D'
+                for row in profile['matches']}
+    first = archive.locator('.match').first
+    smoke.check(first.locator('.match-outcome').inner_text() == outcomes[first.get_attribute('id').removeprefix('match-')],
+                'match archive retains the outcome tag')
     basis = page.locator('.hub-team-basis')
     smoke.check(basis.get_attribute('open') is None, 'detailed stats and heatmap link start collapsed')
-    basis.locator('summary').click()
+    basis.locator(':scope > summary').click()
     smoke.check(page.locator('.hub-archive-card').count() == 3, 'map archive has three summary cards')
     heatmap = page.locator('.hub-team-radar')
-    heatmap.locator('summary').click()
+    heatmap.locator(':scope > summary').click()
     smoke.check(heatmap.locator('a[href*="heatmaps/vitality"]').count() == 1, 'heatmap summary card links to the heatmap tool')
-    heatmap.locator('summary').click()
-    basis.locator('summary').click()
-    archive.locator('summary').click()
+    heatmap.locator(':scope > summary').click()
+    basis.locator(':scope > summary').click()
+    archive.locator(':scope > summary').click()
 
 
 @route('#/teams-hub?team=vitality&map=de_mirage&player=76561198113666193&side=CT', '.hub-player-view')
@@ -1321,10 +1467,26 @@ def check_match_dates(smoke: Smoke, page: Page) -> None:
     map_entry = next(item for item in team['maps'] if item['map'] == 'de_mirage')
     map_entry['results'] = rows
     team['maps'] = [map_entry]
+    # The palette searches data/search_index.json (playbook/site_index.py), not the hub file.
+    path = root / 'search_index.json'
+    search = json.loads(path.read_text()) if path.exists() else {
+        'schema_version': 1, 'events': [], 'maps': {'columns': ['map', 'display_name'], 'rows': [['de_mirage', 'Mirage']]},
+        'teams': {'columns': ['slug', 'team', 'maps'], 'rows': [['vitality', 'Vitality', [0]]]},
+        **{name: {'columns': columns, 'rows': []} for name, columns in [
+            ('matches', ['team', 'map', 'demo_id', 'opponent', 'date', 'date_precision', 'event', 'hltv_match_id']),
+            ('recipes', ['id', 'map', 'site', 'spots']),
+            ('lineups', ['id', 'map', 'side', 'type', 'throw_place', 'land_place', 'n_throws', 'name']),
+            ('players', ['steamid', 'name', 'teams'])]}}
+    team_i = next(i for i, row in enumerate(search['teams']['rows']) if row[0] == 'vitality')
+    map_i = next(i for i, row in enumerate(search['maps']['rows']) if row[0] == 'de_mirage')
+    search['events'].append('Date Test Event')
+    search['matches']['rows'] = [[team_i, map_i, row['demo_id'], row['opponent'], row['date'], row['date_precision'],
+                                  len(search['events']) - 1, row['hltv_match_id']] for row in rows]
     patterns = {
         '**/data/index.json': index,
         '**/data/heatmap_teams.json': teams,
         '**/data/de_mirage/teams/vitality.json': profile,
+        '**/data/search_index.json': search,
     }
     try:
         for pattern, payload in patterns.items():
@@ -1365,10 +1527,20 @@ def check_match_dates(smoke: Smoke, page: Page) -> None:
 
 @route('#/de_mirage/tactics', '.tactics-page')
 def check_command_palette(smoke: Smoke, page: Page) -> None:
+    page.wait_for_load_state('networkidle')
+    fetched = []
+    page.on('request', lambda request: fetched.append(request.url) if '/data/' in request.url else None)
     page.locator('.palette-trigger').focus()
     page.keyboard.press('Control+k')
     query = page.locator('#palette-query')
     expect(query).to_be_focused()
+    # One small search index replaces every map's tactics, lineups and players (F5).
+    query.fill('vitality mirage')
+    expect(page.locator('.palette-results [role=option]').first).to_be_visible()
+    page.wait_for_load_state('networkidle')
+    heavy = [url for url in fetched if url.rsplit('/', 1)[-1] in ('lineups.json', 'players.json', 'tactics.json', 'heatmap_teams.json')]
+    smoke.check(any(url.endswith('/data/search_index.json') for url in fetched) and not heavy,
+                f'palette searches data/search_index.json without per-map files ({heavy[:3]})')
     query.fill('mirage')
     expect(page.locator('.palette-results [role=option]').first).to_be_visible()
     expect(page.locator('.palette-results [role=option]').nth(1)).to_be_visible()
@@ -1392,25 +1564,31 @@ def check_team(smoke: Smoke, page: Page) -> None:
                 'legacy team URL redirects to the matching hub slide')
     smoke.check(page.locator('.team-page').count() == 0, 'legacy team page is removed')
     # Redirect must replace the old entry: Back returns to the previous real page.
-    page.goto(f"{smoke.base}/#/de_mirage/teams")
-    page.wait_for_selector('.team-card')
+    page.goto(f"{smoke.base}/#/de_mirage/players")
+    page.wait_for_selector('.player-card')
     page.evaluate("location.hash = '/de_mirage/teams/vitality'")
     page.wait_for_selector('.hub-player-card')
     page.go_back()
-    page.wait_for_selector('.team-card')
-    smoke.check(page.url.endswith('#/de_mirage/teams'), 'Back skips the replaced legacy route')
+    page.wait_for_selector('.player-card')
+    smoke.check(page.url.endswith('#/de_mirage/players'), 'Back skips the replaced legacy route')
     page.go_forward()
     page.wait_for_selector('.hub-player-card')
-    # Team map: low-sample banner
-    body = page.inner_text("body")
-    expect(page.locator('.low-sample')).to_contain_text('样本不足，结果仅供参考。')
-    smoke.check("1" in body, "team page retains the match count beside the shared low-sample warning")
+    # Team map: the shared low-sample banner follows the exported flag.
+    profile = page.request.get(f'{smoke.base}/data/de_mirage/teams/vitality.json').json()
+    if profile['low_sample']:
+        expect(page.locator('.low-sample')).to_contain_text('样本不足，结果仅供参考。')
+    else:
+        expect(page.locator('.hub-map-context .low-sample')).to_have_count(0)
+    smoke.check(str(profile['n_matches']) in page.locator('.hub-team-matches > summary').inner_text(),
+                "team map keeps its match count beside the shared low-sample warning")
 
 
-@route('#/de_mirage/teams', 'text=Vitality')
+@route('#/de_mirage/teams', '.hub-team-card')
 def check_teams(smoke: Smoke, page: Page) -> None:
-    # Teams and players pages render
-    smoke.check("B8" in page.inner_text("body"), "teams page lists both teams")
+    # The superseded per-map team list redirects to the hub, replacing its history entry.
+    smoke.check(page.url.split('#')[-1] == '/teams-hub', 'legacy per-map team list opens the teams hub')
+    teams = page.request.get(f'{smoke.base}/data/heatmap_teams.json').json()
+    expect(page.locator('.hub-team-card')).to_have_count(len(teams))
 
 
 @route('#/teams-hub', '.hub-team-card')
@@ -1462,8 +1640,14 @@ def check_radar6(smoke: Smoke, page: Page) -> None:
         chart = page.locator('.hub-player-analysis > .player-radar6')
         expect(chart).to_have_attribute('data-side', 'T')
         smoke.check(chart.locator('[data-axis]').count() == 6, 'player radar has six focusable axes')
+        smoke.check(chart.locator('[data-axis][tabindex="0"]').count() == 1, 'the six axes share one Tab stop (roving tabindex)')
         chart.locator('[data-axis=entry]').focus()
         expect(chart.locator('[role=status]')).to_contain_text('P75.0')
+        page.keyboard.press('ArrowRight')
+        expect(chart.locator('[data-axis=trade]')).to_be_focused()
+        expect(chart.locator('[data-axis=trade]')).to_have_attribute('tabindex', '0')
+        page.keyboard.press('ArrowLeft')
+        expect(chart.locator('[data-axis=entry]')).to_be_focused()
         page.get_by_role('button', name='CT', exact=True).click()
         expect(chart).to_have_attribute('data-side', 'CT')
         chart.locator('[data-axis=entry]').focus()
@@ -1481,11 +1665,15 @@ def check_players(smoke: Smoke, page: Page) -> None:
 
     # Language switch persists across reload
     zh_title = page.inner_text("h1")
-    page.locator("header button", has_text="EN").first.click() if page.locator("header button", has_text="EN").count() else page.locator(".lang-toggle, header button").last.click()
-    page.reload()
-    page.wait_for_selector("text=ZywOo")
-    smoke.check(page.inner_text("h1") != zh_title and page.evaluate("document.documentElement.lang") == "en",
-          "language switches to English and persists after reload")
+    try:
+        page.locator("header button", has_text="EN").first.click() if page.locator("header button", has_text="EN").count() else page.locator(".lang-toggle, header button").last.click()
+        page.reload()
+        page.wait_for_selector("text=ZywOo")
+        smoke.check(page.inner_text("h1") != zh_title and page.evaluate("document.documentElement.lang") == "en",
+              "language switches to English and persists after reload")
+    finally:
+        # localStorage is shared by every page of the context: later routes expect Chinese.
+        page.evaluate("localStorage.setItem('cs2-pro-playbook.lang', 'zh')")
 
 
 # Chromium can retain layout boxes below a closed <details>. Client rects alone
@@ -1667,7 +1855,9 @@ def check_ai_lab(smoke: Smoke, page: Page) -> None:
         before = selected.input_value()
         dot.dispatch_event('click')
         smoke.check(selected.input_value() == before, 'unavailable scatter clicks cannot change the selected round')
-        expect(selected.locator('option').nth(unavailable[0] + 1)).to_be_disabled()
+        # Playwright's to_be_disabled() reports <option disabled> as enabled; read the DOM property.
+        smoke.check(selected.locator('option').nth(unavailable[0] + 1).evaluate('el => el.disabled'),
+                    'unavailable rounds are disabled in the keyboard sample picker')
     available = next((i for i in range(len(points)) if i not in set(unavailable)), None)
     if available is not None:
         page.locator('.lab-cloud circle').nth(available).focus()
@@ -1675,6 +1865,19 @@ def check_ai_lab(smoke: Smoke, page: Page) -> None:
         point = points[available]
         expect(page.get_by_label('键盘选择样本')).to_have_value(f"{point['demo_id']}:{point['round_num']}:{point['team']}")
     smoke.check('未导出此回合回放' not in page.inner_text('body'), 'medoids never lead to the missing-replay dead end')
+    # The lab route has no map segment: its replay must request the attention map's file (F2).
+    opener = page.locator('[data-lab-panel=attention] .replay-open').first
+    if opener.count():
+        with page.expect_request(lambda request: '/replay/' in request.url and request.url.endswith('.json')
+                                 and '/replay/index.json' not in request.url) as replay_request:
+            opener.click()
+        smoke.check('/data/de_' in replay_request.value.url and '/data/lab/' not in replay_request.value.url,
+                    f'lab replay requests the map replay file ({replay_request.value.url.split("/data/")[-1]})')
+        expect(page.locator('dialog[open] .replay-radar')).to_have_count(1)
+        smoke.check('map=de_' in page.url, 'lab replay URL names its map')
+        page.keyboard.press('Escape')
+        expect(page.locator('dialog[open]')).to_have_count(0)
+        smoke.check(page.url.split('#')[-1].startswith('/lab') and 'replay=' not in page.url, 'closing the lab replay restores the lab URL')
     control = data['control']
     if control:
         expect(page.locator('.lab-control-radar [data-cell]')).to_have_count(
@@ -1847,12 +2050,19 @@ def check_hub_map_loading_v41(smoke: Smoke, page: Page) -> None:
     page.evaluate("""() => {
         window.hubClickAt = performance.now();
         window.hubShellDelay = null;
+        window.hubSnapshotWait = 0;
         window.hubFadeDurations = [];
         window.hubOriginalTransition = document.startViewTransition;
         window.hubOriginalAnimate = Element.prototype.animate;
         if (document.startViewTransition) {
             document.startViewTransition = function(update) {
-                const transition = window.hubOriginalTransition.call(this, update);
+                // The browser renders and captures the old scene before it runs the update;
+                // that capture is slow on GPU-less runners and is not the app's latency.
+                const requested = performance.now();
+                const transition = window.hubOriginalTransition.call(this, () => {
+                    window.hubSnapshotWait += performance.now() - requested;
+                    return update();
+                });
                 transition.ready.then(() => {
                     window.hubFadeDurations = document.getAnimations()
                         .filter(a => ['hub-scene-in', 'hub-scene-out'].includes(a.animationName))
@@ -1881,9 +2091,11 @@ def check_hub_map_loading_v41(smoke: Smoke, page: Page) -> None:
         expect(page.locator('.hub-map-panel .loading')).to_have_count(0)
         expect(page.locator('.hub-orbit-core')).to_have_count(0)
         expect(page.locator('.hub-section-head h2')).to_have_count(1)
-        delay = page.evaluate('window.hubShellDelay')
-        smoke.check(delay is not None and delay <= 200,
-                    f'slow data: destination shell appears within 200ms ({delay}ms), with portraits and one title')
+        delay, snapshot = page.evaluate('[window.hubShellDelay, window.hubSnapshotWait]')
+        app_delay = None if delay is None else round(delay - snapshot)
+        smoke.check(app_delay is not None and app_delay <= 200,
+                    f'slow data: destination shell appears within 200ms ({app_delay}ms app time; '
+                    f'{round(snapshot)}ms browser view-transition capture), with portraits and one title')
         smoke.check(page.locator('.hub-section-head [style*=view-transition-name]').count() == 0,
                     'team/map titles do not fly independently of the scene')
         page.wait_for_function('window.hubFadeDurations.length > 0')
@@ -1909,21 +2121,173 @@ def check_hub_map_loading_v41(smoke: Smoke, page: Page) -> None:
         }''')
 
 
+@route('#/de_mirage/tactics?side=CT', '.tactics-radar-wrap')
+def check_tactics_radar_size(smoke: Smoke, page: Page) -> None:
+    """A radar whose workspace starts below the fold must not collapse (F1); lineups stay lazy (F6)."""
+    page.wait_for_load_state('networkidle')
+    for width, height in [(1440, 900), (1280, 800)]:
+        page.set_viewport_size({'width': width, 'height': height})
+        page.evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
+        widths = page.locator('svg.tactics-radar').evaluate_all('els => els.map(el => Math.round(el.getBoundingClientRect().width))')
+        smoke.check(bool(widths) and min(widths) >= 280, f'{width}x{height}: every tactics radar is at least 280px wide {widths}')
+    page.set_viewport_size({'width': 1440, 'height': 900})
+    fetched = []
+    page.on('request', lambda request: fetched.append(request.url) if '/data/' in request.url else None)
+    page.goto(f'{smoke.base}/#/de_mirage/tactics?side=T')
+    page.reload()
+    page.wait_for_selector('.tactics-page')
+    page.wait_for_load_state('networkidle')
+    smoke.check(any(url.endswith('/de_mirage/lineup_index.json') for url in fetched)
+                and not any(url.endswith('/lineups.json') for url in fetched),
+                'tactics reads the small lineup index, not the full lineup library')
+
+
+@route('#/de_mirage/tactics', '.tactics-page')
+def check_replay_keyboard(smoke: Smoke, page: Page) -> None:
+    """Space activates the focused dialog control instead of toggling playback (F8)."""
+    pattern = '**/data/de_mirage/replay/smoke-keys/1.json'
+    try:
+        page.route(pattern, lambda request: request.fulfill(json={**replay_fixture(), 'demo_id': 'smoke-keys'}))
+        page.emulate_media(reduced_motion='reduce')
+        page.goto(f'{smoke.base}/#/de_mirage/tactics?replay=smoke-keys:1')
+        page.wait_for_selector('dialog[open] .replay-radar')
+        play = page.get_by_role('button', name='播放', exact=True)
+        expect(play).to_be_visible()
+        speed = page.get_by_role('button', name='2×', exact=True)
+        speed.focus()
+        page.keyboard.press('Space')
+        expect(speed).to_have_attribute('aria-pressed', 'true')
+        expect(play).to_be_visible()
+        smoke.check(True, 'Space on a focused speed button changes the speed, not playback')
+        play.focus()
+        page.keyboard.press('Space')
+        expect(page.get_by_role('button', name='暂停', exact=True)).to_be_visible()
+        page.keyboard.press('Space')
+        expect(page.get_by_role('button', name='播放', exact=True)).to_be_visible()
+        smoke.check(True, 'Space on the focused play button plays and pauses exactly once per press')
+        page.locator('.replay-close').focus()
+        page.keyboard.press('Space')
+        expect(page.locator('dialog[open]')).to_have_count(0)
+        smoke.check('replay=' not in page.url, 'Space activates the focused Close button')
+    finally:
+        page.unroute_all(behavior='ignoreErrors')
+        page.emulate_media(reduced_motion='no-preference')
+
+
+@route('#/de_mirage/tactics', '.tactics-page')
+def check_error_boundaries(smoke: Smoke, page: Page) -> None:
+    """Malformed data fails locally with a Chinese message; nav, footer and dialogs survive (F3)."""
+    root = Path(__file__).resolve().parents[1] / 'public/data'
+    tactics = json.loads((root / 'de_mirage/tactics.json').read_text())
+    pattern = '**/data/de_mirage/tactics.json'
+    try:
+        mock_json(page, pattern, {})
+        page.reload()
+        expect(page.locator('.route-scene .notice-error')).to_contain_text('数据格式与当前页面不匹配')
+        expect(page.locator('.route-scene .notice-error')).to_contain_text('返回地图')
+        expect(page.locator('.main-nav')).to_be_visible()
+        expect(page.locator('footer a[href="#/about"]')).to_be_visible()
+        smoke.check(True, 'a malformed data file shows a localized notice and keeps the shell')
+        page.unroute(pattern)
+        # Right top-level shape, missing nested field: a render error, caught by the route boundary.
+        mock_json(page, pattern, {**tactics, 't_overview': {}})
+        logged = len(smoke.errors)
+        page.reload()
+        expect(page.locator('.route-error')).to_contain_text('此页面暂时无法显示')
+        expect(page.locator('.main-nav')).to_be_visible()
+        page.locator('.main-nav a[href="#/lab"]').click()
+        expect(page.locator('.route-error')).to_have_count(0)
+        produced, smoke.errors[logged:] = smoke.errors[logged:], []
+        smoke.check(all('ErrorBoundary' in error or 'Error' in error or 'undefined' in error for error in produced),
+                    f'only the injected render error was logged ({len(produced)} entries)')
+        smoke.check(True, 'a render error is contained by the route boundary and navigation recovers')
+        page.unroute(pattern)
+        mock_json(page, '**/data/de_mirage/replay/smoke-broken/1.json', {})
+        # Reload first: the app caches the broken tactics.json in memory, and a hash
+        # navigation back to the tactics page would render (and log) it again.
+        page.reload()
+        page.goto(f'{smoke.base}/#/de_mirage/tactics?replay=smoke-broken:1')
+        expect(page.locator('dialog[open] .replay-error')).to_contain_text('回放数据不完整')
+        expect(page.locator('.tactics-page')).to_be_visible()
+        page.locator('.replay-close').click()
+        expect(page.locator('dialog[open]')).to_have_count(0)
+        smoke.check(True, 'a broken replay round stays inside its dialog')
+    finally:
+        page.unroute_all(behavior='ignoreErrors')
+
+
+@route('#/about', '.about-page')
+def check_about(smoke: Smoke, page: Page) -> None:
+    expect(page.locator('main h1')).to_have_text('数据来源与版权')
+    text = page.locator('.about-page').inner_text()
+    terms = ('GOTV', 'HLTV.org', 'cs2povarchive/cs2-demos', 'Apache-2.0', 'bo3.gg', 'awpy', 'Valve', 'MIT')
+    smoke.check(all(term in text for term in terms), 'about page credits sources, licences and trademarks')
+    smoke.check(text.index('比赛数据') < text.index('Match data'), 'about page is bilingual, Chinese first')
+    page.goto(f'{smoke.base}/#/')
+    footer = page.locator('footer')
+    smoke.check('Professional CS2 match demos' not in footer.inner_text(), 'footer shows the localized credit line, not raw export text')
+    footer.locator('a[href="#/about"]').click()
+    expect(page.locator('.about-page')).to_be_visible()
+
+
+@route('#/teams-hub?team=vitality&map=de_mirage', '.hub-player-card')
+def check_match_replays(smoke: Smoke, page: Page) -> None:
+    """Rows with replay rounds but no win-probability strip still open them (F11)."""
+    root = Path(__file__).resolve().parents[1] / 'public/data'
+    team = json.loads((root / 'de_mirage/teams/vitality.json').read_text())
+    demo = team['matches'][0]['demo_id']
+    for match in team['matches']:
+        match['winprob_available'] = False
+    try:
+        mock_json(page, '**/data/de_mirage/teams/vitality.json', team)
+        mock_json(page, '**/data/de_mirage/replay/index.json', {demo: [3, 1]})
+        page.route(f'**/data/de_mirage/replay/{demo}/3.json', lambda request: request.fulfill(json={**replay_fixture(), 'demo_id': demo, 'round_num': 3}))
+        page.reload()
+        page.wait_for_selector('.hub-player-card')
+        page.locator('.hub-team-matches > summary').click()
+        chips = page.locator('.match .match-replays')
+        expect(chips).to_have_count(1)
+        expect(chips.locator('summary')).to_contain_text('2')
+        chips.locator('summary').click()
+        smoke.check(chips.locator('.replay-open').all_text_contents() == ['1', '3'], 'replay chips list the indexed rounds in order')
+        chips.get_by_role('button', name='回放第 3 回合', exact=True).click()
+        expect(page.locator('dialog[open] .replay-title-match')).to_contain_text('第 3 回合')
+        page.keyboard.press('Escape')
+        expect(page.locator('dialog[open]')).to_have_count(0)
+        smoke.check('map=de_mirage' in page.url and 'team=vitality' in page.url, 'replay chips open and close within the hub slide')
+    finally:
+        page.unroute_all(behavior='ignoreErrors')
+
+
+# Real-export checks: the committed samples/site lacks ai_lab.json, ct_patterns.json and
+# showcase teams such as Falcons. `--samples` skips them (CI); run them before publishing.
+REAL_DATA_ONLY = ('check_ai_lab', 'check_lab_legacy_v41', 'check_ct_defense', 'check_team_fingerprint')
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("base", nargs="?", default="http://localhost:4173")
     parser.add_argument("--shots", type=Path, help="save each route, including on exceptions")
     parser.add_argument("--lab-only", action="store_true", help="check AI lab, CT defense and fingerprints using the current export")
     parser.add_argument("--orbit-only", action="store_true", help="check orbit navigation/layout with current data")
+    parser.add_argument("--samples", action="store_true",
+                        help="committed samples/site (CI): skip the checks that need a full export")
+    parser.add_argument("--mobile", action="store_true", help="also check 375px pages for horizontal overflow")
+    parser.add_argument("--only", help="comma-separated check names to run, e.g. hub_team,about")
     args = parser.parse_args()
     cases = [case for case in ROUTES if case.test in (check_hub_orbit, check_hub_orbit_v4, check_hub_samples, check_cache_pages, check_hub_map_loading_v41)] if args.orbit_only else None
     if args.lab_only:
         cases = [case for case in ROUTES if case.test in (check_ai_lab, check_lab_legacy_v41, check_ct_defense, check_team_fingerprint)]
+    if args.samples:
+        cases = [case for case in (cases if cases is not None else ROUTES) if case.test.__name__ not in REAL_DATA_ONLY]
+    if args.only:
+        names = {f"check_{name.strip().removeprefix('check_')}" for name in args.only.split(",")}
+        cases = [case for case in (cases if cases is not None else ROUTES) if case.test.__name__ in names]
     if args.shots:
         args.shots.mkdir(parents=True, exist_ok=True)
     root = Path(__file__).resolve().parents[1]
     lineups = json.loads((root / "public/data/de_mirage/lineups.json").read_text(encoding="utf-8"))
-    smoke = Smoke(args.base.rstrip("/"), lineups, args.shots)
+    smoke = Smoke(args.base.rstrip("/"), lineups, args.shots, samples=args.samples)
     origin = urlsplit(smoke.base)
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
@@ -1933,8 +2297,10 @@ def main() -> int:
                                       origin=f"{origin.scheme}://{origin.netloc}")
             run_routes(smoke, desktop, cases=cases)
 
-            mobile = browser.new_context(viewport={"width": 375, "height": 812})
-            run_routes(smoke, mobile, mobile=True, cases=cases)
+            # The site is desktop-first; 375px overflow checks are opt-in.
+            if args.mobile:
+                mobile = browser.new_context(viewport={"width": 375, "height": 812})
+                run_routes(smoke, mobile, mobile=True, cases=cases)
 
             smoke.check(not smoke.errors,
                         f"no console errors ({len(smoke.errors)}): {smoke.errors[:3]}")

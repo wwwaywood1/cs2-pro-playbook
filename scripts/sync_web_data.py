@@ -9,19 +9,31 @@ do not linger. When the source lacks the small derived indexes (search_index.jso
 <map>/lineup_index.json, playbook/site_index.py), they are generated in the copy.
 
 Radar images come from the awpy-data GitHub release (downloaded once into ~/.awpy) and are
-not committed to this repo.
+not committed to this repo. They are copied for every exported map and for every map of the
+teams-hub orbit pool, which the hub draws even when an export has no data for it.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 AWPY_DATA_VERSION = "2000933"
+
+
+def orbit_pool() -> list[str]:
+    """Map ids of ORBIT_POOL in web/src/pages/teamsHubOrbit.ts (the hub always shows them)."""
+    try:
+        source = (ROOT / "web/src/pages/teamsHubOrbit.ts").read_text(encoding="utf-8")
+    except OSError:
+        return []
+    block = source.partition("export const ORBIT_POOL")[2].partition("] as const")[0]
+    return re.findall(r'\[\s*"(de_\w+)"', block)
 
 
 def main() -> None:
@@ -53,8 +65,10 @@ def main() -> None:
 
     radar_dir = ROOT / "web/public/radars"
     radar_dir.mkdir(parents=True, exist_ok=True)
-    for m in index["maps"]:
-        for name in (m["map"], f"{m['map']}_lower"):
+    # The teams-hub orbit draws every pool map, with or without data in this export.
+    maps = list(dict.fromkeys([m["map"] for m in index["maps"]] + orbit_pool()))
+    for map_name in maps:
+        for name in (map_name, f"{map_name}_lower"):
             try:
                 path = Path(awpy_data.radar_path(name, version=AWPY_DATA_VERSION))
             except FileNotFoundError:
