@@ -246,6 +246,10 @@ def import_downloads(src: Path = RAW_DIR / "hltv", *, parsed: Path = PARSED_DIR,
         row = Result(archive.name)
         rows.append(row)
         destination = src / archive.stem
+        if archive.name in processed and destination.is_dir():
+            # imported before (e.g. downloaded twice): nothing to extract again
+            row.reasons.append("already imported")
+            continue
         if dry_run:
             row.reasons.append(f"dry-run: would extract to {destination}; map/duplicate checks deferred"
                                + ("; would delete archive only if import succeeds" if delete_archives else "; keep archive"))

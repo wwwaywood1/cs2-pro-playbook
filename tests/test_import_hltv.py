@@ -52,8 +52,8 @@ def test_extract_filter_summary_and_rerun(workspace, capsys):
     assert download.exists()
     output = capsys.readouterr().out
     assert "match.zip -> de_mirage, de_vertigo | 1 | 0 | 1 | 0" in output
-    row, = run(workspace)
-    assert (row.imported, row.duplicate, row.skipped) == (0, 1, 1)
+    row, = run(workspace)                    # imported before: not extracted again
+    assert (row.imported, row.failed, row.reasons) == (0, 0, ["already imported"])
 
 
 def test_duplicate_parsed_existing_raw_and_batch(workspace):
@@ -85,7 +85,7 @@ def test_multipart_published_together_and_identity_counted_once(workspace):
     assert demo_identity(groups[0][0])["demo_id"].startswith("hltv-")
     assert demo_identity(groups[0][0]) == demo_identity(groups[0][1])
     row, = run(workspace)
-    assert (row.imported, row.duplicate) == (0, 1)
+    assert (row.imported, row.reasons) == (0, ["already imported"])
 
 
 def test_dry_run_never_extracts_or_writes(workspace, monkeypatch, capsys):
@@ -275,3 +275,14 @@ def test_rar_that_every_extractor_rejects_is_set_aside(workspace, monkeypatch):
                         lambda cmd, **kw: subprocess.CompletedProcess(cmd, 1, "", "Truncated input file"))
     row, = run(workspace)
     assert row.failed == 1 and (src / ".bad" / "match.rar").exists()
+
+
+def test_archive_imported_before_is_not_extracted_again(workspace, monkeypatch):
+    src, _, _ = workspace
+    archive(src, **{"game.dem": "de_nuke"})
+    row, = run(workspace)
+    assert row.imported == 1
+    calls = []
+    monkeypatch.setattr(hltv, "extract_archive", lambda *a: calls.append(a))
+    row, = run(workspace)
+    assert calls == [] and row.reasons == ["already imported"] and not row.failed
