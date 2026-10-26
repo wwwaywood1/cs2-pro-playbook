@@ -328,7 +328,7 @@ x = -1730.1
 y = 1115.3
 radius = 150
 en = "Back A molotov (Temple side)"
-zh = "A后点火（靠墓地）"
+zh = "A后点火（靠寺庙）"
 confidence = "medium"
 
 [[spot]]
@@ -416,7 +416,7 @@ x = -1508.3
 y = 1133.5
 radius = 150
 en = "Temple molotov"
-zh = "墓地火"
+zh = "寺庙火"
 confidence = "medium"
 
 [[spot]]

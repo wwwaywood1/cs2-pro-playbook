@@ -594,6 +594,12 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
     print(f"site data -> {out_dir}")
 
 
+def _strip_name_columns(df: pl.DataFrame) -> pl.DataFrame:
+    """Trim stray spaces from every player-name column (name, attacker_name, thrower_name, ...)."""
+    cols = [c for c, dtype in df.schema.items() if (c == "name" or c.endswith("_name")) and dtype == pl.Utf8]
+    return df.with_columns(pl.col(c).str.strip_chars() for c in cols) if cols else df
+
+
 def tidy_player_names(t: dict[str, pl.DataFrame]) -> dict[str, pl.DataFrame]:
     """One display name per steamid across all maps (the most used one), without stray spaces."""
     pr = t["player_rounds"].with_columns(pl.col("name").str.strip_chars())
@@ -601,7 +607,7 @@ def tidy_player_names(t: dict[str, pl.DataFrame]) -> dict[str, pl.DataFrame]:
             .group_by("steamid", "name").agg(pl.len().alias("_n"))
             .sort(["steamid", "_n", "name"], descending=[False, True, False])
             .group_by("steamid", maintain_order=True).agg(pl.col("name").first().alias("_name")))
-    out = dict(t)
+    out = {k: _strip_name_columns(v) for k, v in t.items()}  # e.g. " NAF-FLY" in positions -> lurker facts
     out["player_rounds"] = pr.join(best, on="steamid", how="left").with_columns(
         pl.coalesce("_name", "name").alias("name")).drop("_name")
     if "players" in t and {"steamid", "name"} <= set(t["players"].columns):

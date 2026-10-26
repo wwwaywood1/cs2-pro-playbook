@@ -151,3 +151,15 @@ def test_wpa_side_baselines_are_round_weighted_and_center_each_side():
     assert base["CT"] == pytest.approx((0.02, 0.015, 0.005))
     centered = sum(v[0] * (v[1] - base["T"][0]) for k, v in rows.items() if k[2] == "T")
     assert centered == pytest.approx(0)
+
+
+def test_player_name_columns_are_trimmed_in_every_table():
+    from playbook.export import tidy_player_names
+    t = {"player_rounds": pl.DataFrame({"steamid": [1, 1], "name": [" NAF-FLY", "NAF-FLY "]}),
+         "positions": pl.DataFrame({"steamid": [1], "name": [" NAF-FLY"], "place": [" Mid"]}),
+         "kills": pl.DataFrame({"attacker_name": [" a "], "victim_name": ["b "], "weapon": [" ak47"]})}
+    out = tidy_player_names(t)
+    assert out["player_rounds"]["name"].to_list() == ["NAF-FLY", "NAF-FLY"]
+    assert out["positions"]["name"].to_list() == ["NAF-FLY"] and out["positions"]["place"].to_list() == [" Mid"]
+    assert out["kills"]["attacker_name"].to_list() == ["a"] and out["kills"]["victim_name"].to_list() == ["b"]
+    assert out["kills"]["weapon"].to_list() == [" ak47"]
