@@ -147,3 +147,13 @@ def test_bo1_and_single_map_are_the_same_format():
 def test_queue_text():
     assert hltv.queue_text([{"demo_id": 113185, "hltv_match_id": 2399731},
                             {"demo_id": 1, "hltv_match_id": 2}]) == "113185 2399731\n1 2\n"
+    text = hltv.queue_text([{"demo_id": None, "hltv_match_id": 5}, {"demo_id": 7, "hltv_match_id": 8}])
+    assert text == "- 5\n7 8\n" and hltv.read_queue(text) == [(None, 5), (7, 8)]
+
+
+def test_saved_match_page_knows_its_match_id(tmp_path):
+    assert hltv.parse_match((FIX / "match.html").read_text()).match_id is None
+    page = tmp_path / "page.html"
+    page.write_text('<head><meta property="og:url" content="https://www.hltv.org/matches/2399731/g2-vs-aurora">')
+    html, url = hltv.read_saved_page(page)
+    assert url == "" and hltv.parse_match(html).match_id == 2399731
