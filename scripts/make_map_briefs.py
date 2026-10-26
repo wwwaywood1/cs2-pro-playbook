@@ -2,6 +2,7 @@
 
     python scripts/make_map_briefs.py data/raw            # every demo under data/raw
     python scripts/make_map_briefs.py a.dem b.dem --brief # also write delegation/DS-05_map_configs.md
+    python scripts/make_map_briefs.py --parsed de_nuke de_inferno   # from data/parsed, no re-parsing
 
 For every map it writes delegation/inputs/<map>_callouts.csv with one row per in-game
 place name (m_szLastPlaceName) seen during live rounds:
@@ -54,6 +55,27 @@ def collect(demos: list[Path]) -> dict[str, dict]:
     return out
 
 
+def collect_parsed(maps: list[str], parsed: Path = ROOT / "data" / "parsed") -> dict[str, dict]:
+    """Same as collect() from the already parsed tables (every demo of each map in ``parsed``)."""
+    matches = pl.concat([pl.read_parquet(f) for f in sorted((parsed / "matches").glob("*.parquet"))],
+                        how="diagonal_relaxed")
+    out: dict[str, dict] = {}
+    for map_name in maps:
+        rows = matches.filter(pl.col("map") == map_name).sort("demo_id")
+        ids = rows["demo_id"].to_list()
+        if not ids:
+            print(f"  {map_name}: no parsed demos")
+            continue
+        cols = ["demo_id", "round_num", "side", "t_s", "x", "y", "z", "place", "alive"]
+        out[map_name] = {
+            "positions": [pl.read_parquet(parsed / "positions" / f"{i}.parquet", columns=cols) for i in ids],
+            "plants": [pl.read_parquet(parsed / "plants" / f"{i}.parquet") for i in ids
+                       if (parsed / "plants" / f"{i}.parquet").exists()],
+            "demos": [f"{len(ids)} parsed demos"],
+        }
+    return out
+
+
 def table(map_name: str, data: dict) -> pl.DataFrame:
     mm = load_map(map_name)
     pos = pl.concat(data["positions"], how="diagonal_relaxed").filter(pl.col("alive") & (pl.col("place") != ""))
@@ -93,8 +115,10 @@ def markdown_table(df: pl.DataFrame) -> str:
 
 def main() -> None:
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    demos = _demo_paths([Path(a) for a in args] or [ROOT / "data" / "raw"])
-    data = collect(demos)
+    if "--parsed" in sys.argv:
+        data = collect_parsed(args)
+    else:
+        data = collect(_demo_paths([Path(a) for a in args] or [ROOT / "data" / "raw"]))
     INPUTS.mkdir(parents=True, exist_ok=True)
     sections = []
     for map_name in sorted(data):

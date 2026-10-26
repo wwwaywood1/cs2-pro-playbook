@@ -289,8 +289,9 @@ def test_export_twice_in_fresh_processes_is_byte_identical_except_timestamp(tmp_
         subprocess.run([sys.executable,"-m","playbook","export","--parsed",str(parsed),"--out",str(target)],check=True,capture_output=True,text=True,
                        env={**os.environ,"PYTHONHASHSEED":str(i)})
         files={str(p.relative_to(target)):p.read_text() for p in target.rglob("*.json")}
-        idx=json.loads(files["index.json"]);idx.pop("generated_at")
-        files["index.json"]=json.dumps(idx)
+        for stamped in ("index.json", "search_index.json"):  # the search index repeats index.json's time
+            idx=json.loads(files[stamped]);idx.pop("generated_at")
+            files[stamped]=json.dumps(idx)
         outputs.append(files)
     assert len(outputs[0])>=10
     assert outputs[0]==outputs[1]

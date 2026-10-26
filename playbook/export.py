@@ -30,6 +30,7 @@ from playbook.config import PARSED_DIR, RAW_DIR, SITE_DIR, MapMeta, load_map, lo
 from playbook.heatmap import build_heatmaps, roster_order
 from playbook.metrics import combat_totals
 from playbook.config import ROOT, load_spot_names
+from playbook.site_index import write_site_indexes
 from playbook.tactics import DEFINITIONS, analyse_map, ct_summary, name_spots, site_spots, t_summary
 from playbook.insights import attach_summaries, team_insights
 from playbook.zones import make_summarizer, team_setup
@@ -590,12 +591,16 @@ def tidy_player_names(t: dict[str, pl.DataFrame]) -> dict[str, pl.DataFrame]:
     return out
 
 
-def _write_meta(mdir: Path, mm: MapMeta) -> None:
-    _write(mdir / "meta.json", {
+def _write_meta(mdir: Path, mm: MapMeta, centres: dict[str, tuple[float, float, float]] | None = None) -> None:
+    meta = {
         "map": mm.name, "display_name": mm.display_name, "radar": mm.radar,
         "radar_image": f"https://github.com/pnxenopoulos/awpy-data/releases (radars/{mm.name}.png)",
         "regions": mm.region_lane, "callouts": mm.callout_region,
-    })
+    }
+    if centres and mm.radar:
+        # mean plant position per site (tactics.site_centres) in radar px; the recipe radar centres on it
+        meta["site_centres"] = {site: [round(v, 1) for v in mm.to_radar(x, y)] for site, (x, y, _z) in sorted(centres.items())}
+    _write(mdir / "meta.json", meta)
 
 
 def _export_into(parsed_dir: Path, out_dir: Path) -> None:
@@ -657,7 +662,6 @@ def _export_into(parsed_dir: Path, out_dir: Path) -> None:
                     lineup["name"] = landing_names[lineup["id"]]
         lineup_ids = {l["id"] for l in lineups}
         mdir = out_dir / map_name
-        _write_meta(mdir, mm)
         _write(mdir / "teams.json", [
             {"team": p["team"], "slug": p["slug"], "n_matches": p["n_matches"], "low_sample": p["low_sample"],
              "win_rate_T": p["sides"]["T"]["win_rate"], "win_rate_CT": p["sides"]["CT"]["win_rate"]}
@@ -665,6 +669,7 @@ def _export_into(parsed_dir: Path, out_dir: Path) -> None:
         ])
         _write(mdir / "lineups.json", lineups)
         res = analyse_map(sub, mm, nade_lineup)
+        _write_meta(mdir, mm, res["centres"])
         attach_example_dates(res["recipes"], sub["matches"])
         spot_names = name_spots(res["spots"], configured_names)
         for r in res["recipes"]:
@@ -718,6 +723,7 @@ def _export_into(parsed_dir: Path, out_dir: Path) -> None:
             _write_meta(mdir, load_map(mdir.name))
     _write(out_dir / "index.json", index)
     _write(out_dir / "heatmap_teams.json", heatmap_team_index(pool_rounds, order, team_maps))
+    write_site_indexes(out_dir)  # search_index.json and <map>/lineup_index.json, from the files above
 
 
 def heatmap_team_index(player_rounds: pl.DataFrame, order: dict[str, list[str]],
