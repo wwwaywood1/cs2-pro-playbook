@@ -1,188 +1,112 @@
 # cs2-pro-playbook
 
-Open-source analysis of professional CS2 demos, turned into something regular players can use:
-how pro teams set up and attack each map, what role each player plays, and a library of the
-grenades pros actually throw, each with a one-line practice command.
+Professional CS2 demos turned into something regular players can use: how top teams set up and
+attack each map, what each player does, every round replayed in 2D with win probability, and a
+library of the grenades pros actually throw, each with a one-line practice command.
 
-> Status: data pipeline working and tested (M0). Website v1 in [`web/`](web/) (M3);
-> tactic clustering in progress. See [DESIGN.md](DESIGN.md) for the architecture,
-> data contract and roadmap.
+Data through 2026-10-24: about 740 maps from 2026 tier-1 events on the active pool (Ancient,
+Anubis, Cache, Dust2, Inferno, Mirage, Nuke), 54 teams; showcase teams Falcons · Vitality ·
+Spirit · MOUZ · FURIA (`config/site.toml`). Every match is dated to the day.
 
 ## 中文简介
 
-从职业比赛 demo 中自动提炼三类内容，面向普通玩家：
+从职业比赛 demo 中自动提炼，面向普通玩家：
 
-- **队伍战术画像**：每张图的 T 方默认站位、进攻点、执行节奏，CT 方站位与回防。每个结论都附样本量。
-- **选手打法画像**：狙击手、自由人、突破手、主防等角色提示，并附上判定依据的数据。
-- **职业道具库**：按职业比赛中的使用次数排序。每颗道具都有投掷技巧（跳投、跑投等）和 `setpos/setang` 练习指令，复制进练习服即可站到出手点。
+- **战队中心**：轨道式战队页 → 地图 → 选手；王牌图/短板图、阵容、定场诗。
+- **战术**：T 方进攻套路（路线 + 道具组合 + 胜率）、CT 防守阵型（聚类 + 经济关联）。
+- **道具库**：按职业比赛使用次数排序，带投掷技巧和 `setpos/setang` 练习指令。
+- **热力图**：每队每图的站位、交火和道具分布。
+- **2D 回放**：展示战队每一回合，带视角、胜率曲线、击杀与道具时间线。
+- **AI 实验室**：胜率模型的可解释性（Shapley）、CT 阵型的注意力示意。
+- 所有结论附样本量；统计结论经过显著性检验和多重比较控制。
 
-## Quick start
+## What's on the site
 
-```bash
-pip install -e ".[fetch,dev]"          # Python 3.11+
+Teams hub (orbit → team → map → player: verses, 6-axis radar, win probability added) · Tactics
+(T recipes and routes, CT defence patterns) · Lineup library · Heatmaps · 2D round replay with
+view cones and a per-second win-probability strip · AI Lab · match-date filters. Chinese first;
+the top-bar button switches to English. Desktop first.
 
-python -m playbook fetch --dry-run     # list demos matching config/targets.toml
-python -m playbook fetch               # download them into data/raw/cs2povarchive/
-# no Hugging Face access where the pipeline runs? on any machine that has it:
-#   python3 -m pip install -U huggingface_hub && python3 scripts/download_batch1.py
-python -m playbook run                 # parse + export -> data/site/*.json
-pytest -q                              # tests (end-to-end ones need the test demo, see below)
-```
+## Repository layout
 
-## 从 HLTV 补录像
+| Path | What |
+|---|---|
+| `playbook/` | pipeline: `parse` (awpy + polars) → `data/parsed` parquet → `export` → `data/site` JSON; dedupe, dates, win probability, replays, CT patterns, AI Lab, HLTV page parsers |
+| `scripts/` | runbook tools: `refresh.sh`, `import_hltv.py`, `hltv_plan.py`, `hltv_queue.py`, `register_hltv_dates.py`, `archive_downloads.py`, `relocate_raw.py`, `team_assets.sh`, `make_portraits.py`, `sync_web_data.py`, `insight_text.py` |
+| `config/` | maps and callouts, spots, team/player aliases, events, exact dates (`match_dates.csv`, `hltv_archives.json`), `hltv.toml` (download scope), `storage.toml` (where bulky data lives), `site.toml` (showcase teams) |
+| `web/` | Vite + React + TypeScript site (HashRouter, static JSON) and browser smoke tests (`web/e2e/`) |
+| `tests/` | pytest suite (demo-dependent tests skip without the test demo) |
+| `samples/site/` | a one-match export used by CI |
+| `docs/` | `WORKFLOW.md` (runbook, Chinese), `CREDITS.md` (data sources and licences) |
 
-在 HLTV 比赛页面点击 **GOTV Demo**，手动下载压缩包，放到 `data/raw/hltv/`
-（目录不存在时先创建）。支持直接放入 `.rar`、`.zip`、单个 demo 的 `.gz` / `.bz2`
-或未压缩的 `.dem`；只读取该目录第一层的下载文件。
-
-```bash
-.venv/bin/python scripts/import_hltv.py
-.venv/bin/python -m playbook parse
-.venv/bin/python -m playbook export
-```
-
-导入器依次尝试 `bsdtar`、`unar`、`7z`（或 `7zz`），ZIP 最后可用 Python 自带的 `zipfile`；
-若 RAR 无法打开，可运行 `brew install sevenzip`。压缩包解到
-`data/raw/hltv/<压缩包主名>/`，只保留当前地图池中的新 demo；`-p1`、`-p2`
-保留在同一目录，解析时自动拼接。已解析或已导入的相同 demo identity 会跳过。
-原压缩包默认保留，`--delete-archives` 仅在该包没有导入失败时删除；可先用
-`--dry-run` 查看计划（不解压，包内地图与重复检查留到正式导入时）。自定义下载目录可用
-`--src DIR`；若目录不在 `data/raw/` 下，第二条命令须加上该目录作为输入。
-散装 `.dem` 原地登记，重复或池外文件也不会删除；这些原文件仍会被 `parse`
-递归发现，如需排除请自行移到 `data/raw/` 之外。统计按整场地图计数，多段录像只计一次。
-
-## Website
-
-The v1 frontend lives in [`web/`](web/): Vite + React + TypeScript with a `HashRouter`, no
-backend. It reads precomputed JSON from `web/public/data/` and radar images from
-`web/public/radars/`; both directories are generated and gitignored.
+## Setup
 
 ```bash
-cd web
-npm install
-npm run dev       # local dev server
-npm run build     # tsc -b && vite build -> web/dist
+python3.11 -m venv .venv && .venv/bin/pip install -e ".[dev]"   # Python ≥ 3.11
+(cd web && npm ci)                                               # Node ≥ 22
+.venv/bin/python -m pytest -q
 ```
 
-Populate the sample data (Mirage, one match) before the first run:
+## Adding data
+
+HLTV only allows downloading demos by hand, so that one step is manual and everything else is
+scripted (details in [docs/WORKFLOW.md](docs/WORKFLOW.md)):
+
+1. **Plan**: list the 2026 tier-1 matches we don't have yet (`config/hltv.toml`), most popular first:
+   `_sync/<team>_plan.json` and a click-through page `_sync/<team>_queue.html`
+   (`scripts/hltv_plan.py <team> --results-html <saved HLTV results page>` or from bo3.gg/Liquipedia data).
+2. **Download**: open the queue page in your browser and click each "Download demo" link; archives land in `~/Downloads`.
+3. **Ingest**: `bash scripts/refresh.sh` moves the archives into `data/raw/hltv/`, extracts them (duplicates and
+   off-pool maps skipped), records which HLTV match each archive is and its exact date
+   (`config/hltv_archives.json`, `config/match_dates.csv`), moves the original archives to the external drive
+   (SHA-256 verified), parses the new demos and exports the site data.
+
+`data/raw` can live on an external drive (`config/storage.toml [raw]`, moved with `scripts/relocate_raw.py`);
+parsing and exporting then need the drive mounted and stop with a clear message otherwise.
+
+Legacy source: the cs2povarchive dataset on Hugging Face (`python -m playbook fetch`, `scripts/download_batch.py`).
+
+## Pipeline commands
 
 ```bash
-python scripts/sync_web_data.py --samples
+python -m playbook parse            # new demos under data/raw -> data/parsed
+python -m playbook relabel          # re-apply config/maps/*.toml to parsed tables
+python -m playbook export           # data/parsed -> data/site (written fresh, then swapped in)
+python -m playbook run              # parse + export
+python -m playbook callouts x.dem   # list a map's callout names (for config/maps/<map>.toml)
 ```
 
-Radars are included in CI and Pages builds. The sync script uses awpy to download
-`images.zip` from the pinned awpy-data release `2000933` on the first run, then
-copies the needed images from `~/.awpy/`. Both workflows cache that directory;
-no demos, navigation meshes, or geometry downloads are needed for the web build.
-
-### CI and browser smoke tests
-
-[`ci.yml`](.github/workflows/ci.yml) runs on pushes and pull requests. Its Python
-and web jobs run in parallel with pip and npm caches and six-minute timeouts.
-Python uses 3.11, `pip install -e ".[dev]"` and `pytest -q`; tests requiring the
-uncommitted demo skip when it is absent. The web job syncs `samples/site`, runs
-`npm ci` and `npm run build`, then serves `web/dist` to Playwright's Chromium
-headless shell. Failure screenshots and the static server log are uploaded as
-the `smoke-screenshots` artifact (retained for seven days).
-
-To run the browser checks locally, from the repository root:
+## Frontend
 
 ```bash
-python -m pip install -r web/e2e/requirements.txt
-python -m playwright install --with-deps --only-shell chromium
-python scripts/sync_web_data.py --samples
-(cd web && npm ci && npm run build)
-python3 -m http.server 4173 --bind 127.0.0.1 --directory web/dist
-# In a second terminal:
-python3 web/e2e/smoke.py http://127.0.0.1:4173 --shots work/smoke-shots
+python scripts/sync_web_data.py            # data/site -> web/public/data (+ radars)
+python scripts/sync_web_data.py --samples  # the committed one-match sample instead
+cd web && npm run dev                      # or: npm run build -> web/dist
 ```
 
-Add a route to [`web/e2e/smoke.py`](web/e2e/smoke.py) by writing one function
-decorated with `@route("#/path", "ready-selector")`, taking `(smoke, page)` and
-using `smoke.check(condition, description)` for assertions. The runner navigates
-to it, waits for its ready selector, runs its desktop checks, checks for horizontal
-overflow at 375px, and collects browser errors and screenshots in both viewports.
-The DS-06 heatmap route can use the same registration once it is available.
+Team logos, player portraits and map backgrounds live in `web/public/{logos,players,map-bg}`; they are
+supplied locally, gitignored and never published.
 
-### Manual GitHub Pages deployment
+## Tests and CI
 
-In repository **Settings → Pages**, select **GitHub Actions** as the build source.
-Then run **Actions → Deploy Pages → Run workflow** on the desired branch.
-[`pages.yml`](.github/workflows/pages.yml) is `workflow_dispatch` only: it builds
-the committed one-match `samples/site` export plus radars, uploads `web/dist`, and
-deploys with `actions/deploy-pages`. The deploy job uses the `github-pages`
-environment and is the only job granted `pages: write` and `id-token: write`.
-Private repositories need a GitHub plan that supports Pages, or must become public.
-Vite's relative base and the HashRouter support the repository subpath without
-server rewrites.
-
-To deploy real data later, produce an export locally and package the **contents**
-of `data/site` (including `index.json`, map directories and heatmap JSON):
-
-```bash
-python -m playbook run
-tar -czf site-data.tar.gz -C data/site .
-```
-
-Publish that archive as a release asset, or upload the same directory as a workflow
-artifact named `site-data` through a separate data-producing workflow. In the
-Pages build, add a download step **before** the sync step, placing the complete
-export at `data/site/`, and change the sync command to
-`python scripts/sync_web_data.py` (remove `--samples`). Keep CI on sample data.
-For a release asset, pin its tag and download/extract it, for example:
-
-```yaml
-- name: Download real site export
-  env:
-    GH_TOKEN: ${{ github.token }}
-  run: |
-    gh release download site-data-2026-10-19 --pattern site-data.tar.gz --dir "$RUNNER_TEMP"
-    mkdir -p data/site
-    tar -xzf "$RUNNER_TEMP/site-data.tar.gz" -C data/site
-```
-
-For a workflow artifact, use `actions/download-artifact@v4` with `name: site-data`,
-`path: data/site`, the producer's `run-id`, and `github-token: ${{ github.token }}`;
-add `actions: read` to the build job's permissions alongside `contents: read` for
-cross-run downloads. Keep the producer run ID or release tag explicit so deployments
-are reproducible. Demos and intermediate parsed tables stay outside the deployment.
-
-The pages are the map index, the lineup library (radar plus copyable practice commands),
-team profiles (T/CT setups, executes, economy) and player profiles (roles, lanes). Chinese
-is the default language; the top-bar button switches to English and remembers the choice in
-`localStorage`.
-
-Demos you download yourself (for example from HLTV) can go straight into `data/raw/`.
-
-Test demo for the end-to-end tests (B8 vs Vitality, Mirage, 347 MB):
-
-```bash
-curl -L -o data/raw/hltv-de_mirage-2394170.dem \
-  https://github.com/pnxenopoulos/awpy-fixtures/releases/download/hltv-de_mirage-2394170/hltv-de_mirage-2394170.dem
-```
-
-## What the pipeline produces
-
-From one demo (about 15 to 30 seconds to parse), per round and per player:
-teams and sides, economy, positions every second with callouts, kills with opening-duel
-flags, plants with site, and every grenade with its thrower, release spot, view angles and
-landing callout. On top of that, per round: setup "shapes" (for example `A2 M2 B1`), execute
-timing and lane, and per player: distance to teammates, site-entry order, opening duels.
-
-Across demos, `export` writes static JSON for the site (team profiles, player profiles,
-lineup library). A real one-match example is in [`samples/site/`](samples/site/).
+`pytest -q` runs the pipeline tests. `.github/workflows/ci.yml` runs them plus the TypeScript check, a
+production build on `samples/site` and the browser smoke test (`web/e2e/smoke.py --samples`). On a real
+export run `smoke.py` without flags, `--orbit-only`, `--lab-only` and `node web/e2e/orbit_geometry.mjs`.
 
 ## Adding a map
 
 1. `python -m playbook callouts path/to/demo.dem` lists the map's callout names.
-2. Map each callout to a region and each region to a lane in `config/maps/<map>.toml`
-   (see `de_mirage.toml`).
+2. Map each callout to a region and each region to a lane in `config/maps/<map>.toml` (see `de_mirage.toml`),
+   add the Chinese/English names to `web/src/i18n/{zh,en}.json` (`callout.<map>`), then `python -m playbook relabel`.
 
-## Data and credits
+## Data sources and licence
 
-- Demos: [cs2povarchive/cs2-demos](https://huggingface.co/datasets/cs2povarchive/cs2-demos) on Hugging Face (Apache-2.0): IEM Cologne Major 2026 and CAC 2026 GOTV demos.
-- Parsing: [awpy](https://github.com/pnxenopoulos/awpy) (MIT). Radar images and transforms: awpy-data.
-- Method inspiration: Xenopoulos et al., *ggViz* (2022), *Valuing Player Actions in CSGO* (2020), *ESTA* (2022).
+Statistics are derived from GOTV recordings of professional matches made by the tournament organisers,
+downloaded by hand from HLTV.org, and from the cs2povarchive dataset on Hugging Face (Apache-2.0). Match
+start times were cross-checked with HLTV and bo3.gg. Demo files are not redistributed. Parsing uses awpy
+(MIT); radar images and transforms come from awpy-data. Counter-Strike 2 and its assets are © Valve
+Corporation; team names and logos are trademarks of their owners. This is a non-commercial fan analysis
+project, not affiliated with or endorsed by Valve, HLTV, bo3.gg, any tournament organiser or team. Full
+list: [docs/CREDITS.md](docs/CREDITS.md).
 
-Not affiliated with Valve, HLTV, or any team. MIT licensed.
-
+The **code** is MIT licensed; game art, logos and photos are not covered by that licence.

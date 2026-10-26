@@ -37,3 +37,4 @@ assets/map-photos/*
 
 # hand-off folder between Claude sessions and the Mac (plans, download logs, assets)
 _sync/
+.claude/
