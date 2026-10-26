@@ -1,0 +1,37 @@
+# HLTV planning settings (playbook/hltv.py). Team ids are from hltv.org/team/<id>/<slug>.
+
+[tier1]
+# An event is tier-1 when its name contains one of `include` and none of `exclude`.
+include = [
+  "Major", "IEM ", "BLAST Open", "BLAST Premier", "BLAST Bounty", "BLAST Rivals",
+  "ESL Pro League", "PGL ", "Esports World Cup", "StarLadder StarSeries",
+  "FISSURE Playground", "Thunderpick World Championship", "CS Asia Championships",
+]
+exclude = ["Qualifier", "Showmatch", "Academy", "Digital Crusade", "CCT ", "Challenger", "Play-In Qualifier"]
+
+[download]
+since = "2026-01-01"
+delay_seconds = 20
+
+# slug -> HLTV team id (HLTV world ranking, 2026-10-19)
+[teams]
+spirit = 7020
+vitality = 9565
+furia = 8297
+mouz = 4494
+aurora = 11861
+falcons = 11283
+legacy = 12468
+g2 = 5995
+betboom = 12394
+fut = 13286
+natus-vincere = 4608
+mibr = 9215
+parivision = 12467
+1win = 10621
+9z = 9996
+astralis = 6665
+faze = 6667
+m80 = 12376
+ninjas-in-pyjamas = 4411
+the-mongolz = 6248
