@@ -47,12 +47,14 @@
     "BombsiteA": "A包点进攻线",
     "Library": "书房线",
     "Pit": "大坑线",
+    "Graveyard": "墓地线",
     "Balcony": "A二楼阳台线",
     "CTSpawn": "警家线"
   },
   "de_nuke": {
     "Squeaky": "吱呀门线",
     "Hut": "小屋线",
+    "Crane": "吊车线",
     "Outside": "外场线",
     "Ramp": "B坡道线",
     "Vents": "通风管线",

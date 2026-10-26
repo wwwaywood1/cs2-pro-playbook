@@ -4,6 +4,9 @@
 svg [data-map-link] { transform-box: fill-box; transform-origin: center; outline: none; }
 .map-link-ring { fill: none; stroke: var(--accent, #efad55); stroke-width: 2; vector-effect: non-scaling-stroke; opacity: 0; pointer-events: none; }
 [data-map-state="active"] .map-link-ring { opacity: 1; }
+/* SVG markers have no native focus outline: keyboard focus shows the ring, thicker. */
+svg :is(a, g[tabindex]):focus-visible > .map-link-ring,
+svg :is(a, g[tabindex]):focus-visible > g > .map-link-ring { opacity: 1; stroke-width: 3; }
 .map-link-hint { font-size: .75rem; margin: 6px 0 12px; }
 @media (prefers-reduced-motion: reduce) {
   [data-map-link] { transition: none; }

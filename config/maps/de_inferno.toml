@@ -47,4 +47,5 @@ Arch = "A_SITE"
 Library = "A_SITE"
 Pit = "A_SITE"
 Balcony = "A_SITE"
+Graveyard = "A_SITE"  # 墓地：A 点 Pit 与 Library 之间（雷达约 943,696），T 从 Arch/A 二楼投闪
 CTSpawn = "CT_SPAWN"

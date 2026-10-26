@@ -3,10 +3,15 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
     "dev": "vite",
+    "typecheck": "tsc -b",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node e2e/hub_route.mjs && node e2e/orbit_geometry.mjs && node e2e/map_badges.mjs && node e2e/render_view_cones.cjs"
   },
   "dependencies": {
     "react": "^18.3.1",

@@ -37,6 +37,7 @@ Hell = "A_SITE"
 Catwalk = "A_SITE"
 Rafters = "A_SITE"
 LockerRoom = "A_SITE"
+Crane = "A_SITE"  # 吊车：demo 中位置与 Hut 重合（雷达约 548,544），T 从 Roof/Silo 向此投闪/火，CT 从此回防 A
 # Outside / T 家外公共区域：Nuke 没有传统中路，Outside 是 A/B 分兵前的集结点
 Outside = "MID"
 Silo = "MID"

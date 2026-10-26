@@ -1,5 +1,6 @@
 import MatchDate, { MatchTimeFilter } from "./MatchDate";
-import { getCTPatterns, getIndex, useData } from "../data";
+import { ReplayButton } from "./RoundReplay";
+import { getCTPatterns, getIndex, getReplayIndex, useData } from "../data";
 import { inTimeRange, newestMatch, type TimeRange } from "../matchDates";
 import Segmented from "./Segmented";
 import { ctSetupLabel } from "../labels";
@@ -242,6 +243,18 @@ function EconomyTable({ rows }: { rows: TeamProfile["economy"] }) {
   );
 }
 
+/** Replays of a match without a win-probability strip: one disclosure, then a button per round. */
+function MatchReplays({ map, demoId, rounds }: { map: string; demoId: string; rounds: number[] }) {
+  const sorted = [...new Set(rounds)].filter((round) => Number.isInteger(round) && round > 0).sort((a, b) => a - b);
+  if (!sorted.length) return null;
+  return <details className="match-replays">
+    <summary>{t("round4.replay_rounds")} · {fmtInt(sorted.length)}</summary>
+    <div className="match-replay-rounds" role="group" aria-label={t("round4.replay_rounds_label", { n: fmtInt(sorted.length) })}>
+      {sorted.map((round) => <ReplayButton key={round} map={map} demoId={demoId} round={round} compact />)}
+    </div>
+  </details>;
+}
+
 /** The former team page's archive lives below the map's roster, closed by default. */
 export default function TeamDetails({ team, tacticsContent, heatmapContent, detailsOpen, onDetailsToggle }: {
   team: TeamProfile; tacticsContent?: ReactNode; heatmapContent?: ReactNode; detailsOpen?: boolean; onDetailsToggle?: (open: boolean) => void;
@@ -256,6 +269,8 @@ export default function TeamDetails({ team, tacticsContent, heatmapContent, deta
   const matches = [...team.matches].sort(newestMatch);
   const visible = matches.filter((match) => inTimeRange(match, range, index.data?.data_through));
   const patterns = useData(() => getCTPatterns(team.map), [team.map]);
+  // Rounds with a 2D replay; rows without a win-probability strip list them directly.
+  const replays = useData(() => getReplayIndex(team.map), [team.map]);
   const recipeCount = new Set((team.tactics?.T.recipes ?? []).map(r => r.value)).size;
   const clusterCount = patterns.data?.clusters.length ?? 0;
   const coverage = [recipeCount ? `收录 ${fmtInt(recipeCount)} 套进攻套路` : "", clusterCount ? `${fmtInt(clusterCount)} 类 CT 阵型` : ""].filter(Boolean).join(" · ");
@@ -274,6 +289,7 @@ export default function TeamDetails({ team, tacticsContent, heatmapContent, deta
           <span className="match-opponent">{match.opponent ?? "—"}<small className="match-context"><MatchDate match={match} /></small></span>
           <span className="match-score">{fmtInt(match.score_for)} : {fmtInt(match.score_against)}</span>
           {match.winprob_available ? <MatchWinprob map={team.map} demoId={match.demo_id} teamSlug={team.slug} /> : null}
+          {!match.winprob_available && replays.data?.[match.demo_id]?.length ? <MatchReplays map={team.map} demoId={match.demo_id} rounds={replays.data[match.demo_id]} /> : null}
         </li>;
       }) : <li className="empty">{t("heatmap.no_data")}</li>}</ul>
     </details>

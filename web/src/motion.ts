@@ -1,4 +1,4 @@
-import { createContext, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { createContext, useEffect, useState, type RefObject } from "react";
 
 const MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 export const ReducedMotion = createContext(false);
@@ -22,31 +22,6 @@ export function useReducedMotion() {
   }, []);
   return reduced;
 }
-
-/** Retain the outgoing tree until its exit finishes; latest destination wins. */
-export function useMotionRoute<T>(route: T, key: string, reduced: boolean,
-  direction: (next: T, previous: T) => number = forward, duration = MOTION_TIMING.exit) {
-  const [shown, setShown] = useState({ route, key, direction: 1 });
-  const host = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    if (key === shown.key) return;
-    const sign = direction(route, shown.route);
-    const reveal = () => setShown({ route, key, direction: sign });
-    const element = host.current;
-    if (reduced || !element?.animate) { reveal(); return; }
-    let cancelled = false;
-    const animation = element.animate([
-      { opacity: 1, transform: "translateX(0) scale(1)", filter: "blur(0px)" },
-      { opacity: 0, transform: `translateX(${-sign * 48}px) scale(.985)`, filter: "blur(8px)" },
-    ], { duration, easing: MOTION_EASE, fill: "forwards" });
-    void animation.finished.then(() => { if (!cancelled) reveal(); }, () => {});
-    return () => { cancelled = true; animation.cancel(); };
-    // Same-key query/locale changes must not restart a pending route exit.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, shown.key, reduced, direction, duration]);
-  return { ...shown, host };
-}
-function forward() { return 1; }
 
 /** One delegated, idle-free spring loop; React never rerenders on pointer movement. */
 export function useMotionPointer(host: RefObject<HTMLElement>, reduced: boolean) {

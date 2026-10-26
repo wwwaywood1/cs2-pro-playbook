@@ -18,15 +18,17 @@ import { MapLinkHint } from "../mapLink";
 import RecipeRadar, { SpotList, type RecipeSpot } from "../components/RecipeRadar";
 import Stat from "../components/Stat";
 import { ErrorNotice, Loading } from "../components/Status";
-import { getLineups, getMeta, getTactics, getTeams, useData } from "../data";
+import { getLineupIndex, getMeta, getTactics, getTeams, useData } from "../data";
 import { fmtInt, fmtNum, fmtPct, fmtSeconds } from "../format";
-import { calloutLabel, t, useLang, type Lang } from "../i18n";
-import type { CTTactics, Lineup, Ranked, Recipe, Spot, SpotRef, TTactics } from "../types";
+import { calloutLabel, spotLabel, t, useLang } from "../i18n";
+import type { CTTactics, LineupIndex, Ranked, Recipe, Spot, SpotRef, TTactics } from "../types";
 import "../tactics.css";
 
 function siteLabel(site: string): string {
   return site === "A" || site === "B" ? t(`region.${site}_SITE`) : t("tactics.no_target");
 }
+
+const mostThrown = (lineups: { lineup_id: string; n_throws: number }[]) => [...lineups].sort((a, b) => b.n_throws - a.n_throws)[0];
 
 function ShareBars({ rows, labelFor }: { rows: Ranked[]; labelFor: (value: string) => string }) {
   if (!rows.length) return <p className="muted">{t("tactics.no_data")}</p>;
@@ -65,7 +67,7 @@ function TOverview({ data }: { data: TTactics }) {
       </div>
       <div className="stat-row">
         <Stat label={t("tactics.avg_commit")} value={fmtSeconds(data.avg_commit_s)} />
-        <Stat label="多方向进点率" title="进点位置相距至少 400 游戏单位，或相对包点中心的方位角相差至少 50°；不限定中路。" value={fmtPct(data.split_rate)} />
+        <Stat label={t("tactics.split_rate")} title={t("tactics.split_help")} value={fmtPct(data.split_rate)} />
         <Stat label={t("tactics.lurk_rate")} value={fmtPct(data.lurk_rate)} />
         <Stat label={t("tactics.fake_rate")} value={fmtPct(data.fake_rate)} />
       </div>
@@ -117,22 +119,23 @@ function CTOverview({ data }: { data: CTTactics }) {
   );
 }
 
-function resolveSpot(map: string, ref: SpotRef, spot: Spot | undefined, core: boolean, number: number, lang: Lang, byLineup: Map<string, Lineup>): RecipeSpot {
-  const lineups = ref.lineups.length ? ref.lineups : spot?.lineups ?? [];
-  const mostThrown = [...lineups].sort((a, b) => b.n_throws - a.n_throws)[0];
+function resolveSpot(map: string, ref: SpotRef, spot: Spot | undefined, core: boolean, number: number, byLineup: LineupIndex): RecipeSpot {
+  const top = mostThrown(ref.lineups.length ? ref.lineups : spot?.lineups ?? []);
+  const lineup = top ? byLineup[top.lineup_id] : undefined;
   return {
-    lineup: mostThrown ? byLineup.get(mostThrown.lineup_id) : undefined,
+    lineup,
     id: ref.spot_id, type: ref.type, spot, core, number: ref.order ?? number, share: ref.share,
-    thrower: ref.thrower, throwerTeam: ref.thrower_team, throwPlace: calloutLabel(map, ref.throw_place), order: ref.order,
-    name: ref.name?.[lang] || spot?.name?.[lang] || ref.label,
-    to: mostThrown ? `/${encodeURIComponent(map)}/lineups?${new URLSearchParams({ id: mostThrown.lineup_id })}` : null,
+    thrower: ref.thrower, throwerTeam: ref.thrower_team, order: ref.order,
+    throwPlace: calloutLabel(map, ref.throw_place ?? lineup?.throw_place),
+    name: spotLabel(map, { label: ref.label, place: ref.place, name: { zh: ref.name?.zh || spot?.name?.zh, en: ref.name?.en || spot?.name?.en } }),
+    to: top ? `/${encodeURIComponent(map)}/lineups?${new URLSearchParams({ id: top.lineup_id })}` : null,
   };
 }
 
-function recipeSpots(map: string, recipe: Recipe, byId: Map<string, Spot>, lang: Lang, byLineup: Map<string, Lineup>): RecipeSpot[] {
+function recipeSpots(map: string, recipe: Recipe, byId: Map<string, Spot>, byLineup: LineupIndex): RecipeSpot[] {
   return [...recipe.core.map((ref) => ({ ref, core: true })), ...recipe.options.map((ref) => ({ ref, core: false }))]
     .sort((a, b) => (a.ref.order ?? Infinity) - (b.ref.order ?? Infinity))
-    .map(({ ref, core }, index) => resolveSpot(map, ref, byId.get(ref.spot_id), core, index + 1, lang, byLineup));
+    .map(({ ref, core }, index) => resolveSpot(map, ref, byId.get(ref.spot_id), core, index + 1, byLineup));
 }
 
 function RecipeTitle({ entries }: { entries: RecipeSpot[] }) {
@@ -149,7 +152,7 @@ function RecipeDetails({ recipe, entries, splitDefinition, map, teams }: { recip
     <dl className="tactics-detail-stats">
       <div><dt>{t("ui.matches_title")}</dt><dd>{t("round2.recipe_matches", { n: fmtInt(recipe.n_matches) })}</dd></div>
       <div><dt>{t("tactics.plant_rate")}</dt><dd><Num value={fmtPct(recipe.plant_rate)} /></dd></div>
-      <div><dt tabIndex={0} title={splitDefinition}>多方向进点率 ⓘ</dt><dd><Num value={fmtPct(recipe.split_rate)} /></dd></div>
+      <div><dt tabIndex={0} title={splitDefinition}>{t("tactics.split_rate")} ⓘ</dt><dd><Num value={fmtPct(recipe.split_rate)} /></dd></div>
       <div><dt>{t("tactics.avg_flashes")}</dt><dd>{fmtNum(recipe.avg_flashes)}</dd></div>
     </dl>
     {recipe.wp && recipe.wp.n > 0 && Number.isFinite(recipe.wp.before) && Number.isFinite(recipe.wp.after) ? <p className="recipe-wp">
@@ -186,8 +189,10 @@ export default function Tactics() {
   const { data, loading, error } = useData(() => getTactics(map), [map]);
   const teamData = useData(() => getTeams(map), [map]);
   const teams = useMemo(() => new Map((teamData.data ?? []).map((team) => [team.team, team.slug])), [teamData.data]);
-  const { data: lineupData } = useData(() => getLineups(map), [map]);
-  const byLineup = useMemo(() => new Map((lineupData ?? []).map((lineup) => [lineup.id, lineup])), [lineupData]);
+  // Throw lines and practice positions for the spots on screen: the small lineup index,
+  // not the multi-megabyte lineup library. A failure only drops those extras.
+  const { data: lineupData } = useData(() => getLineupIndex(map), [map]);
+  const byLineup = useMemo<LineupIndex>(() => lineupData ?? {}, [lineupData]);
   const { data: meta } = useData(() => getMeta(map), [map]);
   const [collapsedRecipe, setCollapsedRecipe] = useState<string | null>(null);
   const [setupChoice, setSetupChoice] = useState<string | null>(null);
@@ -198,13 +203,14 @@ export default function Tactics() {
       || b.n_rounds - a.n_rounds || a.id.localeCompare(b.id)), [data, site, sort]);
   const selected = recipes.find((recipe) => recipe.id === params.get("recipe")) ?? recipes[0];
   const shown = selected;
-  const entries = useMemo(() => shown ? recipeSpots(map, shown, spotsById, lang, byLineup) : [], [shown, map, spotsById, lang, byLineup]);
+  const entries = useMemo(() => shown ? recipeSpots(map, shown, spotsById, byLineup) : [], [shown, map, spotsById, lang, byLineup]);
   const ctSpots = useMemo<RecipeSpot[]>(() => (data?.spots ?? []).filter((spot) => spot.side === "CT" && (site === "all" || spot.lane === site))
     .sort((a, b) => b.n_throws - a.n_throws || a.spot_id.localeCompare(b.spot_id)).slice(0, 6).map((spot, index) => {
-      const mostThrown = [...spot.lineups].sort((a, b) => b.n_throws - a.n_throws)[0];
-      return { lineup: mostThrown ? byLineup.get(mostThrown.lineup_id) : undefined, id: spot.spot_id, spot, type: spot.type, core: true, number: index + 1, share: null,
-        name: spot.name?.[lang] || spot.label,
-        to: mostThrown ? `/${encodeURIComponent(map)}/lineups?${new URLSearchParams({ id: mostThrown.lineup_id })}` : null };
+      const top = mostThrown(spot.lineups);
+      const lineup = top ? byLineup[top.lineup_id] : undefined;
+      return { lineup, id: spot.spot_id, spot, type: spot.type, core: true, number: index + 1, share: null,
+        name: spotLabel(map, spot), throwPlace: lineup ? calloutLabel(map, lineup.throw_place) : null,
+        to: top ? `/${encodeURIComponent(map)}/lineups?${new URLSearchParams({ id: top.lineup_id })}` : null };
     }), [data, map, site, lang, byLineup]);
   const setups = useMemo(() => [...(data?.ct_overview.setups_20s ?? [])].sort((a, b) => b.rounds - a.rounds || a.value.localeCompare(b.value)), [data]);
   const currentSetup = setups.find((setup) => setup.value === setupChoice) ?? setups[0];
@@ -222,7 +228,7 @@ export default function Tactics() {
   if (error || !data) return <ErrorNotice error={error ?? new Error(t("tactics.no_data"))} />;
   const topTarget = [...data.t_overview.target].filter((row) => row.value !== "none").sort((a, b) => b.rounds - a.rounds)[0];
   const topRecipe = [...data.recipes].sort((a, b) => b.n_rounds - a.n_rounds || a.id.localeCompare(b.id))[0];
-  const topRecipeName = topRecipe ? recipeSpots(map, topRecipe, spotsById, lang, byLineup).filter((entry) => entry.core).map((entry) => entry.name).join(" + ") : t("tactics.no_data");
+  const topRecipeName = topRecipe ? recipeSpots(map, topRecipe, spotsById, byLineup).filter((entry) => entry.core).map((entry) => entry.name).join(" + ") : t("tactics.no_data");
   const scale = meta && Number.isFinite(meta.radar.scale) && meta.radar.scale > 0 ? meta.radar.scale : undefined;
   return <PageSurface className="tactics-page" data-side={side}>
     <header className="page-head">
@@ -247,7 +253,7 @@ export default function Tactics() {
     {side === "CT" && <CTDefense key={map} map={map} />}
     <div className="tactics-workspace">
       <aside className="tactics-map-panel">
-        <Reveal className="motion-radar" key={`${map}:${side}`}><RecipeRadar key={`${map}:${side}:${selected?.id ?? "ct"}`} map={map} scale={scale} spots={side === "T" ? entries : ctSpots} title={side === "T" ? t("tactics.selected_utility") : t("tactics.ct_utility")}
+        <Reveal className="motion-radar" key={`${map}:${side}`}><RecipeRadar key={`${map}:${side}:${selected?.id ?? "ct"}`} map={map} scale={scale} centres={meta?.site_centres} spots={side === "T" ? entries : ctSpots} title={side === "T" ? t("tactics.selected_utility") : t("tactics.ct_utility")}
           routes={side === "T" ? shown?.routes ?? [] : undefined} routeKey={shown?.id}
           site={side === "T" ? shown?.site : site === "all" ? undefined : site}
           selectionLabel={side === "T" && shown ? `${siteLabel(shown.site)} · ${entries.filter((entry) => entry.core).map((entry) => entry.name).join(" + ")}` : undefined} /></Reveal>
@@ -263,7 +269,7 @@ export default function Tactics() {
         {side === "T" ? <div className="tactics-recipes">
           <p className="muted tactics-help">{t("tactics.recipe_count", { n: fmtInt(recipes.length) })} · {t("tactics.preview_hint")}</p>
           {recipes.length ? recipes.map((recipe, index) => {
-            const rowEntries = recipeSpots(map, recipe, spotsById, lang, byLineup);
+            const rowEntries = recipeSpots(map, recipe, spotsById, byLineup);
             const active = recipe.id === selected?.id;
             const open = active && collapsedRecipe !== recipe.id;
             return <article className={`tactics-recipe motion-reveal${active ? " is-selected" : ""}`} data-motion-tilt={active || undefined} style={{ "--stagger": `${Math.min(index * 55, 385)}ms` } as CSSProperties} key={recipe.id} data-recipe-id={recipe.id}>
@@ -273,7 +279,7 @@ export default function Tactics() {
                 <span className="tactics-row-meta">{t("tactics.recipe_meta", { rounds: fmtInt(recipe.n_rounds), win: fmtPct(recipe.win_rate), time: fmtSeconds(recipe.median_commit_s) })}</span>
               </button></h3>
               {recipe.entry_sync_sec != null ? <div className="recipe-intent"><small>{t("round6.entry_gap", { s: fmtNum(recipe.entry_sync_sec, 1) })}</small></div> : null}
-              <div id={`details-${recipe.id}`} hidden={!open}>{open && <RecipeDetails recipe={recipe} map={map} teams={teams} entries={rowEntries} splitDefinition={`进点位置相距至少 400 游戏单位，或相对包点中心的方位角相差至少 50°。不限定中路。导出定义：${String(data.definitions.split ?? "未提供")}`} />}</div>
+              <div id={`details-${recipe.id}`} hidden={!open}>{open && <RecipeDetails recipe={recipe} map={map} teams={teams} entries={rowEntries} splitDefinition={lang !== "zh" && typeof data.definitions.split === "string" ? `Export definition: ${data.definitions.split}` : t("tactics.split_help")} />}</div>
             </article>;
           }) : <p className="muted">{t("tactics.no_recipes")}</p>}
         </div> : <>

@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { fmtNum } from "../format";
-import { useLang } from "../i18n";
+import { fmtNum, fmtPercentile, percentile100 } from "../format";
+import { t, useLang } from "../i18n";
+import { moveRoving } from "../roving";
 import type { PlayerProfile, Radar6Axis, Side } from "../types";
 import "../radar6.css";
 
@@ -20,19 +21,23 @@ const point = (axis: number, radius: number): [number, number] => {
 export default function PlayerRadar6({ player, side }: { player?: PlayerProfile; side: Side }) {
   const lang = useLang();
   const [active, setActive] = useState<number | null>(null);
+  // One Tab stop per chart; arrow keys move between the six axes.
+  const [rover, setRover] = useState(0);
   const profile = player?.[side].radar_6d;
   if (!profile) return null;
   const title = lang === "zh" ? "六维风格" : "Six-axis profile";
-  const percentiles = AXES.map(([key]) => profile[key].percentile);
+  // Radar percentiles are exported on 0–100 (WPA uses 0–1; see format.percentile100).
+  const percentiles = AXES.map(([key]) => percentile100(profile[key].percentile, "percent"));
   const points = percentiles.map((value, i) => value == null ? null : point(i, value * .82));
   const tooltip = (i: number) => {
     const [key, zh, en, zhHelp, enHelp] = AXES[i];
     const metric = profile[key];
-    return `${lang === "zh" ? zh : en} · ${metric.percentile == null ? "—" : `P${fmtNum(metric.percentile, 1)}`} · ${lang === "zh" ? "原值" : "Raw"} ${fmtNum(metric.raw, 3)} · ${lang === "zh" ? zhHelp : enHelp}`;
+    return `${lang === "zh" ? zh : en} · ${fmtPercentile(percentiles[i])} · ${lang === "zh" ? "原值" : "Raw"} ${fmtNum(metric.raw, 3)} · ${lang === "zh" ? zhHelp : enHelp}`;
   };
   return <figure className="player-radar6" data-side={side}>
     <figcaption>{title} · {side}<small>{lang === "zh" ? "同图同阵营百分位 · ≥50 回合" : "Map / side percentiles · ≥50 rounds"}</small></figcaption>
-    <svg viewBox="0 0 300 260" role="group" aria-label={`${title} · ${side}`}>
+    <svg viewBox="0 0 300 260" role="group" aria-label={`${title} · ${side} · ${t("a11y.radar_axes")}`}
+      onKeyDown={(event) => { const next = moveRoving(event, rover, AXES.length); if (next !== null) setRover(next); }}>
       {[.25, .5, .75, 1].map((fraction) => <polygon key={fraction} points={AXES.map((_, i) => point(i, 82 * fraction).join(",")).join(" ")} className="radar6-ring" />)}
       {AXES.map(([key], i) => <line key={key} x1="150" y1="130" x2={point(i, 82)[0]} y2={point(i, 82)[1]} className="radar6-axis" />)}
       {points.every((p) => p !== null) ? <polygon className="radar6-area" points={points.map((p) => p!.join(",")).join(" ")} /> : points.map((p, i) => {
@@ -42,9 +47,9 @@ export default function PlayerRadar6({ player, side }: { player?: PlayerProfile;
       {AXES.map(([key, zh, en], i) => {
         const label = point(i, 108);
         const p = points[i];
-        return <g key={key} tabIndex={0} role="img" aria-label={tooltip(i)} data-axis={key} onPointerEnter={() => setActive(i)} onPointerLeave={() => setActive(null)} onFocus={() => setActive(i)} onBlur={() => setActive(null)}>
+        return <g key={key} tabIndex={i === rover ? 0 : -1} data-roving={i} role="img" aria-label={tooltip(i)} data-axis={key} onPointerEnter={() => setActive(i)} onPointerLeave={() => setActive(null)} onFocus={() => { setActive(i); setRover(i); }} onBlur={() => setActive(null)}>
           <title>{tooltip(i)}</title>
-          <circle cx={point(i, 82)[0]} cy={point(i, 82)[1]} r="14" fill="transparent" />
+          <circle className="radar6-hit" cx={point(i, 82)[0]} cy={point(i, 82)[1]} r="14" fill="transparent" />
           {p ? <circle cx={p[0]} cy={p[1]} r="3" className="radar6-dot" /> : null}
           <text x={label[0]} y={label[1]} textAnchor="middle" dominantBaseline="middle" className={p ? "" : "radar6-missing"}>{lang === "zh" ? zh : en}{p ? "" : " —"}</text>
         </g>;

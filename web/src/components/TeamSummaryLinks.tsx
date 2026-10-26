@@ -1,7 +1,7 @@
 import { useMapLink } from "../mapLink";
 import { Fragment } from "react";
 import { Link } from "react-router-dom";
-import { calloutLabel, t, useLang } from "../i18n";
+import { calloutLabel, spotLabel, t, useLang } from "../i18n";
 import type { TeamProfile, TacticsFile } from "../types";
 
 export function signatureRecipe(profile: TeamProfile, tactics?: TacticsFile | null) {
@@ -40,7 +40,7 @@ export default function TeamSummaryLinks({ profile, tactics }: { profile: TeamPr
       return spot ? <Link key={index} {...bind(`spot:${spot.spot_id}`)} to={spotTo(spot.spot_id)} title={t("round3.spot_on_map", { name: part.text })}>{part.text}</Link> : <Fragment key={index}>{part.text}</Fragment>;
     })}
     <span className="team-signature">招牌套路：{recipe.core.map((spot, index) => <Fragment key={spot.spot_id}>
-      {index ? " + " : ""}<Link {...bind(`spot:${spot.spot_id}`)} to={spotTo(spot.spot_id)} title={t("round3.spot_on_map", { name: spot.name?.[lang] || spot.label })}>{spot.name?.[lang] || calloutLabel(profile.map, spot.place) || spot.label}</Link>
+      {index ? " + " : ""}<Link {...bind(`spot:${spot.spot_id}`)} to={spotTo(spot.spot_id)} title={t("round3.spot_on_map", { name: spotLabel(profile.map, spot) })}>{spotLabel(profile.map, spot)}</Link>
     </Fragment>)}</span>
     <Link className="team-recipe-cta" to={to}>查看该套路落点 →</Link>
   </span>;

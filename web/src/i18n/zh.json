@@ -30,11 +30,13 @@
     "round_win_rate": "回合胜率",
     "language": "语言",
     "generated_at": "数据生成时间",
-    "data_source_note": "数据来源：职业比赛 demo（IEM Cologne Major 2026 等，经 Hugging Face cs2povarchive 公开）。",
+    "data_source_note": "比赛数据来自赛事主办方录制的 GOTV 录像（经 HLTV.org 与 Hugging Face cs2povarchive 数据集获取）。与 Valve、HLTV、赛事主办方及战队均无关联。",
     "no_plant": "未下包",
     "nav_heatmaps": "战队热力图",
     "skip_content": "跳至主要内容",
-    "primary_navigation": "主导航"
+    "primary_navigation": "主导航",
+    "about_link": "数据来源与版权",
+    "data_through": "数据截至"
   },
   "side": {
     "T": "T",
@@ -60,7 +62,7 @@
   },
   "buy": {
     "pistol": "手枪局",
-    "eco": "ECO",
+    "eco": "经济局",
     "force": "强起",
     "full": "长枪局"
   },
@@ -151,7 +153,8 @@
       "Balcony": "阳台",
       "CTSpawn": "警家",
       "Pit": "大坑",
-      "Library": "书房"
+      "Library": "书房",
+      "Graveyard": "墓地"
     },
     "de_ancient": {
       "MainHall": "主厅",
@@ -257,7 +260,8 @@
       "Catwalk": "天桥",
       "Secret": "密道",
       "Garage": "车库",
-      "CTSpawn": "警家"
+      "CTSpawn": "警家",
+      "Crane": "吊车"
     },
     "de_overpass": {
       "UpperPark": "上公园",
@@ -471,7 +475,11 @@
     "top_target": "最常进攻包点",
     "target_context": "{site}，占全部 T 方长枪局的比例。",
     "spot_index": "地图点位（{n}）",
-    "summary_basis": "数据依据（{n} 条）"
+    "summary_basis": "数据依据（{n} 条）",
+    "split_rate": "多方向进点率",
+    "split_help": "进点位置相距至少 400 游戏单位，或相对包点中心的方位角相差至少 50°；不限定中路。",
+    "common_throw": "最常用起投点",
+    "throw_line_help": "细线：最常用起投点 → 落点；并非队员移动路线"
   },
   "hub": {
     "eyebrow": "战术研究台",
@@ -564,7 +572,10 @@
     "round_bar_tip": "第 {r} 回合 · 胜率 {from} → {to}",
     "round_bar_title": "每回合胜率变化",
     "best_map": "王牌图",
-    "weak_map": "短板图"
+    "weak_map": "短板图",
+    "wpa_drift_note": "已扣除时间流逝本身带来的胜率变化",
+    "best_map_tip": "王牌图：按地图胜率 95% Wilson 区间下限排名第一（至少 {n} 场），且与短板图的区间不重叠。",
+    "weak_map_tip": "短板图：按地图胜率 95% Wilson 区间上限排名最低（至少 {n} 场），且与王牌图的区间不重叠。"
   },
   "round3": {
     "round_bars_caption": "每回合胜率变化：绿色上升，红色下降",
@@ -598,7 +609,10 @@
     "throw_from": "从{place}投出",
     "thrower_example": "例：{name}（{team}）",
     "util_legend": "图标为道具类型，点击查看投掷位置",
-    "portrait_line": "T 开局常在{lane} · 每回合 {kpr} 杀"
+    "portrait_line": "T 开局常在{lane} · 每回合 {kpr} 杀",
+    "replay_rounds": "回放",
+    "replay_rounds_label": "可回放的回合（{n}）",
+    "replay_round_short": "第 {round} 回合"
   },
   "round5": {
     "clock": "{clock}",
@@ -621,7 +635,11 @@
     "map_pick_hint": "先点地图上的落点，再点投掷位置，直接找到这颗道具",
     "route_name": "{via} · {p}% 的队员",
     "portrait_place": "T 开局最常在{place}",
-    "ghost_empty": "本侧本阶段暂无可显示的分布差异"
+    "ghost_empty": "本侧本阶段暂无可显示的分布差异",
+    "palette_index_error": "搜索索引暂不可用，仅可搜索地图",
+    "palette_loading": "加载中…",
+    "palette_count": "{n} 条结果 · ↑/↓ 选择 · Enter 打开 · Esc 关闭",
+    "palette_results": "搜索结果"
   },
   "round6": {
     "event_kill": "{clock} [{side}] {attacker} 击杀 {victim}{hs}{wpa}",
@@ -642,6 +660,85 @@
     "badge_rush": "⚡ 一波流",
     "badge_fake": "🎭 假打转点",
     "map_pick_clear": "× 清除地图选点",
-    "map_pick_active": "已按地图选点筛选：{n} 颗道具"
+    "map_pick_active": "已按地图选点筛选：{n} 颗道具",
+    "context_trailing": "比分落后",
+    "context_leading": "比分领先",
+    "context_tied": "比分持平",
+    "context_after_loss": "上回合失利",
+    "context_mixed": "混合配装"
+  },
+  "weapon": {
+    "ak47": "AK-47",
+    "awp": "AWP",
+    "m4a1_silencer": "M4A1-S",
+    "m4a1_silencer_off": "M4A1-S",
+    "m4a1": "M4A4",
+    "galilar": "加利尔 AR",
+    "famas": "法玛斯",
+    "aug": "AUG",
+    "sg556": "SG 553",
+    "ssg08": "SSG 08",
+    "g3sg1": "G3SG1",
+    "scar20": "SCAR-20",
+    "usp_silencer": "USP-S",
+    "usp_silencer_off": "USP-S",
+    "hkp2000": "P2000",
+    "glock": "格洛克 18 型",
+    "deagle": "沙漠之鹰",
+    "revolver": "R8 左轮手枪",
+    "p250": "P250",
+    "fiveseven": "FN57",
+    "tec9": "Tec-9",
+    "cz75a": "CZ75 自动手枪",
+    "elite": "双持贝瑞塔",
+    "mp9": "MP9",
+    "mac10": "MAC-10",
+    "mp7": "MP7",
+    "mp5sd": "MP5-SD",
+    "ump45": "UMP-45",
+    "p90": "P90",
+    "bizon": "PP-野牛",
+    "nova": "新星",
+    "xm1014": "XM1014",
+    "sawedoff": "截短霰弹枪",
+    "mag7": "MAG-7",
+    "negev": "内格夫",
+    "m249": "M249",
+    "taser": "电击枪",
+    "knife": "刀",
+    "hegrenade": "高爆手雷",
+    "inferno": "燃烧火焰",
+    "molotov": "燃烧瓶",
+    "incgrenade": "燃烧弹",
+    "flashbang": "闪光弹",
+    "smokegrenade": "烟雾弹",
+    "decoy": "诱饵弹",
+    "planted_c4": "C4 爆炸",
+    "world": "环境伤害"
+  },
+  "error": {
+    "unknown": "数据加载失败。",
+    "missing": "未找到这份数据：可能尚未导出，或已在新的数据中移除。",
+    "http": "数据服务器返回错误（HTTP {status}），请稍后重试。",
+    "network": "网络连接失败，未能加载数据。请检查网络后重试。",
+    "parse": "数据文件已损坏，无法读取。",
+    "shape": "数据格式与当前页面不匹配，可能需要重新导出。",
+    "retry": "重试",
+    "back_to_maps": "返回地图",
+    "render_title": "此页面暂时无法显示",
+    "render": "页面渲染时出错，可能是数据不完整。导航和其他页面仍可正常使用。",
+    "replay_render": "这一回合的回放数据不完整，无法播放。",
+    "replay_missing": "未找到这一回合的回放数据。",
+    "replay_invalid": "回放地址无效：缺少地图、比赛或回合编号。",
+    "app": "网站加载出错。请刷新页面重试。",
+    "reload": "刷新页面"
+  },
+  "a11y": {
+    "chart_points": "{n} 个数据点，使用 ← / → 键逐个浏览",
+    "radar_axes": "六个维度，使用 ← / → 键逐个查看",
+    "round_bars": "{n} 个回合，使用 ← / → 键逐个浏览，Enter 打开回放"
+  },
+  "about": {
+    "title": "数据来源与版权"
   }
 }

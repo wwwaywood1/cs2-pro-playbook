@@ -6,34 +6,18 @@ import CTTrajectories, { CT_COLORS } from "../components/CTTrajectories";
 import { ReplayButton } from "../components/RoundReplay";
 import { ErrorNotice, Loading } from "../components/Status";
 import { signedPP } from "../components/CTDefense";
+import { economyLabel, labCopy, methodName } from "../labCopy";
+import { t } from "../i18n";
+import { moveRoving } from "../roving";
 import "../lab.css";
 
 const GROUPS: Record<string, string> = { alive_diff: "人数差", hp_equipment: "血量与装备", map_control: "区域占位输入", bomb_state_time: "C4 与倒计时", active_utility: "场上道具", positional_spread_pinch: "分散与夹击" };
 const PHASES: Record<string, string> = { round_start: "开局", before_execute: "进点前", after_plant: "下包后" };
 
-// Translate exported explanatory copy at the presentation boundary; preserve data and citations.
-const LAB_COPY_ZH: Record<string, string> = {
-  "Distance kernel, not learned attention; self edges included; tau=0.25": "基于距离的核权重，并非学习得到的注意力；包含自连接；温度参数 τ=0.25",
-  "Existing model uses lane occupancies as spatial inputs; replay t_control is observed separately and is not a model feature.": "现有模型以通道占位作为空间输入；回放中的 T 控图率是独立观测指标，不属于模型特征。",
-  "Active utility and positional spread/pinch are not inputs to the existing model and have zero attribution.": "场上道具、站位分散与夹击均未作为现有模型的输入，因此归因为零。",
-  "Map and pre-round score are held fixed; background size is capped at 32 to bound export runtime.": "地图与回合开始前的比分保持固定；背景样本最多为 32 个，以限制导出耗时。",
-  "Explains calibrated match-held-out model, not a separately trained surrogate.": "归因解释的是经过校准、按比赛留出的模型，并非另外训练的替代模型。",
-  "Existing occupied 15x15 XY replay grid; straight-line nearest-player distances, no NavMesh or walls": "使用现有回放中有观测的 15×15 XY 网格，按最近玩家的直线距离计算；不包含导航网格或墙体",
-};
-const METHOD_ZH: Record<string, string> = {
-  lightweight_standardised_pca_kmeans: "轻量标准化、主成分分析与 K 均值聚类",
-  exact_interventional_group_shapley_64_coalitions: "精确干预式分组 Shapley 归因（64 种组合作用）",
-  existing_hist_gradient_boosting_match_oof_plus_isotonic: "现有直方图梯度提升模型，按比赛留出预测并进行保序校准",
-};
-function labCopy(value: string) {
-  const paper = value.match(/^TAGNet was validated on Dust2 only \(([^)]+) rounds\);/);
-  return paper ? `TAGNet 仅在 Dust2 上进行了验证（${paper[1]} 个回合）；本项目将轻量方法应用于所有已解析地图。下方结果均由本项目的比赛录像计算得出。` : LAB_COPY_ZH[value] ?? value;
-}
-
 function Method({ value }: { value: string }) {
-  return <>{METHOD_ZH[value] ?? "方法标识"}（<code>{value}</code>）</>;
+  const name = methodName(value);
+  return <>{name === value ? "方法标识" : name}（<code>{value}</code>）</>;
 }
-const economyLabel = (value: string) => ({ eco: "经济局", force: "强起", full: "全装", full_buy: "全装", pistol: "手枪局", mixed: "混合配装" }[value] ?? value);
 
 function Attention({ data }: { data: LabData }) {
   const [map, setMap] = useState("de_mirage");
@@ -52,18 +36,30 @@ function Attention({ data }: { data: LabData }) {
   const round = point ?? example?.round;
   // Explicit availability wins; older exports fall back to the replay index.
   const canReplay = (p: RoundRef) => p.replay_available ?? !!replays.data?.[p.demo_id]?.includes(p.round_num);
+  // The point cloud is one Tab stop: arrow keys move between points that have a replay.
+  const [rover, setRover] = useState(0);
+  const playable = cloud.flatMap((p, i) => canReplay(p) ? [i] : []);
+  const positionOf = new Map(playable.map((index, position) => [index, position]));
+  const current = Math.min(rover, Math.max(0, playable.length - 1));
+  const choose = (p: (typeof cloud)[number]) => { if (canReplay(p)) { setClusterId(p.cluster_id); setPoint(p); } };
   return <section className="lab-panel panel" data-lab-panel="attention" aria-labelledby="lab-attention-title">
     <p className="eyebrow">01 / 阵型</p><h2 id="lab-attention-title">时空距离核 · CT 阵型沙盘</h2>
     <div className="lab-controls"><label>地图 <select value={map} onChange={e => { setMap(e.target.value); setClusterId(""); setTime(0); setFloor(0); setPoint(null); }}>{[...new Set(data.attention.map(a => a.map))].map(m => <option key={m} value={m}>{m}{m === "de_overpass" ? "（历史）" : ""}</option>)}</select></label>
       <label>阵型 <select value={example?.cluster_id ?? ""} onChange={e => { setClusterId(e.target.value); setPoint(null); }}>{examples.map(a => <option key={a.cluster_id} value={a.cluster_id}>{a.cluster_id} · {patterns.data?.clusters.find(c => c.id === a.cluster_id)?.label_zh ?? a.round.team}</option>)}</select></label>
       {map === "de_nuke" && <label>楼层 <select value={floor} onChange={e => setFloor(Number(e.target.value))}><option value="0">上层</option><option value="1">下层</option></select></label>}</div>
-    <p className="lab-method">{labCopy(data.metadata.attention)} · αᵢⱼ = softmaxⱼ(exp(−dᵢⱼ / 4215.87 / τ)) · τ={example?.tau}。行归一化包含自连接；图中自连接以节点圆环表示。</p>
+    <p className="lab-method">{labCopy(data.metadata.attention)} · αᵢⱼ = softmaxⱼ(−dᵢⱼ / (4215.87·τ)) · τ={example?.tau}。行归一化包含自连接；图中自连接以节点圆环表示。</p>
     {snapshot ? <><label className="lab-slider">冻结结束后 {snapshot.t_s} 秒 <input aria-label="阵型快照" type="range" min="0" max={example.snapshots.length - 1} value={Math.min(time, example.snapshots.length - 1)} onChange={e => setTime(Number(e.target.value))} /></label>
       <div className="lab-attention-grid"><svg className="lab-radar" viewBox="0 0 1024 1024" role="img" aria-label={`${map} ${example.cluster_id} 距离核`}>
         <image href={assetUrl(`radars/${map}${map === "de_nuke" && floor === 1 ? "_lower" : ""}.png`)} width="1024" height="1024" />
         <CTTrajectories snapshots={example.snapshots.filter(s => s.t_s <= snapshot.t_s)} level={floor} kind="medoid" />
         {snapshot.positions.map((p, i) => p[2] === floor && <g key={i}>{snapshot.positions.map((q, j) => i !== j && q[2] === floor && <line key={j} x1={p[0]} y1={p[1]} x2={q[0]} y2={q[1]} stroke="#6edcd0" strokeWidth={snapshot.alpha[i][j] * 22} opacity={snapshot.alpha[i][j] * 2.2}><title>{`α${i + 1}→${j + 1} = ${snapshot.alpha[i][j].toFixed(4)}`}</title></line>)}<circle cx={p[0]} cy={p[1]} r={12 + snapshot.alpha[i][i] * 15} fill="#08151f" stroke={CT_COLORS[i]} strokeWidth="5" /><text x={p[0]} y={p[1] + 5} textAnchor="middle" fill="white" fontSize="17">{i + 1}</text></g>)}
-      </svg><div><h3>PCA 二维投影 · 本图完整样本</h3>{patterns.error ? <p role="status">阵型投影加载失败。</p> : <svg className="lab-cloud" viewBox="0 0 400 340" role="group" aria-label="CT 阵型 PCA 投影">{cloud.map((p, i) => <circle key={i} cx={20 + (p.x - minX) / (maxX - minX || 1) * 360} cy={320 - (p.y - minY) / (maxY - minY || 1) * 300} r={p.cluster_id === example.cluster_id ? 3.5 : 2.5} fill={CT_COLORS[Number(p.cluster_id.slice(1)) % CT_COLORS.length]} opacity={canReplay(p) ? p.cluster_id === example.cluster_id ? .85 : .3 : .12} role="button" aria-disabled={!canReplay(p)} tabIndex={canReplay(p) ? 0 : undefined} aria-label={`${p.cluster_id} ${p.team} R${p.round_num}${canReplay(p) ? "" : " · 无回放"}`} onClick={() => { if (canReplay(p)) { setClusterId(p.cluster_id); setPoint(p); } }} onKeyDown={e => { if (canReplay(p) && ["Enter", " "].includes(e.key)) { e.preventDefault(); setClusterId(p.cluster_id); setPoint(p); } }}><title>{`${p.cluster_id} · ${p.team} · R${p.round_num} · CT ${p.score.ct}:${p.score.t} T · ${economyLabel(p.economy)}${canReplay(p) ? "" : " · 无回放"}`}</title></circle>)}</svg>}
+      </svg><div><h3>PCA 二维投影 · 本图完整样本</h3>{patterns.error ? <p role="status">阵型投影加载失败。</p> : <svg className="lab-cloud" viewBox="0 0 400 340" role="group" aria-label={`CT 阵型 PCA 投影 · ${t("a11y.chart_points", { n: playable.length })}`}
+          onKeyDown={e => { const next = moveRoving(e, current, playable.length); if (next !== null) setRover(next); }}>{cloud.map((p, i) => {
+            const position = positionOf.get(i) ?? -1;
+            return <circle key={i} cx={20 + (p.x - minX) / (maxX - minX || 1) * 360} cy={320 - (p.y - minY) / (maxY - minY || 1) * 300} r={p.cluster_id === example.cluster_id ? 3.5 : 2.5} fill={CT_COLORS[Number(p.cluster_id.slice(1)) % CT_COLORS.length]} opacity={canReplay(p) ? p.cluster_id === example.cluster_id ? .85 : .3 : .12} role="button" aria-disabled={!canReplay(p)}
+              tabIndex={position < 0 ? undefined : position === current ? 0 : -1} data-roving={position < 0 ? undefined : position} onFocus={() => { if (position >= 0) setRover(position); }}
+              aria-label={`${p.cluster_id} ${p.team} R${p.round_num}${canReplay(p) ? "" : " · 无回放"}`} onClick={() => choose(p)} onKeyDown={e => { if (canReplay(p) && ["Enter", " "].includes(e.key)) { e.preventDefault(); choose(p); } }}><title>{`${p.cluster_id} · ${p.team} · R${p.round_num} · CT ${p.score.ct}:${p.score.t} T · ${economyLabel(p.economy)}${canReplay(p) ? "" : " · 无回放"}`}</title></circle>;
+          })}</svg>}
         <p className="muted">点击散点选择其簇与回合；左侧展示该簇的代表回合。PCA 投影并非 UMAP。</p>
         <label>键盘选择样本 <select value={point ? `${point.demo_id}:${point.round_num}:${point.team}` : ""} onChange={e => { const p = cloud.find(p => `${p.demo_id}:${p.round_num}:${p.team}` === e.target.value); if (p && canReplay(p)) { setPoint(p); setClusterId(p.cluster_id); } }}><option value="">选择回合</option>{cloud.map((p, i) => <option key={i} disabled={!canReplay(p)} value={`${p.demo_id}:${p.round_num}:${p.team}`}>{p.cluster_id} · {p.team} · R{p.round_num} · {p.demo_id}{canReplay(p) ? "" : " · 无回放"}</option>)}</select></label>
       </div></div>

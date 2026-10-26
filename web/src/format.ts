@@ -21,6 +21,22 @@ export function fmtSignedNum(value: number | null | undefined, digits = 2): stri
   return `${rounded >= 0 ? "+" : ""}${fmtNum(rounded, digits)}`;
 }
 
+/**
+ * Percentiles on one 0–100 scale. The export writes WPA percentiles as a 0–1 share
+ * ("fraction at or below") and six-axis radar percentiles as 0–100; pass the source scale,
+ * or "auto" to read values above 1 as already on 0–100.
+ */
+export function percentile100(value: number | null | undefined, scale: "share" | "percent" | "auto" = "auto"): number | null {
+  if (!isNum(value)) return null;
+  const share = scale === "share" || (scale === "auto" && value <= 1);
+  return Math.max(0, Math.min(100, share ? value * 100 : value));
+}
+
+/** "P74.8": the shared label for a 0–100 percentile. */
+export function fmtPercentile(value: number | null | undefined): string {
+  return isNum(value) ? `P${fmtNum(value, 1)}` : "—";
+}
+
 export function fmtSeconds(value: number | null | undefined, digits = 1): string {
   return isNum(value) ? `${value.toFixed(digits)}s` : "—";
 }

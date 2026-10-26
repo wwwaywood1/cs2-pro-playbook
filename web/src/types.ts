@@ -56,6 +56,8 @@ export interface MapMeta {
   radar_image: string;
   regions: Record<string, Lane>; // region -> lane
   callouts: Record<string, string>; // callout -> region
+  /** Optional: mean plant position per site in radar px; the UI falls back to built-in anchors. */
+  site_centres?: Partial<Record<"A" | "B", [number, number]>>;
 }
 
 export interface TeamSummary {
@@ -196,6 +198,48 @@ export interface Lineup {
   /** paste into the CS2 console on a practice server (sv_cheats 1) */
   practice_cmd: string;
   example: { demo_id: string; round_num: number; throw_tick: number };
+}
+
+/**
+ * <map>/lineup_index.json (playbook/site_index.py): lineup id -> the fields the tactics
+ * radar, recipe practice script and hub utility layer read, for every lineup that
+ * tactics.json or a team heatmap references. Replaces lineups.json on those pages.
+ */
+export interface LineupRef {
+  side: Side;
+  type: GrenadeType;
+  throw_place: string | null;
+  land_place: string | null;
+  n_throws: number;
+  /** radar px */
+  throw: [number, number];
+  land: [number, number];
+  /** setpos x y z + setang pitch yaw; tactics references only */
+  setpos?: [number, number, number, number, number];
+  name?: { en: string; zh: string } | { en?: string; zh?: string };
+}
+export type LineupIndex = Record<string, LineupRef>;
+
+/** A positional table: each row lists its values in `columns` order. */
+export interface IndexTable<Row extends unknown[]> { columns: string[]; rows: Row[] }
+type NamePair = [string | null, string | null] | null;
+/**
+ * data/search_index.json (playbook/site_index.py): everything the Ctrl+K palette searches.
+ * `map`, `team` and `event` cells are indexes into `maps`, `teams` and `events`.
+ */
+export interface SearchIndex {
+  schema_version: 1;
+  generated_at?: string | null;
+  maps: IndexTable<[map: string, display_name: string]>;
+  teams: IndexTable<[slug: string, team: string, maps: number[]]>;
+  events: string[];
+  matches: IndexTable<[team: number, map: number, demo_id: string, opponent: string | null, date: string | null,
+    date_precision: MatchDateInfo["date_precision"], event: number | null, hltv_match_id: number | null]>;
+  recipes: IndexTable<[id: string, map: number, site: "A" | "B",
+    spots: [type: GrenadeType, place: string | null, label: string | null, name_zh: string | null, name_en: string | null][]]>;
+  lineups: IndexTable<[id: string, map: number, side: Side, type: GrenadeType, throw_place: string | null,
+    land_place: string | null, n_throws: number, name: NamePair]>;
+  players: IndexTable<[steamid: string, name: string, teams: [map: number, team: string | null][]]>;
 }
 
 // ---------------------------------------------------------------------------- heatmaps

@@ -24,7 +24,7 @@
 .tactics-map-head button { flex: none; }
 .tactics-levels { margin-bottom: 8px; }
 .tactics-levels button:disabled { opacity: 0.4; cursor: default; }
-.radar.tactics-radar { width: min(100%, 760px, var(--tactics-raster-limit, 760px), max(1px, calc(100vh - var(--tactics-radar-top, 320px) - 24px))); height: auto; aspect-ratio: 1; border-radius: 12px; overflow: hidden; }
+.radar.tactics-radar { width: min(100%, 760px, var(--tactics-raster-limit, 760px), max(320px, calc(100vh - var(--tactics-radar-top, 320px) - 24px))); height: auto; aspect-ratio: 1; border-radius: 12px; overflow: hidden; }
 .tactics-radar image { opacity: 1; filter: contrast(1.1) brightness(1.15); }
 .tactics-radar a { cursor: pointer; }
 .tactics-radar a:hover, .tactics-radar a:focus-visible { outline: none; filter: brightness(1.3); }

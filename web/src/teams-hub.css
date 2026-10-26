@@ -296,7 +296,7 @@
 .hub-map-card strong { color: var(--rate-color); }
 .hub-map-badge { padding: 2px 8px; border-radius: var(--radius-pill); font-size: .72rem; background: #132b35; }
 .hub-map-badge.is-best { color: #e8b75a; }
-.hub-map-badge.is-weak { color: var(--negative); }
+.hub-map-badge.is-weak { color: var(--negative-text); }
 .hub-analysis-toolbar .hub-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .hub-player-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
 .hub-player-title .hub-sample-inline { font-size: .75rem; }
@@ -479,6 +479,12 @@
 .hub-page .hub-orbit[data-active] .hub-orbit-node:not([data-active="true"]) { --orbit-emphasis: .96; scale: calc(var(--orbit-depth, 1) * var(--orbit-emphasis)); opacity: .65; filter: none; }
 .hub-page .hub-orbit .hub-orbit-node[data-active="true"] { --orbit-emphasis: 1.08; scale: calc(var(--orbit-depth, 1) * var(--orbit-emphasis)); }
 .hub-page .hub-orbit .hub-orbit-node[data-empty="true"] { --orbit-emphasis: 1; scale: var(--orbit-depth, 1); }
+@media (min-width: 900px) {
+  /* A map without data takes neither hover/focus emphasis nor the .96 de-emphasis: it keeps
+     its depth scale, so a focused placeholder cannot grow over its neighbours or the core. */
+  .hub-page .hub-orbit .hub-orbit-node[data-empty="true"]:is(:hover, :focus-visible, [data-active="true"]),
+  .hub-page .hub-orbit[data-active] .hub-orbit-node[data-empty="true"] { --orbit-emphasis: 1; scale: var(--orbit-depth, 1); }
+}
 .hub-page .hub-orbit .hub-orbit-node > .map-landmark-art { z-index: 0; }
 .hub-page .hub-orbit .hub-orbit-node > .map-card-bg { opacity: .07; }
 .hub-page .hub-orbit .hub-orbit-node:has(.card-scenic-bg) > .map-landmark-art { visibility: hidden; }
@@ -562,6 +568,33 @@
   .hub-orbit .hub-team-head h2 { margin: 0; font-size: 34px; line-height: 40px; letter-spacing: .08em; }
   .hub-orbit .hub-orbit-hud { min-height: 0; font-size: 14px; line-height: 20px; }
 
+  /* Cards are drawn at --orbit-fit × (1 ± 5%) of their 196×252 layout box (about .55 at
+     1280×800). Size their text in layout px so it never renders below 11.5 screen px;
+     the data rows sit at the bottom and the photo's dark fade follows their height. */
+  .hub-page .hub-orbit .hub-orbit-node {
+    --card-text: max(12px, calc(11.5px / (var(--orbit-fit, 1) * .95)));
+    --card-ring: max(44px, calc(var(--card-text) * 2.4));
+    --card-text-block: calc(var(--card-text) * 3.7 + var(--card-ring) + 14px);
+    padding: 0 8px 6px; grid-template-rows: none; align-content: end;
+  }
+  .hub-page .hub-orbit .hub-orbit-node[data-empty="true"] { grid-template-rows: none; }
+  .hub-page .hub-orbit .hub-orbit-node .hub-map-name { font-size: max(16px, var(--card-text)); line-height: 1.2; }
+  .hub-page .hub-orbit .hub-orbit-node .hub-rate { width: var(--card-ring); height: var(--card-ring); }
+  .hub-page .hub-orbit .hub-orbit-node .hub-rate strong { font-size: max(20px, calc(var(--card-text) * 1.1)); }
+  .hub-page .hub-orbit .hub-orbit-node .hub-rate-label { font-size: var(--card-text); line-height: 1.2; }
+  .hub-page .hub-orbit .hub-orbit-node > small { font-size: var(--card-text); line-height: 1.25; gap: .3em; }
+  .hub-page .hub-orbit .hub-orbit-node .low-sample-chip { width: 1.25em; height: 1.25em; font-size: 1em; }
+  .hub-page .hub-orbit .hub-orbit-node .hub-map-badge { font-size: var(--card-text); line-height: 1.2; padding: .1em .45em; }
+  .hub-page .hub-orbit .hub-orbit-node .hub-orbit-empty { height: var(--card-ring); }
+  .hub-page .hub-orbit .hub-orbit-node:has(.card-scenic-bg)::before {
+    background: linear-gradient(180deg, transparent calc(100% - var(--card-text-block) - 16px), #080c10 calc(100% - var(--card-text-block) + 2px));
+  }
+
+  /* The team name stays on one line inside the 230px core reserved by the orbit fit:
+     TeamsHub scales its font down for long names (never breaking inside a word). */
+  .hub-orbit .hub-team-anchor { grid-template-columns: minmax(0, 1fr); }
+  .hub-orbit .hub-team-head h2 { white-space: nowrap; overflow-wrap: normal; word-break: keep-all; }
+  .hub-orbit .hub-team-head h2[data-fit="wrap"] { white-space: normal; text-wrap: balance; line-height: 1.1; }
 }
 
 .hub-page .hub-orbit[data-active] .hub-orbit-node:has(.card-scenic-bg):not([data-active="true"]) { opacity: 1; }
