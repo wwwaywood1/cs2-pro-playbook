@@ -475,7 +475,10 @@ interface Insight {
   value: number; // share for this team
   baseline?: number; // other teams on the map (compare facts)
   rounds: number;
-  z?: number; // two-proportion z score (compare facts, |z| >= 2)
+  matches?: number; // matches behind `rounds` (compare facts, >= 5)
+  z?: number; // match-clustered z score (compare facts)
+  p?: number; // two-sided p value of z (compare facts)
+  q?: number; // Benjamini–Hochberg q over all team × fact tests on the map (compare facts, <= 0.1)
   direction?: "more" | "less";
   text: { zh: string; en: string }; // template sentence; never edit numbers by hand
   recipe_id?: string;
