@@ -2,46 +2,53 @@
  "map": "de_ancient",
  "teams": [
   {
-   "slug": "b8",
-   "team": "B8",
-   "n_matches": 8,
+   "slug": "astralis",
+   "team": "Astralis",
+   "n_matches": 4,
    "facts": [
     {
-     "id": "t_tempo_fast",
+     "id": "t_main_lurker",
      "side": "T",
-     "zh": "快攻占 14%，低于其他队伍的 28%（79 个枪局）",
-     "en": "fast hits: 14% vs 28% for other teams (79 gun rounds)"
-    },
+     "zh": "jabbi 是最常摸边的人（6 次进攻时在另一侧或远离进攻点）",
+     "en": "jabbi is the usual lurker (6 hits with him on the other side or far away)"
+    }
+   ]
+  },
+  {
+   "slug": "aurora",
+   "team": "Aurora",
+   "n_matches": 2,
+   "facts": [
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：B 点 一道烟 + 二道烟 + B点柱子火（7 次，赢 7 次）",
-     "en": "Go-to execute: B with B short smoke + B long smoke + B pillar molotov (7 times, won 7)"
+     "zh": "最常用的爆弹：B 点 一道烟 + 二道烟 + B点柱子火（12 次，赢 8 次）",
+     "en": "Go-to execute: B with B short smoke + B long smoke + B pillar molotov (12 times, won 8)"
+    },
+    {
+     "id": "t_main_lurker",
+     "side": "T",
+     "zh": "soulfly 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
+     "en": "soulfly is the usual lurker (4 hits with him on the other side or far away)"
     }
    ]
   },
   {
    "slug": "betboom",
    "team": "BETBOOM",
-   "n_matches": 3,
+   "n_matches": 5,
    "facts": [
-    {
-     "id": "t_tempo_fast",
-     "side": "T",
-     "zh": "快攻占 50%，高于其他队伍的 26%（28 个枪局）",
-     "en": "fast hits: 50% vs 26% for other teams (28 gun rounds)"
-    },
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：A 点 警家烟（A点） + 甜甜圈烟（A点出口）（4 次，赢 4 次）",
-     "en": "Go-to execute: A with CT smoke (A) + Donut smoke (A exit) (4 times, won 4)"
+     "zh": "最常用的爆弹：A 点 警家烟（A点） + 甜甜圈烟（A点出口） + A包点火（警家侧箱子）（8 次，赢 5 次）",
+     "en": "Go-to execute: A with CT smoke (A) + Donut smoke (A exit) + A site molotov (CT-side boxes) (8 times, won 5)"
     },
     {
      "id": "t_main_lurker",
      "side": "T",
-     "zh": "Boombl4 是最常摸边的人（5 次进攻时在另一侧或远离进攻点）",
-     "en": "Boombl4 is the usual lurker (5 hits with him on the other side or far away)"
+     "zh": "Boombl4 是最常摸边的人（8 次进攻时在另一侧或远离进攻点）",
+     "en": "Boombl4 is the usual lurker (8 hits with him on the other side or far away)"
     }
    ]
   },
@@ -51,12 +58,6 @@
    "n_matches": 14,
    "facts": [
     {
-     "id": "t_tempo_late",
-     "side": "T",
-     "zh": "拖后进攻占 35%，高于其他队伍的 25%（140 个枪局）",
-     "en": "late hits: 35% vs 25% for other teams (140 gun rounds)"
-    },
-    {
      "id": "t_main_lurker",
      "side": "T",
      "zh": "NiKo 是最常摸边的人（14 次进攻时在另一侧或远离进攻点）",
@@ -65,104 +66,91 @@
    ]
   },
   {
+   "slug": "furia",
+   "team": "FURIA",
+   "n_matches": 13,
+   "facts": [
+    {
+     "id": "t_main_lurker",
+     "side": "T",
+     "zh": "yuurih 是最常摸边的人（17 次进攻时在另一侧或远离进攻点）",
+     "en": "yuurih is the usual lurker (17 hits with him on the other side or far away)"
+    }
+   ]
+  },
+  {
    "slug": "fut-esports",
    "team": "FUT Esports",
-   "n_matches": 4,
+   "n_matches": 7,
    "facts": [
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：B 点 一道烟 + 二道烟 + B点柱子火（7 次，赢 6 次）",
-     "en": "Go-to execute: B with B short smoke + B long smoke + B pillar molotov (7 times, won 6)"
+     "zh": "最常用的爆弹：B 点 一道烟 + 二道烟 + B点柱子火（12 次，赢 10 次）",
+     "en": "Go-to execute: B with B short smoke + B long smoke + B pillar molotov (12 times, won 10)"
     },
     {
      "id": "t_main_lurker",
      "side": "T",
-     "zh": "Krabeni 是最常摸边的人（5 次进攻时在另一侧或远离进攻点）",
-     "en": "Krabeni is the usual lurker (5 hits with him on the other side or far away)"
+     "zh": "Krabeni 是最常摸边的人（9 次进攻时在另一侧或远离进攻点）",
+     "en": "Krabeni is the usual lurker (9 hits with him on the other side or far away)"
     }
    ]
   },
   {
    "slug": "g2",
    "team": "G2",
-   "n_matches": 3,
+   "n_matches": 7,
    "facts": [
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：B 点 一道烟 + 二道烟 + B点柱子火（5 次，赢 0 次）",
-     "en": "Go-to execute: B with B short smoke + B long smoke + B pillar molotov (5 times, won 0)"
+     "zh": "最常用的爆弹：B 点 一道烟 + 二道烟 + B点柱子火（13 次，赢 5 次）",
+     "en": "Go-to execute: B with B short smoke + B long smoke + B pillar molotov (13 times, won 5)"
     }
    ]
   },
   {
    "slug": "gamerlegion",
    "team": "GamerLegion",
-   "n_matches": 3,
+   "n_matches": 4,
    "facts": [
+    {
+     "id": "t_signature_recipe",
+     "side": "T",
+     "zh": "最常用的爆弹：A 点 警家烟（A点） + A后点火（靠墓地）（5 次，赢 3 次）",
+     "en": "Go-to execute: A with CT smoke (A) + Back A molotov (Temple side) (5 times, won 3)"
+    },
     {
      "id": "t_main_lurker",
      "side": "T",
-     "zh": "REZ 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
-     "en": "REZ is the usual lurker (4 hits with him on the other side or far away)"
-    },
-    {
-     "id": "ct_stack",
-     "side": "CT",
-     "zh": "堆点防守的回合占 30%，高于其他队伍的 7%（23 个枪局）",
-     "en": "Stacked rounds: 30% vs 7% for other teams (23 gun rounds)"
+     "zh": "REZ 是最常摸边的人（7 次进攻时在另一侧或远离进攻点）",
+     "en": "REZ is the usual lurker (7 hits with him on the other side or far away)"
     },
     {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A2 B3（开局 20 秒，26% 的枪局，胜率 50%）",
-     "en": "Default CT setup A2 B3 at 20 s (26% of gun rounds, won 50%)"
+     "zh": "CT 默认站位 A2 B3（开局 20 秒，26% 的枪局，胜率 55%）",
+     "en": "Default CT setup A2 B3 at 20 s (26% of gun rounds, won 55%)"
     }
    ]
   },
   {
    "slug": "legacy",
    "team": "Legacy",
-   "n_matches": 5,
-   "facts": [
-    {
-     "id": "t_main_lurker",
-     "side": "T",
-     "zh": "latto 是最常摸边的人（9 次进攻时在另一侧或远离进攻点）",
-     "en": "latto is the usual lurker (9 hits with him on the other side or far away)"
-    }
-   ]
-  },
-  {
-   "slug": "lgcy",
-   "team": "LGCY",
-   "n_matches": 3,
-   "facts": [
-    {
-     "id": "ct_default_setup",
-     "side": "CT",
-     "zh": "CT 默认站位 A2 B3（开局 20 秒，29% 的枪局，胜率 70%）",
-     "en": "Default CT setup A2 B3 at 20 s (29% of gun rounds, won 70%)"
-    }
-   ]
-  },
-  {
-   "slug": "lvg",
-   "team": "LVG",
-   "n_matches": 3,
+   "n_matches": 8,
    "facts": [
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：B 点 一道烟 + 二道烟 + B点柱子火（4 次，赢 2 次）",
-     "en": "Go-to execute: B with B short smoke + B long smoke + B pillar molotov (4 times, won 2)"
+     "zh": "最常用的爆弹：B 点 一道烟 + 二道烟 + B点柱子火（8 次，赢 7 次）",
+     "en": "Go-to execute: B with B short smoke + B long smoke + B pillar molotov (8 times, won 7)"
     },
     {
-     "id": "ct_stack",
-     "side": "CT",
-     "zh": "堆点防守的回合占 25%，高于其他队伍的 7%（16 个枪局）",
-     "en": "Stacked rounds: 25% vs 7% for other teams (16 gun rounds)"
+     "id": "t_main_lurker",
+     "side": "T",
+     "zh": "latto 是最常摸边的人（13 次进攻时在另一侧或远离进攻点）",
+     "en": "latto is the usual lurker (13 hits with him on the other side or far away)"
     }
    ]
   },
@@ -174,14 +162,8 @@
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：A 点 警家烟（A点） + A后点火（靠墓地）（6 次，赢 2 次）",
-     "en": "Go-to execute: A with CT smoke (A) + Back A molotov (Temple side) (6 times, won 2)"
-    },
-    {
-     "id": "ct_stack",
-     "side": "CT",
-     "zh": "堆点防守的回合占 26%，高于其他队伍的 7%（31 个枪局）",
-     "en": "Stacked rounds: 26% vs 7% for other teams (31 gun rounds)"
+     "zh": "最常用的爆弹：B 点 一道烟 + 二道烟 + B点柱子火（6 次，赢 3 次）",
+     "en": "Go-to execute: B with B short smoke + B long smoke + B pillar molotov (6 times, won 3)"
     }
    ]
   },
@@ -191,22 +173,10 @@
    "n_matches": 3,
    "facts": [
     {
-     "id": "t_site_A",
-     "side": "T",
-     "zh": "进攻 A 点的回合占 64%，高于其他队伍的 43%（25 个枪局）",
-     "en": "Rounds going A: 64% vs 43% for other teams (25 gun rounds)"
-    },
-    {
-     "id": "t_site_B",
-     "side": "T",
-     "zh": "进攻 B 点的回合占 36%，低于其他队伍的 57%（25 个枪局）",
-     "en": "Rounds going B: 36% vs 57% for other teams (25 gun rounds)"
-    },
-    {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：A 点 警家烟（A点） + VIP烟（4 次，赢 1 次）",
-     "en": "Go-to execute: A with CT smoke (A) + Red room smoke (4 times, won 1)"
+     "zh": "最常用的爆弹：A 点 VIP烟 + 警家烟（A点） + 甜甜圈烟（A点出口）（4 次，赢 1 次）",
+     "en": "Go-to execute: A with Red room smoke + CT smoke (A) + Donut smoke (A exit) (4 times, won 1)"
     },
     {
      "id": "t_main_lurker",
@@ -228,16 +198,10 @@
    "n_matches": 4,
    "facts": [
     {
-     "id": "t_lurk",
-     "side": "T",
-     "zh": "有人摸边的进攻占 58%，高于其他队伍的 37%（26 个枪局）",
-     "en": "Hits with a lurker: 58% vs 37% for other teams (26 gun rounds)"
-    },
-    {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：A 点 警家烟（A点） + A后点火（靠墓地）（6 次，赢 3 次）",
-     "en": "Go-to execute: A with CT smoke (A) + Back A molotov (Temple side) (6 times, won 3)"
+     "zh": "最常用的爆弹：A 点 警家烟（A点） + A后点火（靠墓地）（7 次，赢 3 次）",
+     "en": "Go-to execute: A with CT smoke (A) + Back A molotov (Temple side) (7 times, won 3)"
     },
     {
      "id": "t_main_lurker",
@@ -248,47 +212,72 @@
    ]
   },
   {
-   "slug": "ninjas-in-pyjamas",
-   "team": "Ninjas in Pyjamas",
+   "slug": "mouz",
+   "team": "MOUZ",
+   "n_matches": 19,
+   "facts": [
+    {
+     "id": "t_signature_recipe",
+     "side": "T",
+     "zh": "最常用的爆弹：B 点 一道烟 + 二道烟 + B点柱子火（14 次，赢 9 次）",
+     "en": "Go-to execute: B with B short smoke + B long smoke + B pillar molotov (14 times, won 9)"
+    },
+    {
+     "id": "t_main_lurker",
+     "side": "T",
+     "zh": "Spinx 是最常摸边的人（14 次进攻时在另一侧或远离进攻点）",
+     "en": "Spinx is the usual lurker (14 hits with him on the other side or far away)"
+    }
+   ]
+  },
+  {
+   "slug": "natus-vincere",
+   "team": "Natus Vincere",
    "n_matches": 3,
    "facts": [
     {
-     "id": "t_split",
+     "id": "t_main_lurker",
      "side": "T",
-     "zh": "分兵进点占 73%，高于其他队伍的 44%（15 个枪局）",
-     "en": "Split hits: 73% vs 44% for other teams (15 gun rounds)"
+     "zh": "makazze 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
+     "en": "makazze is the usual lurker (4 hits with him on the other side or far away)"
+    },
+    {
+     "id": "ct_default_setup",
+     "side": "CT",
+     "zh": "CT 默认站位 A1 M1 B3（开局 20 秒，30% 的枪局，胜率 80%）",
+     "en": "Default CT setup A1 M1 B3 at 20 s (30% of gun rounds, won 80%)"
     }
    ]
   },
   {
    "slug": "nrg",
    "team": "NRG",
-   "n_matches": 2,
+   "n_matches": 3,
    "facts": [
     {
      "id": "t_signature_recipe",
      "side": "T",
      "zh": "最常用的爆弹：B 点 二道烟 + 一道火（深）（4 次，赢 3 次）",
      "en": "Go-to execute: B with B long smoke + B short molotov (deep) (4 times, won 3)"
-    }
-   ]
-  },
-  {
-   "slug": "parivision",
-   "team": "PARIVISION",
-   "n_matches": 3,
-   "facts": [
-    {
-     "id": "t_signature_recipe",
-     "side": "T",
-     "zh": "最常用的爆弹：A 点 警家烟（A点） + A后点火（靠墓地）（4 次，赢 4 次）",
-     "en": "Go-to execute: A with CT smoke (A) + Back A molotov (Temple side) (4 times, won 4)"
     },
     {
      "id": "t_main_lurker",
      "side": "T",
-     "zh": "xiELO 是最常摸边的人（6 次进攻时在另一侧或远离进攻点）",
-     "en": "xiELO is the usual lurker (6 hits with him on the other side or far away)"
+     "zh": "br0 是最常摸边的人（5 次进攻时在另一侧或远离进攻点）",
+     "en": "br0 is the usual lurker (5 hits with him on the other side or far away)"
+    }
+   ]
+  },
+  {
+   "slug": "og",
+   "team": "OG",
+   "n_matches": 1,
+   "facts": [
+    {
+     "id": "ct_default_setup",
+     "side": "CT",
+     "zh": "CT 默认站位 A1 M1 B3（开局 20 秒，25% 的枪局，胜率 100%）",
+     "en": "Default CT setup A1 M1 B3 at 20 s (25% of gun rounds, won 100%)"
     }
    ]
   },
@@ -306,15 +295,28 @@
    ]
   },
   {
+   "slug": "spirit",
+   "team": "Spirit",
+   "n_matches": 19,
+   "facts": [
+    {
+     "id": "t_main_lurker",
+     "side": "T",
+     "zh": "magixx 是最常摸边的人（25 次进攻时在另一侧或远离进攻点）",
+     "en": "magixx is the usual lurker (25 hits with him on the other side or far away)"
+    }
+   ]
+  },
+  {
    "slug": "the-mongolz",
    "team": "The MongolZ",
-   "n_matches": 4,
+   "n_matches": 6,
    "facts": [
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：B 点 一道烟 + 二道烟 + B点柱子火（5 次，赢 4 次）",
-     "en": "Go-to execute: B with B short smoke + B long smoke + B pillar molotov (5 times, won 4)"
+     "zh": "最常用的爆弹：B 点 一道烟 + 二道烟 + B点柱子火（8 次，赢 6 次）",
+     "en": "Go-to execute: B with B short smoke + B long smoke + B pillar molotov (8 times, won 6)"
     }
    ]
   },
@@ -326,8 +328,27 @@
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：B 点 一道烟 + 二道烟 + B点柱子火（8 次，赢 5 次）",
-     "en": "Go-to execute: B with B short smoke + B long smoke + B pillar molotov (8 times, won 5)"
+     "zh": "最常用的爆弹：B 点 一道烟 + 二道烟 + B点柱子火（9 次，赢 6 次）",
+     "en": "Go-to execute: B with B short smoke + B long smoke + B pillar molotov (9 times, won 6)"
+    }
+   ]
+  },
+  {
+   "slug": "vitality",
+   "team": "Vitality",
+   "n_matches": 2,
+   "facts": [
+    {
+     "id": "t_signature_recipe",
+     "side": "T",
+     "zh": "最常用的爆弹：A 点 警家烟（A点） + 甜甜圈烟（A点出口） + A包点火（警家侧箱子）（4 次，赢 3 次）",
+     "en": "Go-to execute: A with CT smoke (A) + Donut smoke (A exit) + A site molotov (CT-side boxes) (4 times, won 3)"
+    },
+    {
+     "id": "t_main_lurker",
+     "side": "T",
+     "zh": "ropz 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
+     "en": "ropz is the usual lurker (4 hits with him on the other side or far away)"
     }
    ]
   }

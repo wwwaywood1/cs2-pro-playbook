@@ -1,0 +1,60 @@
+{
+ "aurora": {
+  "zh": "Aurora 开局 20 秒的 CT 默认站位为 A1 M2 B2，占 30% 的枪局，胜率 56%。",
+  "en": "Aurora's default CT setup at 20 s is A1 M2 B2, used in 30% of gun rounds with a 56% win rate.",
+  "facts": [
+   "ct_default_setup"
+  ],
+  "fingerprint": "bd47e7a24c18"
+ },
+ "betboom": {
+  "zh": "BETBOOM 开局 20 秒的 CT 默认站位为 A2 M1 B2，占 27% 的枪局，胜率 67%。",
+  "en": "BETBOOM's default CT setup at 20 s is A2 M1 B2, used in 27% of gun rounds with a 67% win rate.",
+  "facts": [
+   "ct_default_setup"
+  ],
+  "fingerprint": "c0f1c37c0404"
+ },
+ "furia": {
+  "zh": "FURIA 最常用的爆弹是 B 点树房烟，26 次赢 12 次。",
+  "en": "FURIA's go-to execute is B with Tree room smoke, used 26 times with 12 wins.",
+  "facts": [
+   "t_signature_recipe"
+  ],
+  "fingerprint": "bd71629f1a34"
+ },
+ "m80": {
+  "zh": "M80 最常用的爆弹是 B 点树房烟，5 次赢 3 次。",
+  "en": "M80's go-to execute is B with Tree room smoke, used 5 times with 3 wins.",
+  "facts": [
+   "t_signature_recipe"
+  ],
+  "fingerprint": "47a5bfc89e37"
+ },
+ "mouz": {
+  "zh": "MOUZ 最常用的爆弹是 B 点树房烟，5 次赢 3 次。最常摸边的人是 PR，6 次进攻时他在另一侧或远离进攻点。",
+  "en": "MOUZ's go-to execute is B with Tree room smoke, used 5 times with 3 wins. Their usual lurker is PR, who was on the other side or far from the hit in 6 attacks.",
+  "facts": [
+   "t_signature_recipe",
+   "t_main_lurker"
+  ],
+  "fingerprint": "2758c85f084b"
+ },
+ "spirit": {
+  "zh": "Spirit 最常用的爆弹是 B 点树房烟，15 次赢 11 次。",
+  "en": "Spirit's go-to execute is B with Tree room smoke, used 15 times with 11 wins.",
+  "facts": [
+   "t_signature_recipe"
+  ],
+  "fingerprint": "5cf036b197e1"
+ },
+ "vitality": {
+  "zh": "Vitality 最常用的爆弹是 B 点树房烟，17 次赢 14 次。最常摸边的人是 ropz，8 次进攻时他在另一侧或远离进攻点。",
+  "en": "Vitality's go-to execute is B with Tree room smoke, used 17 times with 14 wins. Their usual lurker is ropz, who was on the other side or far from the hit in 8 attacks.",
+  "facts": [
+   "t_signature_recipe",
+   "t_main_lurker"
+  ],
+  "fingerprint": "ddfbf016dcea"
+ }
+}

@@ -1,4 +1,21 @@
 {
+ "astralis": {
+  "zh": "Astralis 最常摸边的人是 jabbi，6 次进攻时他在另一侧或远离进攻点。",
+  "en": "Astralis' usual lurker is jabbi, on the other side or far from the hit in 6 attacks.",
+  "facts": [
+   "t_main_lurker"
+  ],
+  "fingerprint": "a9bb22077744"
+ },
+ "aurora": {
+  "zh": "Aurora 最常用的爆弹是 B 点一道烟、二道烟加 B点柱子火，12 次赢 8 次；最常摸边的人是 soulfly，4 次进攻时他在另一侧或远离进攻点。",
+  "en": "Aurora's go-to execute is B with B short smoke, B long smoke and B pillar molotov, used 12 times with 8 wins, and their usual lurker is soulfly, on the other side or far from the hit in 4 attacks.",
+  "facts": [
+   "t_signature_recipe",
+   "t_main_lurker"
+  ],
+  "fingerprint": "d8804219bab2"
+ },
  "b8": {
   "zh": "T 方快攻占 14%，低于其他队伍的 28%。T 方最常用一道烟、二道烟和 B点柱子火爆弹 B 点，7 次赢下 7 次。",
   "en": "Fast hits account for 14% of T gun rounds versus 28% for other teams. The go-to B execute uses B short smoke, B long smoke and a B pillar molotov, winning 7 of 7 attempts.",
@@ -9,57 +26,65 @@
   "fingerprint": "aef6b28ff32f"
  },
  "betboom": {
-  "zh": "BETBOOM 的快攻占 50%，高于其他队伍的 26%（28 个枪局）。最常用的爆弹是 A 点警家烟加甜甜圈烟，4 次全赢；Boombl4 是最常摸边的人（5 次）。",
-  "en": "BETBOOM hit fast on 50% of their T rounds vs 26% for other teams (28 gun rounds). The go-to execute is A with a CT smoke plus a Donut smoke, 4 times for 4 wins, and Boombl4 is the usual lurker (5).",
+  "zh": "BETBOOM 最常用的爆弹是 A 点警家烟、甜甜圈烟加 A包点火（警家侧箱子），8 次赢 5 次；最常摸边的人是 Boombl4，8 次进攻时他在另一侧或远离进攻点。",
+  "en": "BETBOOM's go-to execute is A with CT smoke, Donut smoke and A site molotov (CT-side boxes), used 8 times with 5 wins, and their usual lurker is Boombl4, on the other side or far from the hit in 8 attacks.",
   "facts": [
-   "t_tempo_fast",
    "t_signature_recipe",
    "t_main_lurker"
   ],
-  "fingerprint": "52ab68804e4d"
+  "fingerprint": "cc3b067850c3"
  },
  "falcons": {
-  "zh": "Falcons 的拖后进攻占 35%，高于其他队伍的 25%（140 个枪局），节奏偏慢。NiKo 是最常摸边的人，14 次进攻时留在另一侧或远离进攻点。",
-  "en": "Falcons go late on 35% of their T rounds against 25% for other teams (140 gun rounds). NiKo is the usual lurker, 14 times on the other side or far from the hit.",
+  "zh": "Falcons 最常摸边的人是 NiKo，14 次进攻时他在另一侧或远离进攻点。",
+  "en": "Falcons' usual lurker is NiKo, on the other side or far from the hit in 14 attacks.",
   "facts": [
-   "t_tempo_late",
    "t_main_lurker"
   ],
-  "fingerprint": "6a725f8b4fd9"
+  "fingerprint": "c591de7e3e89"
+ },
+ "furia": {
+  "zh": "FURIA 最常摸边的人是 yuurih，17 次进攻时他在另一侧或远离进攻点。",
+  "en": "FURIA's usual lurker is yuurih, on the other side or far from the hit in 17 attacks.",
+  "facts": [
+   "t_main_lurker"
+  ],
+  "fingerprint": "fbbff9768995"
  },
  "fut-esports": {
-  "zh": "T 方最常用一道烟、二道烟和 B点柱子火爆弹 B 点，7 次赢下 6 次。T 方最常由 Krabeni 摸边，5 次进攻时他在另一侧或远离进攻点。",
-  "en": "The go-to B execute uses B short smoke, B long smoke and a B pillar molotov, winning 6 of 7 attempts. Krabeni is the usual T lurker, on the other side or far from the hit on 5 attacks.",
+  "zh": "FUT Esports 最常用的爆弹是 B 点一道烟、二道烟加 B点柱子火，12 次赢 10 次；最常摸边的人是 Krabeni，9 次进攻时他在另一侧或远离进攻点。",
+  "en": "FUT Esports' go-to execute is B with B short smoke, B long smoke and B pillar molotov, used 12 times with 10 wins, and their usual lurker is Krabeni, on the other side or far from the hit in 9 attacks.",
   "facts": [
    "t_signature_recipe",
    "t_main_lurker"
   ],
-  "fingerprint": "597c5b593861"
+  "fingerprint": "3a5fe0649446"
  },
  "g2": {
-  "zh": "G2 最常用的爆弹是 B 点的一道烟加二道烟再配柱子火，5 次全败。",
-  "en": "G2's go-to execute is B with a short smoke, a long smoke and a pillar molotov: 5 times, 0 rounds won.",
+  "zh": "G2 最常用的爆弹是 B 点一道烟、二道烟加 B点柱子火，13 次赢 5 次。",
+  "en": "G2's go-to execute is B with B short smoke, B long smoke and B pillar molotov, used 13 times with 5 wins.",
   "facts": [
    "t_signature_recipe"
   ],
-  "fingerprint": "085c71d4560f"
+  "fingerprint": "a71b252cecc6"
  },
  "gamerlegion": {
-  "zh": "GamerLegion 的 CT 方堆点防守占 30%，高于其他队伍的 7%。默认站位 A2 B3 占 26% 的枪局，胜率 50%，更常集中人手守点。",
-  "en": "GamerLegion's CT side stacks in 30% of rounds versus the other teams' 7%, more often concentrating defenders at a site. Its default setup A2 B3 covers 26% of gun rounds with a 50% win rate.",
+  "zh": "GamerLegion 最常用的爆弹是 A 点警家烟加 A后点火（靠墓地），5 次赢 3 次；最常摸边的人是 REZ（7 次进攻时在另一侧或远离进攻点）。CT 默认站位是 A2 B3（开局 20 秒），占 26% 的枪局，胜率 55%。",
+  "en": "GamerLegion's go-to execute is A with CT smoke and Back A molotov (Temple side), used 5 times with 3 wins, and their usual lurker is REZ (on the other side or far from the hit in 7 attacks). Their default CT setup at 20 s is A2 B3, used in 26% of gun rounds with a 55% win rate.",
   "facts": [
-   "ct_stack",
+   "t_signature_recipe",
+   "t_main_lurker",
    "ct_default_setup"
   ],
-  "fingerprint": "09109740ba02"
+  "fingerprint": "8e4d8a5c3e09"
  },
  "legacy": {
-  "zh": "Legacy 的进攻里 latto 是最常摸边的人，9 次进攻时他在另一侧或远离进攻点。",
-  "en": "Legacy's usual lurker is latto, 9 times on the other side or far from the hit.",
+  "zh": "Legacy 最常用的爆弹是 B 点一道烟、二道烟加 B点柱子火，8 次赢 7 次；最常摸边的人是 latto，13 次进攻时他在另一侧或远离进攻点。",
+  "en": "Legacy's go-to execute is B with B short smoke, B long smoke and B pillar molotov, used 8 times with 7 wins, and their usual lurker is latto, on the other side or far from the hit in 13 attacks.",
   "facts": [
+   "t_signature_recipe",
    "t_main_lurker"
   ],
-  "fingerprint": "c3847346d01f"
+  "fingerprint": "d1a1a62a29ec"
  },
  "lgcy": {
   "zh": "T 方最常用一道烟、二道烟和 B点柱子火爆弹 B 点，5 次赢下 5 次。开局 20 秒的 CT 默认站位为 A2 B3，占 31% 的枪局，胜率 57%。",
@@ -80,35 +105,49 @@
   "fingerprint": "5091c11e7ccc"
  },
  "lynn-vision": {
-  "zh": "Lynn Vision 最常用的爆弹是 A 点警家烟加靠墓地一侧的 A 后点火，6 次只赢 2 次。防守端他们有 26% 的枪局选择堆点，其他队伍只有 7%（31 个枪局）。",
-  "en": "Lynn Vision's go-to execute is A with a CT smoke and a Back A molotov from the Temple side, 6 times for 2 wins. On CT they stack 26% of rounds against 7% for other teams (31 gun rounds).",
+  "zh": "Lynn Vision 最常用的爆弹是 B 点一道烟、二道烟加 B点柱子火，6 次赢 3 次。",
+  "en": "Lynn Vision's go-to execute is B with B short smoke, B long smoke and B pillar molotov, used 6 times with 3 wins.",
   "facts": [
-   "t_signature_recipe",
-   "ct_stack"
+   "t_signature_recipe"
   ],
-  "fingerprint": "353ea879e18a"
+  "fingerprint": "198d24d0f531"
  },
  "m80": {
-  "zh": "M80 进攻 A 点占 64%，B 点 36%（25 个枪局），最常用的爆弹是 A 点警家烟加 VIP 烟，4 次只赢 1 次，Swisher 常摸边（4 次）。CT 默认站 A2 B3，占 25% 的枪局，胜率 88%。",
-  "en": "M80 send 64% of their T rounds to A and 36% to B (25 gun rounds), and their go-to execute is A with a CT smoke plus a Red room smoke, 4 times for 1 win, with Swisher often the lurker (4). On CT they default to A2 B3 at 20 s, 25% of gun rounds at 88%.",
+  "zh": "M80 最常用的爆弹是 A 点 VIP烟、警家烟加甜甜圈烟（4 次，赢 1 次），最常摸边的人是 Swisher（4 次进攻时在另一侧或远离进攻点）。CT 默认站位是 A2 B3（开局 20 秒），占 25% 的枪局，胜率 88%。",
+  "en": "M80's go-to execute is A with Red room smoke, CT smoke and Donut smoke (4 times, won 1), and their usual lurker is Swisher (on the other side or far from the hit in 4 attacks). Their default CT setup at 20 s is A2 B3, used in 25% of gun rounds with an 88% win rate.",
   "facts": [
-   "t_site_A",
-   "t_site_B",
    "t_signature_recipe",
    "t_main_lurker",
    "ct_default_setup"
   ],
-  "fingerprint": "1811db78737c"
+  "fingerprint": "a430fe259273"
  },
  "mibr": {
-  "zh": "MIBR 有 58% 的进攻带人摸边，高于其他队伍的 37%（26 个枪局）。最常用的爆弹是 A 点警家烟加靠墓地一侧的 A 后点火，6 次赢 3 次，LNZ 是最常摸边的人（4 次）。",
-  "en": "MIBR hit with a lurker on 58% of their T rounds against 37% for other teams (26 gun rounds). Their go-to execute is A with a CT smoke and a Back A molotov from the Temple side, 6 times for 3 wins, and LNZ is the usual lurker (4).",
+  "zh": "MIBR 最常用的爆弹是 A 点警家烟加 A后点火（靠墓地），7 次赢 3 次；最常摸边的人是 LNZ，4 次进攻时他在另一侧或远离进攻点。",
+  "en": "MIBR's go-to execute is A with CT smoke and Back A molotov (Temple side), used 7 times with 3 wins, and their usual lurker is LNZ, on the other side or far from the hit in 4 attacks.",
   "facts": [
-   "t_lurk",
    "t_signature_recipe",
    "t_main_lurker"
   ],
-  "fingerprint": "aee93ffdae00"
+  "fingerprint": "6ee9448b99c8"
+ },
+ "mouz": {
+  "zh": "MOUZ 最常用的爆弹是 B 点一道烟、二道烟加 B点柱子火，14 次赢 9 次；最常摸边的人是 Spinx，14 次进攻时他在另一侧或远离进攻点。",
+  "en": "MOUZ's go-to execute is B with B short smoke, B long smoke and B pillar molotov, used 14 times with 9 wins, and their usual lurker is Spinx, on the other side or far from the hit in 14 attacks.",
+  "facts": [
+   "t_signature_recipe",
+   "t_main_lurker"
+  ],
+  "fingerprint": "e8f2414fd498"
+ },
+ "natus-vincere": {
+  "zh": "Natus Vincere 最常摸边的人是 makazze，4 次进攻时他在另一侧或远离进攻点。CT 默认站位是 A1 M1 B3（开局 20 秒），占 30% 的枪局，胜率 80%。",
+  "en": "Natus Vincere's usual lurker is makazze, on the other side or far from the hit in 4 attacks. Their default CT setup at 20 s is A1 M1 B3, used in 30% of gun rounds with an 80% win rate.",
+  "facts": [
+   "t_main_lurker",
+   "ct_default_setup"
+  ],
+  "fingerprint": "02d0ae4bcbf6"
  },
  "ninjas-in-pyjamas": {
   "zh": "Ninjas in Pyjamas 的分兵进点占 73%，高于其他队伍的 44%（15 个枪局）。",
@@ -119,12 +158,21 @@
   "fingerprint": "caf5e0179887"
  },
  "nrg": {
-  "zh": "NRG 的 T 方最常用 B 点爆弹，以二道烟、一道火（深）配合，4 次进攻赢下 3 次。",
-  "en": "NRG's T side favors a B execute with B long smoke and B short molotov (deep), winning 3 of 4 attempts.",
+  "zh": "NRG 最常用的爆弹是 B 点二道烟加一道火（深），4 次赢 3 次；最常摸边的人是 br0，5 次进攻时他在另一侧或远离进攻点。",
+  "en": "NRG's go-to execute is B with B long smoke and B short molotov (deep), used 4 times with 3 wins, and their usual lurker is br0, on the other side or far from the hit in 5 attacks.",
   "facts": [
-   "t_signature_recipe"
+   "t_signature_recipe",
+   "t_main_lurker"
   ],
-  "fingerprint": "309c20057f26"
+  "fingerprint": "5f0880ab4964"
+ },
+ "og": {
+  "zh": "OG 的 CT 默认站位是 A1 M1 B3（开局 20 秒），占 25% 的枪局，胜率 100%。",
+  "en": "OG's default CT setup at 20 s is A1 M1 B3, used in 25% of gun rounds with a 100% win rate.",
+  "facts": [
+   "ct_default_setup"
+  ],
+  "fingerprint": "5036bb496dd2"
  },
  "parivision": {
   "zh": "PARIVISION 最常用的爆弹是 A 点警家烟加靠墓地一侧的 A 后点火，4 次全赢；xiELO 是最常摸边的人（6 次）。",
@@ -144,27 +192,36 @@
   "fingerprint": "2c6fce8d4f82"
  },
  "spirit": {
-  "zh": "T 方最常用警家烟和靠墓地的 A后点火爆弹 A 点，4 次赢下 2 次。",
-  "en": "The go-to A execute uses CT smoke and a Back A molotov on the Temple side, winning 2 of 4 attempts.",
+  "zh": "Spirit 最常摸边的人是 magixx，25 次进攻时他在另一侧或远离进攻点。",
+  "en": "Spirit's usual lurker is magixx, on the other side or far from the hit in 25 attacks.",
   "facts": [
-   "t_signature_recipe"
+   "t_main_lurker"
   ],
-  "fingerprint": "f8f28fbba815"
+  "fingerprint": "1817e876faee"
  },
  "the-mongolz": {
-  "zh": "The MongolZ 最常用的爆弹是 B 点的一道烟加二道烟再配柱子火，5 次赢下 4 次。",
-  "en": "The MongolZ's go-to execute is B with a short smoke, a long smoke and a pillar molotov, 5 times for 4 wins.",
+  "zh": "The MongolZ 最常用的爆弹是 B 点一道烟、二道烟加 B点柱子火，8 次赢 6 次。",
+  "en": "The MongolZ's go-to execute is B with B short smoke, B long smoke and B pillar molotov, used 8 times with 6 wins.",
   "facts": [
    "t_signature_recipe"
   ],
-  "fingerprint": "83e63b0e6b1d"
+  "fingerprint": "6d373131a6c6"
  },
  "tyloo": {
-  "zh": "T 方最常用一道烟、二道烟和 B点柱子火爆弹 B 点，8 次赢下 5 次。",
-  "en": "The go-to B execute uses B short smoke, B long smoke and a B pillar molotov, winning 5 of 8 attempts.",
+  "zh": "TYLOO 最常用的爆弹是 B 点一道烟、二道烟加 B点柱子火，9 次赢 6 次。",
+  "en": "TYLOO's go-to execute is B with B short smoke, B long smoke and B pillar molotov, used 9 times with 6 wins.",
   "facts": [
    "t_signature_recipe"
   ],
-  "fingerprint": "4c248eef7f33"
+  "fingerprint": "c29c189e1b37"
+ },
+ "vitality": {
+  "zh": "Vitality 最常用的爆弹是 A 点警家烟、甜甜圈烟加 A包点火（警家侧箱子），4 次赢 3 次；最常摸边的人是 ropz，4 次进攻时他在另一侧或远离进攻点。",
+  "en": "Vitality's go-to execute is A with CT smoke, Donut smoke and A site molotov (CT-side boxes), used 4 times with 3 wins, and their usual lurker is ropz, on the other side or far from the hit in 4 attacks.",
+  "facts": [
+   "t_signature_recipe",
+   "t_main_lurker"
+  ],
+  "fingerprint": "424f638a08a2"
  }
 }

@@ -4,154 +4,116 @@
   {
    "slug": "9z",
    "team": "9z",
-   "n_matches": 6,
+   "n_matches": 7,
    "facts": [
-    {
-     "id": "t_tempo_late",
-     "side": "T",
-     "zh": "拖后进攻占 11%，低于其他队伍的 26%（45 个枪局）",
-     "en": "late hits: 11% vs 26% for other teams (45 gun rounds)"
-    },
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯火（5 次，赢 1 次）",
-     "en": "Go-to execute: A with Jungle smoke + Stairs molotov (5 times, won 1)"
+     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯火（7 次，赢 3 次）",
+     "en": "Go-to execute: A with Jungle smoke + Stairs molotov (7 times, won 3)"
     }
    ]
   },
   {
    "slug": "b8",
    "team": "B8",
-   "n_matches": 8,
+   "n_matches": 12,
    "facts": [
-    {
-     "id": "t_fake",
-     "side": "T",
-     "zh": "先假打再转点占 2%，低于其他队伍的 16%（40 个枪局）",
-     "en": "Fakes before the hit: 2% vs 16% for other teams (40 gun rounds)"
-    },
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯火（7 次，赢 2 次）",
-     "en": "Go-to execute: A with Jungle smoke + Stairs molotov (7 times, won 2)"
+     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯火（12 次，赢 4 次）",
+     "en": "Go-to execute: A with Jungle smoke + Stairs molotov (12 times, won 4)"
     }
    ]
   },
   {
    "slug": "betboom",
    "team": "BETBOOM",
-   "n_matches": 5,
+   "n_matches": 8,
    "facts": [
     {
-     "id": "t_fake",
+     "id": "t_signature_recipe",
      "side": "T",
-     "zh": "先假打再转点占 33%，高于其他队伍的 15%（24 个枪局）",
-     "en": "Fakes before the hit: 33% vs 15% for other teams (24 gun rounds)"
+     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯烟 + A二楼脚手架处的火（6 次，赢 2 次）",
+     "en": "Go-to execute: A with Jungle smoke + Stairs smoke + Molotov at Palace scaffolding (6 times, won 2)"
     },
     {
      "id": "t_main_lurker",
      "side": "T",
-     "zh": "Boombl4 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
-     "en": "Boombl4 is the usual lurker (4 hits with him on the other side or far away)"
+     "zh": "Boombl4 是最常摸边的人（7 次进攻时在另一侧或远离进攻点）",
+     "en": "Boombl4 is the usual lurker (7 hits with him on the other side or far away)"
     }
    ]
   },
   {
-   "slug": "big",
-   "team": "BIG",
-   "n_matches": 3,
+   "slug": "furia",
+   "team": "FURIA",
+   "n_matches": 45,
    "facts": [
     {
-     "id": "t_signature_recipe",
+     "id": "t_lurk",
      "side": "T",
-     "zh": "最常用的爆弹：A 点 楼梯烟 + 丛林烟 + 警家烟（警亭） + A二楼脚手架处的火（4 次，赢 1 次）",
-     "en": "Go-to execute: A with Stairs smoke + Jungle smoke + CT smoke (Ticket) + Molotov at Palace scaffolding (4 times, won 1)"
+     "zh": "有人摸边的进攻占 41%，高于其他队伍的 25%（274 个枪局）",
+     "en": "Hits with a lurker: 41% vs 25% for other teams (274 gun rounds)"
     }
    ]
   },
   {
-   "slug": "falcons",
-   "team": "Falcons",
-   "n_matches": 15,
+   "slug": "fut-esports",
+   "team": "FUT Esports",
+   "n_matches": 9,
    "facts": [
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：A 点 楼梯烟 + 丛林烟 + 警家烟（警亭） + A二楼脚手架处的火（14 次，赢 11 次）",
-     "en": "Go-to execute: A with Stairs smoke + Jungle smoke + CT smoke (Ticket) + Molotov at Palace scaffolding (14 times, won 11)"
+     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯火（9 次，赢 2 次）",
+     "en": "Go-to execute: A with Jungle smoke + Stairs molotov (9 times, won 2)"
+    },
+    {
+     "id": "t_main_lurker",
+     "side": "T",
+     "zh": "Krabeni 是最常摸边的人（8 次进攻时在另一侧或远离进攻点）",
+     "en": "Krabeni is the usual lurker (8 hits with him on the other side or far away)"
     }
    ]
   },
   {
    "slug": "g2",
    "team": "G2",
-   "n_matches": 6,
+   "n_matches": 11,
    "facts": [
     {
-     "id": "t_tempo_fast",
+     "id": "t_signature_recipe",
      "side": "T",
-     "zh": "快攻占 26%，高于其他队伍的 15%（77 个枪局）",
-     "en": "fast hits: 26% vs 15% for other teams (77 gun rounds)"
+     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯火（12 次，赢 7 次）",
+     "en": "Go-to execute: A with Jungle smoke + Stairs molotov (12 times, won 7)"
     }
    ]
   },
   {
-   "slug": "lgcy",
-   "team": "LGCY",
-   "n_matches": 3,
+   "slug": "legacy",
+   "team": "Legacy",
+   "n_matches": 10,
    "facts": [
     {
-     "id": "ct_rotate",
-     "side": "CT",
-     "zh": "进攻开始后有人及时回防的回合占 7%，低于其他队伍的 31%（15 个枪局）",
-     "en": "Rounds where a CT rotated in time: 7% vs 31% for other teams (15 gun rounds)"
-    }
-   ]
-  },
-  {
-   "slug": "m80",
-   "team": "M80",
-   "n_matches": 4,
-   "facts": [
-    {
-     "id": "t_fake",
+     "id": "t_signature_recipe",
      "side": "T",
-     "zh": "先假打再转点占 30%，高于其他队伍的 15%（27 个枪局）",
-     "en": "Fakes before the hit: 30% vs 15% for other teams (27 gun rounds)"
+     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯火（8 次，赢 5 次）",
+     "en": "Go-to execute: A with Jungle smoke + Stairs molotov (8 times, won 5)"
     }
    ]
   },
   {
    "slug": "mibr",
    "team": "MIBR",
-   "n_matches": 6,
-   "facts": [
-    {
-     "id": "t_lurk",
-     "side": "T",
-     "zh": "有人摸边的进攻占 11%，低于其他队伍的 25%（37 个枪局）",
-     "en": "Hits with a lurker: 11% vs 25% for other teams (37 gun rounds)"
-    },
-    {
-     "id": "t_signature_recipe",
-     "side": "T",
-     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯火（6 次，赢 3 次）",
-     "en": "Go-to execute: A with Jungle smoke + Stairs molotov (6 times, won 3)"
-    }
-   ]
-  },
-  {
-   "slug": "mnglz",
-   "team": "MNGLZ",
-   "n_matches": 4,
+   "n_matches": 7,
    "facts": [
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯火（5 次，赢 1 次）",
-     "en": "Go-to execute: A with Jungle smoke + Stairs molotov (5 times, won 1)"
+     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯火（7 次，赢 4 次）",
+     "en": "Go-to execute: A with Jungle smoke + Stairs molotov (7 times, won 4)"
     }
    ]
   },
@@ -169,111 +131,92 @@
    ]
   },
   {
-   "slug": "mouz",
-   "team": "MOUZ",
-   "n_matches": 5,
-   "facts": [
-    {
-     "id": "ct_rotate",
-     "side": "CT",
-     "zh": "进攻开始后有人及时回防的回合占 50%，高于其他队伍的 29%（24 个枪局）",
-     "en": "Rounds where a CT rotated in time: 50% vs 29% for other teams (24 gun rounds)"
-    }
-   ]
-  },
-  {
-   "slug": "natus-vincere",
-   "team": "Natus Vincere",
-   "n_matches": 3,
+   "slug": "nrg",
+   "team": "NRG",
+   "n_matches": 4,
    "facts": [
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：B 点 超市窗口烟 + 白车火（4 次，赢 4 次）",
-     "en": "Go-to execute: B with Market window smoke + Van molotov (4 times, won 4)"
+     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯烟 + A二楼脚手架处的火（6 次，赢 2 次）",
+     "en": "Go-to execute: A with Jungle smoke + Stairs smoke + Molotov at Palace scaffolding (6 times, won 2)"
     }
    ]
   },
   {
    "slug": "pain",
    "team": "paiN",
-   "n_matches": 3,
+   "n_matches": 5,
    "facts": [
     {
-     "id": "t_tempo_fast",
+     "id": "t_main_lurker",
      "side": "T",
-     "zh": "快攻占 37%，高于其他队伍的 16%（19 个枪局）",
-     "en": "fast hits: 37% vs 16% for other teams (19 gun rounds)"
-    },
-    {
-     "id": "ct_default_setup",
-     "side": "CT",
-     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，28% 的枪局，胜率 67%）",
-     "en": "Default CT setup A3 M1 B1 at 20 s (28% of gun rounds, won 67%)"
+     "zh": "biguzera 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
+     "en": "biguzera is the usual lurker (4 hits with him on the other side or far away)"
     }
    ]
   },
   {
    "slug": "parivision",
    "team": "PARIVISION",
-   "n_matches": 3,
+   "n_matches": 9,
    "facts": [
+    {
+     "id": "t_signature_recipe",
+     "side": "T",
+     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯烟 + A二楼脚手架处的火（7 次，赢 5 次）",
+     "en": "Go-to execute: A with Jungle smoke + Stairs smoke + Molotov at Palace scaffolding (7 times, won 5)"
+    },
     {
      "id": "ct_forward",
      "side": "CT",
-     "zh": "开局有人前压的回合占 69%，高于其他队伍的 39%（32 个枪局）",
-     "en": "Rounds with an early push: 69% vs 39% for other teams (32 gun rounds)"
+     "zh": "开局有人前压的回合占 61%，高于其他队伍的 39%（77 个枪局）",
+     "en": "Rounds with an early push: 61% vs 39% for other teams (77 gun rounds)"
     }
    ]
   },
   {
    "slug": "spirit",
    "team": "Spirit",
-   "n_matches": 7,
+   "n_matches": 31,
    "facts": [
-    {
-     "id": "t_signature_recipe",
-     "side": "T",
-     "zh": "最常用的爆弹：A 点 楼梯烟 + 丛林烟 + 警家烟（警亭） + A二楼脚手架处的火（7 次，赢 4 次）",
-     "en": "Go-to execute: A with Stairs smoke + Jungle smoke + CT smoke (Ticket) + Molotov at Palace scaffolding (7 times, won 4)"
-    },
     {
      "id": "ct_forward",
      "side": "CT",
-     "zh": "开局有人前压的回合占 13%，低于其他队伍的 41%（77 个枪局）",
-     "en": "Rounds with an early push: 13% vs 41% for other teams (77 gun rounds)"
+     "zh": "开局有人前压的回合占 20%，低于其他队伍的 42%（319 个枪局）",
+     "en": "Rounds with an early push: 20% vs 42% for other teams (319 gun rounds)"
     }
    ]
   },
   {
    "slug": "tyloo",
    "team": "TYLOO",
-   "n_matches": 4,
+   "n_matches": 5,
    "facts": [
     {
-     "id": "t_tempo_late",
+     "id": "t_signature_recipe",
      "side": "T",
-     "zh": "拖后进攻占 8%，低于其他队伍的 26%（38 个枪局）",
-     "en": "late hits: 8% vs 26% for other teams (38 gun rounds)"
+     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯火（5 次，赢 2 次）",
+     "en": "Go-to execute: A with Jungle smoke + Stairs molotov (5 times, won 2)"
     },
     {
-     "id": "ct_forward",
+     "id": "ct_default_setup",
      "side": "CT",
-     "zh": "开局有人前压的回合占 68%，高于其他队伍的 39%（34 个枪局）",
-     "en": "Rounds with an early push: 68% vs 39% for other teams (34 gun rounds)"
+     "zh": "CT 默认站位 A2 M2 B1（开局 20 秒，26% 的枪局，胜率 64%）",
+     "en": "Default CT setup A2 M2 B1 at 20 s (26% of gun rounds, won 64%)"
     }
    ]
   },
   {
    "slug": "vitality",
    "team": "Vitality",
-   "n_matches": 4,
+   "n_matches": 27,
    "facts": [
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯火（4 次，赢 3 次）",
-     "en": "Go-to execute: A with Jungle smoke + Stairs molotov (4 times, won 3)"
+     "zh": "最常用的爆弹：A 点 丛林烟 + 楼梯火（21 次，赢 14 次）",
+     "en": "Go-to execute: A with Jungle smoke + Stairs molotov (21 times, won 14)"
     }
    ]
   }

@@ -2,247 +2,272 @@
  "map": "de_nuke",
  "teams": [
   {
-   "slug": "9z",
-   "team": "9z",
-   "n_matches": 5,
+   "slug": "3dmax",
+   "team": "3DMAX",
+   "n_matches": 3,
    "facts": [
-    {
-     "id": "t_tempo_fast",
-     "side": "T",
-     "zh": "快攻占 24%，高于其他队伍的 13%（51 个枪局）",
-     "en": "fast hits: 24% vs 13% for other teams (51 gun rounds)"
-    },
-    {
-     "id": "t_signature_recipe",
-     "side": "T",
-     "zh": "最常用的爆弹：A 点 正门烟（上层A区） + 小木屋顶火（上层A区）（5 次，赢 2 次）",
-     "en": "Go-to execute: A with Mini smoke (upper A) + Hut roof molotov (upper A) (5 times, won 2)"
-    },
-    {
-     "id": "t_main_lurker",
-     "side": "T",
-     "zh": "dgt 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
-     "en": "dgt is the usual lurker (4 hits with him on the other side or far away)"
-    },
     {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，38% 的枪局，胜率 78%）",
-     "en": "Default CT setup A3 M1 B1 at 20 s (38% of gun rounds, won 78%)"
+     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，30% 的枪局，胜率 45%）",
+     "en": "Default CT setup A3 M1 B1 at 20 s (30% of gun rounds, won 45%)"
     }
    ]
   },
   {
-   "slug": "astralis",
-   "team": "Astralis",
-   "n_matches": 3,
+   "slug": "9z",
+   "team": "9z",
+   "n_matches": 12,
    "facts": [
     {
-     "id": "t_tempo_late",
-     "side": "T",
-     "zh": "拖后进攻占 5%，低于其他队伍的 27%（19 个枪局）",
-     "en": "late hits: 5% vs 27% for other teams (19 gun rounds)"
+     "id": "ct_default_setup",
+     "side": "CT",
+     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，33% 的枪局，胜率 55%）",
+     "en": "Default CT setup A3 M1 B1 at 20 s (33% of gun rounds, won 55%)"
     }
    ]
   },
   {
    "slug": "aurora",
    "team": "Aurora",
-   "n_matches": 6,
+   "n_matches": 14,
    "facts": [
-    {
-     "id": "t_lurk",
-     "side": "T",
-     "zh": "有人摸边的进攻占 58%，高于其他队伍的 33%（24 个枪局）",
-     "en": "Hits with a lurker: 58% vs 33% for other teams (24 gun rounds)"
-    },
     {
      "id": "t_main_lurker",
      "side": "T",
-     "zh": "MAJ3R 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
-     "en": "MAJ3R is the usual lurker (4 hits with him on the other side or far away)"
-    },
-    {
-     "id": "ct_rotate",
-     "side": "CT",
-     "zh": "进攻开始后有人及时回防的回合占 88%，高于其他队伍的 69%（34 个枪局）",
-     "en": "Rounds where a CT rotated in time: 88% vs 69% for other teams (34 gun rounds)"
+     "zh": "Wicadia 是最常摸边的人（13 次进攻时在另一侧或远离进攻点）",
+     "en": "Wicadia is the usual lurker (13 hits with him on the other side or far away)"
     }
    ]
   },
   {
    "slug": "b8",
    "team": "B8",
-   "n_matches": 3,
+   "n_matches": 4,
    "facts": [
     {
-     "id": "t_tempo_late",
+     "id": "t_main_lurker",
      "side": "T",
-     "zh": "拖后进攻占 55%，高于其他队伍的 25%（29 个枪局）",
-     "en": "late hits: 55% vs 25% for other teams (29 gun rounds)"
-    },
-    {
-     "id": "t_fake",
-     "side": "T",
-     "zh": "先假打再转点占 5%，低于其他队伍的 26%（22 个枪局）",
-     "en": "Fakes before the hit: 5% vs 26% for other teams (22 gun rounds)"
-    },
-    {
-     "id": "ct_forward",
-     "side": "CT",
-     "zh": "开局有人前压的回合占 45%，低于其他队伍的 72%（31 个枪局）",
-     "en": "Rounds with an early push: 45% vs 72% for other teams (31 gun rounds)"
+     "zh": "s1zzi 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
+     "en": "s1zzi is the usual lurker (4 hits with him on the other side or far away)"
     }
    ]
   },
   {
    "slug": "betboom",
    "team": "BETBOOM",
-   "n_matches": 6,
+   "n_matches": 8,
    "facts": [
     {
-     "id": "t_split",
-     "side": "T",
-     "zh": "分兵进点占 52%，低于其他队伍的 72%（42 个枪局）",
-     "en": "Split hits: 52% vs 72% for other teams (42 gun rounds)"
+     "id": "ct_default_setup",
+     "side": "CT",
+     "zh": "CT 默认站位 A2 M2 B1（开局 20 秒，27% 的枪局，胜率 89%）",
+     "en": "Default CT setup A2 M2 B1 at 20 s (27% of gun rounds, won 89%)"
+    }
+   ]
+  },
+  {
+   "slug": "big",
+   "team": "BIG",
+   "n_matches": 3,
+   "facts": [
+    {
+     "id": "ct_default_setup",
+     "side": "CT",
+     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，36% 的枪局，胜率 75%）",
+     "en": "Default CT setup A3 M1 B1 at 20 s (36% of gun rounds, won 75%)"
     }
    ]
   },
   {
    "slug": "falcons",
    "team": "Falcons",
-   "n_matches": 9,
+   "n_matches": 12,
    "facts": [
     {
-     "id": "t_main_lurker",
-     "side": "T",
-     "zh": "TeSeS 是最常摸边的人（7 次进攻时在另一侧或远离进攻点）",
-     "en": "TeSeS is the usual lurker (7 hits with him on the other side or far away)"
+     "id": "ct_default_setup",
+     "side": "CT",
+     "zh": "CT 默认站位 A2 M2 B1（开局 20 秒，31% 的枪局，胜率 72%）",
+     "en": "Default CT setup A2 M2 B1 at 20 s (31% of gun rounds, won 72%)"
+    }
+   ]
+  },
+  {
+   "slug": "faze",
+   "team": "FaZe",
+   "n_matches": 2,
+   "facts": [
+    {
+     "id": "ct_default_setup",
+     "side": "CT",
+     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，47% 的枪局，胜率 75%）",
+     "en": "Default CT setup A3 M1 B1 at 20 s (47% of gun rounds, won 75%)"
     }
    ]
   },
   {
    "slug": "furia",
    "team": "FURIA",
-   "n_matches": 2,
+   "n_matches": 28,
    "facts": [
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：A 点 正门烟（上层A区） + 小木屋顶火（上层A区）（4 次，赢 1 次）",
-     "en": "Go-to execute: A with Mini smoke (upper A) + Hut roof molotov (upper A) (4 times, won 1)"
-    },
-    {
-     "id": "t_main_lurker",
-     "side": "T",
-     "zh": "molodoy 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
-     "en": "molodoy is the usual lurker (4 hits with him on the other side or far away)"
-    },
-    {
-     "id": "ct_forward",
-     "side": "CT",
-     "zh": "开局有人前压的回合占 92%，高于其他队伍的 70%（24 个枪局）",
-     "en": "Rounds with an early push: 92% vs 70% for other teams (24 gun rounds)"
+     "zh": "最常用的爆弹：A 点 正门烟（上层A区） + 小木屋顶火（上层A区）（25 次，赢 16 次）",
+     "en": "Go-to execute: A with Mini smoke (upper A) + Hut roof molotov (upper A) (25 times, won 16)"
     }
    ]
   },
   {
    "slug": "fut-esports",
    "team": "FUT Esports",
-   "n_matches": 2,
+   "n_matches": 5,
    "facts": [
     {
-     "id": "t_tempo_fast",
+     "id": "t_signature_recipe",
      "side": "T",
-     "zh": "快攻占 30%，高于其他队伍的 13%（20 个枪局）",
-     "en": "fast hits: 30% vs 13% for other teams (20 gun rounds)"
+     "zh": "最常用的爆弹：A 点 正门烟（上层A区） + 小木屋顶火（上层A区）（6 次，赢 3 次）",
+     "en": "Go-to execute: A with Mini smoke (upper A) + Hut roof molotov (upper A) (6 times, won 3)"
     },
     {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A2 M2 B1（开局 20 秒，32% 的枪局，胜率 83%）",
-     "en": "Default CT setup A2 M2 B1 at 20 s (32% of gun rounds, won 83%)"
+     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，27% 的枪局，胜率 64%）",
+     "en": "Default CT setup A3 M1 B1 at 20 s (27% of gun rounds, won 64%)"
     }
    ]
   },
   {
    "slug": "gamerlegion",
    "team": "GamerLegion",
-   "n_matches": 3,
+   "n_matches": 6,
    "facts": [
     {
-     "id": "t_tempo_late",
+     "id": "t_main_lurker",
      "side": "T",
-     "zh": "拖后进攻占 45%，高于其他队伍的 26%（22 个枪局）",
-     "en": "late hits: 45% vs 26% for other teams (22 gun rounds)"
-    },
-    {
-     "id": "t_site_A",
-     "side": "T",
-     "zh": "进攻 A 点的回合占 82%，高于其他队伍的 57%（17 个枪局）",
-     "en": "Rounds going A: 82% vs 57% for other teams (17 gun rounds)"
-    },
-    {
-     "id": "t_site_B",
-     "side": "T",
-     "zh": "进攻 B 点的回合占 18%，低于其他队伍的 43%（17 个枪局）",
-     "en": "Rounds going B: 18% vs 43% for other teams (17 gun rounds)"
-    },
+     "zh": "Snax 是最常摸边的人（6 次进攻时在另一侧或远离进攻点）",
+     "en": "Snax is the usual lurker (6 hits with him on the other side or far away)"
+    }
+   ]
+  },
+  {
+   "slug": "gentle-mates",
+   "team": "Gentle Mates",
+   "n_matches": 2,
+   "facts": [
     {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A2 M1 B2（开局 20 秒，27% 的枪局，胜率 0%）",
-     "en": "Default CT setup A2 M1 B2 at 20 s (27% of gun rounds, won 0%)"
+     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，28% 的枪局，胜率 71%）",
+     "en": "Default CT setup A3 M1 B1 at 20 s (28% of gun rounds, won 71%)"
     }
    ]
   },
   {
    "slug": "legacy",
    "team": "Legacy",
-   "n_matches": 5,
+   "n_matches": 7,
    "facts": [
-    {
-     "id": "t_split",
-     "side": "T",
-     "zh": "分兵进点占 47%，低于其他队伍的 72%（30 个枪局）",
-     "en": "Split hits: 47% vs 72% for other teams (30 gun rounds)"
-    },
-    {
-     "id": "t_signature_recipe",
-     "side": "T",
-     "zh": "最常用的爆弹：A 点 正门烟（上层A区） + 小木屋顶火（上层A区）（6 次，赢 5 次）",
-     "en": "Go-to execute: A with Mini smoke (upper A) + Hut roof molotov (upper A) (6 times, won 5)"
-    },
-    {
-     "id": "t_main_lurker",
-     "side": "T",
-     "zh": "saadzin 是最常摸边的人（5 次进攻时在另一侧或远离进攻点）",
-     "en": "saadzin is the usual lurker (5 hits with him on the other side or far away)"
-    },
     {
      "id": "ct_forward",
      "side": "CT",
-     "zh": "开局有人前压的回合占 54%，低于其他队伍的 72%（52 个枪局）",
-     "en": "Rounds with an early push: 54% vs 72% for other teams (52 gun rounds)"
+     "zh": "开局有人前压的回合占 55%，低于其他队伍的 74%（76 个枪局）",
+     "en": "Rounds with an early push: 55% vs 74% for other teams (76 gun rounds)"
     },
     {
      "id": "ct_stack",
      "side": "CT",
-     "zh": "堆点防守的回合占 19%，高于其他队伍的 8%（52 个枪局）",
-     "en": "Stacked rounds: 19% vs 8% for other teams (52 gun rounds)"
+     "zh": "堆点防守的回合占 22%，高于其他队伍的 9%（76 个枪局）",
+     "en": "Stacked rounds: 22% vs 9% for other teams (76 gun rounds)"
     },
     {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A2 M2 B1（开局 20 秒，27% 的枪局，胜率 71%）",
-     "en": "Default CT setup A2 M2 B1 at 20 s (27% of gun rounds, won 71%)"
+     "zh": "CT 默认站位 A2 M2 B1（开局 20 秒，25% 的枪局，胜率 63%）",
+     "en": "Default CT setup A2 M2 B1 at 20 s (25% of gun rounds, won 63%)"
     }
    ]
   },
   {
-   "slug": "lgcy",
-   "team": "LGCY",
-   "n_matches": 3,
+   "slug": "liquid",
+   "team": "Liquid",
+   "n_matches": 5,
+   "facts": [
+    {
+     "id": "ct_default_setup",
+     "side": "CT",
+     "zh": "CT 默认站位 A2 M2 B1（开局 20 秒，26% 的枪局，胜率 62%）",
+     "en": "Default CT setup A2 M2 B1 at 20 s (26% of gun rounds, won 62%)"
+    }
+   ]
+  },
+  {
+   "slug": "mibr",
+   "team": "MIBR",
+   "n_matches": 5,
+   "facts": [
+    {
+     "id": "t_signature_recipe",
+     "side": "T",
+     "zh": "最常用的爆弹：A 点 正门烟（上层A区） + 小木屋顶火（上层A区）（4 次，赢 2 次）",
+     "en": "Go-to execute: A with Mini smoke (upper A) + Hut roof molotov (upper A) (4 times, won 2)"
+    },
+    {
+     "id": "t_main_lurker",
+     "side": "T",
+     "zh": "LNZ 是最常摸边的人（5 次进攻时在另一侧或远离进攻点）",
+     "en": "LNZ is the usual lurker (5 hits with him on the other side or far away)"
+    },
+    {
+     "id": "ct_default_setup",
+     "side": "CT",
+     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，30% 的枪局，胜率 69%）",
+     "en": "Default CT setup A3 M1 B1 at 20 s (30% of gun rounds, won 69%)"
+    }
+   ]
+  },
+  {
+   "slug": "monte",
+   "team": "Monte",
+   "n_matches": 5,
+   "facts": [
+    {
+     "id": "t_signature_recipe",
+     "side": "T",
+     "zh": "最常用的爆弹：A 点 正门烟（上层A区） + 小木屋顶火（上层A区）（6 次，赢 3 次）",
+     "en": "Go-to execute: A with Mini smoke (upper A) + Hut roof molotov (upper A) (6 times, won 3)"
+    },
+    {
+     "id": "ct_forward",
+     "side": "CT",
+     "zh": "开局有人前压的回合占 49%，低于其他队伍的 74%（43 个枪局）",
+     "en": "Rounds with an early push: 49% vs 74% for other teams (43 gun rounds)"
+    },
+    {
+     "id": "ct_default_setup",
+     "side": "CT",
+     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，26% 的枪局，胜率 73%）",
+     "en": "Default CT setup A3 M1 B1 at 20 s (26% of gun rounds, won 73%)"
+    }
+   ]
+  },
+  {
+   "slug": "mouz",
+   "team": "MOUZ",
+   "n_matches": 24,
+   "facts": [
+    {
+     "id": "t_main_lurker",
+     "side": "T",
+     "zh": "Spinx 是最常摸边的人（19 次进攻时在另一侧或远离进攻点）",
+     "en": "Spinx is the usual lurker (19 hits with him on the other side or far away)"
+    }
+   ]
+  },
+  {
+   "slug": "natus-vincere",
+   "team": "Natus Vincere",
+   "n_matches": 4,
    "facts": [
     {
      "id": "t_signature_recipe",
@@ -251,74 +276,17 @@
      "en": "Go-to execute: A with Mini smoke (upper A) + Hut roof molotov (upper A) (4 times, won 3)"
     },
     {
-     "id": "ct_forward",
-     "side": "CT",
-     "zh": "开局有人前压的回合占 47%，低于其他队伍的 71%（32 个枪局）",
-     "en": "Rounds with an early push: 47% vs 71% for other teams (32 gun rounds)"
-    },
-    {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A2 M2 B1（开局 20 秒，25% 的枪局，胜率 62%）",
-     "en": "Default CT setup A2 M2 B1 at 20 s (25% of gun rounds, won 62%)"
+     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，30% 的枪局，胜率 79%）",
+     "en": "Default CT setup A3 M1 B1 at 20 s (30% of gun rounds, won 79%)"
     }
    ]
   },
   {
-   "slug": "liquid",
-   "team": "Liquid",
-   "n_matches": 4,
-   "facts": [
-    {
-     "id": "t_fake",
-     "side": "T",
-     "zh": "先假打再转点占 46%，高于其他队伍的 25%（24 个枪局）",
-     "en": "Fakes before the hit: 46% vs 25% for other teams (24 gun rounds)"
-    },
-    {
-     "id": "ct_default_setup",
-     "side": "CT",
-     "zh": "CT 默认站位 A2 M2 B1（开局 20 秒，26% 的枪局，胜率 70%）",
-     "en": "Default CT setup A2 M2 B1 at 20 s (26% of gun rounds, won 70%)"
-    }
-   ]
-  },
-  {
-   "slug": "mibr",
-   "team": "MIBR",
-   "n_matches": 3,
-   "facts": [
-    {
-     "id": "ct_default_setup",
-     "side": "CT",
-     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，34% 的枪局，胜率 73%）",
-     "en": "Default CT setup A3 M1 B1 at 20 s (34% of gun rounds, won 73%)"
-    }
-   ]
-  },
-  {
-   "slug": "mnglz",
-   "team": "MNGLZ",
-   "n_matches": 3,
-   "facts": [
-    {
-     "id": "t_main_lurker",
-     "side": "T",
-     "zh": "Techno4K 是最常摸边的人（5 次进攻时在另一侧或远离进攻点）",
-     "en": "Techno4K is the usual lurker (5 hits with him on the other side or far away)"
-    },
-    {
-     "id": "ct_default_setup",
-     "side": "CT",
-     "zh": "CT 默认站位 A2 M1 B2（开局 20 秒，28% 的枪局，胜率 44%）",
-     "en": "Default CT setup A2 M1 B2 at 20 s (28% of gun rounds, won 44%)"
-    }
-   ]
-  },
-  {
-   "slug": "monte",
-   "team": "Monte",
-   "n_matches": 4,
+   "slug": "nrg",
+   "team": "NRG",
+   "n_matches": 5,
    "facts": [
     {
      "id": "t_signature_recipe",
@@ -327,48 +295,10 @@
      "en": "Go-to execute: A with Mini smoke (upper A) + Hut roof molotov (upper A) (5 times, won 3)"
     },
     {
-     "id": "ct_forward",
-     "side": "CT",
-     "zh": "开局有人前压的回合占 50%，低于其他队伍的 72%（40 个枪局）",
-     "en": "Rounds with an early push: 50% vs 72% for other teams (40 gun rounds)"
-    }
-   ]
-  },
-  {
-   "slug": "mouz",
-   "team": "MOUZ",
-   "n_matches": 5,
-   "facts": [
-    {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，32% 的枪局，胜率 83%）",
-     "en": "Default CT setup A3 M1 B1 at 20 s (32% of gun rounds, won 83%)"
-    }
-   ]
-  },
-  {
-   "slug": "nrg",
-   "team": "NRG",
-   "n_matches": 4,
-   "facts": [
-    {
-     "id": "t_split",
-     "side": "T",
-     "zh": "分兵进点占 91%，高于其他队伍的 69%（22 个枪局）",
-     "en": "Split hits: 91% vs 69% for other teams (22 gun rounds)"
-    },
-    {
-     "id": "t_signature_recipe",
-     "side": "T",
-     "zh": "最常用的爆弹：A 点 正门烟（上层A区） + 小木屋顶火（上层A区）（6 次，赢 4 次）",
-     "en": "Go-to execute: A with Mini smoke (upper A) + Hut roof molotov (upper A) (6 times, won 4)"
-    },
-    {
-     "id": "ct_default_setup",
-     "side": "CT",
-     "zh": "CT 默认站位 A2 M2 B1（开局 20 秒，41% 的枪局，胜率 69%）",
-     "en": "Default CT setup A2 M2 B1 at 20 s (41% of gun rounds, won 69%)"
+     "zh": "CT 默认站位 A2 M2 B1（开局 20 秒，39% 的枪局，胜率 58%）",
+     "en": "Default CT setup A2 M2 B1 at 20 s (39% of gun rounds, won 58%)"
     }
    ]
   },
@@ -378,12 +308,6 @@
    "n_matches": 5,
    "facts": [
     {
-     "id": "t_signature_recipe",
-     "side": "T",
-     "zh": "最常用的爆弹：A 点 正门烟（上层A区） + 小木屋顶火（上层A区）（5 次，赢 4 次）",
-     "en": "Go-to execute: A with Mini smoke (upper A) + Hut roof molotov (upper A) (5 times, won 4)"
-    },
-    {
      "id": "t_main_lurker",
      "side": "T",
      "zh": "piriajr 是最常摸边的人（5 次进攻时在另一侧或远离进攻点）",
@@ -392,8 +316,8 @@
     {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A2 M2 B1（开局 20 秒，26% 的枪局，胜率 75%）",
-     "en": "Default CT setup A2 M2 B1 at 20 s (26% of gun rounds, won 75%)"
+     "zh": "CT 默认站位 A2 M2 B1（开局 20 秒，29% 的枪局，胜率 78%）",
+     "en": "Default CT setup A2 M2 B1 at 20 s (29% of gun rounds, won 78%)"
     }
    ]
   },
@@ -413,32 +337,19 @@
   {
    "slug": "spirit",
    "team": "Spirit",
-   "n_matches": 3,
-   "facts": [
-    {
-     "id": "ct_default_setup",
-     "side": "CT",
-     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，41% 的枪局，胜率 73%）",
-     "en": "Default CT setup A3 M1 B1 at 20 s (41% of gun rounds, won 73%)"
-    }
-   ]
-  },
-  {
-   "slug": "the-mongolz",
-   "team": "The MongolZ",
-   "n_matches": 5,
+   "n_matches": 15,
    "facts": [
     {
      "id": "t_main_lurker",
      "side": "T",
-     "zh": "Techno4K 是最常摸边的人（5 次进攻时在另一侧或远离进攻点）",
-     "en": "Techno4K is the usual lurker (5 hits with him on the other side or far away)"
+     "zh": "zont1x 是最常摸边的人（12 次进攻时在另一侧或远离进攻点）",
+     "en": "zont1x is the usual lurker (12 hits with him on the other side or far away)"
     },
     {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A2 M1 B2（开局 20 秒，27% 的枪局，胜率 57%）",
-     "en": "Default CT setup A2 M1 B2 at 20 s (27% of gun rounds, won 57%)"
+     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，41% 的枪局，胜率 61%）",
+     "en": "Default CT setup A3 M1 B1 at 20 s (41% of gun rounds, won 61%)"
     }
    ]
   },
@@ -450,21 +361,27 @@
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：A 点 正门烟（上层A区） + 小木屋顶火（上层A区）（5 次，赢 4 次）",
-     "en": "Go-to execute: A with Mini smoke (upper A) + Hut roof molotov (upper A) (5 times, won 4)"
+     "zh": "最常用的爆弹：A 点 正门烟（上层A区） + 小木屋顶火（上层A区）（4 次，赢 3 次）",
+     "en": "Go-to execute: A with Mini smoke (upper A) + Hut roof molotov (upper A) (4 times, won 3)"
     }
    ]
   },
   {
    "slug": "vitality",
    "team": "Vitality",
-   "n_matches": 2,
+   "n_matches": 22,
    "facts": [
     {
-     "id": "ct_forward",
+     "id": "t_main_lurker",
+     "side": "T",
+     "zh": "ropz 是最常摸边的人（16 次进攻时在另一侧或远离进攻点）",
+     "en": "ropz is the usual lurker (16 hits with him on the other side or far away)"
+    },
+    {
+     "id": "ct_default_setup",
      "side": "CT",
-     "zh": "开局有人前压的回合占 91%，高于其他队伍的 70%（22 个枪局）",
-     "en": "Rounds with an early push: 91% vs 70% for other teams (22 gun rounds)"
+     "zh": "CT 默认站位 A2 M2 B1（开局 20 秒，34% 的枪局，胜率 75%）",
+     "en": "Default CT setup A2 M2 B1 at 20 s (34% of gun rounds, won 75%)"
     }
    ]
   }

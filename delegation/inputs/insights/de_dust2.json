@@ -2,251 +2,194 @@
  "map": "de_dust2",
  "teams": [
   {
-   "slug": "9z",
-   "team": "9z",
-   "n_matches": 8,
+   "slug": "3dmax",
+   "team": "3DMAX",
+   "n_matches": 4,
    "facts": [
     {
      "id": "t_main_lurker",
      "side": "T",
-     "zh": "dgt 是最常摸边的人（10 次进攻时在另一侧或远离进攻点）",
-     "en": "dgt is the usual lurker (10 hits with him on the other side or far away)"
+     "zh": "Lucky 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
+     "en": "Lucky is the usual lurker (4 hits with him on the other side or far away)"
+    }
+   ]
+  },
+  {
+   "slug": "9z",
+   "team": "9z",
+   "n_matches": 12,
+   "facts": [
+    {
+     "id": "t_signature_recipe",
+     "side": "T",
+     "zh": "最常用的爆弹：A 点 A小跳警家烟（9 次，赢 6 次）",
+     "en": "Go-to execute: A with A short drop smoke (9 times, won 6)"
+    },
+    {
+     "id": "t_main_lurker",
+     "side": "T",
+     "zh": "dgt 是最常摸边的人（14 次进攻时在另一侧或远离进攻点）",
+     "en": "dgt is the usual lurker (14 hits with him on the other side or far away)"
+    }
+   ]
+  },
+  {
+   "slug": "astralis",
+   "team": "Astralis",
+   "n_matches": 5,
+   "facts": [
+    {
+     "id": "t_signature_recipe",
+     "side": "T",
+     "zh": "最常用的爆弹：A 点 A小跳警家烟（4 次，赢 3 次）",
+     "en": "Go-to execute: A with A short drop smoke (4 times, won 3)"
+    },
+    {
+     "id": "t_main_lurker",
+     "side": "T",
+     "zh": "HooXi 是最常摸边的人（7 次进攻时在另一侧或远离进攻点）",
+     "en": "HooXi is the usual lurker (7 hits with him on the other side or far away)"
+    },
+    {
+     "id": "ct_default_setup",
+     "side": "CT",
+     "zh": "CT 默认站位 A3 B2（开局 20 秒，36% 的枪局，胜率 60%）",
+     "en": "Default CT setup A3 B2 at 20 s (36% of gun rounds, won 60%)"
     }
    ]
   },
   {
    "slug": "aurora",
    "team": "Aurora",
-   "n_matches": 5,
+   "n_matches": 17,
    "facts": [
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：B 点 B门烟（7 次，赢 4 次）",
-     "en": "Go-to execute: B with B doors smoke (7 times, won 4)"
-    },
-    {
-     "id": "t_main_lurker",
-     "side": "T",
-     "zh": "MAJ3R 是最常摸边的人（5 次进攻时在另一侧或远离进攻点）",
-     "en": "MAJ3R is the usual lurker (5 hits with him on the other side or far away)"
+     "zh": "最常用的爆弹：B 点 B门烟（13 次，赢 8 次）",
+     "en": "Go-to execute: B with B doors smoke (13 times, won 8)"
     },
     {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A3 B2（开局 20 秒，30% 的枪局，胜率 75%）",
-     "en": "Default CT setup A3 B2 at 20 s (30% of gun rounds, won 75%)"
+     "zh": "CT 默认站位 A3 B2（开局 20 秒，25% 的枪局，胜率 65%）",
+     "en": "Default CT setup A3 B2 at 20 s (25% of gun rounds, won 65%)"
     }
    ]
   },
   {
    "slug": "b8",
    "team": "B8",
-   "n_matches": 3,
+   "n_matches": 7,
    "facts": [
-    {
-     "id": "t_tempo_fast",
-     "side": "T",
-     "zh": "快攻占 17%，高于其他队伍的 6%（29 个枪局）",
-     "en": "fast hits: 17% vs 6% for other teams (29 gun rounds)"
-    },
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：A 点 A小跳警家烟 + A坡火（4 次，赢 4 次）",
-     "en": "Go-to execute: A with A short drop smoke + A ramp molotov (4 times, won 4)"
+     "zh": "最常用的爆弹：A 点 A小跳警家烟（5 次，赢 5 次）",
+     "en": "Go-to execute: A with A short drop smoke (5 times, won 5)"
     }
    ]
   },
   {
    "slug": "bc-game",
    "team": "BC.Game",
-   "n_matches": 2,
+   "n_matches": 4,
    "facts": [
     {
-     "id": "ct_default_setup",
-     "side": "CT",
-     "zh": "CT 默认站位 A3 B2（开局 20 秒，29% 的枪局，胜率 40%）",
-     "en": "Default CT setup A3 B2 at 20 s (29% of gun rounds, won 40%)"
-    }
-   ]
-  },
-  {
-   "slug": "bcg",
-   "team": "BCG",
-   "n_matches": 2,
-   "facts": [
-    {
-     "id": "ct_default_setup",
-     "side": "CT",
-     "zh": "CT 默认站位 A3 B2（开局 20 秒，29% 的枪局，胜率 40%）",
-     "en": "Default CT setup A3 B2 at 20 s (29% of gun rounds, won 40%)"
-    }
-   ]
-  },
-  {
-   "slug": "betboom",
-   "team": "BETBOOM",
-   "n_matches": 8,
-   "facts": [
-    {
-     "id": "t_main_lurker",
+     "id": "t_signature_recipe",
      "side": "T",
-     "zh": "FL4MUS 是最常摸边的人（6 次进攻时在另一侧或远离进攻点）",
-     "en": "FL4MUS is the usual lurker (6 hits with him on the other side or far away)"
-    },
-    {
-     "id": "ct_default_setup",
-     "side": "CT",
-     "zh": "CT 默认站位 A3 B2（开局 20 秒，25% 的枪局，胜率 84%）",
-     "en": "Default CT setup A3 B2 at 20 s (25% of gun rounds, won 84%)"
-    },
-    {
-     "id": "ct_rotate",
-     "side": "CT",
-     "zh": "进攻开始后有人及时回防的回合占 61%，高于其他队伍的 38%（23 个枪局）",
-     "en": "Rounds where a CT rotated in time: 61% vs 38% for other teams (23 gun rounds)"
+     "zh": "最常用的爆弹：B 点 B门烟（4 次，赢 2 次）",
+     "en": "Go-to execute: B with B doors smoke (4 times, won 2)"
     }
    ]
   },
   {
    "slug": "falcons",
    "team": "Falcons",
-   "n_matches": 27,
+   "n_matches": 34,
    "facts": [
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：B 点 B门烟（23 次，赢 17 次）",
-     "en": "Go-to execute: B with B doors smoke (23 times, won 17)"
+     "zh": "最常用的爆弹：B 点 B门烟（28 次，赢 21 次）",
+     "en": "Go-to execute: B with B doors smoke (28 times, won 21)"
     }
    ]
   },
   {
-   "slug": "flc",
-   "team": "FLC",
-   "n_matches": 4,
+   "slug": "fut-esports",
+   "team": "FUT Esports",
+   "n_matches": 9,
    "facts": [
     {
-     "id": "t_fake",
+     "id": "t_signature_recipe",
      "side": "T",
-     "zh": "先假打再转点占 45%，高于其他队伍的 20%（20 个枪局）",
-     "en": "Fakes before the hit: 45% vs 20% for other teams (20 gun rounds)"
+     "zh": "最常用的爆弹：B 点 B门烟（9 次，赢 4 次）",
+     "en": "Go-to execute: B with B doors smoke (9 times, won 4)"
     },
     {
      "id": "t_main_lurker",
      "side": "T",
-     "zh": "NiKo 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
-     "en": "NiKo is the usual lurker (4 hits with him on the other side or far away)"
-    }
-   ]
-  },
-  {
-   "slug": "furia",
-   "team": "FURIA",
-   "n_matches": 4,
-   "facts": [
-    {
-     "id": "t_signature_recipe",
-     "side": "T",
-     "zh": "最常用的爆弹：B 点 B门烟（4 次，赢 3 次）",
-     "en": "Go-to execute: B with B doors smoke (4 times, won 3)"
-    }
-   ]
-  },
-  {
-   "slug": "g2",
-   "team": "G2",
-   "n_matches": 5,
-   "facts": [
-    {
-     "id": "t_signature_recipe",
-     "side": "T",
-     "zh": "最常用的爆弹：B 点 B门烟（6 次，赢 4 次）",
-     "en": "Go-to execute: B with B doors smoke (6 times, won 4)"
-    },
-    {
-     "id": "t_main_lurker",
-     "side": "T",
-     "zh": "HeavyGod 是最常摸边的人（4 次进攻时在另一侧或远离进攻点）",
-     "en": "HeavyGod is the usual lurker (4 hits with him on the other side or far away)"
-    },
-    {
-     "id": "ct_rotate",
-     "side": "CT",
-     "zh": "进攻开始后有人及时回防的回合占 15%，低于其他队伍的 40%（20 个枪局）",
-     "en": "Rounds where a CT rotated in time: 15% vs 40% for other teams (20 gun rounds)"
-    }
-   ]
-  },
-  {
-   "slug": "heroic",
-   "team": "Heroic",
-   "n_matches": 2,
-   "facts": [
-    {
-     "id": "t_tempo_fast",
-     "side": "T",
-     "zh": "快攻占 20%，高于其他队伍的 6%（20 个枪局）",
-     "en": "fast hits: 20% vs 6% for other teams (20 gun rounds)"
-    },
-    {
-     "id": "ct_default_setup",
-     "side": "CT",
-     "zh": "CT 默认站位 A2 B2 C1（开局 20 秒，25% 的枪局，胜率 75%）",
-     "en": "Default CT setup A2 B2 C1 at 20 s (25% of gun rounds, won 75%)"
+     "zh": "Krabeni 是最常摸边的人（7 次进攻时在另一侧或远离进攻点）",
+     "en": "Krabeni is the usual lurker (7 hits with him on the other side or far away)"
     }
    ]
   },
   {
    "slug": "legacy",
    "team": "Legacy",
-   "n_matches": 7,
+   "n_matches": 12,
    "facts": [
     {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A3 B2（开局 20 秒，27% 的枪局，胜率 56%）",
-     "en": "Default CT setup A3 B2 at 20 s (27% of gun rounds, won 56%)"
+     "zh": "CT 默认站位 A3 B2（开局 20 秒，28% 的枪局，胜率 59%）",
+     "en": "Default CT setup A3 B2 at 20 s (28% of gun rounds, won 59%)"
     }
    ]
   },
   {
-   "slug": "lgcy",
-   "team": "LGCY",
-   "n_matches": 2,
+   "slug": "liquid",
+   "team": "Liquid",
+   "n_matches": 5,
    "facts": [
     {
-     "id": "ct_default_setup",
-     "side": "CT",
-     "zh": "CT 默认站位 A3 B2（开局 20 秒，33% 的枪局，胜率 83%）",
-     "en": "Default CT setup A3 B2 at 20 s (33% of gun rounds, won 83%)"
+     "id": "t_signature_recipe",
+     "side": "T",
+     "zh": "最常用的爆弹：B 点 B门烟（4 次，赢 2 次）",
+     "en": "Go-to execute: B with B doors smoke (4 times, won 2)"
     }
    ]
   },
   {
-   "slug": "lvg",
-   "team": "LVG",
-   "n_matches": 2,
+   "slug": "luminosity",
+   "team": "Luminosity",
+   "n_matches": 1,
    "facts": [
     {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A3 B2（开局 20 秒，38% 的枪局，胜率 75%）",
-     "en": "Default CT setup A3 B2 at 20 s (38% of gun rounds, won 75%)"
+     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，31% 的枪局，胜率 60%）",
+     "en": "Default CT setup A3 M1 B1 at 20 s (31% of gun rounds, won 60%)"
     }
    ]
   },
   {
    "slug": "lynn-vision",
    "team": "Lynn Vision",
-   "n_matches": 3,
+   "n_matches": 5,
    "facts": [
+    {
+     "id": "t_signature_recipe",
+     "side": "T",
+     "zh": "最常用的爆弹：B 点 B门烟（4 次，赢 4 次）",
+     "en": "Go-to execute: B with B doors smoke (4 times, won 4)"
+    },
     {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A3 B2（开局 20 秒，45% 的枪局，胜率 71%）",
-     "en": "Default CT setup A3 B2 at 20 s (45% of gun rounds, won 71%)"
+     "zh": "CT 默认站位 A3 B2（开局 20 秒，36% 的枪局，胜率 67%）",
+     "en": "Default CT setup A3 B2 at 20 s (36% of gun rounds, won 67%)"
     }
    ]
   },
@@ -258,141 +201,97 @@
     {
      "id": "t_signature_recipe",
      "side": "T",
-     "zh": "最常用的爆弹：B 点 B门烟（8 次，赢 6 次）",
-     "en": "Go-to execute: B with B doors smoke (8 times, won 6)"
+     "zh": "最常用的爆弹：B 点 B门烟（10 次，赢 8 次）",
+     "en": "Go-to execute: B with B doors smoke (10 times, won 8)"
     },
     {
      "id": "t_main_lurker",
      "side": "T",
      "zh": "Gizmy 是最常摸边的人（5 次进攻时在另一侧或远离进攻点）",
      "en": "Gizmy is the usual lurker (5 hits with him on the other side or far away)"
-    },
-    {
-     "id": "ct_rotate",
-     "side": "CT",
-     "zh": "进攻开始后有人及时回防的回合占 65%，高于其他队伍的 38%（23 个枪局）",
-     "en": "Rounds where a CT rotated in time: 65% vs 38% for other teams (23 gun rounds)"
-    }
-   ]
-  },
-  {
-   "slug": "mouz",
-   "team": "MOUZ",
-   "n_matches": 2,
-   "facts": [
-    {
-     "id": "ct_default_setup",
-     "side": "CT",
-     "zh": "CT 默认站位 A3 M1 B1（开局 20 秒，29% 的枪局，胜率 83%）",
-     "en": "Default CT setup A3 M1 B1 at 20 s (29% of gun rounds, won 83%)"
     }
    ]
   },
   {
    "slug": "natus-vincere",
    "team": "Natus Vincere",
-   "n_matches": 3,
+   "n_matches": 10,
    "facts": [
+    {
+     "id": "t_main_lurker",
+     "side": "T",
+     "zh": "Aleksib 是最常摸边的人（5 次进攻时在另一侧或远离进攻点）",
+     "en": "Aleksib is the usual lurker (5 hits with him on the other side or far away)"
+    },
     {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A3 B2（开局 20 秒，52% 的枪局，胜率 44%）",
-     "en": "Default CT setup A3 B2 at 20 s (52% of gun rounds, won 44%)"
+     "zh": "CT 默认站位 A3 B2（开局 20 秒，34% 的枪局，胜率 39%）",
+     "en": "Default CT setup A3 B2 at 20 s (34% of gun rounds, won 39%)"
     }
    ]
   },
   {
    "slug": "ninjas-in-pyjamas",
    "team": "Ninjas in Pyjamas",
-   "n_matches": 2,
+   "n_matches": 3,
    "facts": [
-    {
-     "id": "t_tempo_fast",
-     "side": "T",
-     "zh": "快攻占 20%，高于其他队伍的 7%（15 个枪局）",
-     "en": "fast hits: 20% vs 7% for other teams (15 gun rounds)"
-    },
     {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A3 B2（开局 20 秒，26% 的枪局，胜率 20%）",
-     "en": "Default CT setup A3 B2 at 20 s (26% of gun rounds, won 20%)"
-    }
-   ]
-  },
-  {
-   "slug": "pain",
-   "team": "paiN",
-   "n_matches": 2,
-   "facts": [
-    {
-     "id": "ct_forward",
-     "side": "CT",
-     "zh": "开局有人前压的回合占 59%，高于其他队伍的 36%（22 个枪局）",
-     "en": "Rounds with an early push: 59% vs 36% for other teams (22 gun rounds)"
-    }
-   ]
-  },
-  {
-   "slug": "parivision",
-   "team": "PARIVISION",
-   "n_matches": 4,
-   "facts": [
-    {
-     "id": "t_main_lurker",
-     "side": "T",
-     "zh": "nota 是最常摸边的人（5 次进攻时在另一侧或远离进攻点）",
-     "en": "nota is the usual lurker (5 hits with him on the other side or far away)"
-    },
-    {
-     "id": "ct_forward",
-     "side": "CT",
-     "zh": "开局有人前压的回合占 61%，高于其他队伍的 36%（28 个枪局）",
-     "en": "Rounds with an early push: 61% vs 36% for other teams (28 gun rounds)"
+     "zh": "CT 默认站位 A3 B2（开局 20 秒，30% 的枪局，胜率 22%）",
+     "en": "Default CT setup A3 B2 at 20 s (30% of gun rounds, won 22%)"
     }
    ]
   },
   {
    "slug": "spirit",
    "team": "Spirit",
-   "n_matches": 6,
+   "n_matches": 40,
    "facts": [
-    {
-     "id": "t_lurk",
-     "side": "T",
-     "zh": "有人摸边的进攻占 49%，高于其他队伍的 29%（47 个枪局）",
-     "en": "Hits with a lurker: 49% vs 29% for other teams (47 gun rounds)"
-    },
-    {
-     "id": "t_fake",
-     "side": "T",
-     "zh": "先假打再转点占 32%，高于其他队伍的 20%（47 个枪局）",
-     "en": "Fakes before the hit: 32% vs 20% for other teams (47 gun rounds)"
-    },
     {
      "id": "t_main_lurker",
      "side": "T",
-     "zh": "magixx 是最常摸边的人（8 次进攻时在另一侧或远离进攻点）",
-     "en": "magixx is the usual lurker (8 hits with him on the other side or far away)"
+     "zh": "magixx 是最常摸边的人（42 次进攻时在另一侧或远离进攻点）",
+     "en": "magixx is the usual lurker (42 hits with him on the other side or far away)"
     },
     {
      "id": "ct_default_setup",
      "side": "CT",
-     "zh": "CT 默认站位 A3 B2（开局 20 秒，48% 的枪局，胜率 63%）",
-     "en": "Default CT setup A3 B2 at 20 s (48% of gun rounds, won 63%)"
+     "zh": "CT 默认站位 A3 B2（开局 20 秒，41% 的枪局，胜率 64%）",
+     "en": "Default CT setup A3 B2 at 20 s (41% of gun rounds, won 64%)"
+    }
+   ]
+  },
+  {
+   "slug": "the-mongolz",
+   "team": "The MongolZ",
+   "n_matches": 9,
+   "facts": [
+    {
+     "id": "ct_default_setup",
+     "side": "CT",
+     "zh": "CT 默认站位 A3 B2（开局 20 秒，26% 的枪局，胜率 62%）",
+     "en": "Default CT setup A3 B2 at 20 s (26% of gun rounds, won 62%)"
     }
    ]
   },
   {
    "slug": "vitality",
    "team": "Vitality",
-   "n_matches": 3,
+   "n_matches": 38,
    "facts": [
     {
-     "id": "ct_default_setup",
-     "side": "CT",
-     "zh": "CT 默认站位 A3 B2（开局 20 秒，29% 的枪局，胜率 71%）",
-     "en": "Default CT setup A3 B2 at 20 s (29% of gun rounds, won 71%)"
+     "id": "t_signature_recipe",
+     "side": "T",
+     "zh": "最常用的爆弹：B 点 B门烟（32 次，赢 26 次）",
+     "en": "Go-to execute: B with B doors smoke (32 times, won 26)"
+    },
+    {
+     "id": "t_main_lurker",
+     "side": "T",
+     "zh": "ropz 是最常摸边的人（31 次进攻时在另一侧或远离进攻点）",
+     "en": "ropz is the usual lurker (31 hits with him on the other side or far away)"
     }
    ]
   }

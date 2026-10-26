@@ -1,37 +1,55 @@
 {
- "9z": {
-  "zh": "dgt 是 9z 最常摸边的人：10 次进攻时他在另一侧或远离进攻点。",
-  "en": "dgt is 9z's usual lurker, drifting to the far side or away from the hit in 10 attacking rounds.",
+ "3dmax": {
+  "zh": "3DMAX 最常摸边的人是 Lucky，4 次进攻时他在另一侧或远离进攻点。",
+  "en": "3DMAX's usual lurker is Lucky, on the other side or far from the hit in 4 attacks.",
   "facts": [
    "t_main_lurker"
   ],
-  "fingerprint": "4e95543e66df"
+  "fingerprint": "24027b925b7d"
+ },
+ "9z": {
+  "zh": "9z 最常用的爆弹是 A 点 A小跳警家烟，9 次赢 6 次；最常摸边的人是 dgt，14 次进攻时他在另一侧或远离进攻点。",
+  "en": "9z's go-to execute is A with A short drop smoke, used 9 times with 6 wins, and their usual lurker is dgt, on the other side or far from the hit in 14 attacks.",
+  "facts": [
+   "t_signature_recipe",
+   "t_main_lurker"
+  ],
+  "fingerprint": "210479827155"
+ },
+ "astralis": {
+  "zh": "Astralis 最常用的爆弹是 A 点 A小跳警家烟（4 次，赢 3 次），最常摸边的人是 HooXi（7 次进攻时在另一侧或远离进攻点）。CT 默认站位是 A3 B2（开局 20 秒），占 36% 的枪局，胜率 60%。",
+  "en": "Astralis' go-to execute is A with A short drop smoke (4 times, won 3), and their usual lurker is HooXi (on the other side or far from the hit in 7 attacks). Their default CT setup at 20 s is A3 B2, used in 36% of gun rounds with a 60% win rate.",
+  "facts": [
+   "t_signature_recipe",
+   "t_main_lurker",
+   "ct_default_setup"
+  ],
+  "fingerprint": "eab2dc74cbc1"
  },
  "aurora": {
-  "zh": "T 方最常用B门烟爆弹 B 点，7 次赢下 4 次。开局 20 秒的 CT 默认站位为 A3 B2，占 30% 的枪局，胜率 75%。",
-  "en": "The go-to B execute uses B doors smoke, winning 4 of 7 attempts. At 20 s, the default CT setup is A3 B2, used in 30% of gun rounds with a win rate of 75%.",
+  "zh": "Aurora 最常用的爆弹是 B 点 B门烟，13 次赢 8 次。CT 默认站位是 A3 B2（开局 20 秒），占 25% 的枪局，胜率 65%。",
+  "en": "Aurora's go-to execute is B with B doors smoke, used 13 times with 8 wins. Their default CT setup at 20 s is A3 B2, used in 25% of gun rounds with a 65% win rate.",
   "facts": [
    "t_signature_recipe",
    "ct_default_setup"
   ],
-  "fingerprint": "776a9dbae7ff"
+  "fingerprint": "3b75420a49e7"
  },
  "b8": {
-  "zh": "B8 快攻占比 17%，高于其他队伍的 6%（29 个枪局）。最常用的爆弹是 A 小跳警家烟配 A 坡火，4 次里赢下 4 次。",
-  "en": "B8 go fast on 17% of gun rounds vs 6% for other teams (29 gun rounds). Their go-to execute is an A hit with A short drop smoke plus A ramp molotov, used 4 times and won 4.",
+  "zh": "B8 最常用的爆弹是 A 点 A小跳警家烟，5 次赢 5 次。",
+  "en": "B8's go-to execute is A with A short drop smoke, used 5 times with 5 wins.",
   "facts": [
-   "t_tempo_fast",
    "t_signature_recipe"
   ],
-  "fingerprint": "369575e38a25"
+  "fingerprint": "9193d7756b7b"
  },
  "bc-game": {
-  "zh": "BC.Game 的 CT 默认站位是 A3 B2，开局 20 秒成型，出现在 29% 的枪局，胜率 40%。",
-  "en": "BC.Game's default CT setup is A3 B2 at 20 s, used in 29% of gun rounds with a 40% win rate.",
+  "zh": "BC.Game 最常用的爆弹是 B 点 B门烟，4 次赢 2 次。",
+  "en": "BC.Game's go-to execute is B with B doors smoke, used 4 times with 2 wins.",
   "facts": [
-   "ct_default_setup"
+   "t_signature_recipe"
   ],
-  "fingerprint": "e069b3bdaba9"
+  "fingerprint": "7737ebd72f77"
  },
  "bcg": {
   "zh": "BCG 的 CT 默认站位 A3 B2 占 29% 的枪局，胜率 40%。",
@@ -52,12 +70,12 @@
   "fingerprint": "30bd4e1db281"
  },
  "falcons": {
-  "zh": "Falcons 最常用的爆弹是 B 点 B 门烟，用了 23 次，赢下 17 次。",
-  "en": "Falcons' go-to execute is a B hit with the B doors smoke, used 23 times and won 17.",
+  "zh": "Falcons 最常用的爆弹是 B 点 B门烟，28 次赢 21 次。",
+  "en": "Falcons' go-to execute is B with B doors smoke, used 28 times with 21 wins.",
   "facts": [
    "t_signature_recipe"
   ],
-  "fingerprint": "4a1fd35c037c"
+  "fingerprint": "9121ae20cb0f"
  },
  "flc": {
   "zh": "T 方先假打再转点占 48%，高于其他队伍的 19%。进攻开始后 CT 及时回防占 65%，高于其他队伍的 39%。",
@@ -77,12 +95,13 @@
   "fingerprint": "763bd96728f0"
  },
  "fut-esports": {
-  "zh": "FUT Esports 的 CT 方开局前压仅占 16%，低于其他队伍的 39%，较少主动向前展开防守。",
-  "en": "FUT Esports' CT side pushes early in just 16% of rounds versus the other teams' 39%, taking a forward defensive posture less often.",
+  "zh": "FUT Esports 最常用的爆弹是 B 点 B门烟，9 次赢 4 次；最常摸边的人是 Krabeni，7 次进攻时他在另一侧或远离进攻点。",
+  "en": "FUT Esports' go-to execute is B with B doors smoke, used 9 times with 4 wins, and their usual lurker is Krabeni, on the other side or far from the hit in 7 attacks.",
   "facts": [
-   "ct_forward"
+   "t_signature_recipe",
+   "t_main_lurker"
   ],
-  "fingerprint": "039d3f5ca6f8"
+  "fingerprint": "02ae6d576e1c"
  },
  "g2": {
   "zh": "G2 最常用的爆弹是 B 点 B 门烟，6 次里赢 4 次；HeavyGod 是最常摸边的人（4 次）。只有 15% 的回合有人及时回防，其他队伍是 40%（20 个枪局）。",
@@ -104,12 +123,12 @@
   "fingerprint": "0ac19cc84bc0"
  },
  "legacy": {
-  "zh": "Legacy 的 CT 默认站位是 A3 B2，开局 20 秒成型，出现在 27% 的枪局，胜率 56%。",
-  "en": "Legacy's default CT setup is A3 B2 at 20 s, used in 27% of gun rounds with a 56% win rate.",
+  "zh": "Legacy 的 CT 默认站位是 A3 B2（开局 20 秒），占 28% 的枪局，胜率 59%。",
+  "en": "Legacy's default CT setup at 20 s is A3 B2, used in 28% of gun rounds with a 59% win rate.",
   "facts": [
    "ct_default_setup"
   ],
-  "fingerprint": "3840b800b140"
+  "fingerprint": "5e024a8a5848"
  },
  "lgcy": {
   "zh": "T 方最常用夹B警家烟和 B门烟爆弹 B 点，4 次赢下 2 次。开局 20 秒的 CT 默认站位为 A3 B2，占 33% 的枪局，胜率 83%。",
@@ -128,6 +147,14 @@
   ],
   "fingerprint": "7737ebd72f77"
  },
+ "luminosity": {
+  "zh": "Luminosity 的 CT 默认站位是 A3 M1 B1（开局 20 秒），占 31% 的枪局，胜率 60%。",
+  "en": "Luminosity's default CT setup at 20 s is A3 M1 B1, used in 31% of gun rounds with a 60% win rate.",
+  "facts": [
+   "ct_default_setup"
+  ],
+  "fingerprint": "37578558b2dd"
+ },
  "lvg": {
   "zh": "LVG 的 CT 默认站位 A3 B2 占 38% 的枪局，胜率 75%。",
   "en": "LVG's default CT setup A3 B2 covers 38% of gun rounds with a 75% win rate.",
@@ -137,22 +164,22 @@
   "fingerprint": "73f68a52e6e1"
  },
  "lynn-vision": {
-  "zh": "Lynn Vision 的 CT 默认站位是 A3 B2，开局 20 秒成型，占 45% 的枪局，胜率 71%。",
-  "en": "Lynn Vision's default CT setup is A3 B2 at 20 s, used in 45% of gun rounds with a 71% win rate.",
-  "facts": [
-   "ct_default_setup"
-  ],
-  "fingerprint": "eb23237e1628"
- },
- "monte": {
-  "zh": "Monte 最常用的爆弹是 B 点 B 门烟，8 次里赢 6 次；Gizmy 是最常摸边的人（5 次）。65% 的回合有人及时回防，其他队伍是 38%（23 个枪局）。",
-  "en": "Monte's go-to execute is a B hit with the B doors smoke, used 8 times and won 6; Gizmy is the usual lurker (5 hits). A CT rotated in time in 65% of rounds vs 38% for other teams (23 gun rounds).",
+  "zh": "Lynn Vision 最常用的爆弹是 B 点 B门烟，4 次赢 4 次。CT 默认站位是 A3 B2（开局 20 秒），占 36% 的枪局，胜率 67%。",
+  "en": "Lynn Vision's go-to execute is B with B doors smoke, used 4 times with 4 wins. Their default CT setup at 20 s is A3 B2, used in 36% of gun rounds with a 67% win rate.",
   "facts": [
    "t_signature_recipe",
-   "t_main_lurker",
-   "ct_rotate"
+   "ct_default_setup"
   ],
-  "fingerprint": "0be8efc21251"
+  "fingerprint": "bc09cb7e3b8e"
+ },
+ "monte": {
+  "zh": "Monte 最常用的爆弹是 B 点 B门烟，10 次赢 8 次；最常摸边的人是 Gizmy，5 次进攻时他在另一侧或远离进攻点。",
+  "en": "Monte's go-to execute is B with B doors smoke, used 10 times with 8 wins, and their usual lurker is Gizmy, on the other side or far from the hit in 5 attacks.",
+  "facts": [
+   "t_signature_recipe",
+   "t_main_lurker"
+  ],
+  "fingerprint": "08bd1a651034"
  },
  "mouz": {
   "zh": "MOUZ 的 CT 默认站位是 A3 M1 B1，开局 20 秒成型，占 29% 的枪局，胜率 83%。",
@@ -163,21 +190,21 @@
   "fingerprint": "3a5d2e53196f"
  },
  "natus-vincere": {
-  "zh": "Natus Vincere 的 CT 默认站位是 A3 B2，开局 20 秒成型，占 52% 的枪局，胜率 44%。",
-  "en": "Natus Vincere's default CT setup is A3 B2 at 20 s, used in 52% of gun rounds with a 44% win rate.",
+  "zh": "Natus Vincere 最常摸边的人是 Aleksib，5 次进攻时他在另一侧或远离进攻点。CT 默认站位是 A3 B2（开局 20 秒），占 34% 的枪局，胜率 39%。",
+  "en": "Natus Vincere's usual lurker is Aleksib, on the other side or far from the hit in 5 attacks. Their default CT setup at 20 s is A3 B2, used in 34% of gun rounds with a 39% win rate.",
   "facts": [
+   "t_main_lurker",
    "ct_default_setup"
   ],
-  "fingerprint": "5032ee73c7dc"
+  "fingerprint": "d9a04019f578"
  },
  "ninjas-in-pyjamas": {
-  "zh": "T 方快攻占 20%，高于其他队伍的 7%。开局 20 秒的 CT 默认站位为 A3 B2，占 26% 的枪局，胜率 20%。",
-  "en": "Fast hits account for 20% of T gun rounds versus 7% for other teams. At 20 s, the default CT setup is A3 B2, used in 26% of gun rounds with a win rate of 20%.",
+  "zh": "Ninjas in Pyjamas 的 CT 默认站位是 A3 B2（开局 20 秒），占 30% 的枪局，胜率 22%。",
+  "en": "Ninjas in Pyjamas' default CT setup at 20 s is A3 B2, used in 30% of gun rounds with a 22% win rate.",
   "facts": [
-   "t_tempo_fast",
    "ct_default_setup"
   ],
-  "fingerprint": "ad00403a5098"
+  "fingerprint": "1a532341ddc1"
  },
  "pain": {
   "zh": "CT 开局有人前压的回合占 59%，高于其他队伍的 36%。",
@@ -197,30 +224,29 @@
   "fingerprint": "7904f49dbb7b"
  },
  "spirit": {
-  "zh": "Spirit 有 49% 的进攻带摸边（其他队伍 29%），magixx 最常摸边（8 次）；假打转点占 32%（其他队伍 20%，47 个枪局）。CT 默认 A3 B2，48% 的枪局，胜率 63%。",
-  "en": "Spirit send a lurker on 49% of hits vs 29% for others, usually magixx (8 hits), and fake first 32% vs 20% (47 gun rounds). Default CT setup A3 B2 in 48% of gun rounds, 63% win rate.",
+  "zh": "Spirit 最常摸边的人是 magixx，42 次进攻时他在另一侧或远离进攻点。CT 默认站位是 A3 B2（开局 20 秒），占 41% 的枪局，胜率 64%。",
+  "en": "Spirit's usual lurker is magixx, on the other side or far from the hit in 42 attacks. Their default CT setup at 20 s is A3 B2, used in 41% of gun rounds with a 64% win rate.",
   "facts": [
-   "t_lurk",
-   "t_fake",
    "t_main_lurker",
    "ct_default_setup"
   ],
-  "fingerprint": "2fce34ec888b"
+  "fingerprint": "90f258a5363c"
  },
  "the-mongolz": {
-  "zh": "开局 20 秒的 CT 默认站位为 A3 B2，占 26% 的枪局，胜率 64%。",
-  "en": "At 20 s, the default CT setup is A3 B2, used in 26% of gun rounds with a win rate of 64%.",
+  "zh": "The MongolZ 的 CT 默认站位是 A3 B2（开局 20 秒），占 26% 的枪局，胜率 62%。",
+  "en": "The MongolZ's default CT setup at 20 s is A3 B2, used in 26% of gun rounds with a 62% win rate.",
   "facts": [
    "ct_default_setup"
   ],
-  "fingerprint": "cd9ca5d5c04c"
+  "fingerprint": "3ae7125fc6f0"
  },
  "vitality": {
-  "zh": "Vitality 的 CT 默认站位是 A3 B2，开局 20 秒成型，占 29% 的枪局，胜率 71%。",
-  "en": "Vitality's default CT setup is A3 B2 at 20 s, used in 29% of gun rounds with a 71% win rate.",
+  "zh": "Vitality 最常用的爆弹是 B 点 B门烟，32 次赢 26 次；最常摸边的人是 ropz，31 次进攻时他在另一侧或远离进攻点。",
+  "en": "Vitality's go-to execute is B with B doors smoke, used 32 times with 26 wins, and their usual lurker is ropz, on the other side or far from the hit in 31 attacks.",
   "facts": [
-   "ct_default_setup"
+   "t_signature_recipe",
+   "t_main_lurker"
   ],
-  "fingerprint": "2dd2f6267ecb"
+  "fingerprint": "ffc0688e4fe6"
  }
 }

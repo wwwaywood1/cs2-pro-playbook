@@ -1,14 +1,20 @@
 {
+ "100-thieves": {
+  "zh": "100 Thieves 开局 20 秒的 CT 默认站位为 A2 M1 B2，占 30% 的枪局，胜率 17%。",
+  "en": "100 Thieves' default CT setup at 20 s is A2 M1 B2, used in 30% of gun rounds with a 17% win rate.",
+  "facts": [
+   "ct_default_setup"
+  ],
+  "fingerprint": "cc3b0fd8c0d3"
+ },
  "aurora": {
-  "zh": "进攻端最常用 B 点爆弹：B连接烟、警家烟与 B后点火，5 次赢 4 次。防守端不堆点（0%，其他队伍 11%），开局 20 秒常规站位 A1 M1 B3，但及时回防仅 20%，低于其他队伍的 48%。",
-  "en": "Go-to execute is B with Palace smoke, CT smoke and Back site molotov (5 times, won 4). On CT they almost never stack (0% vs 11%) and default to A1 M1 B3 at 20 s, but rotate in time in only 20% of rounds versus 48%.",
+  "zh": "Aurora 最常用的爆弹是 B 点警家烟加 B连接烟，12 次赢 9 次。CT 方开局 20 秒的默认站位为 A1 M2 B2，占 27% 的枪局，胜率 78%。",
+  "en": "Aurora's go-to execute is B with CT smoke and Palace smoke, used 12 times with 9 wins. Their default CT setup at 20 s is A1 M2 B2, used in 27% of gun rounds with a 78% win rate.",
   "facts": [
    "t_signature_recipe",
-   "ct_stack",
-   "ct_default_setup",
-   "ct_rotate"
+   "ct_default_setup"
   ],
-  "fingerprint": "9e802c29e471"
+  "fingerprint": "e54e7b7e3bab"
  },
  "betboom": {
   "zh": "防守端偏爱堆点，26% 的枪局选择堆点，远高于其他队伍的 9%（19 个枪局）。",
@@ -18,14 +24,22 @@
   ],
   "fingerprint": "fe48edd8a1fa"
  },
+ "eyeballers": {
+  "zh": "EYEBALLERS 开局 20 秒的 CT 默认站位为 A2 M1 B2，占 38% 的枪局，胜率 50%。",
+  "en": "EYEBALLERS' default CT setup at 20 s is A2 M1 B2, used in 38% of gun rounds with a 50% win rate.",
+  "facts": [
+   "ct_default_setup"
+  ],
+  "fingerprint": "fb115d93cef2"
+ },
  "falcons": {
-  "zh": "进攻端最常用 B 点爆弹：B连接烟、警家烟与 B后点火，17 次赢 12 次。NiKo 是最常摸边的人，14 次进攻时身处另一侧或远离进攻点。",
-  "en": "Go-to execute is B with Palace smoke, CT smoke and Back site molotov (17 times, won 12), and NiKo is the usual lurker (14 hits with him on the other side or far away).",
+  "zh": "Falcons 最常用的爆弹是 B 点警家烟加 B连接烟，27 次赢 18 次。最常摸边的人是 NiKo，20 次进攻时他在另一侧或远离进攻点。",
+  "en": "Falcons' go-to execute is B with CT smoke and Palace smoke, used 27 times with 18 wins. Their usual lurker is NiKo, who was on the other side or far from the hit in 20 attacks.",
   "facts": [
    "t_signature_recipe",
    "t_main_lurker"
   ],
-  "fingerprint": "bfd54e6e0e57"
+  "fingerprint": "dc683b688362"
  },
  "flyquest": {
   "zh": "jks 是最常摸边的人，4 次进攻时身处另一侧或远离进攻点。",
@@ -36,50 +50,56 @@
   "fingerprint": "ca646c4dfa01"
  },
  "furia": {
-  "zh": "T 方快攻占 27%，高于其他队伍的 12%。T 方分兵进点占 88%，高于其他队伍的 60%。",
-  "en": "Fast hits account for 27% of T gun rounds versus 12% for other teams. The T side uses split hits on 88% of attacks versus 60% for other teams.",
+  "zh": "FURIA 最常用的爆弹是 B 点警家烟加 B连接烟，9 次赢 7 次。最常摸边的人是 KSCERATO，7 次进攻时他在另一侧或远离进攻点。",
+  "en": "FURIA's go-to execute is B with CT smoke and Palace smoke, used 9 times with 7 wins. Their usual lurker is KSCERATO, who was on the other side or far from the hit in 7 attacks.",
   "facts": [
-   "t_tempo_fast",
-   "t_split"
+   "t_signature_recipe",
+   "t_main_lurker"
   ],
-  "fingerprint": "141c43ded8a7"
+  "fingerprint": "859a8fcee7d7"
  },
  "fut-esports": {
-  "zh": "T 方快攻占 33%，高于其他队伍的 12%。CT 开局有人前压的回合占 32%，高于其他队伍的 14%。",
-  "en": "Fast hits account for 33% of T gun rounds versus 12% for other teams. The CT side pushes early in 32% of gun rounds versus 14% for other teams.",
+  "zh": "FUT Esports 最常用的爆弹是 A 点天堂烟、A连接烟、A包点火（天堂侧）、A连接火（包点出口）加喷泉火，5 次赢 2 次。最常摸边的人是 dziugss，5 次进攻时他在另一侧或远离进攻点。",
+  "en": "FUT Esports' go-to execute is A with Heaven smoke, A connector smoke, A site molotov (Heaven side), A connector molotov (site exit) and Fountain molotov, used 5 times with 2 wins. Their usual lurker is dziugss, who was on the other side or far from the hit in 5 attacks.",
   "facts": [
-   "t_tempo_fast",
-   "ct_forward"
+   "t_signature_recipe",
+   "t_main_lurker"
   ],
-  "fingerprint": "c06058bbbf5a"
+  "fingerprint": "0adf2ce64ed4"
  },
  "g2": {
-  "zh": "进攻端快攻占 30%（其他队伍 12%），分兵进点只有 29%，低于其他队伍的 62%。防守端开局 20 秒常摆 A1 M2 B2，占 29% 的枪局，胜率 80%。",
-  "en": "Fast hits are 30% of their rounds (12% for others) and splits only 29% (62% for others); on CT the default is A1 M2 B2 at 20 s, 29% of gun rounds with 80% won.",
+  "zh": "G2 最常用的爆弹是 A 点天堂烟、A连接烟、A包点火（天堂侧）、A连接火（包点出口）加喷泉火，8 次赢 5 次。CT 方开局 20 秒的默认站位为 A1 M2 B2，占 35% 的枪局，胜率 59%。",
+  "en": "G2's go-to execute is A with Heaven smoke, A connector smoke, A site molotov (Heaven side), A connector molotov (site exit) and Fountain molotov, used 8 times with 5 wins. Their default CT setup at 20 s is A1 M2 B2, used in 35% of gun rounds with a 59% win rate.",
   "facts": [
-   "t_tempo_fast",
-   "t_split",
+   "t_signature_recipe",
    "ct_default_setup"
   ],
-  "fingerprint": "4ddae25f7c02"
+  "fingerprint": "227dd0361b14"
+ },
+ "liquid": {
+  "zh": "Liquid 最常用的爆弹是 A 点天堂烟、A连接烟、A包点火（天堂侧）、A连接火（包点出口）加喷泉火，5 次赢 3 次。",
+  "en": "Liquid's go-to execute is A with Heaven smoke, A connector smoke, A site molotov (Heaven side), A connector molotov (site exit) and Fountain molotov, used 5 times with 3 wins.",
+  "facts": [
+   "t_signature_recipe"
+  ],
+  "fingerprint": "d40c46874618"
  },
  "mibr": {
-  "zh": "MIBR 的 CT 默认站位 A2 M1 B2 覆盖 52% 的枪局，胜率 91%，是队伍最常用且胜率很高的防守布局。",
-  "en": "MIBR's default CT setup A2 M1 B2 covers 52% of gun rounds with a 91% win rate, making it the team's most-used and highly effective defensive setup.",
+  "zh": "MIBR 的 CT 默认站位是 A2 M1 B2（开局 20 秒），占 52% 的枪局，胜率 91%。",
+  "en": "MIBR's default CT setup is A2 M1 B2 at 20 s, used in 52% of gun rounds and won 91% of them.",
   "facts": [
    "ct_default_setup"
   ],
   "fingerprint": "34f2fb47dd01"
  },
  "natus-vincere": {
-  "zh": "进攻端偏慢，拖后进攻占 55%（其他队伍 35%），常用 A 点爆弹：天堂烟、A连接烟、A连接火与 A包点火，4 次赢 3 次。防守端开局前压占 27%，高于其他队伍的 14%。",
-  "en": "Late hits are 55% of their rounds (35% for others), built on the A execute with Heaven smoke, A connector smoke, A connector molotov and A site molotov (4 times, won 3). On CT an early push shows up in 27% of rounds versus 14%.",
+  "zh": "Natus Vincere 最常用的爆弹是 B 点 B连接烟加 B后点火，9 次赢 6 次。CT 方开局 20 秒的默认站位为 A1 M2 B2，占 25% 的枪局，胜率 37%。",
+  "en": "Natus Vincere's go-to execute is B with Palace smoke and Back site molotov (B), used 9 times with 6 wins. Their default CT setup at 20 s is A1 M2 B2, used in 25% of gun rounds with a 37% win rate.",
   "facts": [
-   "t_tempo_late",
    "t_signature_recipe",
-   "ct_forward"
+   "ct_default_setup"
   ],
-  "fingerprint": "a6fe4df391d8"
+  "fingerprint": "86a0ca0c8970"
  },
  "pain": {
   "zh": "paiN 的 CT 默认站位 A1 M2 B2 占 37% 的枪局，胜率 57%，是队伍最常用的防守布局。",
@@ -89,30 +109,37 @@
   ],
   "fingerprint": "e39348bb4a47"
  },
+ "parivision": {
+  "zh": "PARIVISION 最常用的爆弹是 A 点天堂烟、A连接烟、A包点火（天堂侧）、A连接火（包点出口）加喷泉火，4 次赢 4 次。",
+  "en": "PARIVISION's go-to execute is A with Heaven smoke, A connector smoke, A site molotov (Heaven side), A connector molotov (site exit) and Fountain molotov, used 4 times with 4 wins.",
+  "facts": [
+   "t_signature_recipe"
+  ],
+  "fingerprint": "aebe58b34ca4"
+ },
  "spirit": {
-  "zh": "zont1x 是最常摸边的人，7 次进攻时身处另一侧或远离进攻点。防守端开局 20 秒常摆 A2 M1 B2，占 33% 的枪局，胜率 64%。",
-  "en": "zont1x is the usual lurker (7 hits with him on the other side or far away); on CT the default is A2 M1 B2 at 20 s, 33% of gun rounds with 64% won.",
+  "zh": "Spirit 最常摸边的人是 zont1x，20 次进攻时他在另一侧或远离进攻点。CT 方开局 20 秒的默认站位为 A2 M1 B2，占 30% 的枪局，胜率 57%。",
+  "en": "Spirit's usual lurker is zont1x, who was on the other side or far from the hit in 20 attacks. Their default CT setup at 20 s is A2 M1 B2, used in 30% of gun rounds with a 57% win rate.",
   "facts": [
    "t_main_lurker",
    "ct_default_setup"
   ],
-  "fingerprint": "0465010a00d0"
+  "fingerprint": "061933901ecb"
  },
  "tyloo": {
-  "zh": "拖后进攻只占 10%，远低于其他队伍的 38%。防守端开局 20 秒常摆 A2 M1 B2，占 40% 的枪局，胜率 67%。",
-  "en": "Late hits are only 10% of their rounds (38% for others); on CT the default is A2 M1 B2 at 20 s, 40% of gun rounds with 67% won.",
+  "zh": "TYLOO 开局 20 秒的 CT 默认站位为 A2 M1 B2，占 40% 的枪局，胜率 67%。",
+  "en": "TYLOO's default CT setup at 20 s is A2 M1 B2, used in 40% of gun rounds with a 67% win rate.",
   "facts": [
-   "t_tempo_late",
    "ct_default_setup"
   ],
-  "fingerprint": "da78be5f3d9f"
+  "fingerprint": "971f07f50435"
  },
  "vitality": {
-  "zh": "最常用的爆弹是 B 点警家烟（B点），4 次赢 3 次。",
-  "en": "Go-to execute is B with CT smoke (B) (4 times, won 3).",
+  "zh": "Vitality 最常用的爆弹是 B 点警家烟加 B连接烟，25 次赢 21 次。",
+  "en": "Vitality's go-to execute is B with CT smoke and Palace smoke, used 25 times with 21 wins.",
   "facts": [
    "t_signature_recipe"
   ],
-  "fingerprint": "3246fb26f35d"
+  "fingerprint": "22318b837458"
  }
 }
