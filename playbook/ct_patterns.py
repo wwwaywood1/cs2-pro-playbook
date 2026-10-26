@@ -21,27 +21,60 @@ from playbook.config import CONFIG_DIR, MapMeta
 TIMES = (10, 12, 15, 18, 20)
 REGIONS = ('A', 'MID', 'B', 'CT_SPAWN', 'OTHER')
 DISTANCE_SCALE = 4215.87
+FEATURES = len(TIMES)*19  # geometry only: no economy, score or previous-round input
+ATTENTION_TAU = .25
+ECONOMY_TYPES = ['eco', 'force', 'full']
+PERMUTATIONS = 1999
+FINGERPRINT_MIN_ROUNDS = 30
+RELIABLE_MATCHES, RELIABLE_ROUNDS = 5, 60
 METHOD = 'lightweight_standardised_pca_kmeans'
 METADATA = {
     'paper_scope': 'TAGNet was validated on Dust2 only (697 rounds); this project applies a lightweight method to all parsed maps. Results below are computed from our demos.',
-    'encoder': '5 snapshots × (4 lane shares + 10 sorted XYZ pair distances /4215.87 + 5 sorted CT-to-T depth values) + 8 context values; standardise, PCA <=64, KMeans K<=6, n_init=20, random_state=42; per-map k and exclusions below',
+    'encoder': '5 snapshots × (4 lane shares + 10 sorted XYZ pair distances /4215.87 + 5 sorted CT-to-T depth values) = 95 geometric values; economy, score and the previous result are not inputs; standardise, PCA <=64, KMeans K<=6, n_init=20, random_state=42; per-map k and exclusions below',
     'depth': 'distance from observed CT spawn centroid / (distance to CT spawn + distance to T spawn); centroids from alive spawn frames t=0..2 per map',
     'unknown_lanes': 'OTHER/T_SPAWN remain in denominator, omitted from four encoder shares; reported as OTHER in summaries',
     'snapshots': list(TIMES), 'later_deaths': 'Use recorded positions of the original five CT members, including dead members after 10s; drop incomplete/non-finite rounds.',
     'trajectory_slots': '15s lane A/MID/B/CT_SPAWN/OTHER, depth, steamid; fixed member identity across snapshots',
     'torch_available': False,
-    'pistol_exclusion': 'MR12 regulation rounds 1 and 13 only; overtime half starts are retained.',
+    'pistol_exclusion': 'Rounds the economy table labels pistol (first round of each regulation half: 1 and 13 in MR12, 1 and 16 in MR15); overtime half starts are retained.',
+    'economy_test': f'Post hoc: chi-square of formation x CT buy type (eco/force/full) with Cramer\'s V. Rounds of one match are not independent, so p comes from {PERMUTATIONS} match-block permutations: within each team\'s CT rounds of one match the buy-type sequence is shifted cyclically by a random offset (keeps every match\'s economy mix and streaks, breaks only its alignment with formations); p = (1 + #{{chi2_perm >= chi2}})/({PERMUTATIONS}+1). p_asymptotic is the textbook value assuming independent rounds.',
+    'fingerprints': f'Teams with >= {FINGERPRINT_MIN_ROUNDS} included rounds. share_ci95: Wilson 95% interval on rounds / design effect, design effect = match-clustered variance / binomial variance (at least 1). reliable: >= {RELIABLE_MATCHES} matches and >= {RELIABLE_ROUNDS} rounds.',
 }
 
 
-def wilson(won: int, n: int) -> list[float]:
+def wilson(won: float, n: float) -> list[float]:
+    """Wilson score 95% interval; n may be an effective (design-effect adjusted) size."""
     if not n:
         return [0., 1.]
     z = 1.959963984540054
     p, q = won / n, z*z/n
     mid = (p + q/2)/(1+q)
     half = z*np.sqrt(p*(1-p)/n+z*z/(4*n*n))/(1+q)
-    return [float(mid-half), float(mid+half)]
+    return [0. if p <= 0 else float(max(0., mid-half)), 1. if p >= 1 else float(min(1., mid+half))]
+
+
+def clustered_share_ci(hits: np.ndarray, sizes: np.ndarray) -> list[float]:
+    """95% interval for sum(hits)/sum(sizes) when rounds are grouped in matches.
+
+    Wilson interval on the effective sample n/deff, deff = cluster-robust (match) variance
+    of the share / binomial variance, never below 1 (Korn & Graubard style).
+    """
+    hits, sizes = np.asarray(hits, float), np.asarray(sizes, float)
+    n, g = sizes.sum(), len(sizes)
+    share = hits.sum()/n
+    deff = 1.
+    if g > 1 and 0 < share < 1:
+        robust = g/(g-1)*np.sum((hits-share*sizes)**2)/n**2
+        deff = max(1., float(robust/(share*(1-share)/n)))
+    return wilson(share*n/deff, n/deff)
+
+
+def attention_weights(xyz: np.ndarray, tau: float = ATTENTION_TAU) -> np.ndarray:
+    """Distance kernel: row softmax of -distance/(DISTANCE_SCALE*tau), self edges included."""
+    distances = np.linalg.norm(xyz[:, None]-xyz[None, :], axis=2)
+    logits = -distances/(DISTANCE_SCALE*tau)
+    weights = np.exp(logits-logits.max(axis=1, keepdims=True))
+    return weights/weights.sum(axis=1, keepdims=True)
 
 
 def chi_square(table: np.ndarray, economy_types: list[str]) -> dict:
@@ -60,6 +93,66 @@ def chi_square(table: np.ndarray, economy_types: list[str]) -> dict:
                 n=n, cramers_v=float(np.sqrt(stat/(n*min(a.shape[0]-1, a.shape[1]-1)))), economy_types=types,
                 observed=a.tolist(), min_expected=float(expected.min()),
                 caveat='Expected cells below 5; asymptotic p-value may be unreliable' if expected.min() < 5 else None)
+
+
+def block_permutation_p(clusters: np.ndarray, economy: np.ndarray, blocks: np.ndarray,
+                        permutations: int = PERMUTATIONS, seed: int = 42) -> float:
+    """Chi-square p value from cyclic shifts of the economy labels within blocks.
+
+    clusters/economy: integer codes per round; blocks: block code per round, the rounds of
+    each block in round order. Every shift keeps both margins of the table, so the
+    expected counts are fixed and chi-square is compared directly.
+    """
+    group = np.argsort(np.asarray(blocks), kind='stable')  # contiguous blocks, round order kept
+    clusters, economy, blocks = (np.asarray(a, int)[group] for a in (clusters, economy, blocks))
+    n, n_eco = len(clusters), int(economy.max(initial=0))+1
+    cells = int(clusters.max(initial=0))+1, n_eco
+    observed = np.bincount(clusters*n_eco+economy, minlength=cells[0]*n_eco).reshape(cells)
+    expected = np.outer(observed.sum(axis=1), observed.sum(axis=0))/max(n, 1)
+    nonzero = expected > 0
+    if n == 0 or (observed.sum(axis=1) > 0).sum() < 2 or (observed.sum(axis=0) > 0).sum() < 2:
+        return 1.
+
+    def statistic(o):
+        return (((o-expected)**2)[..., nonzero]/expected[nonzero]).sum(axis=-1)
+
+    stat = statistic(observed)
+    _, start, length = np.unique(blocks, return_index=True, return_counts=True)
+    block = np.searchsorted(np.unique(blocks), blocks)
+    local = np.arange(n)-start[block]
+    rng = np.random.default_rng(seed)
+    exceed = 0
+    for size in [500]*(permutations//500)+[permutations % 500]:
+        if not size:
+            continue
+        shift = rng.integers(0, length[None, :], size=(size, len(length)))
+        source = start[block]+(local+shift[:, block]) % length[block]
+        codes = clusters*n_eco+economy[source]+(np.arange(size)*cells[0]*n_eco)[:, None]
+        table = np.bincount(codes.ravel(), minlength=size*cells[0]*n_eco).reshape(size, *cells)
+        exceed += int((statistic(table) >= stat-1e-9*max(1., stat)).sum())
+    return (1+exceed)/(permutations+1)
+
+
+def economy_association(clusters: np.ndarray, rows: list[dict], k: int,
+                        permutations: int = PERMUTATIONS) -> dict:
+    """Formation x CT buy type, after clustering on geometry only (post hoc)."""
+    economy = np.array([ECONOMY_TYPES.index(r['buy_type']) if r['buy_type'] in ECONOMY_TYPES else -1 for r in rows])
+    table = np.array([[int(np.sum((clusters == c) & (economy == e))) for e in range(len(ECONOMY_TYPES))]
+                      for c in range(k)]).reshape(k, len(ECONOMY_TYPES))
+    out = chi_square(table, ECONOMY_TYPES)
+    out['p_asymptotic'] = out['p']
+    out.update(p_method='match_block_cyclic_shift', permutations=permutations)
+    if out['dof'] == 0:
+        return out
+    keep = economy >= 0
+    keys = sorted(set((r['demo_id'], r['team']) for r in rows))
+    block = np.array([keys.index((r['demo_id'], r['team'])) for r in rows])
+    order = np.lexsort((np.array([r['round_num'] for r in rows]), block))
+    order = order[keep[order]]
+    p = block_permutation_p(clusters[order], economy[order], block[order], permutations)
+    floor = 1/(permutations+1)
+    out.update(p=p, p_display=(f'p ≤ {floor:.1g}' if p <= floor else f'p = {p:.3g}')+'（按场次分块置换）')
+    return out
 
 
 def _spawn(pos: pl.DataFrame, side: str) -> np.ndarray:
@@ -85,17 +178,32 @@ def round_ref(row: dict) -> dict:
             'economy': row['buy_type'], 'score': {'ct': int(row['score_for']), 't': int(row['score_against'])}}
 
 
+def pistol_rounds(team_rounds: pl.DataFrame) -> pl.DataFrame:
+    """(demo_id, round_num) of pistol rounds: either team's economy says pistol.
+
+    The parser labels the first round of each regulation half from mp_maxrounds
+    (1 and 13 in MR12, 1 and 16 in MR15); overtime half starts are gun rounds.
+    """
+    return team_rounds.filter(pl.col('buy_type') == 'pistol').select('demo_id', 'round_num').unique()
+
+
+def _drop_rounds(df: pl.DataFrame, keys: pl.DataFrame) -> pl.DataFrame:
+    return df.join(keys.with_columns(pl.col('round_num').cast(df.schema['round_num'])),
+                   on=['demo_id', 'round_num'], how='anti')
+
+
 def extract(sub: dict, mm: MapMeta) -> tuple[list[dict], np.ndarray, dict]:
     tr = sub['team_rounds'].filter(pl.col('side') == 'CT').sort('demo_id', 'round_num')
     positions = sub['positions']
-    pistols = tr.filter(pl.col('round_num').is_in([1, 13])).height
-    counts = dict(total=tr.height, excluded_pistol_rounds=pistols, eligible_at_10=0,
+    pistol = pistol_rounds(sub['team_rounds'])
+    kept = _drop_rounds(tr, pistol)
+    counts = dict(total=tr.height, excluded_pistol_rounds=tr.height-kept.height, eligible_at_10=0,
                   dropped_at_10=0, dropped_incomplete=0, included=0)
-    tr = tr.filter(~pl.col('round_num').is_in([1, 13]))
+    tr = kept
     if positions.is_empty() or tr.is_empty():
         counts['dropped_at_10'] = tr.height
-        return [], np.empty((0, 103)), counts
-    positions = positions.filter(~pl.col('round_num').is_in([1, 13]))
+        return [], np.empty((0, FEATURES)), counts
+    positions = _drop_rounds(positions, pistol)
     ct_spawn, t_spawn = _spawn(positions, 'CT'), _spawn(positions, 'T')
     pos = positions.filter((pl.col('side') == 'CT') & pl.col('t_s').is_in(sorted(set(TIMES) | set(range(15, 21)))))
     grouped = {key: g for key, g in pos.group_by('demo_id', 'round_num', maintain_order=True)}
@@ -146,16 +254,15 @@ def extract(sub: dict, mm: MapMeta) -> tuple[list[dict], np.ndarray, dict]:
         radar[:, :, 0] = (xyz[:, :, 0]-mm.radar['pos_x'])/mm.radar['scale']
         radar[:, :, 1] = (mm.radar['pos_y']-xyz[:, :, 1])/mm.radar['scale']
         radar[:, :, 2] = (xyz[:, :, 2] < mm.radar.get('lower_level_max_z', -np.inf)).astype(int)
+        # Context is kept on the row for post hoc description only; it is not a feature,
+        # otherwise the economy x formation test would be circular.
         after_loss = previous.get((row['demo_id'], row['round_num'], row['team'])) is False
         row.update(xyz=xyz, radar=radar, shares=np.array([lanes15.count(l)/5 for l in REGIONS]),
                    depth=float(np.mean(depths)), after_loss=after_loss, callouts=callouts)
-        context = [row['equipment_value']/25000, row['opp_equipment_value']/25000,
-                   (row['score_for']-row['score_against'])/12, float(after_loss),
-                   *[float(row['buy_type'] == b) for b in ('full', 'force', 'eco', 'pistol')]]
         rows.append(row)
-        features.append(np.r_[fs, context])
+        features.append(fs)
     counts['included'] = len(rows)
-    return rows, np.array(features).reshape(-1, 103), counts
+    return rows, np.array(features, dtype=float).reshape(-1, FEATURES), counts
 
 
 def player_counts(shares: np.ndarray) -> np.ndarray:
@@ -372,8 +479,6 @@ def build(sub: dict, mm: MapMeta) -> tuple[dict, list[dict]]:
                     leading=np.array([r['score_for'] > r['score_against'] for r in rows]),
                     after_loss=np.array([r['after_loss'] for r in rows]))
     attention = []
-    eco_types = ['eco', 'force', 'full']
-    contingency = []
     for i, c in enumerate(order):
         members = np.flatnonzero(labels == c)
         n = len(members)
@@ -395,26 +500,30 @@ def build(sub: dict, mm: MapMeta) -> tuple[dict, list[dict]]:
                                   share=count/max(1, callouts[i].total()))
                               for p, count in sorted(callouts[i].items(), key=lambda item: (-item[1], item[0]))],
             medoid=round_ref(medoid), context_preferences=prefs))
-        contingency.append([sum(rows[j]['buy_type'] == b for j in members) for b in eco_types])
-        snaps = []
-        for j, s in enumerate(TIMES):
-            xyz = medoid['xyz'][j]
-            distances = np.linalg.norm(xyz[:, None]-xyz[None, :], axis=2)
-            logits = np.exp(-distances/DISTANCE_SCALE/.25)
-            weights = np.exp(logits-logits.max(axis=1, keepdims=True))
-            weights /= weights.sum(axis=1, keepdims=True)
-            snaps.append(dict(t_s=s, positions=medoid['radar'][j].round(3).tolist(), alpha=weights.tolist()))
+        snaps = [dict(t_s=s, positions=medoid['radar'][j].round(3).tolist(),
+                      alpha=attention_weights(medoid['xyz'][j]).tolist()) for j, s in enumerate(TIMES)]
         attention.append(dict(map=mm.name, cluster_id=ids[c], round=round_ref(medoid),
-                              method='distance_kernel', tau=.25, snapshots=snaps))
-    out['chi_square'] = chi_square(np.array(contingency), eco_types)
+                              method='distance_kernel', tau=ATTENTION_TAU, snapshots=snaps))
+    rank = {c: i for i, c in enumerate(order)}
+    out['chi_square'] = economy_association(np.array([rank[c] for c in labels]), rows, k)
+    demos = np.array([r['demo_id'] for r in rows])
     for team in sorted({r['team'] for r in rows}):
         mask = np.array([r['team'] == team for r in rows])
         n = int(mask.sum())
-        if n < 30:
+        if n < FINGERPRINT_MIN_ROUNDS:
             continue
-        out['fingerprints'].append(dict(team=team, n=n, usage=[dict(cluster_id=ids[c],
-            share=float((labels[mask] == c).mean()), pro_share=float((labels == c).mean()),
-            difference_pp=float(100*((labels[mask] == c).mean()-(labels == c).mean()))) for c in order]))
+        matches, match = np.unique(demos[mask], return_inverse=True)
+        sizes = np.bincount(match, minlength=len(matches))
+        usage = []
+        for c in order:
+            used = labels[mask] == c
+            usage.append(dict(cluster_id=ids[c], share=float(used.mean()),
+                              share_ci95=clustered_share_ci(np.bincount(match, used, minlength=len(matches)), sizes),
+                              pro_share=float((labels == c).mean()),
+                              difference_pp=float(100*(used.mean()-(labels == c).mean()))))
+        out['fingerprints'].append(dict(team=team, n=n, matches=len(matches),
+                                        reliable=bool(len(matches) >= RELIABLE_MATCHES and n >= RELIABLE_ROUNDS),
+                                        usage=usage))
     embedding = np.pad(reduced[:, :2], ((0, 0), (0, max(0, 2-reduced.shape[1]))))
     out['embedding']['points'] = [dict(**round_ref(r), cluster_id=ids[labels[i]],
                                      x=float(embedding[i, 0]), y=float(embedding[i, 1])) for i, r in enumerate(rows)]
