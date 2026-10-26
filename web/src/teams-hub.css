@@ -479,6 +479,12 @@
 .hub-page .hub-orbit[data-active] .hub-orbit-node:not([data-active="true"]) { --orbit-emphasis: .96; scale: calc(var(--orbit-depth, 1) * var(--orbit-emphasis)); opacity: .65; filter: none; }
 .hub-page .hub-orbit .hub-orbit-node[data-active="true"] { --orbit-emphasis: 1.08; scale: calc(var(--orbit-depth, 1) * var(--orbit-emphasis)); }
 .hub-page .hub-orbit .hub-orbit-node[data-empty="true"] { --orbit-emphasis: 1; scale: var(--orbit-depth, 1); }
+@media (min-width: 900px) {
+  /* A map without data takes neither hover/focus emphasis nor the .96 de-emphasis: it keeps
+     its depth scale, so a focused placeholder cannot grow over its neighbours or the core. */
+  .hub-page .hub-orbit .hub-orbit-node[data-empty="true"]:is(:hover, :focus-visible, [data-active="true"]),
+  .hub-page .hub-orbit[data-active] .hub-orbit-node[data-empty="true"] { --orbit-emphasis: 1; scale: var(--orbit-depth, 1); }
+}
 .hub-page .hub-orbit .hub-orbit-node > .map-landmark-art { z-index: 0; }
 .hub-page .hub-orbit .hub-orbit-node > .map-card-bg { opacity: .07; }
 .hub-page .hub-orbit .hub-orbit-node:has(.card-scenic-bg) > .map-landmark-art { visibility: hidden; }
