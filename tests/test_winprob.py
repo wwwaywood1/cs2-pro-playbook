@@ -72,3 +72,67 @@ def test_oof_learns_alive_signal_and_kill_sign():
     assert (ev.filter(pl.col("action") == "kill")["dwp"].mean() > 0)
     assert (ev.filter(pl.col("action") == "death")["dwp"].mean() < 0)
     assert 0 <= m["model"]["brier"] <= 0.25
+
+
+def _wp_table(rows):
+    return pl.DataFrame(rows, schema={"demo_id": pl.Utf8, "round_num": pl.Int64, "t_s": pl.Float64, "wp_t": pl.Float64},
+                        orient="row")
+
+
+def _one_round_tables(dur=10.0, winner="T", kill_t=9.5, util=()):
+    kills = pl.DataFrame([{"demo_id": "d", "round_num": 1, "t_s": kill_t, "is_post_round": False, "is_teamkill": False,
+                           "attacker_steamid": "a", "attacker_team": "A", "attacker_side": "T",
+                           "victim_steamid": "v", "victim_team": "B", "victim_side": "CT", "weapon": "ak47"}])
+    utility = pl.DataFrame([{"demo_id": "d", "round_num": 1, "type": typ, "pop_t_s": at, "is_post_round": False,
+                             "thrower_steamid": "a", "thrower_team": "A", "thrower_side": "T"} for typ, at in util],
+                           schema={"demo_id": pl.Utf8, "round_num": pl.Int64, "type": pl.Utf8, "pop_t_s": pl.Float64,
+                                   "is_post_round": pl.Boolean, "thrower_steamid": pl.Utf8, "thrower_team": pl.Utf8,
+                                   "thrower_side": pl.Utf8})
+    return {"kills": kills, "utility": utility,
+            "plants": pl.DataFrame(schema={"demo_id": pl.Utf8, "round_num": pl.Int64, "t_s": pl.Float64,
+                                           "site": pl.Utf8, "steamid": pl.Utf8, "team": pl.Utf8}),
+            "rounds": pl.DataFrame([{"demo_id": "d", "round_num": 1, "dur_s": dur, "winner_side": winner}]),
+            "matches": pl.DataFrame([{"demo_id": "d", "map": "de_mirage"}])}
+
+
+def test_round_ending_kill_takes_the_outcome():
+    t = _one_round_tables(dur=10.0, winner="T", kill_t=9.5)
+    wp = _wp_table([("d", 1, float(s), 0.6) for s in range(11)])
+    ev = W.action_values(t, wp, adjust_drift=False)
+    kill = ev.filter(pl.col("action") == "kill")
+    assert kill.height == 1 and kill["dwp"][0] == pytest.approx(0.4)    # 0.6 -> 1.0 (T won)
+    death = ev.filter(pl.col("action") == "death")
+    assert death["dwp"][0] == pytest.approx(-0.4)
+
+
+def test_flashbangs_count_as_utility():
+    assert "flashbang" in W.UTILITY and "flash" not in W.UTILITY and "decoy" not in W.UTILITY
+    from playbook.utility import WEAPON_TYPE
+    assert set(W.UTILITY) <= set(WEAPON_TYPE.values())
+    t = _one_round_tables(dur=30.0, kill_t=25.0, util=[("flashbang", 3.2), ("decoy", 4.0)])
+    wp = _wp_table([("d", 1, float(s), 0.5) for s in range(31)])
+    ev = W.action_values(t, wp, adjust_drift=False)
+    assert ev.filter(pl.col("action") == "utility")["detail"].to_list() == ["flashbang"]
+
+
+def test_drift_adjustment_removes_the_clock():
+    # WP falls 1 pp per second for T whatever happens: a mid-round flash changes nothing real
+    t = _one_round_tables(dur=40.0, winner="CT", kill_t=39.5, util=[("smoke", 20.4)])
+    wp = _wp_table([("d", 1, float(s), 0.8 - 0.01 * s) for s in range(41)])
+    raw = W.action_values(t, wp, adjust_drift=False).filter(pl.col("action") == "utility")["dwp"][0]
+    adj = W.action_values(t, wp).filter(pl.col("action") == "utility")["dwp"][0]
+    assert raw == pytest.approx(-0.02) and adj == pytest.approx(0.0, abs=1e-9)
+
+
+def test_pre_freeze_kills_are_ignored():
+    t = _one_round_tables(dur=10.0, kill_t=-5.0)
+    wp = _wp_table([("d", 1, float(s), 0.5) for s in range(11)])
+    assert W.action_values(t, wp).filter(pl.col("action").is_in(["kill", "death"])).height == 0
+
+
+def test_recipe_wp_uses_the_outcome_when_the_round_ends_early():
+    plans = pl.DataFrame([{"demo_id": "d", "round_num": 1, "recipe_id": "r1", "commit_s": 8.0}])
+    wp = _wp_table([("d", 1, float(s), 0.5) for s in range(13)])
+    rounds = pl.DataFrame([{"demo_id": "d", "round_num": 1, "winner_side": "T"}])
+    assert W.recipe_wp(plans, wp, rounds=rounds)["r1"]["after"] == 1.0
+    assert W.recipe_wp(plans, wp)["r1"]["after"] == 0.5

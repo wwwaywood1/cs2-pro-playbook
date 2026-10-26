@@ -16,11 +16,15 @@ import math
 import numpy as np
 import polars as pl
 
+from playbook.utility import WEAPON_TYPE
+
 ROUND_TIME_S = 115.0   # CS2 round timer after freeze time
 BOMB_TIME_S = 40.0     # C4 timer
 LANES = ("T_SPAWN", "A", "MID", "B", "CT_SPAWN", "OTHER")
-UTILITY = ("smoke", "flash", "molotov", "he")
+# grenade types as the parser names them ("flashbang", not "flash"); decoys carry no value
+UTILITY = tuple(sorted(set(WEAPON_TYPE.values()) - {"decoy"}))
 N_FOLDS = 5
+DRIFT_BUCKET_S = 10     # time buckets for the no-event drift baseline (5 s after a plant)
 
 
 def states(t: dict[str, pl.DataFrame]) -> pl.DataFrame:
@@ -155,52 +159,109 @@ def wp_lookup(d: pl.DataFrame, wp_t: np.ndarray) -> pl.DataFrame:
     return d.select("demo_id", "round_num", "t_s").with_columns(pl.Series("wp_t", wp_t.round(4)))
 
 
-def action_values(t: dict[str, pl.DataFrame], wp: pl.DataFrame, before: int = 1, after: int = 2) -> pl.DataFrame:
-    """ΔWP for kills, deaths, utility pops, plants; positive = good for the acting player's team.
-
-    WP before = state at floor(t) - before + 1 (last full second before the event),
-    WP after = state at floor(t) + after. Events without both states are dropped.
-    """
-    def attach(ev: pl.DataFrame) -> pl.DataFrame:
-        ev = ev.with_columns(pl.col("t_s").floor().cast(pl.Int64).alias("_s"))
-        w = wp.with_columns(pl.col("t_s").cast(pl.Int64).alias("_s")).drop("t_s")
-        pre = w.rename({"wp_t": "wp_before"}).with_columns(pl.col("_s") + (before - 1))
-        post = w.rename({"wp_t": "wp_after"}).with_columns(pl.col("_s") - after)
-        ev = ev.join(pre, on=["demo_id", "round_num", "_s"], how="inner")
-        ev = ev.join(post, on=["demo_id", "round_num", "_s"], how="inner")
-        sign = pl.when(pl.col("side") == "T").then(1.0).otherwise(-1.0)
-        return ev.with_columns(((pl.col("wp_after") - pl.col("wp_before")) * sign).alias("dwp")).drop("_s")
-
-    k = t["kills"].filter(~pl.col("is_post_round") & ~pl.col("is_teamkill"))
+def _event_frames(t: dict[str, pl.DataFrame]) -> list[pl.DataFrame]:
+    """Kills, deaths, utility pops and plants as (demo, round, t_s, steamid, team, side, action, detail)."""
+    k = t["kills"].filter(~pl.col("is_post_round") & ~pl.col("is_teamkill") & (pl.col("t_s") >= 0))
     kills = k.select("demo_id", "round_num", "t_s", pl.col("attacker_steamid").alias("steamid"),
                      pl.col("attacker_team").alias("team"), pl.col("attacker_side").alias("side"),
                      pl.lit("kill").alias("action"), pl.col("weapon").alias("detail"))
     deaths = k.select("demo_id", "round_num", "t_s", pl.col("victim_steamid").alias("steamid"),
                       pl.col("victim_team").alias("team"), pl.col("victim_side").alias("side"),
                       pl.lit("death").alias("action"), pl.col("weapon").alias("detail"))
-    u = t["utility"].filter(~pl.col("is_post_round") & pl.col("type").is_in(UTILITY) & pl.col("pop_t_s").is_not_null())
+    u = t["utility"].filter(~pl.col("is_post_round") & pl.col("type").is_in(UTILITY) & pl.col("pop_t_s").is_not_null()
+                            & (pl.col("pop_t_s") >= 0))
     util = u.select("demo_id", "round_num", pl.col("pop_t_s").alias("t_s"), pl.col("thrower_steamid").alias("steamid"),
                     pl.col("thrower_team").alias("team"), pl.col("thrower_side").alias("side"),
                     pl.lit("utility").alias("action"), pl.col("type").alias("detail"))
     pl_ = t["plants"].select("demo_id", "round_num", "t_s", "steamid", "team", pl.lit("T").alias("side"),
                              pl.lit("plant").alias("action"), pl.col("site").alias("detail"))
-    frames = []
-    for f in (kills, deaths, util, pl_):
-        f = f.with_columns(pl.col("steamid").cast(pl.Utf8), pl.col("t_s").cast(pl.Float64))
-        frames.append(attach(f))
-    ev = pl.concat(frames, how="diagonal_relaxed")
+    return [f.with_columns(pl.col("steamid").cast(pl.Utf8), pl.col("t_s").cast(pl.Float64))
+            for f in (kills, deaths, util, pl_)]
+
+
+def _drift_keys(frame: pl.DataFrame, t: dict[str, pl.DataFrame], second: str) -> pl.DataFrame:
+    """Add (map, planted, bucket) for the state at integer second ``second``."""
+    plants = t["plants"].group_by("demo_id", "round_num").agg(pl.col("t_s").min().alias("_plant"))
+    maps = t["matches"].select("demo_id", "map")
+    planted = pl.col("_plant").is_not_null() & (pl.col(second) >= pl.col("_plant"))
+    return (frame.join(plants, on=["demo_id", "round_num"], how="left").join(maps, on="demo_id", how="left")
+            .with_columns(planted.alias("_planted"),
+                          pl.when(planted).then(((pl.col(second) - pl.col("_plant")) // 5).cast(pl.Int64))
+                            .otherwise((pl.col(second) // DRIFT_BUCKET_S).cast(pl.Int64)).alias("_bucket"))
+            .drop("_plant"))
+
+
+def drift_baseline(t: dict[str, pl.DataFrame], wp: pl.DataFrame, after: int = 2) -> pl.DataFrame:
+    """Mean change of T win probability over ``after`` seconds in windows where nothing happens.
+
+    The game clock alone moves win probability (towards CT before a plant, towards T after it).
+    Averaging the change over quiet windows (no kill, grenade pop or plant) by map, plant state and
+    time bucket gives the drift an action window would have seen anyway.
+    """
+    w = wp.with_columns(pl.col("t_s").cast(pl.Int64).alias("_s")).drop("t_s")
+    nxt = w.rename({"wp_t": "_wp_next"}).with_columns(pl.col("_s") - after)
+    win = w.join(nxt, on=["demo_id", "round_num", "_s"], how="inner")
+    busy = pl.concat([f.select("demo_id", "round_num", pl.col("t_s").floor().cast(pl.Int64).alias("_e"))
+                      for f in _event_frames(t)])
+    busy = pl.concat([busy.with_columns((pl.col("_e") - k).alias("_s")) for k in range(after)]).select(
+        "demo_id", "round_num", "_s").unique()
+    quiet = win.join(busy, on=["demo_id", "round_num", "_s"], how="anti")
+    quiet = _drift_keys(quiet, t, "_s").with_columns((pl.col("_wp_next") - pl.col("wp_t")).alias("_d"))
+    return quiet.group_by("map", "_planted", "_bucket").agg(pl.col("_d").mean().alias("drift_T"), pl.len().alias("n"))
+
+
+def action_values(t: dict[str, pl.DataFrame], wp: pl.DataFrame, before: int = 1, after: int = 2,
+                  adjust_drift: bool = True) -> pl.DataFrame:
+    """ΔWP for kills, deaths, utility pops, plants; positive = good for the acting player's team.
+
+    WP before = state at floor(t) - before + 1 (last full second before the event),
+    WP after = state at floor(t) + after; when the round ends inside that window the outcome
+    (1 for a T win, 0 otherwise) is the state after. Events before freeze end are ignored.
+
+    ``adjust_drift`` subtracts what the clock alone would have done over the same window
+    (``drift_baseline``), so a player is not credited or charged for time passing: without it,
+    most T players come out negative and most CT players positive.
+    """
+    w = wp.with_columns(pl.col("t_s").cast(pl.Int64).alias("_s")).drop("t_s")
+    last = w.group_by("demo_id", "round_num").agg(pl.col("_s").max().alias("_last"))
+    outcome = t["rounds"].select("demo_id", "round_num", (pl.col("winner_side") == "T").cast(pl.Float64).alias("_out"))
+    drift = drift_baseline(t, wp, after) if adjust_drift else None
+
+    def attach(ev: pl.DataFrame) -> pl.DataFrame:
+        ev = ev.with_columns(pl.col("t_s").floor().cast(pl.Int64).alias("_s"))
+        pre = w.rename({"wp_t": "wp_before"}).with_columns(pl.col("_s") + (before - 1))
+        post = w.rename({"wp_t": "wp_after"}).with_columns(pl.col("_s") - after)
+        ev = ev.join(pre, on=["demo_id", "round_num", "_s"], how="inner")
+        ev = ev.join(post, on=["demo_id", "round_num", "_s"], how="left")
+        ev = ev.join(last, on=["demo_id", "round_num"], how="left").join(outcome, on=["demo_id", "round_num"], how="left")
+        ev = ev.with_columns(pl.when(pl.col("wp_after").is_null() & (pl.col("_s") + after > pl.col("_last")))
+                             .then(pl.col("_out")).otherwise(pl.col("wp_after")).alias("wp_after"))
+        ev = ev.filter(pl.col("wp_after").is_not_null())
+        sign = pl.when(pl.col("side") == "T").then(1.0).otherwise(-1.0)
+        change = pl.col("wp_after") - pl.col("wp_before")
+        if drift is None:
+            return ev.with_columns((change * sign).alias("dwp")).drop("_s", "_last", "_out")
+        ev = _drift_keys(ev, t, "_s").join(drift.select("map", "_planted", "_bucket", "drift_T"),
+                                           on=["map", "_planted", "_bucket"], how="left")
+        ev = ev.with_columns(((change - pl.col("drift_T").fill_null(0.0)) * sign).alias("dwp"))
+        return ev.drop("_s", "_last", "_out", "map", "_planted", "_bucket", "drift_T")
+
+    ev = pl.concat([attach(f) for f in _event_frames(t)], how="diagonal_relaxed")
     # a death is the victim's own ΔWP from their team's view (negative of the kill swing)
     return ev.filter(pl.col("dwp").is_not_nan())
 
 
 def player_wpa(ev: pl.DataFrame, rounds_played: pl.DataFrame) -> pl.DataFrame:
-    """Per player and side: WPA per round, split into kills (+ deaths) and utility."""
-    g = ev.filter(pl.col("action") != "plant").group_by("steamid", "side").agg(
+    """Per player (and team, when ``rounds_played`` has one) and side: WPA per round, split into
+    kills (+ deaths) and utility. Keying by team keeps a player who changed teams on a map from
+    carrying one team's actions into the other team's profile."""
+    keys = ["steamid", "team", "side"] if "team" in rounds_played.columns and "team" in ev.columns else ["steamid", "side"]
+    g = ev.filter(pl.col("action") != "plant").group_by(*keys).agg(
         pl.col("dwp").filter(pl.col("action").is_in(["kill", "death"])).sum().alias("wpa_duels"),
         pl.col("dwp").filter(pl.col("action") == "utility").sum().alias("wpa_utility"),
         pl.col("dwp").sum().alias("wpa_total"),
     )
-    g = g.join(rounds_played, on=["steamid", "side"], how="left")
+    g = g.join(rounds_played, on=keys, how="left")
     return g.with_columns(
         *[(pl.col(c) / pl.col("rounds")).round(4).alias(f"{c}_per_round") for c in ("wpa_duels", "wpa_utility", "wpa_total")])
 
@@ -218,8 +279,12 @@ def is_finite(x: float) -> bool:
     return x is not None and not math.isnan(x)
 
 
-def recipe_wp(plans: pl.DataFrame, wp: pl.DataFrame, before_s: float = 5.0, after_s: float = 10.0) -> dict[str, dict]:
-    """For each execute recipe: mean T win probability 5 s before the commit, 10 s after, and the change."""
+def recipe_wp(plans: pl.DataFrame, wp: pl.DataFrame, before_s: float = 5.0, after_s: float = 10.0,
+              rounds: pl.DataFrame | None = None) -> dict[str, dict]:
+    """For each execute recipe: mean T win probability 5 s before the commit, 10 s after, and the change.
+
+    Rounds that end within 10 s of the commit take the outcome (from ``rounds``) as the state after;
+    without ``rounds`` they fall back to the last sampled state."""
     hit = plans.filter(pl.col("recipe_id").is_not_null() & pl.col("commit_s").is_not_null()).select(
         "demo_id", "round_num", "recipe_id", "commit_s")
     w = wp.with_columns(pl.col("t_s").cast(pl.Int64).alias("_s")).drop("t_s")
@@ -227,10 +292,13 @@ def recipe_wp(plans: pl.DataFrame, wp: pl.DataFrame, before_s: float = 5.0, afte
                            (pl.col("commit_s") + after_s).floor().cast(pl.Int64).alias("_a"))
     hit = hit.join(w.rename({"_s": "_b", "wp_t": "wp_before"}), on=["demo_id", "round_num", "_b"], how="inner")
     hit = hit.join(w.rename({"_s": "_a", "wp_t": "wp_after"}), on=["demo_id", "round_num", "_a"], how="left")
-    # rounds that end within 10 s of the commit: use the final known state
     last = w.group_by("demo_id", "round_num").agg(pl.col("wp_t").sort_by("_s").last().alias("wp_last"))
-    hit = hit.join(last, on=["demo_id", "round_num"], how="left").with_columns(
-        pl.col("wp_after").fill_null(pl.col("wp_last")))
+    hit = hit.join(last, on=["demo_id", "round_num"], how="left")
+    if rounds is not None and {"winner_side"} <= set(rounds.columns):
+        out = rounds.select("demo_id", "round_num", (pl.col("winner_side") == "T").cast(pl.Float64).alias("_out"))
+        hit = hit.join(out, on=["demo_id", "round_num"], how="left").with_columns(
+            pl.col("wp_after").fill_null(pl.col("_out")))
+    hit = hit.with_columns(pl.col("wp_after").fill_null(pl.col("wp_last")))
     g = hit.group_by("recipe_id").agg(pl.len().alias("n"), pl.col("wp_before").mean(), pl.col("wp_after").mean())
     return {rid: {"n": int(n), "before": round(float(b), 3), "after": round(float(a), 3), "delta": round(float(a - b), 3)}
             for rid, n, b, a in g.iter_rows()}

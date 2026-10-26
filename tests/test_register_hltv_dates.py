@@ -139,3 +139,36 @@ def test_dataset_tree_dated_by_match_id(tmp_path, capsys):
     assert mod.main(_args(tmp_path, raw, "--matches", str(tmp_path / "starts.json"), "--apply")) == 0
     rows = (tmp_path / "dates.csv").read_text().strip().splitlines()[1:]
     assert rows == ["2394199_legacy-vs-nrg-nuke,2026-05-20"]
+
+
+def test_plan_without_log_matches_archives_by_name_and_maps(tmp_path, capsys):
+    raw = tmp_path / "raw"
+    for stem, maps in (("pgl-astana-2026-mouz-vs-aurora-bo3-AAAAAAAAAAAAAAAAAAAAAA", ("dust2", "nuke")),
+                       ("pgl-astana-2026-mouz-vs-aurora-bo3-BBBBBBBBBBBBBBBBBBBBBB", ("mirage", "nuke")),
+                       ("iem-krakw-2026-stage-1-aurora-vs-bc-game-bo3-CCCCCCCCCCCCCCCCCCCCCC", ("inferno",))):
+        folder = raw / "hltv" / stem
+        folder.mkdir(parents=True)
+        for i, m in enumerate(maps, 1):
+            (folder / f"x-vs-y-m{i}-{m}.dem").write_bytes(b"x")
+    plan = {"matches": [
+        {"demo_id": 1, "hltv_match_id": 2394140, "unix_ms": 1778562000000, "event": "PGL Astana 2026",
+         "teams": ["MOUZ", "Aurora"], "maps_played": ["Dust2", "Nuke"]},
+        {"demo_id": 2, "hltv_match_id": 2394149, "unix_ms": 1778822400000, "event": "PGL Astana 2026",
+         "teams": ["MOUZ", "Aurora"], "maps_played": ["Mirage", "Nuke", "Ancient"]},
+        {"demo_id": 3, "hltv_match_id": 2389469, "unix_ms": 1769600000000, "event": "IEM Kraków 2026 Stage 1",
+         "teams": ["Aurora", "BC.Game"], "maps_played": ["Inferno", "Nuke"]}]}
+    (tmp_path / "plan.json").write_text(json.dumps(plan))
+    (tmp_path / "events.json").write_text(json.dumps({"_note": "", "events": {}}))
+    (tmp_path / "dates.csv").write_text("demo_id,date\n")
+    assert mod.main(_args(tmp_path, raw, "--plan", str(tmp_path / "plan.json"), "--apply")) == 0
+    reg = json.loads((tmp_path / "registry.json").read_text())["archives"]
+    assert reg == {"pgl-astana-2026-mouz-vs-aurora-bo3-AAAAAAAAAAAAAAAAAAAAAA": "2394140",
+                   "pgl-astana-2026-mouz-vs-aurora-bo3-BBBBBBBBBBBBBBBBBBBBBB": "2394149",
+                   "iem-krakw-2026-stage-1-aurora-vs-bc-game-bo3-CCCCCCCCCCCCCCCCCCCCCC": "2389469"}
+    rows = (tmp_path / "dates.csv").read_text().strip().splitlines()[1:]
+    assert len(rows) == 5
+
+
+def test_hltv_slug():
+    assert mod.hltv_slug("IEM Kraków 2026 Stage 1") == "iem-krakw-2026-stage-1"
+    assert mod.hltv_slug("BC.Game") == "bc-game" and mod.hltv_slug("Virtus.pro", "") == "virtuspro"

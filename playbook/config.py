@@ -20,6 +20,22 @@ LANE_ORDER = ["T_SPAWN", "A", "MID", "B", "CT_SPAWN"]
 LANE_SHORT = {"T_SPAWN": "S", "A": "A", "MID": "M", "B": "B", "CT_SPAWN": "C", "OTHER": "?"}
 
 
+def load_site(path: Path | None = None) -> dict:
+    """config/site.toml (showcase teams etc.); empty when the file is missing."""
+    path = path or CONFIG_DIR / "site.toml"
+    if not path.exists():
+        return {}
+    with open(path, "rb") as fh:
+        return tomllib.load(fh)
+
+
+def raw_dir_problem(raw: Path = RAW_DIR) -> str | None:
+    """Why the raw demo store cannot be read, or None. data/raw may be a symlink to an external drive."""
+    if raw.is_symlink() and not raw.exists():
+        return f"{raw} -> {raw.readlink()} is not available (external drive not mounted?)"
+    return None
+
+
 def load_targets(path: Path | None = None) -> dict:
     with open(path or CONFIG_DIR / "targets.toml", "rb") as fh:
         return tomllib.load(fh)

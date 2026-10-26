@@ -107,7 +107,8 @@ def test_export_applies_player_aliases_to_all_derived_views(tmp_path, monkeypatc
         # Supply deterministic probabilities; keep real action attribution/aggregation.
         wp = t["rounds"].select("demo_id", "round_num").join(
             pl.DataFrame({"t_s": range(40)}), how="cross").with_columns(wp_t=.2 + pl.col("t_s") / 100)
-        events = export.winprob.action_values(t, wp)
+        # the synthetic WP only drifts with the clock; keep the raw change to test attribution
+        events = export.winprob.action_values(t, wp, adjust_drift=False)
         assert str(ALIAS) not in events["steamid"].to_list()
         assert str(CANONICAL) in events["steamid"].to_list()
         return {"states": wp.drop("wp_t"), "oof": wp["wp_t"].to_numpy(), "wp": wp, "events": events,

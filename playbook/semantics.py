@@ -106,8 +106,8 @@ def build_team_rounds(t: dict[str, pl.DataFrame]) -> pl.DataFrame:
         on=[*KEYS, "opponent"], how="left",
     )
 
-    # kills / deaths / opening duel
-    k_all = t["kills"].filter(~pl.col("is_post_round"))
+    # kills / deaths / opening duel; deaths before freeze end (round restarts, pauses) don't count
+    k_all = t["kills"].filter(~pl.col("is_post_round") & (pl.col("t_s") >= 0))
     k = k_all.filter(~pl.col("is_teamkill").fill_null(True))
     kills_for = k.group_by(*KEYS, team="attacker_team").agg(kills=pl.len())
     deaths = k_all.group_by(*KEYS, team="victim_team").agg(deaths=pl.len())
@@ -218,7 +218,7 @@ def build_player_rounds(t: dict[str, pl.DataFrame], team_rounds: pl.DataFrame) -
         .drop("team")
     )
 
-    k = t["kills"].filter(~pl.col("is_post_round"))
+    k = t["kills"].filter(~pl.col("is_post_round") & (pl.col("t_s") >= 0))
     kills = k.filter(~pl.col("is_teamkill").fill_null(True)).group_by(*KEYS, steamid="attacker_steamid").agg(
         kills=pl.len(), hs_kills=pl.col("headshot").sum(), opening_kill=pl.col("is_opening").any(),
         trade_kills=pl.col("is_trade").sum(),

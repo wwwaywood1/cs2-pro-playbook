@@ -1,0 +1,7 @@
+# Site-wide choices read by the exporter (playbook/export.py) and shown in index.json.
+
+# Showcase teams: every round of their matches gets a 2D replay and a per-second
+# win-probability timeline, and the teams hub features them. Canonical team names as
+# exported (config/team_aliases.csv). Add a team once its matches are imported and its
+# logo and player portraits are in web/public/.
+showcase = ["Falcons", "Vitality", "Spirit", "MOUZ", "FURIA"]

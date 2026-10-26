@@ -19,13 +19,14 @@ from __future__ import annotations
 
 import json
 import math
+import shutil
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
 import polars as pl
 
-from playbook.config import PARSED_DIR, SITE_DIR, MapMeta, load_map, team_slug
+from playbook.config import PARSED_DIR, RAW_DIR, SITE_DIR, MapMeta, load_map, load_site, raw_dir_problem, team_slug
 from playbook.heatmap import build_heatmaps, roster_order
 from playbook.metrics import combat_totals
 from playbook.config import ROOT, load_spot_names
@@ -81,14 +82,13 @@ def _top_counts(df: pl.DataFrame, col: str, k: int = 6) -> list[dict]:
 
 
 def _write(path: Path, obj) -> None:
+    """Compact JSON (the site downloads every byte); NaN/Infinity are refused because a
+    single one makes the browser reject the whole file."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
+    path.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":"), allow_nan=False), encoding="utf-8")
 
 
-def _write_compact(path: Path, obj) -> None:
-    """Large numeric files (heatmaps): no indentation."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+_write_compact = _write
 
 
 # --------------------------------------------------------------------------- teams
@@ -327,7 +327,12 @@ def build_lineups(sub: dict[str, pl.DataFrame], mm: MapMeta) -> tuple[list[dict]
     out = []
     for c in clusters:
         ms = c["members"]
-        rep = min(ms, key=lambda m: math.dist((m["throw_x"], m["throw_y"]), (c["tx"], c["ty"]))
+        # The technique pros actually use: the most common one in the cluster; the practice
+        # command comes from a throw made that way, closest to the cluster centre.
+        techniques = [_technique(m["is_jumping"], m["is_crouched"], m["is_walking"], m["throw_speed"]) for m in ms]
+        major = Counter(techniques).most_common(1)[0][0]
+        rep = min((m for m, tech in zip(ms, techniques) if tech == major),
+                  key=lambda m: math.dist((m["throw_x"], m["throw_y"]), (c["tx"], c["ty"]))
                   + math.dist((m["land_x"], m["land_y"]), (c["lx"], c["ly"])))
         land_place = Counter(m["land_place"] for m in ms if m["land_place"]).most_common(1)
         throw_place = Counter(m["throw_place"] for m in ms if m["throw_place"]).most_common(1)
@@ -348,7 +353,8 @@ def build_lineups(sub: dict[str, pl.DataFrame], mm: MapMeta) -> tuple[list[dict]
             "throwers": [n for n, _ in Counter(m["thrower_name"] for m in ms).most_common(3)],
             "round_win_rate": _rate(n_won, len(ms)),
             "median_pop_t_s": _r(pops[len(pops) // 2], 1) if pops else None,
-            "technique": _technique(rep["is_jumping"], rep["is_crouched"], rep["is_walking"], rep["throw_speed"]),
+            "technique": major,
+            "technique_share": _rate(techniques.count(major), len(ms)),
             "jump_share": _rate(sum(1 for m in ms if m["is_jumping"]), len(ms)),
             "throw": {"x": _r(rep["throw_x"], 2), "y": _r(rep["throw_y"], 2), "z": _r(rep["throw_z"], 2),
                       "pitch": _r(rep["pitch"], 2), "yaw": _r(rep["yaw"], 2),
@@ -427,7 +433,8 @@ def _add_team_tactics(mdir: Path, teams: list[dict], res: dict, names: dict) -> 
 
 
 WPA_MIN_ROUNDS = 50  # sample needed to rank a player's WPA among peers
-SHOWCASE_TEAMS = {"Falcons"}  # teams that get per-round WP timelines (files stay small)
+# teams whose every round gets a WP timeline and a 2D replay (config/site.toml)
+SHOWCASE_TEAMS = set(load_site().get("showcase", ["Falcons"]))
 
 
 def team_round_sides(team_rounds: pl.DataFrame, demo: str) -> dict[str, dict[str, str]]:
@@ -455,16 +462,17 @@ def _add_winprob(mdir: Path, ids: list[str], teams: list[dict], players: list[di
                  sub: dict[str, pl.DataFrame], wpr: dict) -> None:
     """Win probability added per player and side, recipe WP swing, showcase-team timelines."""
     ev = wpr["events"].filter(pl.col("demo_id").is_in(ids))
-    played = sub["player_rounds"].with_columns(pl.col("steamid").cast(pl.Utf8)).group_by("steamid", "side").agg(
+    played = sub["player_rounds"].with_columns(pl.col("steamid").cast(pl.Utf8)).group_by("steamid", "team", "side").agg(
         pl.len().alias("rounds"))
-    rows = {(sid, side): r for sid, side, *r in winprob.player_wpa(ev, played).select(
-        "steamid", "side", "rounds", "wpa_total_per_round", "wpa_duels_per_round", "wpa_utility_per_round").iter_rows()}
+    rows = {(sid, team, side): r for sid, team, side, *r in winprob.player_wpa(ev, played).select(
+        "steamid", "team", "side", "rounds", "wpa_total_per_round", "wpa_duels_per_round", "wpa_utility_per_round"
+    ).iter_rows()}
     # percentile among players of this map and side with a reliable sample
-    pool = {side: sorted(v[1] for (sid, sd), v in rows.items() if sd == side and v[0] and v[0] >= WPA_MIN_ROUNDS)
+    pool = {side: sorted(v[1] for (sid, team, sd), v in rows.items() if sd == side and v[0] and v[0] >= WPA_MIN_ROUNDS)
             for side in ("T", "CT")}
     for p in players:
         for side in ("T", "CT"):
-            r = rows.get((str(p["steamid"]), side))
+            r = rows.get((str(p["steamid"]), p["team"], side))
             if r and r[0]:
                 ref = pool[side]
                 pct = (sum(1 for v in ref if v <= r[1]) / len(ref)) if (ref and r[0] >= WPA_MIN_ROUNDS) else None
@@ -473,7 +481,7 @@ def _add_winprob(mdir: Path, ids: list[str], teams: list[dict], players: list[di
                                   "percentile": round(pct, 2) if pct is not None else None,
                                   "peers": len(ref)}
     wp_map = wpr["wp"].filter(pl.col("demo_id").is_in(ids))
-    swing = winprob.recipe_wp(res["plans"], wp_map)
+    swing = winprob.recipe_wp(res["plans"], wp_map, rounds=sub["rounds"])
     for r in res["recipes"]:
         if r["id"] in swing:
             r["wp"] = swing[r["id"]]
@@ -543,10 +551,59 @@ def _add_player_tactics(mdir: Path, players: list[dict], res: dict, player_round
 
 
 def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None:
+    """Write the site data into a fresh directory and swap it in, so files from earlier runs
+    (renamed teams, deduplicated demos, maps that left the pool) never linger."""
+    problem = raw_dir_problem(RAW_DIR)
+    if problem:
+        # event names, dates and HLTV source preference are derived from the raw demo paths
+        raise SystemExit(f"export stopped: {problem}")
+    work = out_dir.with_name(out_dir.name + ".tmp")
+    if work.exists():
+        shutil.rmtree(work)
+    work.mkdir(parents=True)
+    _export_into(parsed_dir, work)
+    old = out_dir.with_name(out_dir.name + ".old")
+    if old.exists():
+        shutil.rmtree(old)
+    if out_dir.exists():
+        out_dir.rename(old)
+    work.rename(out_dir)
+    if old.exists():
+        shutil.rmtree(old)
+    print(f"site data -> {out_dir}")
+
+
+def tidy_player_names(t: dict[str, pl.DataFrame]) -> dict[str, pl.DataFrame]:
+    """One display name per steamid across all maps (the most used one), without stray spaces."""
+    pr = t["player_rounds"].with_columns(pl.col("name").str.strip_chars())
+    best = (pr.filter(pl.col("name").is_not_null() & (pl.col("name") != ""))
+            .group_by("steamid", "name").agg(pl.len().alias("_n"))
+            .sort(["steamid", "_n", "name"], descending=[False, True, False])
+            .group_by("steamid", maintain_order=True).agg(pl.col("name").first().alias("_name")))
+    out = dict(t)
+    out["player_rounds"] = pr.join(best, on="steamid", how="left").with_columns(
+        pl.coalesce("_name", "name").alias("name")).drop("_name")
+    if "players" in t and {"steamid", "name"} <= set(t["players"].columns):
+        out["players"] = t["players"].with_columns(pl.col("name").str.strip_chars()).join(
+            best.with_columns(pl.col("steamid").cast(t["players"]["steamid"].dtype)), on="steamid", how="left"
+        ).with_columns(pl.coalesce("_name", "name").alias("name")).drop("_name")
+    return out
+
+
+def _write_meta(mdir: Path, mm: MapMeta) -> None:
+    _write(mdir / "meta.json", {
+        "map": mm.name, "display_name": mm.display_name, "radar": mm.radar,
+        "radar_image": f"https://github.com/pnxenopoulos/awpy-data/releases (radars/{mm.name}.png)",
+        "regions": mm.region_lane, "callouts": mm.callout_region,
+    })
+
+
+def _export_into(parsed_dir: Path, out_dir: Path) -> None:
     t = read_all(parsed_dir)
     t["matches"] = attach_dates(t["matches"])
     t, duplicates = deduplicate_tables(t, preferred_ids=hltv_demo_ids())
     print(f"deduplicated {len(duplicates)} duplicate demos")
+    t = tidy_player_names(t)
     # Old semantic tables may contain a post-round plant; keep every exported view
     # consistent with the cleaned plant used by heatmaps and tactics.
     plants = round_plants(t)
@@ -559,10 +616,14 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         "data_through": matches["date"].drop_nulls().max(),
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "min_matches_reliable": MIN_MATCHES_RELIABLE,
-        "data_source": "Professional CS2 match demos (provenance per demo in matches; see DESIGN.md, Data sources)",
+        "data_source": "#/about",
+        "showcase": sorted(team_slug(team) for team in SHOWCASE_TEAMS),
         "maps": [],
     }
-    order = roster_order(t["player_rounds"])  # stable player colours across maps
+    # rosters, colours and round counts of the hub count the active map pool only
+    pool_ids = matches.filter(pl.col("map").is_in(list(ACTIVE_POOL))).select("demo_id")
+    pool_rounds = t["player_rounds"].join(pool_ids, on="demo_id", how="semi")
+    order = roster_order(pool_rounds)  # stable player colours across maps
     wpr = winprob.run(t)
     if wpr:
         m = wpr["metrics"]
@@ -596,11 +657,7 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
                     lineup["name"] = landing_names[lineup["id"]]
         lineup_ids = {l["id"] for l in lineups}
         mdir = out_dir / map_name
-        _write(mdir / "meta.json", {
-            "map": map_name, "display_name": mm.display_name, "radar": mm.radar,
-            "radar_image": f"https://github.com/pnxenopoulos/awpy-data/releases (radars/{map_name}.png)",
-            "regions": mm.region_lane, "callouts": mm.callout_region,
-        })
+        _write_meta(mdir, mm)
         _write(mdir / "teams.json", [
             {"team": p["team"], "slug": p["slug"], "n_matches": p["n_matches"], "low_sample": p["low_sample"],
              "win_rate_T": p["sides"]["T"]["win_rate"], "win_rate_CT": p["sides"]["CT"]["win_rate"]}
@@ -656,9 +713,11 @@ def export_site(parsed_dir: Path = PARSED_DIR, out_dir: Path = SITE_DIR) -> None
         print(f"  {map_name}: {len(ids)} matches, {len(teams)} teams, {len(players)} players, {len(lineups)} lineups")
     # Lab medoids extend the completed replay indices; export them last.
     ai_lab.export(t, out_dir, wpr)
+    for mdir in sorted(p for p in out_dir.iterdir() if p.is_dir() and p.name.startswith("de_")):
+        if not (mdir / "meta.json").exists():  # e.g. the historical Overpass replays of the AI Lab
+            _write_meta(mdir, load_map(mdir.name))
     _write(out_dir / "index.json", index)
-    _write(out_dir / "heatmap_teams.json", heatmap_team_index(t["player_rounds"], order, team_maps))
-    print(f"site data -> {out_dir}")
+    _write(out_dir / "heatmap_teams.json", heatmap_team_index(pool_rounds, order, team_maps))
 
 
 def heatmap_team_index(player_rounds: pl.DataFrame, order: dict[str, list[str]],

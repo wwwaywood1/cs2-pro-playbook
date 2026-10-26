@@ -21,8 +21,12 @@ came from, or when a match is (its start time), the date is exact. The registry
 
 Inputs (all optional, merged into the registry):
 
-  --plan + --log   plan JSON {"matches": [{"demo_id": <HLTV demo id>, "hltv_match_id", "unix_ms", ...}]}
-                   and download-log lines ``OK <hltv demo id> <hltv match id> <size|already-present> <file>``
+  --plan [--log]   plan JSON {"matches": [{"demo_id": <HLTV demo id>, "hltv_match_id", "unix_ms", "event",
+                   "teams", "maps_played", ...}]}. With download-log lines
+                   ``OK <hltv demo id> <hltv match id> <size|already-present> <file>`` archives are mapped
+                   by demo id; without a log (demos downloaded by hand) imported archives are matched by
+                   name: ``<event>-<team1>-vs-<team2>-<bo3|map>-<id>`` against each planned match, and
+                   ties (rematches at one event) are broken by the maps inside the archive.
   --archives       {"<archive stem>": {"hltv_match_id", "unix_ms", "event", "maps", ...}}
   --matches        {"<hltv match id>": {"unix_ms", "event", "maps", ...}}
 
@@ -90,6 +94,66 @@ def archive_stem(name: str) -> str:
 def game_map(path: Path) -> str | None:
     m = MAP_RE.search(path.stem.lower())
     return m[1] if m else None
+
+
+ARCHIVE_RE = re.compile(r"^(?P<prefix>.*)-(?P<fmt>bo[135]|dust2|mirage|inferno|nuke|ancient|anubis|cache|overpass|"
+                        r"train|vertigo)-[A-Za-z0-9_-]{18,26}$")
+
+
+def hltv_slug(text: str, dots: str = "-") -> str:
+    """HLTV-style slug: lower case, non-ASCII letters dropped ("Kraków" -> "krakw"), other runs -> '-'.
+    Archive names spell a dot as '-' ("bc-game", "virtus-pro") and occasionally drop it (``dots=""``)."""
+    ascii_only = "".join(ch for ch in text.lower() if ord(ch) < 128).replace(".", dots)
+    return re.sub(r"-{2,}", "-", re.sub(r"[^a-z0-9]+", "-", ascii_only)).strip("-")
+
+
+def archive_dem_maps(folder: Path) -> set[str | None]:
+    return {game_map(p) for p in folder.rglob("*.dem") if not p.name.startswith("._")}
+
+
+def from_plan_names(plan: dict, raw: Path, known: set[str]) -> tuple[dict[str, dict], dict[str, str], list[str]]:
+    """Map imported archives (data/raw/hltv/<stem>/) that are not registered yet to planned matches by name."""
+    hltv_dir = raw / "hltv"
+    stems = [p.name for p in hltv_dir.iterdir() if p.is_dir() and p.name not in known] if hltv_dir.is_dir() else []
+    by_prefix: dict[str, list[str]] = {}
+    for stem in stems:
+        m = ARCHIVE_RE.match(stem)
+        if m:
+            by_prefix.setdefault(m["prefix"], []).append(stem)
+    claims: dict[str, list[dict]] = {}
+    for match in plan.get("matches", []):
+        names = match.get("teams") or []
+        event = hltv_slug(match.get("event") or "")
+        if len(names) != 2 or not event:
+            continue
+        prefixes = set()
+        for dots in ("-", ""):
+            a, b = (hltv_slug(n, dots) for n in names)
+            prefixes |= {f"{event}-{a}-vs-{b}", f"{event}-{b}-vs-{a}"}
+        for prefix in prefixes:
+            for stem in by_prefix.get(prefix, []):
+                if match not in claims.setdefault(stem, []):
+                    claims[stem].append(match)
+    matches, archives, notes = {}, {}, []
+    for stem, cands in sorted(claims.items()):
+        if len(cands) > 1:
+            maps = archive_dem_maps(hltv_dir / stem)
+            cands = [c for c in cands if {m.lower() for m in c.get("maps_played") or []} >= maps]
+        if len(cands) != 1:
+            notes.append(f"{stem}: {'no' if not cands else len(cands)} planned matches fit; not registered")
+            continue
+        mid = str(int(cands[0]["hltv_match_id"]))
+        matches[mid] = match_entry(cands[0], "plan")
+        archives[stem] = mid
+    taken: dict[str, list[str]] = {}
+    for stem, mid in archives.items():
+        taken.setdefault(mid, []).append(stem)
+    for mid, dup in taken.items():
+        if len(dup) > 1:  # two archives claim one match: leave both for a human
+            notes.append(f"match {mid}: claimed by {len(dup)} archives ({', '.join(dup)}); not registered")
+            for stem in dup:
+                archives.pop(stem)
+    return matches, archives, notes
 
 
 def match_entry(match: dict, source: str) -> dict:
@@ -257,12 +321,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--events", type=Path, default=ROOT / "config" / "events.json")
     ap.add_argument("--apply", action="store_true")
     args = ap.parse_args(argv)
-    if args.plan and not args.log:
-        ap.error("--plan needs --log")
 
     in_matches: dict[str, dict] = {}
     in_archives: dict[str, str] = {}
     notes: list[str] = []
+    registry = load_registry(args.registry)
     if args.plan:
         plan = json.loads(args.plan.read_text(encoding="utf-8"))
         log: dict[int, str] = {}
@@ -273,6 +336,11 @@ def main(argv: list[str] | None = None) -> int:
         in_matches.update(found_m)
         in_archives.update(found_a)
         notes += plan_notes
+        known = set(registry["archives"]) | set(found_a)
+        named_m, named_a, name_notes = from_plan_names(plan, args.raw, known)
+        in_matches.update(named_m)
+        in_archives.update(named_a)
+        notes += name_notes
     for path in args.archives:
         for stem, match in json.loads(path.read_text(encoding="utf-8")).items():
             mid = str(int(match["hltv_match_id"]))
@@ -282,7 +350,6 @@ def main(argv: list[str] | None = None) -> int:
         for mid, match in json.loads(path.read_text(encoding="utf-8")).items():
             in_matches[str(int(mid))] = match_entry(match, "matches")
 
-    registry = load_registry(args.registry)
     new_m, new_a, reg_notes = merge_registry(registry, in_matches, in_archives)
     events_doc = json.loads(args.events.read_text(encoding="utf-8"))
     dates, events, collect_notes = collect(registry, args.raw, events_doc["events"])

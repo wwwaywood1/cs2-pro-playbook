@@ -1,7 +1,7 @@
 """Schedule-based match dates. Day precision is an estimate, never a timestamp.
 
 Unique HLTV series IDs are ranked within each event and spaced evenly (nearest
-calendar day) over its inclusive schedule. All raw series participate, so merely
+calendar day) over its inclusive schedule (finished events only). All raw series participate, so merely
 parsing another map does not shift existing estimates. Sparse events and series
 without IDs use the event start. Unknown sources stay undated.
 """
@@ -123,7 +123,9 @@ def demo_dates(matches: pl.DataFrame, raw_dir: Path = RAW_DIR,
             result.update(date=start.isoformat(), date_precision="event")
             mid = next((r["hltv_match_id"] for r in rows if r.get("hltv_match_id")), None)
             fraction = estimates.get(known["event_key"], {}).get(mid)
-            if fraction is not None:
+            # spreading ids over the schedule assumes the whole event was collected: not for an
+            # event still running (its later days would get future dates)
+            if fraction is not None and end < date.today():
                 estimate = start + timedelta(days=int((end - start).days * fraction + .5))
                 if start <= estimate <= end:
                     result.update(date=estimate.isoformat(), date_precision="day")
