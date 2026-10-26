@@ -71,7 +71,7 @@ def collect_parsed(maps: list[str], parsed: Path = ROOT / "data" / "parsed") -> 
             "positions": [pl.read_parquet(parsed / "positions" / f"{i}.parquet", columns=cols) for i in ids],
             "plants": [pl.read_parquet(parsed / "plants" / f"{i}.parquet") for i in ids
                        if (parsed / "plants" / f"{i}.parquet").exists()],
-            "demos": [f"{len(ids)} parsed demos"],
+            "demos": ids,
         }
     return out
 
