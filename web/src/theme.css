@@ -10,6 +10,8 @@
   --brand: #2ecc71;
   --positive: #52d795;
   --negative: #a74c52;
+  /* Negative values as text: >= 4.5:1 on every surface (6.5:1 on #132b35). */
+  --negative-text: #ff8a91;
   --primary: var(--brand);
   --team-primary: var(--brand);
   --team-secondary: #e8b75a;

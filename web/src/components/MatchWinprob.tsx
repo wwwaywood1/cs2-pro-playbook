@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { fmtInt, fmtPct } from "../format";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getReplayIndex, getWinprob, useData } from "../data";
 import { t, useLang } from "../i18n";
+import { moveRoving } from "../roving";
 
 /** Side metadata comes from team_rounds, so half changes and OT stay team-relative. */
 export default function MatchWinprob({ map, demoId, teamSlug }: { map: string; demoId: string; teamSlug: string }) {
@@ -10,6 +12,7 @@ export default function MatchWinprob({ map, demoId, teamSlug }: { map: string; d
   const replayIndex = useData(() => getReplayIndex(map), [map]);
   const location = useLocation();
   const navigate = useNavigate();
+  const [rover, setRover] = useState(0);
   const sides = data?.team_sides?.[teamSlug];
   if (!data || !sides) return null;
   const rounds = Object.entries(data.wp_t).filter(([round, values]) => Number.isFinite(Number(round))
@@ -19,9 +22,15 @@ export default function MatchWinprob({ map, demoId, teamSlug }: { map: string; d
   if (!rounds.length) return null;
   const width = rounds.length * 16;
   const half = rounds.findIndex(([round]) => Number(round) > 12);
+  // Only rounds with a replay are interactive, and together they are one Tab stop.
+  const playable = rounds.map(([round]) => !!replayIndex.data?.[demoId]?.includes(Number(round)));
+  const order = playable.flatMap((ok, index) => ok ? [index] : []);
+  const current = Math.min(rover, Math.max(0, order.length - 1));
   return <figure className="match-winprob">
     <figcaption>{t("round2.round_bar_title")}</figcaption>
-    <svg className="winprob-overview" viewBox={`0 0 ${width} 108`} role="group" aria-label={t("round2.round_bar_title")}>
+    <svg className="winprob-overview" viewBox={`0 0 ${width} 108`} role="group"
+      aria-label={`${t("round2.round_bar_title")} · ${order.length ? t("a11y.round_bars", { n: fmtInt(order.length) }) : t("a11y.chart_points", { n: fmtInt(rounds.length) })}`}
+      onKeyDown={(event) => { const next = moveRoving(event, current, order.length); if (next !== null) setRover(next); }}>
       <line x1="0" x2={width} y1="50" y2="50" className="winprob-midline" />
       {rounds.map(([round, values], index) => {
         const from = sides[round] === "T" ? values[0] : 1 - values[0];
@@ -29,15 +38,18 @@ export default function MatchWinprob({ map, demoId, teamSlug }: { map: string; d
         const delta = to - from;
         const height = Math.abs(delta) * 45;
         const label = t("round2.round_bar_tip", { r: fmtInt(Number(round)), from: fmtPct(from), to: fmtPct(to) });
-        const available = replayIndex.data?.[demoId]?.includes(Number(round));
+        const available = playable[index];
+        const position = order.indexOf(index);
         const open = () => {
           if (!available) return;
           const query = new URLSearchParams(location.search);
           query.set("replay", `${demoId}:${round}`);
           navigate({ pathname: location.pathname, search: `?${query}` }, { state: { ...location.state, replayOpened: `${demoId}:${round}` } });
         };
-        return <g key={round} className="winprob-round" tabIndex={0} role={available ? "button" : "img"} aria-label={available ? `${label} · ${t("round4.replay_open", { round: fmtInt(Number(round)) })}` : label}
-          style={available ? { cursor: "pointer" } : undefined} onClick={open} onKeyDown={(event) => { if (available && ["Enter", " "].includes(event.key)) { event.preventDefault(); open(); } }}>
+        return <g key={round} className="winprob-round" tabIndex={available ? position === current ? 0 : -1 : undefined} data-roving={available ? position : undefined}
+          role={available ? "button" : "img"} aria-label={available ? `${label} · ${t("round4.replay_open", { round: fmtInt(Number(round)) })}` : label}
+          style={available ? { cursor: "pointer" } : undefined} onFocus={() => { if (available) setRover(position); }} onClick={open}
+          onKeyDown={(event) => { if (available && ["Enter", " "].includes(event.key)) { event.preventDefault(); open(); } }}>
           <title>{label}</title>
           <rect x={index * 16 + 2} y={delta >= 0 ? 50 - height : 50} width="12" height={height || .5} className={`winprob-bar ${delta >= 0 ? "is-positive" : "is-negative"}`} />
           <rect x={index * 16} y="0" width="16" height="98" fill="transparent" />

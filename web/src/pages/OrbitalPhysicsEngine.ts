@@ -20,8 +20,13 @@ export function useOrbitalPhysicsEngine(host: RefObject<HTMLDivElement>, paused:
     let visible = true, frame = 0;
     let previous: number | undefined;
     let size = { width: 0, height: 0, nodes: nodes.map(() => ({ width: 0, height: 0 })) };
+    let fitted = "";
     const paint = () => {
-      const { points } = orbitLayout(size.width, size.height, size.nodes, reduced ? 0 : phase.current);
+      const { points, scale } = orbitLayout(size.width, size.height, size.nodes, reduced ? 0 : phase.current);
+      // The fitted (depth-free) card scale lets CSS keep card text at a minimum
+      // on-screen size; it only changes on resize, never per frame.
+      const fit = scale.toFixed(4);
+      if (scale > .05 && fit !== fitted) { fitted = fit; stage.style.setProperty("--orbit-fit", fit); }
       rays?.setAttribute("viewBox", `0 0 ${size.width} ${size.height}`);
       nodes.forEach((node, index) => {
         const point = points[index];

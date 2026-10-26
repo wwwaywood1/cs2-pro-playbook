@@ -12,4 +12,5 @@
 .player-radar6 .radar6-missing { fill: #83909d; }
 .radar6-tooltip { min-height: 3.6em; font-size: .68rem; line-height: 1.5; color: #9faebd; margin: -4px 0 0; overflow-wrap: anywhere; }
 .player-radar6 g:focus { outline: none; }
+.player-radar6 g[data-axis]:focus-visible .radar6-hit { stroke: var(--accent, #2ecc71); stroke-width: 2; }
 .player-radar6 g:focus text, .player-radar6 g:hover text { fill: #fff; text-decoration: underline; }

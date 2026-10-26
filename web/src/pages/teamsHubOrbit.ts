@@ -99,11 +99,52 @@ export function orbitRate(rate: number | null | undefined) {
   return rate == null ? "neutral" : rate >= .6 ? "strong" : rate >= .5 ? "neutral" : "weak";
 }
 
+/** 95% Wilson score interval of a rate observed over n maps. */
+export function wilson(rate: number, n: number, z = 1.959964): [number, number] {
+  if (!(n > 0) || !Number.isFinite(rate)) return [0, 1];
+  const p = Math.max(0, Math.min(1, rate));
+  const z2 = z * z;
+  const centre = (p + z2 / (2 * n)) / (1 + z2 / n);
+  const half = z / (1 + z2 / n) * Math.sqrt(p * (1 - p) / n + z2 / (4 * n * n));
+  return [Math.max(0, centre - half), Math.min(1, centre + half)];
+}
+
+/** A map needs this many matches (and the export's reliability minimum) to earn a badge. */
+export const BADGE_MIN_MATCHES = 8;
+
+type BadgeMap = { map: string; n_matches: number; map_win_rate?: number | null; round_win_rate?: number | null };
+
+/**
+ * 王牌图 / 短板图 with evidence, not by the raw rate (7/8 must not beat 32/38):
+ * best = highest Wilson lower bound, worst = lowest Wilson upper bound, over maps with
+ * n >= max(BADGE_MIN_MATCHES, minMatches); ties break on round win rate, then map id.
+ * No badge at all when the two 95% intervals overlap heavily, when the map rates tie,
+ * when the round win rates contradict the order, or with fewer than two maps.
+ * "Heavily" = the overlap exceeds half the mean margin of error of the two intervals,
+ * which for independent proportions is roughly a difference at p ≈ .05 (Cumming &
+ * Finch 2005); requiring no overlap at all would leave almost every team without badges.
+ */
+export function mapBadges<T extends BadgeMap>(maps: T[], minMatches: number | undefined): { best: string | undefined; worst: string | undefined } {
+  const none = { best: undefined, worst: undefined };
+  if (minMatches == null) return none;
+  const threshold = Math.max(BADGE_MIN_MATCHES, minMatches);
+  const rows = maps.filter((map) => map.n_matches >= threshold && map.map_win_rate != null && Number.isFinite(map.map_win_rate))
+    .map((map) => {
+      const [lower, upper] = wilson(map.map_win_rate!, map.n_matches);
+      return { map: map.map, rate: map.map_win_rate!, rounds: map.round_win_rate ?? null, lower, upper };
+    });
+  if (rows.length < 2) return none;
+  const rounds = (row: (typeof rows)[number]) => row.rounds ?? .5;
+  const best = [...rows].sort((a, b) => b.lower - a.lower || rounds(b) - rounds(a) || a.map.localeCompare(b.map))[0];
+  const worst = [...rows].sort((a, b) => a.upper - b.upper || rounds(a) - rounds(b) || a.map.localeCompare(b.map))[0];
+  const margin = ((best.upper - best.lower) + (worst.upper - worst.lower)) / 4;
+  if (best.map === worst.map || best.rate <= worst.rate || worst.upper - best.lower > margin / 2) return none;
+  if (best.rounds != null && worst.rounds != null && best.rounds < worst.rounds) return none;
+  return { best: best.map, worst: worst.map };
+}
+
 /** Restrict both sample totals and ranking to the seven rendered pool nodes. */
-export function orbitStats<T extends { map: string; n_matches: number; map_win_rate?: number | null }>(maps: T[], minMatches: number | undefined) {
+export function orbitStats<T extends BadgeMap>(maps: T[], minMatches: number | undefined) {
   const shown = maps.filter((map) => ORBIT_POOL.some(([id]) => id === map.map));
-  const ranked = shown.filter((map) => minMatches != null && map.n_matches >= minMatches && map.map_win_rate != null)
-    .sort((a, b) => (b.map_win_rate ?? 0) - (a.map_win_rate ?? 0) || a.map.localeCompare(b.map));
-  return { matches: shown.reduce((sum, map) => sum + map.n_matches, 0),
-    best: ranked[0]?.map, worst: ranked.length > 1 ? ranked[ranked.length - 1].map : undefined };
+  return { matches: shown.reduce((sum, map) => sum + map.n_matches, 0), ...mapBadges(shown, minMatches) };
 }

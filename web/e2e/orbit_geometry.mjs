@@ -60,8 +60,9 @@ const maps = [
   { map: 'de_anubis', n_matches: 19, map_win_rate: .47 },
   { map: 'de_overpass', n_matches: 100, map_win_rate: 0 },
 ];
+// Badge ranking itself is covered by web/e2e/map_badges.mjs; here: pool filter and totals.
 assert.deepEqual(orbitStats(maps, 5), {matches: 67, best: 'de_dust2', worst: 'de_anubis'});
-assert.deepEqual(orbitStats(maps, 20), {matches: 67, best: 'de_dust2', worst: undefined});
+assert.deepEqual(orbitStats(maps, 20), {matches: 67, best: undefined, worst: undefined}, 'one eligible map earns no badge');
 assert.deepEqual(orbitStats(maps, undefined), {matches: 67, best: undefined, worst: undefined});
 assert.deepEqual(orbitStats(maps, 50), {matches: 67, best: undefined, worst: undefined});
 assert.deepEqual([null, undefined, 0, .4999, .5, .5999, .6, .65, 1].map(orbitRate),
@@ -119,6 +120,7 @@ const nodes = Array.from({ length: 7 }, () => ({
 const rays = { setAttribute(name, value) { this[name] = value; } };
 const lines = Array.from({ length: 7 }, () => ({ setAttribute(name, value) { this[name] = Number(value); } }));
 const stage = { dataset: {}, clientWidth: 1140, clientHeight: 570,
+  style: { setProperty(name, value) { this[name] = value; } },
   querySelector() { return rays; }, querySelectorAll(selector) {
   return selector === '.hub-orbit-node' ? nodes : [lines[Number(selector.match(/nth-child\((\d+)\)/)[1]) - 1]];
 } };
@@ -156,6 +158,9 @@ assert.equal(rays.viewBox, '0 0 1296 700');
 assert(nodes.every((node, i) => Math.abs(parseFloat(node.style['--orbit-x']) - expected[i].x) < 1e-6 &&
   Math.abs(parseFloat(node.style['--orbit-y']) - expected[i].y) < 1e-6), 'static resize refits node centres');
 assert(lines.every((line, i) => Math.abs(line.x2 - expected[i].x) < 1e-6 && Math.abs(line.y2 - expected[i].y) < 1e-6), 'rays follow node centres');
+// CSS keeps card text >= 11.5 screen px from the fitted (depth-free) scale.
+const { scale: fitted } = orbitLayout(stage.clientWidth, stage.clientHeight, measured);
+assert.equal(stage.style['--orbit-fit'], fitted.toFixed(4), 'the stage publishes the fitted card scale for text sizing');
 effects.forEach(effect => effect?.cleanup?.());
 assert.equal(raf.size, 0, 'unmount must cancel the last frame');
 assert.equal(windowListeners.size, 0, 'unmount must remove resize listener');
