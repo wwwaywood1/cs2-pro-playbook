@@ -27,7 +27,7 @@ host_of() {  # $1 URL -> its lower-case host name if it is an https URL, else no
 got=0; have=0; refused=0; failed=0; requests=0
 while read -r name url _; do
   case "${name:-}" in ''|'#'*) continue ;; esac
-  url="${url:-}"; url="${url%$'\r'}"
+  url=${url:-}; url=${url%$'\r'}  # unquoted on purpose: bash 3.2 expands $'\r' only outside quotes
   host="$(host_of "$url")"
   if [ -z "$host" ]; then
     echo "REFUSED $name $url (https URLs only)"; refused=$((refused + 1)); continue
