@@ -36,7 +36,8 @@ jobs:
 
   web:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    # the Chromium system packages (playwright install --with-deps) took 10 min on 2026-10-26
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
