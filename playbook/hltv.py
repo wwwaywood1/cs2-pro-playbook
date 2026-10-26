@@ -207,9 +207,9 @@ def parse_match(html: str) -> MatchPage:
         played = holder.find(cls="optional") is None and holder.find(cls="results-team-score") is not None
         if name is not None and played:
             maps.append(name.text())
-    own_url = "".join([n.attrs.get("href", "") for n in root.find_all("link") if n.attrs.get("rel") == "canonical"]
-                      + [n.attrs.get("content", "") for n in root.find_all("meta")
-                         if n.attrs.get("property") == "og:url"])
+    own_url = " ".join([n.attrs.get("href", "") for n in root.find_all("link") if n.attrs.get("rel") == "canonical"]
+                       + [n.attrs.get("content", "") for n in root.find_all("meta")
+                          if n.attrs.get("property") == "og:url"])
     m = MATCH_HREF.search(own_url)
     return MatchPage(demo, unix, event, event_id, teams, maps, int(m[1]) if m else None)
 
