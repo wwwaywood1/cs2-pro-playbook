@@ -39,7 +39,7 @@ from awpy import Demo
 from playbook.config import PARSED_DIR, RAW_DIR
 from playbook.export import ACTIVE_POOL
 from playbook.multipart import DUPLICATE_RE, game_stem, ordered_paths
-from playbook.parse import demo_identity
+from playbook.parse import demo_identity, same_device
 
 ARCHIVES = {".rar", ".zip", ".gz", ".bz2"}
 RAR_HELP = "Cannot open RAR: install an extractor with `brew install sevenzip` (7z/7zz), then retry."
@@ -83,6 +83,19 @@ class DamagedArchive(ValueError):
     """Every available extractor failed: an incomplete download, a damaged or an unsafe archive."""
 
 
+def local_source(archive: Path, stage: Path) -> Path:
+    """``archive`` itself when it is on the staging disk, else a copy made with one sequential read.
+
+    bsdtar reading HLTV RARs straight from the exFAT external drive (a user-space FSKit mount on
+    macOS 26) hung for good, unkillable even by the time limit below; from a local copy the
+    same archives extract in seconds."""
+    if same_device(archive, stage):
+        return archive
+    copy = stage / ("source" + archive.suffix.lower())
+    shutil.copyfile(archive, copy)
+    return copy
+
+
 def extract_archive(archive: Path, stage: Path) -> Path:
     """Try native extractors in order, discarding each failed attempt's files."""
     suffix = archive.suffix.lower()
@@ -95,6 +108,8 @@ def extract_archive(archive: Path, stage: Path) -> Path:
             shutil.copyfileobj(src, dst)
         return stage
 
+    limit = extract_timeout(archive)
+    archive = local_source(archive, stage)
     # Validate ZIP paths/links even when a native tool will do the extraction.
     if suffix == ".zip":
         try:
@@ -108,7 +123,6 @@ def extract_archive(archive: Path, stage: Path) -> Path:
                     raise ValueError(f"archive symlink: {member.filename}")
 
     errors, timeouts = [], 0
-    limit = extract_timeout(archive)
     commands = [
         ("bsdtar", lambda dest: ["-xf", str(archive), "-C", str(dest)]),
         ("unar", lambda dest: ["-quiet", "-force-overwrite", "-no-directory", "-output-directory", str(dest), str(archive)]),
