@@ -22,13 +22,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import re
-import shutil
-import tempfile
 import time
-from collections.abc import Iterator
-from contextlib import contextmanager
 from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
@@ -240,52 +235,16 @@ def _site_from_place(place: str | None, mm: MapMeta) -> str | None:
     return lane if lane in ("A", "B") else None
 
 
-def same_device(path: Path, folder: Path) -> bool:
-    try:
-        return os.stat(path).st_dev == os.stat(folder).st_dev
-    except OSError:
-        return True
-
-
-@contextmanager
-def readable_copies(paths: list[Path]) -> Iterator[list[Path]]:
-    """The files to hand to the demo parser: ``paths`` themselves when they are on the same disk
-    as the temp folder, otherwise same-named copies in a temp folder (removed afterwards).
-
-    The raw store can live on an external drive (config/storage.toml). macOS 26 mounts exFAT
-    drives through a user-space FSKit driver, and tools reading archives straight from it
-    (bsdtar) have hung there for good, unkillable; one sequential copy per file is cheap next to
-    parsing, and the parser then reads a local file."""
-    tmp_root = Path(tempfile.gettempdir())
-    if all(same_device(p, tmp_root) for p in paths):
-        yield list(paths)
-        return
-    with tempfile.TemporaryDirectory(prefix="playbook-demo-") as tmp:
-        copies = []
-        for p in paths:
-            copy = Path(tmp) / p.name
-            shutil.copyfile(p, copy)
-            copies.append(copy)
-        yield copies
-
-
 def parse_demo(path: Path | list[Path] | tuple[Path, ...], aliases: dict[str, str] | None = None,
                verbose: bool = True) -> dict[str, pl.DataFrame]:
-    paths = ordered_paths(list(path) if isinstance(path, (list, tuple)) else [Path(path)])
-    with readable_copies(paths) as files:
-        return _parse_demo(paths, files, aliases, verbose)
-
-
-def _parse_demo(paths: list[Path], files: list[Path], aliases: dict[str, str] | None,
-                verbose: bool) -> dict[str, pl.DataFrame]:
-    """``paths`` name the game (demo id, demo_file); ``files`` are what the parser reads."""
     t_start = time.time()
+    paths = ordered_paths(list(path) if isinstance(path, (list, tuple)) else [Path(path)])
     path = paths[0]
     aliases = load_team_aliases() if aliases is None else aliases
     ident = demo_identity(path)
     demo_id = ident["demo_id"]
 
-    demo = GameDemo(files) if len(files) > 1 else Demo(files[0])
+    demo = GameDemo(paths) if len(paths) > 1 else Demo(path)
     demo.load("rounds", "kills", "bomb", "grenades", "smokes", "players", "round_economy", "shots")
     header = demo.header
     map_name = header["map_name"]
@@ -578,13 +537,11 @@ def shots_table(raw: pl.DataFrame, rounds: pl.DataFrame, loadouts: pl.DataFrame,
 
 def list_callouts(path: Path) -> pl.DataFrame:
     """Every callout name in a demo with its median position (to write config/maps/<map>.toml)."""
-    with readable_copies([Path(path)]) as (local,):
-        demo = Demo(local)
-        tk = demo.ticks(["X", "Y", "Z", "m_szLastPlaceName"], players_only=True).filter(pl.col("m_szLastPlaceName") != "")
-        map_name = demo.header["map_name"]
+    demo = Demo(path)
+    tk = demo.ticks(["X", "Y", "Z", "m_szLastPlaceName"], players_only=True).filter(pl.col("m_szLastPlaceName") != "")
     return (
         tk.group_by(pl.col("m_szLastPlaceName").alias("callout"))
         .agg(samples=pl.len(), x=pl.col("X").median().round(0), y=pl.col("Y").median().round(0), z=pl.col("Z").median().round(0))
         .sort("x")
-        .with_columns(pl.lit(map_name).alias("map"))
+        .with_columns(pl.lit(demo.header["map_name"]).alias("map"))
     )

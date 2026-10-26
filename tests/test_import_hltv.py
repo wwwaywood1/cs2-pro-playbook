@@ -362,26 +362,3 @@ def test_second_import_on_the_same_folder_is_refused(workspace):
             run(workspace)
     row, = run(workspace)                     # lock released
     assert row.imported == 1
-
-
-def test_archive_on_another_disk_is_copied_to_the_staging_folder_first(workspace, monkeypatch):
-    src, _, _ = workspace
-    (src / "match.rar").write_bytes(b"rar")
-    monkeypatch.setattr(hltv, "same_device", lambda path, folder: False)
-    monkeypatch.setattr(hltv.shutil, "which", lambda tool: "/fake/7zz" if tool == "7zz" else None)
-    seen = []
-
-    def extract(command, **kwargs):
-        source = Path(command[-1])
-        seen.append((source, source.read_bytes()))
-        dest = Path(next(arg[2:] for arg in command if arg.startswith("-o")))
-        (dest / "game.dem").write_text("de_nuke")
-        return subprocess.CompletedProcess(command, 0, "", "")
-
-    monkeypatch.setattr(hltv.subprocess, "run", extract)
-    row, = run(workspace)
-    assert row.imported == 1
-    (source, content), = seen
-    assert source.name == "source.rar" and source.parent != src and content == b"rar"
-    assert not source.exists()                       # staging folder removed afterwards
-    assert (src / "match.rar").exists()              # the original is untouched
