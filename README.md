@@ -4,8 +4,8 @@ Professional CS2 demos turned into something regular players can use: how top te
 attack each map, what each player does, every round replayed in 2D with win probability, and a
 library of the grenades pros actually throw, each with a one-line practice command.
 
-Data through 2026-10-24: about 740 maps from 2026 tier-1 events on the active pool (Ancient,
-Anubis, Cache, Dust2, Inferno, Mirage, Nuke), 54 teams; showcase teams Falcons · Vitality ·
+Data through 2026-10-24: 755 maps from 2026 tier-1 events on the active pool (Ancient,
+Anubis, Cache, Dust2, Inferno, Mirage, Nuke), 55 teams; showcase teams Falcons · Vitality ·
 Spirit · MOUZ · FURIA (`config/site.toml`). Every match is dated to the day.
 
 ## 中文简介
