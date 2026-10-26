@@ -1,33 +1,37 @@
 #!/usr/bin/env python3
-"""Plan (and script) the HLTV demo downloads for one team.
+"""Plan one team's HLTV demo downloads from pages you saved in your browser.
 
-    # on a machine that can reach hltv.org (your own Terminal):
-    python scripts/hltv_plan.py aurora --fetch
-    # from pages saved by a browser (results page + one HTML file per match page):
-    python scripts/hltv_plan.py aurora --results-html results.html --match-html-dir matches/
+HLTV allows demo downloads by people only (its robots.txt disallows automated demo
+downloads and its terms reportedly forbid scraping), so this tool never contacts hltv.org:
 
-Writes ``_sync/<team>_plan.json`` (matches with exact start times, events, demo ids) and
-``_sync/<team>_queue.txt`` (most wanted first) for ``scripts/hltv_download.sh <team>``, which
-downloads them into ~/Downloads and then runs ``scripts/refresh.sh`` (import, exact dates via
-scripts/register_hltv_dates.py, archive the .rar/.zip files, parse, export).
+    # 1. In Safari open https://www.hltv.org/results?team=<id> (ids: config/hltv.toml [teams])
+    #    and save it with File > Save As ("Web Archive" or "Page Source" both work). For
+    #    older matches also save the next results page ("Next" at the bottom).
+    # 2. Optional: save match pages as well; they add the demo link, exact start time and maps.
+    python scripts/hltv_plan.py aurora --results-html ~/Downloads/Results.webarchive \
+        [--match-html-dir ~/Downloads/aurora-matches]
 
-HLTV is behind Cloudflare. This tool identifies itself honestly and stops when it is refused;
-it never tries to get around a check. Save the pages from your browser instead (above).
+Writes ``_sync/<team>_plan.json`` (matches with start times, events and demo ids when known),
+``_sync/<team>_queue.txt`` (most wanted first) and ``_sync/<team>_queue.html``: open the page in
+Safari and click its links one by one. A match whose page you saved links to its demo; the
+others link to their match page, where you click "GOTV Demo". When the downloads have
+finished, run ``bash scripts/refresh.sh`` (import, exact dates via scripts/register_hltv_dates.py,
+archive the .rar/.zip files, parse, export; it also updates the page). scripts/hltv_queue.py
+rewrites the page on its own.
 
 Scope (config/hltv.toml): matches since ``[download] since``, tier-1 events only, ordered by
 HLTV's popularity stars (they reflect both teams' rankings), then newest first. Matches we
 already have are skipped: HLTV ids registered in config/hltv_archives.json or present as
 dataset folders (data/raw/<source>/<event>/<id>-...), and archives with the same
 event/teams/format (data/raw/hltv folders + the archive directory in config/storage.toml).
+When a rematch at the same event makes that comparison ambiguous, those matches are not
+queued but listed for you to decide (printed, and under "待确认 / To check" on the page).
 """
 from __future__ import annotations
 
 import argparse
-import json
 import sys
-import time
-import tomllib
-import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -35,67 +39,61 @@ sys.path.insert(0, str(ROOT))
 
 from playbook import hltv  # noqa: E402
 
-UA = "cs2-pro-playbook/0.1 (personal non-commercial CS2 demo analysis; one request at a time)"
-
-
-class Blocked(RuntimeError):
-    pass
-
-
-def fetch(url: str, delay: float) -> str:
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"})
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            body = resp.read().decode("utf-8", errors="replace")
-    except urllib.error.HTTPError as exc:  # Cloudflare answers 403/503 with a challenge page
-        raise Blocked(f"{url}: HTTP {exc.code}") from exc
-    if "Just a moment" in body[:2000] or "cf-chl" in body[:5000]:
-        raise Blocked(f"{url}: Cloudflare challenge")
-    time.sleep(delay)
-    return body
+SAVED_PAGES = (".html", ".htm", ".webarchive")
 
 
 def existing_stems() -> list[str]:
-    stems = []
-    raw = ROOT / "data" / "raw" / "hltv"
-    if raw.is_dir():
-        stems += [p.name for p in raw.iterdir() if p.is_dir()]
-        stems += [p.stem for p in raw.iterdir() if p.is_file() and p.suffix.lower() in (".rar", ".zip")]
-    storage = ROOT / "config" / "storage.toml"
-    if storage.exists():
-        adir = Path((tomllib.loads(storage.read_text()).get("archive") or {}).get("dir", "/nonexistent"))
-        if adir.is_dir():
-            stems += [p.stem for p in adir.iterdir() if p.suffix.lower() in (".rar", ".zip")
-                      and not p.name.startswith("._")]
-    return stems
+    """Archive stems we have that are not registered to a match id (registered ones are
+    covered by known_match_ids, and must not stand in for another match)."""
+    return sorted(hltv.local_stems(ROOT) - hltv.archive_registry(ROOT).keys())
 
 
 def known_match_ids() -> set[int]:
     """HLTV match ids we already have: registered archives and dataset folders named <id>-..."""
-    ids: set[int] = set()
-    registry = ROOT / "config" / "hltv_archives.json"
-    if registry.exists():
-        ids |= {int(m) for m in json.loads(registry.read_text(encoding="utf-8")).get("archives", {}).values()}
-    raw = ROOT / "data" / "raw"
-    if raw.is_dir():
-        for source in raw.iterdir():
-            if source.is_dir() and source.name != "hltv":
-                for folder in source.glob("*/*"):
-                    head = folder.name.split("-", 1)[0]
-                    if folder.is_dir() and head.isdigit():
-                        ids.add(int(head))
-    return ids
+    return set(hltv.archive_registry(ROOT).values()) | hltv.dataset_match_ids(ROOT)
+
+
+def saved_match_pages(folder: Path | None) -> dict[int, hltv.MatchPage]:
+    """Saved match pages by HLTV match id, taken from the file name (<id>.html), the URL a
+    .webarchive records, or the page's own canonical link."""
+    pages: dict[int, hltv.MatchPage] = {}
+    for path in sorted(folder.iterdir()) if folder else []:
+        if path.suffix.lower() not in SAVED_PAGES:
+            continue
+        html, url = hltv.read_saved_page(path)
+        page = hltv.parse_match(html)
+        m = hltv.MATCH_HREF.search(url)
+        mid = int(path.stem) if path.stem.isdigit() else int(m[1]) if m else page.match_id
+        if mid is None:
+            print(f"  cannot tell which match {path.name} is; rename it to <match id>{path.suffix}")
+            continue
+        pages[mid] = page
+    return pages
+
+
+def plan_entry(row: hltv.ResultRow, page: hltv.MatchPage | None) -> dict:
+    """One planned match; ``demo_id`` stays None unless its match page was saved."""
+    return {"hltv_match_id": row.match_id, "demo_id": page.demo_id if page else None,
+            "unix_ms": (page.unix_ms if page else None) or row.unix_ms,
+            "event": (page.event if page else "") or row.event,
+            "hltv_event_id": page.event_id if page else None,
+            "teams": (page.teams if page else []) or row.teams,
+            "maps_played": page.maps_played if page else [],
+            "stars": row.stars, "slug": row.slug, "fmt": row.fmt}
+
+
+def day(unix_ms: int | None) -> str:
+    return datetime.fromtimestamp(unix_ms / 1000, tz=timezone.utc).date().isoformat() if unix_ms else "?"
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("team", help="team slug from config/hltv.toml [teams]")
-    ap.add_argument("--fetch", action="store_true", help="fetch hltv.org pages directly")
-    ap.add_argument("--results-html", type=Path, nargs="*", default=[])
-    ap.add_argument("--match-html-dir", type=Path)
+    ap.add_argument("--results-html", type=Path, nargs="+", required=True,
+                    help="the team's HLTV results page(s) saved from your browser (.html or .webarchive)")
+    ap.add_argument("--match-html-dir", type=Path, help="folder with saved HLTV match pages (optional)")
     ap.add_argument("--since")
     ap.add_argument("--limit", type=int, default=0, help="keep only the first N planned matches")
-    ap.add_argument("--delay", type=float, default=10.0, help="seconds between page fetches (HLTV starts challenging at ~3 s)")
     ap.add_argument("--out-dir", type=Path, default=ROOT / "_sync")
     args = ap.parse_args(argv)
 
@@ -103,52 +101,46 @@ def main(argv: list[str] | None = None) -> int:
     team_id = (cfg.get("teams") or {}).get(args.team)
     if team_id is None:
         ap.error(f"unknown team {args.team!r}; add it to config/hltv.toml [teams]")
+    if args.match_html_dir and not args.match_html_dir.is_dir():
+        ap.error(f"no folder {args.match_html_dir}")
     since = args.since or (cfg.get("download") or {}).get("since", "2026-01-01")
+    results_url = f"{hltv.HLTV}/results?team={team_id}"
 
     rows: list[hltv.ResultRow] = []
-    try:
-        if args.fetch:
-            for offset in (0, 100):
-                page = hltv.parse_results(fetch(f"{hltv.HLTV}/results?team={team_id}"
-                                                + (f"&offset={offset}" if offset else ""), args.delay))
-                rows += page
-                if not page or min((r.unix_ms or 1 << 62) for r in page) < hltv.datetime.fromisoformat(
-                        since).replace(tzinfo=hltv.timezone.utc).timestamp() * 1000:
-                    break
-        for path in args.results_html:
-            rows += hltv.parse_results(path.read_text(encoding="utf-8"))
-        want, have, skipped = hltv.plan_matches(rows, existing_stems(), since=since, cfg=cfg,
-                                                known_ids=known_match_ids())
-        if args.limit:
-            want = want[: args.limit]
-        entries = []
-        for row in want:
-            html = None
-            if args.match_html_dir and (args.match_html_dir / f"{row.match_id}.html").exists():
-                html = (args.match_html_dir / f"{row.match_id}.html").read_text(encoding="utf-8")
-            elif args.fetch:
-                html = fetch(f"{hltv.HLTV}/matches/{row.match_id}/{row.slug}", args.delay)
-            page = hltv.parse_match(html) if html else None
-            if page is None or page.demo_id is None:
-                print(f"  no demo link yet: {row.match_id} {row.slug}")
-                continue
-            entries.append({"hltv_match_id": row.match_id, "demo_id": page.demo_id,
-                            "unix_ms": page.unix_ms or row.unix_ms, "event": page.event or row.event,
-                            "hltv_event_id": page.event_id, "teams": page.teams or row.teams,
-                            "maps_played": page.maps_played, "stars": row.stars, "slug": row.slug})
-    except Blocked as exc:
-        print(f"HLTV refused this request ({exc}). Stopping. Save the pages from your browser and pass "
-              "--results-html/--match-html-dir instead.")
-        return 2
+    for path in args.results_html:
+        rows += hltv.parse_results(hltv.read_saved_page(path)[0])
+    if not rows:
+        print(f"No HLTV results in {', '.join(map(str, args.results_html))}. Open {results_url} in Safari, "
+              "save it (File > Save As) and pass that file.")
+        return 1
+    oldest = min((r.unix_ms for r in rows if r.unix_ms), default=None)
+    if oldest and day(oldest) > since:
+        print(f"Note: the saved results go back to {day(oldest)} only; to plan everything since {since}, also "
+              f"save the next page of {results_url} ('Next' at the bottom) and pass it too.")
+    plan = hltv.plan_matches(rows, existing_stems(), since=since, cfg=cfg, known_ids=known_match_ids())
+    want = plan.want[: args.limit] if args.limit else plan.want
+    pages = saved_match_pages(args.match_html_dir)
+    entries = [plan_entry(row, pages.get(row.match_id)) for row in want]
+    ambiguous = [plan_entry(row, pages.get(row.match_id)) for row in plan.ambiguous]
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
     plan_path = args.out_dir / f"{args.team}_plan.json"
-    hltv.write_plan(plan_path, {"slug": args.team, "hltv_team_id": team_id, "since": since}, entries)
+    hltv.write_plan(plan_path, {"slug": args.team, "hltv_team_id": team_id, "since": since}, entries, ambiguous)
     queue = args.out_dir / f"{args.team}_queue.txt"
     queue.write_text(hltv.queue_text(entries), encoding="utf-8")
-    print(f"{len(entries)} to download, {len(have)} already have, {len(skipped)} not tier-1 -> {plan_path.name}, "
-          f"{queue.name}")
-    print(f"Next: caffeinate -i bash scripts/hltv_download.sh {args.team}")
+    page, _, _ = hltv.write_queue_page(args.team, args.out_dir, ROOT)
+    via_page = sum(1 for e in entries if e["demo_id"] is None)
+    print(f"{len(entries)} to download ({via_page} via their match page), {len(plan.have)} already have, "
+          f"{len(plan.ambiguous)} ambiguous, {len(plan.skipped)} not tier-1 -> {plan_path.name}, {queue.name}, "
+          f"{page.name}")
+    if plan.ambiguous:
+        print("Not queued, decide by hand (also listed on the page): these share event, teams and format with "
+              "archives we have, but there are more such matches than archives (a rematch?):")
+        for row in plan.ambiguous:
+            print(f"  {row.match_id} {day(row.unix_ms)} {' vs '.join(row.teams)} ({row.event}, {row.fmt}) "
+                  f"{hltv.match_url(row.match_id, row.slug)}")
+    print(f"Next: open {page} in Safari and click the links one by one; when the downloads have finished, "
+          "run bash scripts/refresh.sh (or ask Claude to).")
     return 0
 
 

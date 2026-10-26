@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import types
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location(
@@ -58,6 +59,52 @@ def test_finish_keeps_local_copy_when_destination_lost_a_file(tmp_path, capsys):
     (dest / "hltv/event-a-vs-b-bo3-X/a-vs-b-m1-mirage.dem").unlink()
     assert mod.main(_args(src, dest, "--finish")) == 1
     assert list(src.parent.glob("raw.local-*"))
+
+
+def test_finish_rehashes_and_keeps_a_file_whose_destination_differs(tmp_path, capsys):
+    src, dest = _setup(tmp_path)
+    mod.main(_args(src, dest, "--copy"))
+    mod.main(_args(src, dest, "--switch"))
+    rel = "hltv/event-a-vs-b-bo3-X/a-vs-b-m1-mirage.dem"
+    (dest / rel).write_bytes(b"x" * 1000)          # same size, different content
+    capsys.readouterr()
+    assert mod.main(_args(src, dest, "--finish")) == 1
+    out = capsys.readouterr().out
+    assert "SHA-256 mismatch" in out
+    local = next(src.parent.glob("raw.local-*"))
+    assert (local / rel).read_bytes() == b"m" * 1000                     # kept, untouched
+    assert (local / "hltv/event-a-vs-b-bo3-X/._a-vs-b-m1-mirage.dem").exists()  # with its sidecar
+    assert not (local / "hltv/.import_hltv_archives.json").exists()     # the verified file went
+
+
+def test_finish_keeps_files_that_were_never_copied(tmp_path):
+    src, dest = _setup(tmp_path)
+    mod.main(_args(src, dest, "--copy"))
+    mod.main(_args(src, dest, "--switch"))
+    local = next(src.parent.glob("raw.local-*"))
+    (local / "hltv" / "leftover.dem.part").write_bytes(b"p")
+    assert mod.main(_args(src, dest, "--finish")) == 1
+    assert (local / "hltv" / "leftover.dem.part").exists()
+    assert not (local / "hltv" / "event-a-vs-b-bo3-X").exists()          # verified folder removed
+
+
+def test_finish_with_destination_unplugged_removes_nothing(tmp_path, capsys):
+    src, dest = _setup(tmp_path)
+    mod.main(_args(src, dest, "--copy"))
+    mod.main(_args(src, dest, "--switch"))
+    dest.rename(tmp_path / "ssd" / "raw-elsewhere")
+    assert mod.main(_args(src, dest, "--finish")) == 1
+    assert "nothing removed" in capsys.readouterr().out
+    local = next(src.parent.glob("raw.local-*"))
+    assert (local / "hltv/event-a-vs-b-bo3-X/a-vs-b-m1-mirage.dem").exists()
+
+
+def test_copy_is_flushed_with_f_fullfsync_when_available(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(mod, "fcntl", types.SimpleNamespace(F_FULLFSYNC=51, fcntl=lambda fd, cmd: calls.append(cmd)))
+    src, dest = _setup(tmp_path)
+    assert mod.main(_args(src, dest, "--copy")) == 0
+    assert calls.count(51) >= 2
 
 
 def test_unmounted_destination(tmp_path, capsys):

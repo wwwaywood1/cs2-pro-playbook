@@ -2,12 +2,19 @@
 
 [tier1]
 # An event is tier-1 when its name contains one of `include` and none of `exclude`.
+# Case-insensitive, and a term must start at a word: "Series" drops "... North America
+# Series" but not "StarLadder StarSeries"; "Qualifier" also catches "Qualifiers".
 include = [
   "Major", "IEM ", "BLAST Open", "BLAST Premier", "BLAST Bounty", "BLAST Rivals",
   "ESL Pro League", "PGL ", "Esports World Cup", "StarLadder StarSeries",
   "FISSURE Playground", "Thunderpick World Championship", "CS Asia Championships",
 ]
-exclude = ["Qualifier", "Showmatch", "Academy", "Digital Crusade", "CCT ", "Challenger", "Play-In Qualifier"]
+exclude = [
+  "Qualifier", "Showmatch", "Academy", "Digital Crusade", "CCT ", "Challenger", "Play-In Qualifier",
+  "Series",      # regional series of a tier-1 brand, e.g. "Thunderpick World Championship 2026 North America Series"
+  "Conference",  # ESL Pro League Conference (the qualifying stage)
+  "All-Star",    # BLAST Premier All-Star Showcase and similar exhibitions
+]
 
 [download]
 since = "2026-01-01"
