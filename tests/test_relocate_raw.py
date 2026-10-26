@@ -3,10 +3,18 @@ import json
 import types
 from pathlib import Path
 
+import pytest
+
 spec = importlib.util.spec_from_file_location(
     "relocate_raw", Path(__file__).resolve().parents[1] / "scripts" / "relocate_raw.py")
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
+
+
+@pytest.fixture(autouse=True)
+def no_free_space_margin(monkeypatch):
+    """The 20 GB safety margin would fail these tests on hosts with less free space (CI runners)."""
+    monkeypatch.setattr(mod, "MARGIN", 0)
 
 
 def _setup(tmp_path):
