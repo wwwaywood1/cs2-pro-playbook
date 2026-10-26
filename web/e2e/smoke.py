@@ -1458,7 +1458,8 @@ def check_match_dates(smoke: Smoke, page: Page) -> None:
     teams = json.loads((root / 'heatmap_teams.json').read_text())
     team = next(team for team in teams if team['slug'] == 'vitality')
     profile = json.loads((root / 'de_mirage/teams/vitality.json').read_text())
-    base = dict(profile['matches'][0], opponent='Date Test Opponent', event='Date Test Event')
+    # synthetic matches have no timeline file, so the archive must not try to load one
+    base = dict(profile['matches'][0], opponent='Date Test Opponent', event='Date Test Event', winprob_available=False)
     rows = [dict(base, demo_id=f'date-test-{i}', hltv_match_id=9000 + i,
                  date=value, date_precision=precision) for i, (value, precision) in enumerate([
                      ('2026-05-12', 'day'), ('2026-06-01', 'event'),
