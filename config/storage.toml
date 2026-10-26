@@ -6,3 +6,11 @@
 # (scripts/archive_downloads.py, run by scripts/refresh.sh). They are backups only:
 # the extracted demos under data/raw/hltv/<archive>/ are what the pipeline reads.
 dir = "/Volumes/My PSSD/cs2-pro-playbook-data/hltv-archives"
+
+[raw]
+# The raw demo store (extracted .dem files, hundreds of GB). When set, data/raw is a
+# symlink to this directory (scripts/relocate_raw.py moves an existing tree here with
+# SHA-256 verification). Demo ids depend only on names below data/raw, so parsed data
+# stays valid. Parsing and exporting need the drive; scripts/refresh.sh stops early
+# with a clear message when it is not mounted.
+dir = "/Volumes/My PSSD/cs2-pro-playbook-data/raw"

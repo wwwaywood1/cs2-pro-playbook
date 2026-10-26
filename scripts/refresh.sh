@@ -10,6 +10,12 @@ cd "$(dirname "$0")/.."
 PY=.venv/bin/python
 [ -x "$PY" ] || PY=python3
 
+# data/raw may be a symlink to an external drive (config/storage.toml [raw] dir)
+if [ -L data/raw ] && [ ! -d data/raw/ ]; then
+  echo "data/raw -> $(readlink data/raw) is not mounted. Plug in the external drive and run again."
+  exit 1
+fi
+
 mkdir -p data/raw/hltv
 shopt -s nullglob
 moved=0
@@ -27,6 +33,8 @@ for plan in _sync/*_plan.json; do
   log="${plan%_plan.json}_download.log"
   [ -f "$log" ] && { "$PY" scripts/register_hltv_dates.py --plan "$plan" --log "$log" --apply || echo "(date registration failed for $plan)"; }
 done
+# archives registered earlier but imported only now (config/hltv_archives.json)
+"$PY" scripts/register_hltv_dates.py --apply | head -1 || true
 echo "== archive"; "$PY" scripts/archive_downloads.py --apply || echo "(archiving reported problems, continuing)"
 echo "== parse";  "$PY" -m playbook parse 2>&1 | tail -3 || true
 echo "== export"; "$PY" -m playbook export || { echo "export failed"; exit 1; }

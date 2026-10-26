@@ -1,0 +1,4637 @@
+{
+ "_note": "HLTV matches we know the start time of, and which HLTV match each imported archive came from. Written by scripts/register_hltv_dates.py; drives exact dates in config/match_dates.csv.",
+ "matches": {
+  "2389261": {
+   "start_unix_ms": 1768582800000,
+   "event": "BLAST Bounty 2026 Season 1",
+   "hltv_event_id": 8876,
+   "maps": [
+    "Anubis",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "9INE",
+    "FURIA"
+   ],
+   "bo3_match_id": 107564
+  },
+  "2389263": {
+   "start_unix_ms": 1768418100000,
+   "event": "BLAST Bounty 2026 Season 1",
+   "hltv_event_id": 8876,
+   "maps": [
+    "Overpass",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Virtus.pro",
+    "Vitality"
+   ],
+   "bo3_match_id": 107556
+  },
+  "2389265": {
+   "start_unix_ms": 1768568100000,
+   "event": "BLAST Bounty 2026 Season 1",
+   "hltv_event_id": 8876,
+   "maps": [
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "SINNERS",
+    "Spirit"
+   ],
+   "bo3_match_id": 107562
+  },
+  "2389272": {
+   "start_unix_ms": 1768740300000,
+   "event": "BLAST Bounty 2026 Season 1",
+   "hltv_event_id": 8876,
+   "maps": [
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Inner Circle",
+    "Spirit"
+   ],
+   "bo3_match_id": 107570
+  },
+  "2389273": {
+   "start_unix_ms": 1768750500000,
+   "event": "BLAST Bounty 2026 Season 1",
+   "hltv_event_id": 8876,
+   "maps": [
+    "Anubis",
+    "Overpass"
+   ],
+   "source": "hltv",
+   "teams": [
+    "EYEBALLERS",
+    "Vitality"
+   ],
+   "bo3_match_id": 107571
+  },
+  "2389274": {
+   "start_unix_ms": 1768759500000,
+   "event": "BLAST Bounty 2026 Season 1",
+   "hltv_event_id": 8876,
+   "maps": [
+    "Anubis",
+    "Overpass",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FUT",
+    "FURIA"
+   ],
+   "bo3_match_id": 107572
+  },
+  "2389276": {
+   "start_unix_ms": 1769105100000,
+   "event": "BLAST Bounty 2026 Season 1 Finals",
+   "hltv_event_id": 8246,
+   "maps": [
+    "Mirage",
+    "Dust2",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "HEROIC",
+    "FURIA"
+   ],
+   "bo3_match_id": 107594
+  },
+  "2389277": {
+   "start_unix_ms": 1769180400000,
+   "event": "BLAST Bounty 2026 Season 1 Finals",
+   "hltv_event_id": 8246,
+   "maps": [
+    "Inferno",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "GamerLegion",
+    "Vitality"
+   ],
+   "bo3_match_id": 107595
+  },
+  "2389278": {
+   "start_unix_ms": 1769190600000,
+   "event": "BLAST Bounty 2026 Season 1 Finals",
+   "hltv_event_id": 8246,
+   "maps": [
+    "Overpass",
+    "Mirage",
+    "Ancient"
+   ],
+   "source": "hltv",
+   "teams": [
+    "PARIVISION",
+    "Spirit"
+   ],
+   "bo3_match_id": 107596
+  },
+  "2389279": {
+   "start_unix_ms": 1769266800000,
+   "event": "BLAST Bounty 2026 Season 1 Finals",
+   "hltv_event_id": 8246,
+   "maps": [
+    "Inferno",
+    "Anubis",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "Falcons"
+   ],
+   "bo3_match_id": 107597
+  },
+  "2389280": {
+   "start_unix_ms": 1769279400000,
+   "event": "BLAST Bounty 2026 Season 1 Finals",
+   "hltv_event_id": 8246,
+   "maps": [
+    "Mirage",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "PARIVISION",
+    "FURIA"
+   ],
+   "bo3_match_id": 107598
+  },
+  "2389637": {
+   "start_unix_ms": 1769873400000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108775
+  },
+  "2389640": {
+   "start_unix_ms": 1769877900000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108772
+  },
+  "2389641": {
+   "start_unix_ms": 1769887150000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108787
+  },
+  "2389643": {
+   "start_unix_ms": 1769950800000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108785
+  },
+  "2389646": {
+   "start_unix_ms": 1769962796000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Inferno",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108776
+  },
+  "2389647": {
+   "start_unix_ms": 1769974200000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108779
+  },
+  "2389649": {
+   "start_unix_ms": 1770037200000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": 8240,
+   "maps": [
+    "Inferno",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "3DMAX",
+    "Vitality"
+   ],
+   "bo3_match_id": 108789
+  },
+  "2389651": {
+   "start_unix_ms": 1770037200000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Inferno"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108791
+  },
+  "2389653": {
+   "start_unix_ms": 1770056353000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108781
+  },
+  "2389655": {
+   "start_unix_ms": 1770123600000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108793
+  },
+  "2389657": {
+   "start_unix_ms": 1770132600000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108782
+  },
+  "2389658": {
+   "start_unix_ms": 1770144000000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108794
+  },
+  "2389659": {
+   "start_unix_ms": 1770132600000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Anubis",
+    "Dust2"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108783
+  },
+  "2389660": {
+   "start_unix_ms": 1770145800000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Inferno"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108795
+  },
+  "2389661": {
+   "start_unix_ms": 1770389100000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108796
+  },
+  "2389662": {
+   "start_unix_ms": 1770400800000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108797
+  },
+  "2389663": {
+   "start_unix_ms": 1770475500000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108798
+  },
+  "2389664": {
+   "start_unix_ms": 1770491400000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108799
+  },
+  "2389665": {
+   "start_unix_ms": 1770553800000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108800
+  },
+  "2389666": {
+   "start_unix_ms": 1770566400000,
+   "event": "IEM Kraków 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Inferno",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 108801
+  },
+  "2389949": {
+   "start_unix_ms": 1771065254000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Inferno"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109896
+  },
+  "2389951": {
+   "start_unix_ms": 1771080212000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Anubis",
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109897
+  },
+  "2389953": {
+   "start_unix_ms": 1771093500000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109900
+  },
+  "2389955": {
+   "start_unix_ms": 1771142937000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109901
+  },
+  "2389959": {
+   "start_unix_ms": 1771163690000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Anubis",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109906
+  },
+  "2389961": {
+   "start_unix_ms": 1771177219000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109908
+  },
+  "2389967": {
+   "start_unix_ms": 1771254600000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Inferno"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109914
+  },
+  "2389969": {
+   "start_unix_ms": 1771261800000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Anubis",
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109915
+  },
+  "2389971": {
+   "start_unix_ms": 1771322400000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109918
+  },
+  "2389975": {
+   "start_unix_ms": 1771342074000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109921
+  },
+  "2389981": {
+   "start_unix_ms": 1771589400000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109927
+  },
+  "2389982": {
+   "start_unix_ms": 1771602900000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Inferno"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109928
+  },
+  "2389983": {
+   "start_unix_ms": 1771613100000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109929
+  },
+  "2389984": {
+   "start_unix_ms": 1771686000000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Inferno"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109930
+  },
+  "2389985": {
+   "start_unix_ms": 1771696800000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109931
+  },
+  "2389986": {
+   "start_unix_ms": 1771761600000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109932
+  },
+  "2389987": {
+   "start_unix_ms": 1771776000000,
+   "event": "PGL Cluj-Napoca 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Inferno"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 109933
+  },
+  "2390814": {
+   "start_unix_ms": 1773870600000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Mirage",
+    "Overpass"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "TYLOO"
+   ],
+   "bo3_match_id": 111720
+  },
+  "2390816": {
+   "start_unix_ms": 1773928800000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Mirage",
+    "Ancient"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "Liquid"
+   ],
+   "bo3_match_id": 111722
+  },
+  "2390817": {
+   "start_unix_ms": 1773939000000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Nuke",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "The MongolZ"
+   ],
+   "bo3_match_id": 111723
+  },
+  "2390818": {
+   "start_unix_ms": 1773948900000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Overpass",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "9z"
+   ],
+   "bo3_match_id": 111724
+  },
+  "2391103": {
+   "start_unix_ms": 1772804400000,
+   "event": "ESL Pro League Season 23 Stage 2",
+   "hltv_event_id": 8412,
+   "maps": [
+    "Nuke",
+    "Overpass"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "3DMAX"
+   ],
+   "bo3_match_id": 112545
+  },
+  "2391107": {
+   "start_unix_ms": 1772820600000,
+   "event": "ESL Pro League Season 23 Stage 2",
+   "hltv_event_id": 8412,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "HEROIC"
+   ],
+   "bo3_match_id": 112549
+  },
+  "2391108": {
+   "start_unix_ms": 1772831100000,
+   "event": "ESL Pro League Season 23 Stage 2",
+   "hltv_event_id": 8412,
+   "maps": [
+    "Mirage",
+    "Overpass",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "B8"
+   ],
+   "bo3_match_id": 112550
+  },
+  "2391113": {
+   "start_unix_ms": 1772900100000,
+   "event": "ESL Pro League Season 23 Stage 2",
+   "hltv_event_id": 8412,
+   "maps": [
+    "Ancient",
+    "Mirage",
+    "Overpass"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "Astralis"
+   ],
+   "bo3_match_id": 112555
+  },
+  "2391115": {
+   "start_unix_ms": 1772911200000,
+   "event": "ESL Pro League Season 23 Stage 2",
+   "hltv_event_id": 8412,
+   "maps": [
+    "Mirage",
+    "Nuke",
+    "Anubis"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "B8"
+   ],
+   "bo3_match_id": 112557
+  },
+  "2391116": {
+   "start_unix_ms": 1772910300000,
+   "event": "ESL Pro League Season 23 Stage 2",
+   "hltv_event_id": 8412,
+   "maps": [
+    "Dust2",
+    "Overpass"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "3DMAX"
+   ],
+   "bo3_match_id": 112558
+  },
+  "2391121": {
+   "start_unix_ms": 1772988000000,
+   "event": "ESL Pro League Season 23 Stage 2",
+   "hltv_event_id": 8412,
+   "maps": [
+    "Ancient",
+    "Overpass"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "The MongolZ"
+   ],
+   "bo3_match_id": 112563
+  },
+  "2391123": {
+   "start_unix_ms": 1772994600000,
+   "event": "ESL Pro League Season 23 Stage 2",
+   "hltv_event_id": 8412,
+   "maps": [
+    "Ancient",
+    "Anubis"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "G2"
+   ],
+   "bo3_match_id": 112565
+  },
+  "2391124": {
+   "start_unix_ms": 1772992800000,
+   "event": "ESL Pro League Season 23 Stage 2",
+   "hltv_event_id": 8412,
+   "maps": [
+    "Dust2",
+    "Overpass",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "HEROIC"
+   ],
+   "bo3_match_id": 112566
+  },
+  "2391130": {
+   "start_unix_ms": 1773077400000,
+   "event": "ESL Pro League Season 23 Stage 2",
+   "hltv_event_id": 8412,
+   "maps": [
+    "Inferno",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "paiN"
+   ],
+   "bo3_match_id": 112571
+  },
+  "2391133": {
+   "start_unix_ms": 1773169200000,
+   "event": "ESL Pro League Season 23 Stage 2",
+   "hltv_event_id": 8412,
+   "maps": [
+    "Nuke",
+    "Dust2",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "Astralis"
+   ],
+   "bo3_match_id": 112575
+  },
+  "2391136": {
+   "start_unix_ms": 1773417600000,
+   "event": "ESL Pro League Season 23 Finals",
+   "hltv_event_id": 8413,
+   "maps": [
+    "Dust2",
+    "Overpass",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "FUT"
+   ],
+   "bo3_match_id": 112537
+  },
+  "2391137": {
+   "start_unix_ms": 1773433800000,
+   "event": "ESL Pro League Season 23 Finals",
+   "hltv_event_id": 8413,
+   "maps": [
+    "Dust2",
+    "Ancient"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Astralis",
+    "Spirit"
+   ],
+   "bo3_match_id": 112538
+  },
+  "2391758": {
+   "start_unix_ms": 1774040400000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Dust2",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Aurora",
+    "FURIA"
+   ],
+   "bo3_match_id": 113607
+  },
+  "2391760": {
+   "start_unix_ms": 1774104300000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Dust2",
+    "Inferno",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "9z"
+   ],
+   "bo3_match_id": 113613
+  },
+  "2391761": {
+   "start_unix_ms": 1774118100000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Anubis",
+    "Ancient"
+   ],
+   "source": "hltv",
+   "teams": [
+    "PARIVISION",
+    "Spirit"
+   ],
+   "bo3_match_id": 113614
+  },
+  "2391762": {
+   "start_unix_ms": 1774127400000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Mirage",
+    "Overpass"
+   ],
+   "source": "hltv",
+   "teams": [
+    "The MongolZ",
+    "Vitality"
+   ],
+   "bo3_match_id": 113615
+  },
+  "2391763": {
+   "start_unix_ms": 1774189500000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Mirage",
+    "Nuke",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "NRG",
+    "FURIA"
+   ],
+   "bo3_match_id": 113608
+  },
+  "2391766": {
+   "start_unix_ms": 1774210800000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Overpass",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "9z",
+    "Spirit"
+   ],
+   "bo3_match_id": 113617
+  },
+  "2391768": {
+   "start_unix_ms": 1774272600000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Mirage",
+    "Dust2",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "FURIA"
+   ],
+   "bo3_match_id": 113610
+  },
+  "2391769": {
+   "start_unix_ms": 1774288200000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Mirage",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "PARIVISION",
+    "Vitality"
+   ],
+   "bo3_match_id": 113619
+  },
+  "2391770": {
+   "start_unix_ms": 1774298700000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Nuke",
+    "Overpass"
+   ],
+   "source": "hltv",
+   "teams": [
+    "The MongolZ",
+    "Spirit"
+   ],
+   "bo3_match_id": 113618
+  },
+  "2391773": {
+   "start_unix_ms": 1774706400000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Inferno",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "Aurora"
+   ],
+   "bo3_match_id": 113622
+  },
+  "2391775": {
+   "start_unix_ms": 1774780200000,
+   "event": "BLAST Open Rotterdam 2026",
+   "hltv_event_id": 8248,
+   "maps": [
+    "Inferno",
+    "Anubis",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "Natus Vincere"
+   ],
+   "bo3_match_id": 113624
+  },
+  "2393081": {
+   "start_unix_ms": 1776085200000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 116753
+  },
+  "2393083": {
+   "start_unix_ms": 1776094200000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 116756
+  },
+  "2393085": {
+   "start_unix_ms": 1776112800000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 116760
+  },
+  "2393088": {
+   "start_unix_ms": 1776104669000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 116757
+  },
+  "2393224": {
+   "start_unix_ms": 1776171600000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 117078
+  },
+  "2393226": {
+   "start_unix_ms": 1776184800000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Anubis",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 117080
+  },
+  "2393228": {
+   "start_unix_ms": 1776191250000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 117085
+  },
+  "2393230": {
+   "start_unix_ms": 1776202469000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 117088
+  },
+  "2393232": {
+   "start_unix_ms": 1776258000000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 117082
+  },
+  "2393236": {
+   "start_unix_ms": 1776276000000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 117084
+  },
+  "2393237": {
+   "start_unix_ms": 1776276000000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 117083
+  },
+  "2393238": {
+   "start_unix_ms": 1776288332000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 117092
+  },
+  "2393240": {
+   "start_unix_ms": 1776438000000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 117107
+  },
+  "2393241": {
+   "start_unix_ms": 1776449700000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 117108
+  },
+  "2393242": {
+   "start_unix_ms": 1776524400000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 117109
+  },
+  "2393243": {
+   "start_unix_ms": 1776536100000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 117110
+  },
+  "2393244": {
+   "start_unix_ms": 1776605400000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 117111
+  },
+  "2393245": {
+   "start_unix_ms": 1776618000000,
+   "event": "IEM Rio 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 117112
+  },
+  "2393319": {
+   "start_unix_ms": 1777475100000,
+   "event": "BLAST Rivals 2026 Season 1",
+   "hltv_event_id": 8250,
+   "maps": [
+    "Mirage",
+    "Dust2",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "FUT"
+   ],
+   "bo3_match_id": 117246
+  },
+  "2393322": {
+   "start_unix_ms": 1777502100000,
+   "event": "BLAST Rivals 2026 Season 1",
+   "hltv_event_id": 8250,
+   "maps": [
+    "Inferno",
+    "Nuke",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "GamerLegion"
+   ],
+   "bo3_match_id": 117251
+  },
+  "2393334": {
+   "start_unix_ms": 1777568100000,
+   "event": "BLAST Rivals 2026 Season 1",
+   "hltv_event_id": 8250,
+   "maps": [
+    "Mirage",
+    "Overpass",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "G2"
+   ],
+   "bo3_match_id": 117249
+  },
+  "2393335": {
+   "start_unix_ms": 1777580400000,
+   "event": "BLAST Rivals 2026 Season 1",
+   "hltv_event_id": 8250,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FaZe",
+    "FURIA"
+   ],
+   "bo3_match_id": 117252
+  },
+  "2393349": {
+   "start_unix_ms": 1777752300000,
+   "event": "BLAST Rivals 2026 Season 1",
+   "hltv_event_id": 8250,
+   "maps": [
+    "Mirage",
+    "Overpass"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "GamerLegion"
+   ],
+   "bo3_match_id": 117830
+  },
+  "2393350": {
+   "start_unix_ms": 1777829400000,
+   "event": "BLAST Rivals 2026 Season 1",
+   "hltv_event_id": 8250,
+   "maps": [
+    "Nuke",
+    "Anubis",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Natus Vincere",
+    "Vitality"
+   ],
+   "bo3_match_id": 117831
+  },
+  "2394108": {
+   "start_unix_ms": 1778522400000,
+   "event": "IEM Atlanta 2026",
+   "hltv_event_id": 8243,
+   "maps": [
+    "Mirage",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "BC.Game"
+   ],
+   "bo3_match_id": 119488
+  },
+  "2394118": {
+   "start_unix_ms": 1778310300000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119514
+  },
+  "2394120": {
+   "start_unix_ms": 1778322300000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119515
+  },
+  "2394121": {
+   "start_unix_ms": 1778320800000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119516
+  },
+  "2394122": {
+   "start_unix_ms": 1778329800000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119518
+  },
+  "2394124": {
+   "start_unix_ms": 1778389200000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119520
+  },
+  "2394126": {
+   "start_unix_ms": 1778402325000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119522
+  },
+  "2394128": {
+   "start_unix_ms": 1778412000000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119524
+  },
+  "2394130": {
+   "start_unix_ms": 1778418589000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119526
+  },
+  "2394134": {
+   "start_unix_ms": 1778484300000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119530
+  },
+  "2394136": {
+   "start_unix_ms": 1778493577000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Inferno",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119532
+  },
+  "2394138": {
+   "start_unix_ms": 1778505009000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119534
+  },
+  "2394140": {
+   "start_unix_ms": 1778562000000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119536
+  },
+  "2394142": {
+   "start_unix_ms": 1778571900000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119538
+  },
+  "2394144": {
+   "start_unix_ms": 1778585316000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Inferno",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119540
+  },
+  "2394149": {
+   "start_unix_ms": 1778822400000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119544
+  },
+  "2394150": {
+   "start_unix_ms": 1778833200000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119545
+  },
+  "2394152": {
+   "start_unix_ms": 1778859600000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119547
+  },
+  "2394153": {
+   "start_unix_ms": 1778925600000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119548
+  },
+  "2394154": {
+   "start_unix_ms": 1778936400000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119549
+  },
+  "2394155": {
+   "start_unix_ms": 1779004800000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119550
+  },
+  "2394156": {
+   "start_unix_ms": 1779015600000,
+   "event": "PGL Astana 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 119551
+  },
+  "2394157": {
+   "start_unix_ms": 1778608800000,
+   "event": "IEM Atlanta 2026",
+   "hltv_event_id": 8243,
+   "maps": [
+    "Anubis",
+    "Overpass",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "BETBOOM",
+    "Vitality"
+   ],
+   "bo3_match_id": 119553
+  },
+  "2394166": {
+   "start_unix_ms": 1778686200000,
+   "event": "IEM Atlanta 2026",
+   "hltv_event_id": 8243,
+   "maps": [
+    "Nuke",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FaZe",
+    "Vitality"
+   ],
+   "bo3_match_id": 119556
+  },
+  "2394170": {
+   "start_unix_ms": 1778704500000,
+   "event": "IEM Atlanta 2026",
+   "hltv_event_id": 8243,
+   "maps": [
+    "Mirage",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "B8",
+    "Vitality"
+   ],
+   "bo3_match_id": 119558
+  },
+  "2394174": {
+   "start_unix_ms": 1778880600000,
+   "event": "IEM Atlanta 2026",
+   "hltv_event_id": 8243,
+   "maps": [
+    "Dust2",
+    "Anubis",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Natus Vincere",
+    "Vitality"
+   ],
+   "bo3_match_id": 119569
+  },
+  "2394199": {
+   "start_unix_ms": 1779255300000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119812
+  },
+  "2394200": {
+   "start_unix_ms": 1779254100000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119813
+  },
+  "2394201": {
+   "start_unix_ms": 1779258600000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119814
+  },
+  "2394202": {
+   "start_unix_ms": 1779259500000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119815
+  },
+  "2394203": {
+   "start_unix_ms": 1779246900000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119817
+  },
+  "2394204": {
+   "start_unix_ms": 1779246728000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119816
+  },
+  "2394205": {
+   "start_unix_ms": 1779250690000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119818
+  },
+  "2394206": {
+   "start_unix_ms": 1779251100000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119819
+  },
+  "2394207": {
+   "start_unix_ms": 1779276000000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119827
+  },
+  "2394208": {
+   "start_unix_ms": 1779273600000,
+   "event": "CS Asia Championships 2026",
+   "hltv_event_id": 8263,
+   "maps": [
+    "Inferno",
+    "Ancient"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "M80"
+   ],
+   "bo3_match_id": 119828
+  },
+  "2394209": {
+   "start_unix_ms": 1779263372000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119835
+  },
+  "2394210": {
+   "start_unix_ms": 1779264000000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119836
+  },
+  "2394211": {
+   "start_unix_ms": 1779332400000,
+   "event": "CS Asia Championships 2026",
+   "hltv_event_id": 8263,
+   "maps": [
+    "Ancient",
+    "Nuke",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "NRG",
+    "MOUZ"
+   ],
+   "bo3_match_id": 119830
+  },
+  "2394212": {
+   "start_unix_ms": 1779346500000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119829
+  },
+  "2394213": {
+   "start_unix_ms": 1779332400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119838
+  },
+  "2394214": {
+   "start_unix_ms": 1779343800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119837
+  },
+  "2394215": {
+   "start_unix_ms": 1779356100000,
+   "event": "CS Asia Championships 2026",
+   "hltv_event_id": 8263,
+   "maps": [
+    "Overpass",
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "M80",
+    "MOUZ"
+   ],
+   "bo3_match_id": 119832
+  },
+  "2394216": {
+   "start_unix_ms": 1779367780000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119831
+  },
+  "2394217": {
+   "start_unix_ms": 1779355500000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119840
+  },
+  "2394218": {
+   "start_unix_ms": 1779366600000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119839
+  },
+  "2394219": {
+   "start_unix_ms": 1779418800000,
+   "event": "CS Asia Championships 2026",
+   "hltv_event_id": 8263,
+   "maps": [
+    "Dust2",
+    "Ancient"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "Legacy"
+   ],
+   "bo3_match_id": 119833
+  },
+  "2394220": {
+   "start_unix_ms": 1779426900000,
+   "event": "CS Asia Championships 2026",
+   "hltv_event_id": 8263,
+   "maps": [
+    "Nuke",
+    "Overpass"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "paiN"
+   ],
+   "bo3_match_id": 119834
+  },
+  "2394221": {
+   "start_unix_ms": 1779418800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119841
+  },
+  "2394222": {
+   "start_unix_ms": 1779429254000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119842
+  },
+  "2394223": {
+   "start_unix_ms": 1779440899000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119843
+  },
+  "2394224": {
+   "start_unix_ms": 1779439500000,
+   "event": "CS Asia Championships 2026",
+   "hltv_event_id": 8263,
+   "maps": [
+    "Overpass",
+    "Ancient"
+   ],
+   "source": "hltv",
+   "teams": [
+    "B8",
+    "MOUZ"
+   ],
+   "bo3_match_id": 119844
+  },
+  "2394225": {
+   "start_unix_ms": 1779512400000,
+   "event": "CS Asia Championships 2026",
+   "hltv_event_id": 8263,
+   "maps": [
+    "Mirage",
+    "Dust2",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "MOUZ"
+   ],
+   "bo3_match_id": 119845
+  },
+  "2394226": {
+   "start_unix_ms": 1779528286000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 119846
+  },
+  "2394227": {
+   "start_unix_ms": 1779591600000,
+   "event": "CS Asia Championships 2026",
+   "hltv_event_id": 8263,
+   "maps": [
+    "Overpass",
+    "Ancient"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "MIBR"
+   ],
+   "bo3_match_id": 119847
+  },
+  "2394228": {
+   "start_unix_ms": 1779603300000,
+   "event": "CS Asia Championships 2026",
+   "hltv_event_id": 8263,
+   "maps": [
+    "Nuke",
+    "Ancient",
+    "Mirage",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "Legacy"
+   ],
+   "bo3_match_id": 119848
+  },
+  "2394772": {
+   "start_unix_ms": 1780405800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 120597
+  },
+  "2394773": {
+   "start_unix_ms": 1780401600000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 120596
+  },
+  "2394774": {
+   "start_unix_ms": 1780404600000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 120598
+  },
+  "2394775": {
+   "start_unix_ms": 1780408800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 120595
+  },
+  "2394776": {
+   "start_unix_ms": 1780410300000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 120602
+  },
+  "2394777": {
+   "start_unix_ms": 1780396200000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 120601
+  },
+  "2394778": {
+   "start_unix_ms": 1780400700000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 120599
+  },
+  "2394779": {
+   "start_unix_ms": 1780396200000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 120600
+  },
+  "2394840": {
+   "start_unix_ms": 1780414689000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121372
+  },
+  "2394841": {
+   "start_unix_ms": 1780414200000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121370
+  },
+  "2394842": {
+   "start_unix_ms": 1780418948000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121371
+  },
+  "2394843": {
+   "start_unix_ms": 1780418700000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121374
+  },
+  "2394844": {
+   "start_unix_ms": 1780423800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121369
+  },
+  "2394845": {
+   "start_unix_ms": 1780422300000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121373
+  },
+  "2394846": {
+   "start_unix_ms": 1780428600000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121376
+  },
+  "2394847": {
+   "start_unix_ms": 1780426200000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121375
+  },
+  "2394848": {
+   "start_unix_ms": 1780489800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121378
+  },
+  "2394850": {
+   "start_unix_ms": 1780494000000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121380
+  },
+  "2394851": {
+   "start_unix_ms": 1780493400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121379
+  },
+  "2394852": {
+   "start_unix_ms": 1780498200000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121382
+  },
+  "2394853": {
+   "start_unix_ms": 1780497600000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121381
+  },
+  "2394854": {
+   "start_unix_ms": 1780506000000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121432
+  },
+  "2394855": {
+   "start_unix_ms": 1780506000000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121431
+  },
+  "2394856": {
+   "start_unix_ms": 1780574400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121433
+  },
+  "2394857": {
+   "start_unix_ms": 1780574400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121434
+  },
+  "2394858": {
+   "start_unix_ms": 1780583400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121436
+  },
+  "2394859": {
+   "start_unix_ms": 1780585200000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121435
+  },
+  "2394860": {
+   "start_unix_ms": 1780592700000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121437
+  },
+  "2394861": {
+   "start_unix_ms": 1780592400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121438
+  },
+  "2394862": {
+   "start_unix_ms": 1780660800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121439
+  },
+  "2394863": {
+   "start_unix_ms": 1780669800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121440
+  },
+  "2394864": {
+   "start_unix_ms": 1780679145000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121441
+  },
+  "2394865": {
+   "start_unix_ms": 1780753800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121443
+  },
+  "2394866": {
+   "start_unix_ms": 1780741800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121442
+  },
+  "2394867": {
+   "start_unix_ms": 1780741800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "estimated: same day as neighbouring HLTV ids"
+  },
+  "2394868": {
+   "start_unix_ms": 1780745400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121447
+  },
+  "2394869": {
+   "start_unix_ms": 1780754326000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121446
+  },
+  "2394870": {
+   "start_unix_ms": 1780741800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121445
+  },
+  "2394871": {
+   "start_unix_ms": 1780746000000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121444
+  },
+  "2394872": {
+   "start_unix_ms": 1780746000000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "estimated: same day as neighbouring HLTV ids"
+  },
+  "2394874": {
+   "start_unix_ms": 1780761000000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121450
+  },
+  "2394875": {
+   "start_unix_ms": 1780764000000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121453
+  },
+  "2394877": {
+   "start_unix_ms": 1780770600000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121457
+  },
+  "2394878": {
+   "start_unix_ms": 1780769400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121452
+  },
+  "2394879": {
+   "start_unix_ms": 1780774800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121456
+  },
+  "2394880": {
+   "start_unix_ms": 1780773300000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121455
+  },
+  "2394881": {
+   "start_unix_ms": 1780835400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121459
+  },
+  "2394882": {
+   "start_unix_ms": 1780835400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121458
+  },
+  "2394883": {
+   "start_unix_ms": 1780842000000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121461
+  },
+  "2394884": {
+   "start_unix_ms": 1780839000000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121460
+  },
+  "2394885": {
+   "start_unix_ms": 1780845600000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121463
+  },
+  "2394886": {
+   "start_unix_ms": 1780843312000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121462
+  },
+  "2394887": {
+   "start_unix_ms": 1780858200000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121465
+  },
+  "2394888": {
+   "start_unix_ms": 1780851600000,
+   "event": "IEM Cologne Major 2026 Stage 2",
+   "hltv_event_id": 9029,
+   "maps": [
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "9z"
+   ],
+   "bo3_match_id": 121464
+  },
+  "2394889": {
+   "start_unix_ms": 1780920000000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121467
+  },
+  "2394890": {
+   "start_unix_ms": 1780920000000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121466
+  },
+  "2394891": {
+   "start_unix_ms": 1780929000000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121469
+  },
+  "2394892": {
+   "start_unix_ms": 1780930800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121468
+  },
+  "2394893": {
+   "start_unix_ms": 1780939500000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121470
+  },
+  "2394894": {
+   "start_unix_ms": 1780938900000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121471
+  },
+  "2394895": {
+   "start_unix_ms": 1781006400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121472
+  },
+  "2394896": {
+   "start_unix_ms": 1781015400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121473
+  },
+  "2394897": {
+   "start_unix_ms": 1781024400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121474
+  },
+  "2394898": {
+   "start_unix_ms": 1781179800000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Anubis",
+    "Overpass",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "FUT"
+   ],
+   "bo3_match_id": 121920
+  },
+  "2394899": {
+   "start_unix_ms": 1781190300000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Inferno",
+    "Dust2",
+    "Ancient"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "G2"
+   ],
+   "bo3_match_id": 121919
+  },
+  "2394900": {
+   "start_unix_ms": 1781203200000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Dust2",
+    "Anubis"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Natus Vincere",
+    "Spirit"
+   ],
+   "bo3_match_id": 121918
+  },
+  "2394901": {
+   "start_unix_ms": 1781187000000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Mirage",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "B8"
+   ],
+   "bo3_match_id": 121917
+  },
+  "2394902": {
+   "start_unix_ms": 1781195400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121923
+  },
+  "2394903": {
+   "start_unix_ms": 1781168400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121922
+  },
+  "2394904": {
+   "start_unix_ms": 1781168400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121921
+  },
+  "2394905": {
+   "start_unix_ms": 1781179800000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Dust2",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "Legacy"
+   ],
+   "bo3_match_id": 121924
+  },
+  "2394971": {
+   "start_unix_ms": 1781254800000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Nuke",
+    "Inferno",
+    "Overpass"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "MOUZ"
+   ],
+   "bo3_match_id": 121926
+  },
+  "2394972": {
+   "start_unix_ms": 1781254800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121925
+  },
+  "2394973": {
+   "start_unix_ms": 1781266200000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121928
+  },
+  "2394974": {
+   "start_unix_ms": 1781263800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121927
+  },
+  "2394975": {
+   "start_unix_ms": 1781277000000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Nuke",
+    "Ancient"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "BETBOOM"
+   ],
+   "bo3_match_id": 121929
+  },
+  "2394976": {
+   "start_unix_ms": 1781275207000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121930
+  },
+  "2394977": {
+   "start_unix_ms": 1781285100000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Dust2",
+    "Anubis",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Aurora",
+    "Spirit"
+   ],
+   "bo3_match_id": 121932
+  },
+  "2394978": {
+   "start_unix_ms": 1781282700000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Inferno",
+    "Mirage",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "9z"
+   ],
+   "bo3_match_id": 121931
+  },
+  "2394979": {
+   "start_unix_ms": 1781341200000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121934
+  },
+  "2394980": {
+   "start_unix_ms": 1781341200000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121933
+  },
+  "2394981": {
+   "start_unix_ms": 1781353200000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121936
+  },
+  "2394982": {
+   "start_unix_ms": 1781352900000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Inferno",
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "Monte"
+   ],
+   "bo3_match_id": 121935
+  },
+  "2394983": {
+   "start_unix_ms": 1781361300000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Mirage",
+    "Dust2",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "MOUZ"
+   ],
+   "bo3_match_id": 121938
+  },
+  "2394984": {
+   "start_unix_ms": 1781365500000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121937
+  },
+  "2394985": {
+   "start_unix_ms": 1781372400000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Overpass",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "BETBOOM",
+    "FURIA"
+   ],
+   "bo3_match_id": 121940
+  },
+  "2394986": {
+   "start_unix_ms": 1781376900000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Overpass",
+    "Mirage",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "9z"
+   ],
+   "bo3_match_id": 121939
+  },
+  "2394987": {
+   "start_unix_ms": 1781438400000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Ancient",
+    "Nuke",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "FUT"
+   ],
+   "bo3_match_id": 121941
+  },
+  "2394988": {
+   "start_unix_ms": 1781438400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121942
+  },
+  "2394989": {
+   "start_unix_ms": 1781450400000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Overpass",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "BETBOOM",
+    "Vitality"
+   ],
+   "bo3_match_id": 121944
+  },
+  "2394990": {
+   "start_unix_ms": 1781450399000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121943
+  },
+  "2394991": {
+   "start_unix_ms": 1781458800000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Anubis"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Natus Vincere",
+    "Falcons"
+   ],
+   "bo3_match_id": 121946
+  },
+  "2394992": {
+   "start_unix_ms": 1781456400000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121945
+  },
+  "2394993": {
+   "start_unix_ms": 1781524800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121947
+  },
+  "2394994": {
+   "start_unix_ms": 1781533800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121948
+  },
+  "2394995": {
+   "start_unix_ms": 1781542800000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121949
+  },
+  "2394996": {
+   "start_unix_ms": 1781790300000,
+   "event": "",
+   "hltv_event_id": null,
+   "maps": [],
+   "source": "bo3.gg",
+   "bo3_match_id": 121623
+  },
+  "2394997": {
+   "start_unix_ms": 1781802000000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Overpass"
+   ],
+   "source": "hltv",
+   "teams": [
+    "9z",
+    "FURIA"
+   ],
+   "bo3_match_id": 121624
+  },
+  "2394998": {
+   "start_unix_ms": 1781876700000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Overpass",
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "G2",
+    "Spirit"
+   ],
+   "bo3_match_id": 121625
+  },
+  "2394999": {
+   "start_unix_ms": 1781897100000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Anubis",
+    "Inferno",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "Vitality"
+   ],
+   "bo3_match_id": 121626
+  },
+  "2395000": {
+   "start_unix_ms": 1781963100000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Dust2",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Aurora",
+    "FURIA"
+   ],
+   "bo3_match_id": 121628
+  },
+  "2395001": {
+   "start_unix_ms": 1781974800000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Anubis",
+    "Mirage",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "Falcons"
+   ],
+   "bo3_match_id": 121627
+  },
+  "2395002": {
+   "start_unix_ms": 1782054000000,
+   "event": "IEM Cologne Major 2026",
+   "hltv_event_id": 8301,
+   "maps": [
+    "Mirage",
+    "Anubis",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "Falcons"
+   ],
+   "bo3_match_id": 121629
+  },
+  "2396001": {
+   "start_unix_ms": 1784916000000,
+   "event": "BLAST Bounty 2026 Season 2",
+   "hltv_event_id": 9154,
+   "maps": [
+    "Anubis",
+    "Mirage",
+    "Cache"
+   ],
+   "source": "hltv",
+   "teams": [
+    "DENDELE",
+    "FURIA"
+   ],
+   "bo3_match_id": 124983
+  },
+  "2396002": {
+   "start_unix_ms": 1784648100000,
+   "event": "BLAST Bounty 2026 Season 2",
+   "hltv_event_id": 9154,
+   "maps": [
+    "Ancient",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Nuclear TigeRES",
+    "MOUZ"
+   ],
+   "bo3_match_id": 124970
+  },
+  "2396004": {
+   "start_unix_ms": 1784908200000,
+   "event": "BLAST Bounty 2026 Season 2",
+   "hltv_event_id": 9154,
+   "maps": [
+    "Anubis",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Liquid",
+    "Vitality"
+   ],
+   "bo3_match_id": 124982
+  },
+  "2396005": {
+   "start_unix_ms": 1784741400000,
+   "event": "BLAST Bounty 2026 Season 2",
+   "hltv_event_id": 9154,
+   "maps": [
+    "Nuke",
+    "Dust2",
+    "Anubis"
+   ],
+   "source": "hltv",
+   "teams": [
+    "100 Thieves",
+    "Falcons"
+   ],
+   "bo3_match_id": 124975
+  },
+  "2396006": {
+   "start_unix_ms": 1784829900000,
+   "event": "BLAST Bounty 2026 Season 2",
+   "hltv_event_id": 9154,
+   "maps": [
+    "Cache",
+    "Dust2",
+    "Ancient"
+   ],
+   "source": "hltv",
+   "teams": [
+    "OG",
+    "Spirit"
+   ],
+   "bo3_match_id": 124979
+  },
+  "2396011": {
+   "start_unix_ms": 1785000300000,
+   "event": "BLAST Bounty 2026 Season 2",
+   "hltv_event_id": 9154,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FOKUS",
+    "MOUZ"
+   ],
+   "bo3_match_id": 124987
+  },
+  "2396014": {
+   "start_unix_ms": 1785083700000,
+   "event": "BLAST Bounty 2026 Season 2",
+   "hltv_event_id": 9154,
+   "maps": [
+    "Anubis",
+    "Mirage",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "100 Thieves",
+    "Spirit"
+   ],
+   "bo3_match_id": 124991
+  },
+  "2396017": {
+   "start_unix_ms": 1785424800000,
+   "event": "BLAST Bounty 2026 Season 2 Finals",
+   "hltv_event_id": 8247,
+   "maps": [
+    "Dust2",
+    "Nuke",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "3DMAX",
+    "MOUZ"
+   ],
+   "bo3_match_id": 124995
+  },
+  "2396018": {
+   "start_unix_ms": 1785416400000,
+   "event": "BLAST Bounty 2026 Season 2 Finals",
+   "hltv_event_id": 8247,
+   "maps": [
+    "Dust2",
+    "Anubis"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Liquid",
+    "Spirit"
+   ],
+   "bo3_match_id": 124996
+  },
+  "2396019": {
+   "start_unix_ms": 1785593400000,
+   "event": "BLAST Bounty 2026 Season 2 Finals",
+   "hltv_event_id": 8247,
+   "maps": [
+    "Ancient",
+    "Mirage",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Astralis",
+    "MOUZ"
+   ],
+   "bo3_match_id": 124998
+  },
+  "2396020": {
+   "start_unix_ms": 1785580200000,
+   "event": "BLAST Bounty 2026 Season 2 Finals",
+   "hltv_event_id": 8247,
+   "maps": [
+    "Dust2",
+    "Cache",
+    "Anubis"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FaZe",
+    "Spirit"
+   ],
+   "bo3_match_id": 124997
+  },
+  "2396021": {
+   "start_unix_ms": 1785666600000,
+   "event": "BLAST Bounty 2026 Season 2 Finals",
+   "hltv_event_id": 8247,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Ancient",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "MOUZ"
+   ],
+   "bo3_match_id": 124999
+  },
+  "2396567": {
+   "start_unix_ms": 1786558800000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "100 Thieves"
+   ],
+   "bo3_match_id": 126414
+  },
+  "2396577": {
+   "start_unix_ms": 1786618800000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Luminosity",
+    "Spirit"
+   ],
+   "bo3_match_id": 126401
+  },
+  "2396579": {
+   "start_unix_ms": 1786639200000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "Astralis"
+   ],
+   "bo3_match_id": 126393
+  },
+  "2396583": {
+   "start_unix_ms": 1786714200000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Mirage",
+    "Inferno",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "B8",
+    "Vitality"
+   ],
+   "bo3_match_id": 126419
+  },
+  "2396584": {
+   "start_unix_ms": 1786714200000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 126418
+  },
+  "2396588": {
+   "start_unix_ms": 1786803600000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "9z"
+   ],
+   "bo3_match_id": 126408
+  },
+  "2396591": {
+   "start_unix_ms": 1786817400000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Cache",
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "BIG"
+   ],
+   "bo3_match_id": 126403
+  },
+  "2396595": {
+   "start_unix_ms": 1786886100000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Dust2",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "PARIVISION"
+   ],
+   "bo3_match_id": 126422
+  },
+  "2396596": {
+   "start_unix_ms": 1786878000000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Dust2",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Lynn Vision",
+    "Vitality"
+   ],
+   "bo3_match_id": 126423
+  },
+  "2396600": {
+   "start_unix_ms": 1787161200000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Ancient",
+    "Nuke",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "Aurora"
+   ],
+   "bo3_match_id": 126428
+  },
+  "2396602": {
+   "start_unix_ms": 1787162100000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Mirage",
+    "Ancient",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "GamerLegion",
+    "MOUZ"
+   ],
+   "bo3_match_id": 126430
+  },
+  "2396604": {
+   "start_unix_ms": 1787223600000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Inferno",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "The MongolZ"
+   ],
+   "bo3_match_id": 126432
+  },
+  "2396605": {
+   "start_unix_ms": 1787232900000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Dust2",
+    "Cache"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FaZe",
+    "Vitality"
+   ],
+   "bo3_match_id": 126435
+  },
+  "2396606": {
+   "start_unix_ms": 1787232600000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "B8",
+    "Spirit"
+   ],
+   "bo3_match_id": 126434
+  },
+  "2396607": {
+   "start_unix_ms": 1787242800000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Ancient",
+    "Anubis",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "G2",
+    "FURIA"
+   ],
+   "bo3_match_id": 126436
+  },
+  "2396608": {
+   "start_unix_ms": 1787310000000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 126437
+  },
+  "2396609": {
+   "start_unix_ms": 1787320200000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Mirage",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Legacy",
+    "Falcons"
+   ],
+   "bo3_match_id": 126438
+  },
+  "2396610": {
+   "start_unix_ms": 1787329800000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Anubis",
+    "Nuke",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "Spirit"
+   ],
+   "bo3_match_id": 126439
+  },
+  "2396611": {
+   "start_unix_ms": 1787407200000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Ancient",
+    "Nuke",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "FUT"
+   ],
+   "bo3_match_id": 126440
+  },
+  "2396612": {
+   "start_unix_ms": 1787421600000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Dust2",
+    "Ancient"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Legacy",
+    "Spirit"
+   ],
+   "bo3_match_id": 126441
+  },
+  "2396613": {
+   "start_unix_ms": 1787472000000,
+   "event": "Esports World Cup 2026",
+   "hltv_event_id": 8261,
+   "maps": [
+    "Ancient",
+    "Nuke",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "Legacy"
+   ],
+   "bo3_match_id": 126442
+  },
+  "2396924": {
+   "start_unix_ms": 1787745300000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Ancient",
+    "Cache"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "DENDELE"
+   ],
+   "bo3_match_id": 127378
+  },
+  "2396926": {
+   "start_unix_ms": 1787766900000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Mirage",
+    "Cache"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "paiN"
+   ],
+   "bo3_match_id": 127380
+  },
+  "2396927": {
+   "start_unix_ms": 1787821200000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Anubis",
+    "Cache"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "Inner Circle"
+   ],
+   "bo3_match_id": 127389
+  },
+  "2396928": {
+   "start_unix_ms": 1787832000000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Cache",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "9z"
+   ],
+   "bo3_match_id": 127390
+  },
+  "2396930": {
+   "start_unix_ms": 1787850600000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Inferno",
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "Lynn Vision"
+   ],
+   "bo3_match_id": 127392
+  },
+  "2396932": {
+   "start_unix_ms": 1787917800000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Dust2",
+    "Cache"
+   ],
+   "source": "hltv",
+   "teams": [
+    "G2",
+    "Spirit"
+   ],
+   "bo3_match_id": 127382
+  },
+  "2396934": {
+   "start_unix_ms": 1787937000000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Cache",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "M80",
+    "FURIA"
+   ],
+   "bo3_match_id": 127384
+  },
+  "2396935": {
+   "start_unix_ms": 1787994000000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Dust2",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "9z"
+   ],
+   "bo3_match_id": 127393
+  },
+  "2396936": {
+   "start_unix_ms": 1788001800000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Ancient",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Inner Circle",
+    "MOUZ"
+   ],
+   "bo3_match_id": 127394
+  },
+  "2396938": {
+   "start_unix_ms": 1788021900000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Mirage",
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Legacy",
+    "Falcons"
+   ],
+   "bo3_match_id": 127396
+  },
+  "2396941": {
+   "start_unix_ms": 1788109800000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Nuke",
+    "Mirage",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "Legacy"
+   ],
+   "bo3_match_id": 127397
+  },
+  "2396943": {
+   "start_unix_ms": 1788166800000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Ancient",
+    "Cache"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "FURIA"
+   ],
+   "bo3_match_id": 127388
+  },
+  "2396945": {
+   "start_unix_ms": 1788190500000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Nuke",
+    "Ancient",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "Falcons"
+   ],
+   "bo3_match_id": 127400
+  },
+  "2396946": {
+   "start_unix_ms": 1788201300000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Anubis",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FUT",
+    "Vitality"
+   ],
+   "bo3_match_id": 127399
+  },
+  "2396947": {
+   "start_unix_ms": 1788530400000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Inferno",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "G2"
+   ],
+   "bo3_match_id": 127401
+  },
+  "2396948": {
+   "start_unix_ms": 1788540600000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Nuke",
+    "Cache",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "Vitality"
+   ],
+   "bo3_match_id": 127402
+  },
+  "2396949": {
+   "start_unix_ms": 1788616800000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Nuke",
+    "Ancient"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "Falcons"
+   ],
+   "bo3_match_id": 127403
+  },
+  "2396950": {
+   "start_unix_ms": 1788626700000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "Vitality"
+   ],
+   "bo3_match_id": 127404
+  },
+  "2396951": {
+   "start_unix_ms": 1788703200000,
+   "event": "BLAST Open Porto 2026",
+   "hltv_event_id": 8249,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Ancient",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "MOUZ"
+   ],
+   "bo3_match_id": 127405
+  },
+  "2397602": {
+   "start_unix_ms": 1788868200000,
+   "event": "FISSURE Playground 3",
+   "hltv_event_id": 8266,
+   "maps": [
+    "Cache",
+    "Mirage",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "GamerLegion"
+   ],
+   "bo3_match_id": 128178
+  },
+  "2397610": {
+   "start_unix_ms": 1788958500000,
+   "event": "FISSURE Playground 3",
+   "hltv_event_id": 8266,
+   "maps": [
+    "Ancient",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "PARIVISION",
+    "FURIA"
+   ],
+   "bo3_match_id": 129001
+  },
+  "2397617": {
+   "start_unix_ms": 1789031400000,
+   "event": "FISSURE Playground 3",
+   "hltv_event_id": 8266,
+   "maps": [
+    "Mirage",
+    "Ancient"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Legacy",
+    "FURIA"
+   ],
+   "bo3_match_id": 129004
+  },
+  "2397619": {
+   "start_unix_ms": 1789118100000,
+   "event": "FISSURE Playground 3",
+   "hltv_event_id": 8266,
+   "maps": [
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "G2"
+   ],
+   "bo3_match_id": 129015
+  },
+  "2398088": {
+   "start_unix_ms": 1789639200000,
+   "event": "StarLadder StarSeries Fall 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Cache",
+    "Inferno"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 129596
+  },
+  "2398089": {
+   "start_unix_ms": 1789650600000,
+   "event": "StarLadder StarSeries Fall 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 129597
+  },
+  "2398091": {
+   "start_unix_ms": 1789665300000,
+   "event": "StarLadder StarSeries Fall 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Cache",
+    "Inferno",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 129599
+  },
+  "2398099": {
+   "start_unix_ms": 1789725600000,
+   "event": "StarLadder StarSeries Fall 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Cache",
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 129600
+  },
+  "2398102": {
+   "start_unix_ms": 1789756800000,
+   "event": "StarLadder StarSeries Fall 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 129603
+  },
+  "2398103": {
+   "start_unix_ms": 1789819200000,
+   "event": "StarLadder StarSeries Fall 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Cache",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 129604
+  },
+  "2398105": {
+   "start_unix_ms": 1789831800000,
+   "event": "StarLadder StarSeries Fall 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Anubis",
+    "Inferno",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 129606
+  },
+  "2398106": {
+   "start_unix_ms": 1789842600000,
+   "event": "StarLadder StarSeries Fall 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 129607
+  },
+  "2398107": {
+   "start_unix_ms": 1789905600000,
+   "event": "StarLadder StarSeries Fall 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Anubis",
+    "Cache"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 129608
+  },
+  "2398108": {
+   "start_unix_ms": 1789916400000,
+   "event": "StarLadder StarSeries Fall 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Anubis",
+    "Cache",
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 129609
+  },
+  "2398717": {
+   "start_unix_ms": 1791018000000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Mirage",
+    "Anubis"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "TYLOO"
+   ],
+   "bo3_match_id": 130758
+  },
+  "2398719": {
+   "start_unix_ms": 1791027000000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Dust2",
+    "Cache"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "1win"
+   ],
+   "bo3_match_id": 130755
+  },
+  "2398720": {
+   "start_unix_ms": 1791029100000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Dust2",
+    "Nuke",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "ShindeN"
+   ],
+   "bo3_match_id": 130756
+  },
+  "2398722": {
+   "start_unix_ms": 1791041100000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Cache",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "M80"
+   ],
+   "bo3_match_id": 130757
+  },
+  "2398724": {
+   "start_unix_ms": 1791048300000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Mirage",
+    "Cache"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "BETBOOM"
+   ],
+   "bo3_match_id": 130759
+  },
+  "2398725": {
+   "start_unix_ms": 1791104400000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Ancient",
+    "Dust2",
+    "Anubis"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "PARIVISION"
+   ],
+   "bo3_match_id": 130764
+  },
+  "2398728": {
+   "start_unix_ms": 1791116400000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Mirage",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "Aurora"
+   ],
+   "bo3_match_id": 130765
+  },
+  "2398729": {
+   "start_unix_ms": 1791123900000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": null,
+   "maps": [
+    "Cache",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 130768
+  },
+  "2398731": {
+   "start_unix_ms": 1791131400000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Anubis",
+    "Nuke",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "Natus Vincere"
+   ],
+   "bo3_match_id": 130770
+  },
+  "2398733": {
+   "start_unix_ms": 1791190800000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Ancient",
+    "Mirage",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "PARIVISION",
+    "FURIA"
+   ],
+   "bo3_match_id": 130772
+  },
+  "2398737": {
+   "start_unix_ms": 1791210300000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "MOUZ"
+   ],
+   "bo3_match_id": 130775
+  },
+  "2398739": {
+   "start_unix_ms": 1791217800000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Anubis",
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "Falcons"
+   ],
+   "bo3_match_id": 130777
+  },
+  "2398742": {
+   "start_unix_ms": 1791288000000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Cache",
+    "Anubis"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "1win"
+   ],
+   "bo3_match_id": 130779
+  },
+  "2398743": {
+   "start_unix_ms": 1791301200000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "Aurora"
+   ],
+   "bo3_match_id": 130782
+  },
+  "2398745": {
+   "start_unix_ms": 1791313200000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Inferno",
+    "Anubis",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "Natus Vincere"
+   ],
+   "bo3_match_id": 130783
+  },
+  "2398747": {
+   "start_unix_ms": 1791374400000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Nuke",
+    "Inferno"
+   ],
+   "source": "hltv",
+   "teams": [
+    "FURIA",
+    "9z"
+   ],
+   "bo3_match_id": 130786
+  },
+  "2398749": {
+   "start_unix_ms": 1791396300000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Dust2",
+    "Cache"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Spirit",
+    "M80"
+   ],
+   "bo3_match_id": 130785
+  },
+  "2398751": {
+   "start_unix_ms": 1791545100000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Inferno",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "PARIVISION"
+   ],
+   "bo3_match_id": 130748
+  },
+  "2398752": {
+   "start_unix_ms": 1791555300000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": null,
+   "maps": [
+    "Inferno",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 130749
+  },
+  "2398753": {
+   "start_unix_ms": 1791565500000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Mirage",
+    "Anubis"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Falcons",
+    "Spirit"
+   ],
+   "bo3_match_id": 130750
+  },
+  "2398754": {
+   "start_unix_ms": 1791639900000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Anubis",
+    "Cache",
+    "Mirage"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Aurora",
+    "Vitality"
+   ],
+   "bo3_match_id": 130751
+  },
+  "2398755": {
+   "start_unix_ms": 1791652200000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "hltv",
+   "teams": [
+    "MOUZ",
+    "Spirit"
+   ],
+   "bo3_match_id": 130752
+  },
+  "2398756": {
+   "start_unix_ms": 1791718200000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Mirage",
+    "Anubis"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Aurora",
+    "Spirit"
+   ],
+   "bo3_match_id": 130753
+  },
+  "2398757": {
+   "start_unix_ms": 1791730800000,
+   "event": "ESL Pro League Season 24",
+   "hltv_event_id": 8244,
+   "maps": [
+    "Cache",
+    "Inferno",
+    "Dust2"
+   ],
+   "source": "hltv",
+   "teams": [
+    "Vitality",
+    "MOUZ"
+   ],
+   "bo3_match_id": 130754
+  },
+  "2399385": {
+   "start_unix_ms": 1791980400000,
+   "event": "Thunderpick World Championship 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Dust2"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 131667
+  },
+  "2399387": {
+   "start_unix_ms": 1792005000000,
+   "event": "Thunderpick World Championship 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 131662
+  },
+  "2399409": {
+   "start_unix_ms": 1792063800000,
+   "event": "Thunderpick World Championship 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 131668
+  },
+  "2399411": {
+   "start_unix_ms": 1792090200000,
+   "event": "Thunderpick World Championship 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Cache",
+    "Inferno",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 131663
+  },
+  "2399414": {
+   "start_unix_ms": 1792245600000,
+   "event": "Thunderpick World Championship 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Dust2",
+    "Inferno"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 131671
+  },
+  "2399415": {
+   "start_unix_ms": 1792256400000,
+   "event": "Thunderpick World Championship 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Anubis",
+    "Dust2",
+    "Mirage"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 131672
+  },
+  "2399416": {
+   "start_unix_ms": 1792323000000,
+   "event": "Thunderpick World Championship 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Anubis",
+    "Dust2",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 131673
+  },
+  "2399417": {
+   "start_unix_ms": 1792339200000,
+   "event": "Thunderpick World Championship 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Cache",
+    "Dust2",
+    "Mirage",
+    "Nuke"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 131674
+  },
+  "2399726": {
+   "start_unix_ms": 1792858500000,
+   "event": "PGL Masters Bucharest 2026",
+   "hltv_event_id": null,
+   "maps": [
+    "Ancient",
+    "Inferno"
+   ],
+   "source": "bo3.gg",
+   "bo3_match_id": 132176
+  }
+ },
+ "archives": {
+  "blast-bounty-2026-season-1-9ine-vs-furia-bo3-MkQoRlfBmxkBCbF0DvJmNE": "2389261",
+  "blast-bounty-2026-season-1-eyeballers-vs-vitality-bo3-cdixknqTHEiRBWJBE_PGSN": "2389273",
+  "blast-bounty-2026-season-1-finals-gamerlegion-vs-vitality-bo3-xvrJ9muhRij9eX0sOLSDM4": "2389277",
+  "blast-bounty-2026-season-1-finals-heroic-vs-furia-bo3-lks2Hs2GKnZOSw7VzYaKtQ": "2389276",
+  "blast-bounty-2026-season-1-finals-parivision-vs-furia-bo3-OWWuEF0tMU9bni1nLziiyX": "2389280",
+  "blast-bounty-2026-season-1-finals-parivision-vs-spirit-bo3-CpEROJyXP8nd1x7BTCyu61": "2389278",
+  "blast-bounty-2026-season-1-finals-vitality-vs-falcons-bo3-m75xkiVwc3YZkEbdtP1s9_": "2389279",
+  "blast-bounty-2026-season-1-fut-vs-furia-bo3-Ooo2A2Cr6F8fALvRMag2iD": "2389274",
+  "blast-bounty-2026-season-1-inner-circle-vs-spirit-bo3-MfhEGJq5Wo_xqc_g50_1iQ": "2389272",
+  "blast-bounty-2026-season-1-sinners-vs-spirit-bo3-cTn_H9juISZmERJ0ZmI2l0": "2389265",
+  "blast-bounty-2026-season-1-virtuspro-vs-vitality-bo3-q1MsDOb5aD1l3u9zoYMQdQ": "2389263",
+  "blast-bounty-2026-season-2-100-thieves-vs-falcons-bo3-1e-d96xDiJ9l7gcqrB38LA": "2396005",
+  "blast-bounty-2026-season-2-100-thieves-vs-spirit-bo3-jczcENf0aTGcvNESAsG5ib": "2396014",
+  "blast-bounty-2026-season-2-dendele-vs-furia-bo3-BgzrJtVU0wzYp6fxw601kT": "2396001",
+  "blast-bounty-2026-season-2-finals-3dmax-vs-mouz-bo3-2GZ-7ujSl175S4d4wrpQAP": "2396017",
+  "blast-bounty-2026-season-2-finals-astralis-vs-mouz-bo3-GL6fIr97PN55FAkr3XSu7F": "2396019",
+  "blast-bounty-2026-season-2-finals-faze-vs-spirit-bo3-9h2onDXX3gz_Ctzlsgfhnk": "2396020",
+  "blast-bounty-2026-season-2-finals-liquid-vs-spirit-bo3-umEnlvr6xG9WlWGrp-nFPU": "2396018",
+  "blast-bounty-2026-season-2-finals-spirit-vs-mouz-bo5--wn1awkp4iFRmswi58ug57": "2396021",
+  "blast-bounty-2026-season-2-fokus-vs-mouz-bo3-5lm0SkLmjUMrO_TBE5e5qq": "2396011",
+  "blast-bounty-2026-season-2-liquid-vs-vitality-bo3-qIJxv4f_-TgN3EMU0b5r8t": "2396004",
+  "blast-bounty-2026-season-2-nuclear-tigeres-vs-mouz-bo3-ebQxWf7iEoB5eaKtGYzf97": "2396002",
+  "blast-bounty-2026-season-2-og-vs-spirit-bo3-P0hojm_LpZWAZatlwoC6xJ": "2396006",
+  "blast-open-porto-2026-falcons-vs-g2-bo3-irE5VThU6E2aX2_FXBKuME": "2396947",
+  "blast-open-porto-2026-falcons-vs-lynn-vision-bo3-IdZAgRUbsqRX4U5Llhxy2P": "2396930",
+  "blast-open-porto-2026-furia-vs-pain-bo3-MubDLaELy5MHFr4bXaUfPk": "2396926",
+  "blast-open-porto-2026-furia-vs-vitality-bo3-KULcN3Jf23XthDsJCBq9hT": "2396948",
+  "blast-open-porto-2026-fut-vs-vitality-bo3-NtdD-eOTDdeUQsfjwK8sc4": "2396946",
+  "blast-open-porto-2026-g2-vs-spirit-bo3-zmCjt87Rl5n3ZHaNGybjtx": "2396932",
+  "blast-open-porto-2026-inner-circle-vs-mouz-bo3-ssCYIosT42NoQRvjJQOAui": "2396936",
+  "blast-open-porto-2026-legacy-vs-falcons-bo3-gq5W-Wo-iXLjtfndNgImik": "2396938",
+  "blast-open-porto-2026-m80-vs-furia-bo3-R1DuzZH2V8D9cTvDELyPB-": "2396934",
+  "blast-open-porto-2026-mouz-vs-9z-bo3-fnGIdV3faPuq_oJcQbmF4s": "2396928",
+  "blast-open-porto-2026-mouz-vs-falcons-bo3-prw6BqDfxCxFQUiDy4b4ey": "2396945",
+  "blast-open-porto-2026-mouz-vs-vitality-bo3-V3i93ufoKzBC0MBPii8PGf": "2396950",
+  "blast-open-porto-2026-spirit-vs-dendele-bo3-GRiQxm5iEKnKGeOn4zbdbQ": "2396924",
+  "blast-open-porto-2026-spirit-vs-falcons-bo3-fzVRj3juYH_FTkHv4edkex": "2396949",
+  "blast-open-porto-2026-spirit-vs-furia-bo3-DLIuxJDviZLxHemrpqI9i8": "2396943",
+  "blast-open-porto-2026-spirit-vs-mouz-bo5-sZmuJNNeP4vy0G6o8VuS_u": "2396951",
+  "blast-open-porto-2026-vitality-vs-9z-bo3-p-u8ZqQpw4ORQzAjpnwJBy": "2396935",
+  "blast-open-porto-2026-vitality-vs-inner-circle-bo3-MHhZuz8xuP_ejiwRkgvSY2": "2396927",
+  "blast-open-porto-2026-vitality-vs-legacy-bo3-Pu1xg3di2XCxKNuhUGwTec": "2396941",
+  "blast-open-rotterdam-2026-9z-vs-spirit-bo3-lnFGG3HaAlznJFLz1Iw0h2": "2391766",
+  "blast-open-rotterdam-2026-aurora-vs-furia-bo3-vH8nO4Zu3tcUldh_sQ8ejM": "2391758",
+  "blast-open-rotterdam-2026-falcons-vs-furia-bo3-zp0pciKDSVhfKCDy7k3zv2": "2391768",
+  "blast-open-rotterdam-2026-furia-vs-tyloo-bo3-y-6T34bM323RMIz91m8dCL": "2390814",
+  "blast-open-rotterdam-2026-mouz-vs-9z-bo3-uHRpKn3rXGI5DYr9rA9MEo": "2391760",
+  "blast-open-rotterdam-2026-mouz-vs-the-mongolz-bo3-mdEx2QIh_CL5B8AE5ckJp7": "2390817",
+  "blast-open-rotterdam-2026-nrg-vs-furia-bo3-LFfc9svnjaw58w44cKHkWT": "2391763",
+  "blast-open-rotterdam-2026-parivision-vs-spirit-bo3-BM5oinQU0VRWoyAifSAcom": "2391761",
+  "blast-open-rotterdam-2026-parivision-vs-vitality-bo3-hiwqXfBGRevcYWe8xgLMbB": "2391769",
+  "blast-open-rotterdam-2026-spirit-vs-liquid-bo3-KQP2H3l3wjdOpSXxWAH3rw": "2390816",
+  "blast-open-rotterdam-2026-the-mongolz-vs-spirit-bo3-sZcq7b-2moO4gI_-zfbR6P": "2391770",
+  "blast-open-rotterdam-2026-the-mongolz-vs-vitality-bo3-7AUu3EcXrnLd4gicqzNp8L": "2391762",
+  "blast-open-rotterdam-2026-vitality-vs-9z-bo3-kVsrbfS7P7ANQA8A6NP-eu": "2390818",
+  "blast-open-rotterdam-2026-vitality-vs-aurora-bo3-FlxFvdx4Pl-M44Zsyy4BH3": "2391773",
+  "blast-open-rotterdam-2026-vitality-vs-natus-vincere-bo5-M1X_ekEYL-WVFzIqhTKs9U": "2391775",
+  "blast-rivals-2026-season-1-faze-vs-furia-bo3-3YtoX5_ndmrBisoeZ2F9SJ": "2393335",
+  "blast-rivals-2026-season-1-furia-vs-gamerlegion-bo3-qfgwNQNC_y9ZnqCCwD5twG": "2393322",
+  "blast-rivals-2026-season-1-natus-vincere-vs-vitality-bo5-Mv7s4IInKiHxzKeMZKCajF": "2393350",
+  "blast-rivals-2026-season-1-vitality-vs-fut-bo3-9RYfK_Nffwu4TXDghNJDks": "2393319",
+  "blast-rivals-2026-season-1-vitality-vs-g2-bo3-QFGfmJ4pQ03xQPiA9-8d-X": "2393334",
+  "blast-rivals-2026-season-1-vitality-vs-gamerlegion-bo3-6uE9HTRZoNZoyLJ1b6CEsc": "2393349",
+  "cs-asia-championships-2026-b8-vs-mouz-bo3-yEqj9Xtfb0MKLEI6xpiWmk": "2394224",
+  "cs-asia-championships-2026-falcons-vs-legacy-bo3-5MPbSIdXKX5TnGste2kmxY": "2394219",
+  "cs-asia-championships-2026-falcons-vs-legacy-bo5-lm4-NdbBm65gdnpI_2ydjq": "2394228",
+  "cs-asia-championships-2026-falcons-vs-m80-bo3-_PL-u0HzBLDEnWvzSElku8": "2394208",
+  "cs-asia-championships-2026-falcons-vs-mouz-bo3--bPrjLQ2TP-mMaeM2Zy1DS": "2394225",
+  "cs-asia-championships-2026-m80-vs-mouz-bo3-K8BOqmEH09jyXZ1PmLSv8Y": "2394215",
+  "cs-asia-championships-2026-mouz-vs-mibr-bo3-L0hlthaQQ6K4Go0uZPMjWg": "2394227",
+  "cs-asia-championships-2026-mouz-vs-pain-bo3-2ixs2bpHtUSx3e-0ECa9h2": "2394220",
+  "cs-asia-championships-2026-nrg-vs-mouz-bo3-CRFreBMCPVPJVZAHQ1VNmf": "2394211",
+  "esl-pro-league-season-23-finals-astralis-vs-spirit-bo3-0wMle9ouh2c-oVXVQBD8k_": "2391137",
+  "esl-pro-league-season-23-finals-mouz-vs-fut-bo3-JBl40cwhFZKQ8JMmkxP4VS": "2391136",
+  "esl-pro-league-season-23-stage-2-furia-vs-3dmax-bo3-Or836bgdA8NMqIsifloIVM": "2391116",
+  "esl-pro-league-season-23-stage-2-furia-vs-astralis-bo3-qeNKaXMk9GJgED-c100Okx": "2391133",
+  "esl-pro-league-season-23-stage-2-furia-vs-b8-bo3-zJqO-eze9ez7IAjqmXN-tv": "2391108",
+  "esl-pro-league-season-23-stage-2-furia-vs-heroic-bo3-zArYYvhkuQbazmRwzP-G5t": "2391124",
+  "esl-pro-league-season-23-stage-2-furia-vs-pain-bo3-Qr99lkfl5gfsiCrfCH6Yz1": "2391130",
+  "esl-pro-league-season-23-stage-2-mouz-vs-astralis-bo3-MnL0qh_PiLDaVIIr-9W24r": "2391113",
+  "esl-pro-league-season-23-stage-2-mouz-vs-heroic-bo3-cxoiZzfrdLP28C5KHdPUuv": "2391107",
+  "esl-pro-league-season-23-stage-2-mouz-vs-the-mongolz-bo3-ViB55INzIaobVF_kkbF6XP": "2391121",
+  "esl-pro-league-season-23-stage-2-spirit-vs-3dmax-bo3-UG28lYiaKLCGNZcwg7-kFU": "2391103",
+  "esl-pro-league-season-23-stage-2-spirit-vs-b8-bo3-yoFdNgX69x2aaIWbhMEv1q": "2391115",
+  "esl-pro-league-season-23-stage-2-spirit-vs-g2-bo3-Bi1MyOFl2RGc5zvtV7JFFo": "2391123",
+  "esl-pro-league-season-24-aurora-vs-spirit-bo3-Xy401Fit7Af8A-tXKiDV6u": "2398756",
+  "esl-pro-league-season-24-aurora-vs-vitality-bo3-jz97l79s_ZddmLmtUQ37rg": "2398754",
+  "esl-pro-league-season-24-falcons-vs-aurora-bo3-SHwp6i5EMXqaP-2XyfqBwr": "2398728",
+  "esl-pro-league-season-24-falcons-vs-natus-vincere-bo3-3Y4ykAiGXZrr2p0dvri2C9": "2398745",
+  "esl-pro-league-season-24-falcons-vs-spirit-bo3-7qoiS3mfVYinuAhEY9FtFF": "2398753",
+  "esl-pro-league-season-24-falcons-vs-tyloo-bo3-5ZfD4B6g-DyOqiEF6XebhD": "2398717",
+  "esl-pro-league-season-24-furia-vs-9z-bo3-_EeeERbAcm9Uje2t-MD94C": "2398747",
+  "esl-pro-league-season-24-furia-vs-aurora-bo3-aHdx4LZnSFU_o8let4_hJp": "2398743",
+  "esl-pro-league-season-24-furia-vs-betboom-bo3-HrKVopT1MgspQOnVWtbqQ-": "2398724",
+  "esl-pro-league-season-24-furia-vs-mouz-bo3-AQemmoZYCf5pJfMkkZ7dIt": "2398752",
+  "esl-pro-league-season-24-furia-vs-mouz-bo3-vM7Zs--CZxiZO8U1kjgh9F": "2398729",
+  "esl-pro-league-season-24-mouz-vs-m80-bo3-_aBGdI5aLEO4sdGnjzfcZT": "2398722",
+  "esl-pro-league-season-24-mouz-vs-spirit-bo3-sqctTxs0ADRlg-g18Xysab": "2398755",
+  "esl-pro-league-season-24-parivision-vs-furia-bo3-gHiq7z34UTFifZztgVskJU": "2398733",
+  "esl-pro-league-season-24-spirit-vs-1win-bo3-F5n5BX2iZgXHqvm6sCMkvp": "2398742",
+  "esl-pro-league-season-24-spirit-vs-m80-bo3-CGfM7ImIB2PanV5w6FKzdI": "2398749",
+  "esl-pro-league-season-24-spirit-vs-mouz-bo3-1EAS0FkXk363N7dvfZunnl": "2398737",
+  "esl-pro-league-season-24-spirit-vs-parivision-bo3-I1FyZ9C4Y1Df9adH_HJUNq": "2398725",
+  "esl-pro-league-season-24-spirit-vs-shinden-bo3-46eoTx2T5H7O5i_PicsmWL": "2398720",
+  "esl-pro-league-season-24-vitality-vs-1win-bo3-IMbwm15qZnZZ6EZYeQXExQ": "2398719",
+  "esl-pro-league-season-24-vitality-vs-falcons-bo3-tjOq40YPwMI3QHOotPr9e9": "2398739",
+  "esl-pro-league-season-24-vitality-vs-mouz-bo5-HHVdkDbJrwRclevPphxD2-": "2398757",
+  "esl-pro-league-season-24-vitality-vs-natus-vincere-bo3-rAyrt8Fnq-0Skx1b2XM0hC": "2398731",
+  "esl-pro-league-season-24-vitality-vs-parivision-bo3-UFS87rZoI0SoWeaKEAEusH": "2398751",
+  "esports-world-cup-2026-b8-vs-spirit-bo3-P1Vazh1tOeViaVRokCR5Du": "2396606",
+  "esports-world-cup-2026-b8-vs-vitality-bo3-N4CDgIbMarl-Be8034f4a_": "2396583",
+  "esports-world-cup-2026-falcons-vs-astralis-bo3-8OSQG1t8N4d5BnOd-4S3m7": "2396579",
+  "esports-world-cup-2026-falcons-vs-the-mongolz-bo3-vcgsdDHMo3WfPmmxkPpdXP": "2396604",
+  "esports-world-cup-2026-faze-vs-vitality-bo3-62SRZyouxVyNwwo1JtPLmM": "2396605",
+  "esports-world-cup-2026-furia-vs-9z-bo3-1BT7QxqU1S2HcWSrbcLwWZ": "2396588",
+  "esports-world-cup-2026-furia-vs-aurora-bo3-8ElLAnsM7OHWsN1oO6LDhA": "2396600",
+  "esports-world-cup-2026-furia-vs-fut-bo3-o4-MY_r0RKTJE9T5M-6UvG": "2396611",
+  "esports-world-cup-2026-furia-vs-legacy-bo3-pSaQCOHjDbFDklvGLGQxvu": "2396613",
+  "esports-world-cup-2026-fut-vs-mouz-bo3-qVyLGT2Gvu2SDaIG5B_gMZ": "2396608",
+  "esports-world-cup-2026-fut-vs-mouz-bo3-y2tUP23LPdKvpCZCEKG3KK": "2396584",
+  "esports-world-cup-2026-g2-vs-furia-bo3-3q-KSSd6Wxfi72Ts9irMaF": "2396607",
+  "esports-world-cup-2026-gamerlegion-vs-mouz-bo3-mP2q-GsUznSGgohB8Xd2Ga": "2396602",
+  "esports-world-cup-2026-legacy-vs-falcons-bo3-LRZCX4doffPCdPOr4sBwAb": "2396609",
+  "esports-world-cup-2026-legacy-vs-spirit-bo3-2pu8CugYirqkV-rvX3j09c": "2396612",
+  "esports-world-cup-2026-luminosity-vs-spirit-bo3-5zkz1BErF0dwAyXR0jKoQB": "2396577",
+  "esports-world-cup-2026-lynn-vision-vs-vitality-bo3-LW8QjJ062PMCxTmNJ2gWJQ": "2396596",
+  "esports-world-cup-2026-mouz-vs-parivision-bo3-CNjSTW-OJOcy5aOcOdBcN8": "2396595",
+  "esports-world-cup-2026-spirit-vs-big-bo3-sbLMr0RufzMZ16gErFoh4R": "2396591",
+  "esports-world-cup-2026-vitality-vs-100-thieves-nuke-xgmnZlKoCUg1rSdM6g5Q-g": "2396567",
+  "esports-world-cup-2026-vitality-vs-spirit-bo3-feerxWVU296AZ9J8Dbc9si": "2396610",
+  "fissure-playground-3-furia-vs-g2-bo3-HjCesaOmEm1EmqlkTW_ubg": "2397619",
+  "fissure-playground-3-furia-vs-gamerlegion-bo3-ytYJtxdvVOKJPLQfvFobo1": "2397602",
+  "fissure-playground-3-legacy-vs-furia-bo3-tWbxU-NnclaZIA3C7t-cT1": "2397617",
+  "fissure-playground-3-parivision-vs-furia-bo3-oqaDRCoLbOjhqoalTClzFz": "2397610",
+  "iem-atlanta-2026-b8-vs-vitality-bo3-nGRbmcCg2mU5uSsmD_vHGX": "2394170",
+  "iem-atlanta-2026-betboom-vs-vitality-bo3-RQMj4Ln9P780zqrqV8kusH": "2394157",
+  "iem-atlanta-2026-faze-vs-vitality-bo3-6Gd1Zicoah5akfYbegZ76d": "2394166",
+  "iem-atlanta-2026-natus-vincere-vs-vitality-bo3-Oy5NkCJPWmHl6H0cKtC9_L": "2394174",
+  "iem-atlanta-2026-vitality-vs-bcgame-bo3-vVbTCwcwhL6039kdua2CRF": "2394108",
+  "iem-cologne-major-2026-9z-vs-furia-bo3-75cz7uIfE_qsSVElgPGGkW": "2394997",
+  "iem-cologne-major-2026-aurora-vs-furia-bo3-MtUgV-8SDzm10cS7MVFYln": "2395000",
+  "iem-cologne-major-2026-aurora-vs-spirit-bo3--Sux_g3FZEXx-GCHN3oYPP": "2394977",
+  "iem-cologne-major-2026-betboom-vs-furia-bo3-Ay-MJrMMkab9PC7QYnN27N": "2394985",
+  "iem-cologne-major-2026-betboom-vs-vitality-bo3-XBvPIFP-w6HGsMHgX5Tjhh": "2394989",
+  "iem-cologne-major-2026-falcons-vs-betboom-bo3-kcT5VnksAOAr6-o-CAtLhw": "2394975",
+  "iem-cologne-major-2026-falcons-vs-g2-bo3-ulYBxvWqNtYedYZU8Mp8wY": "2394899",
+  "iem-cologne-major-2026-falcons-vs-monte-bo3-Zu6g_J0g9FITHyX_vG3lH1": "2394982",
+  "iem-cologne-major-2026-falcons-vs-vitality-bo3-Q3edu52gPDbzXK7dImpXFr": "2394999",
+  "iem-cologne-major-2026-furia-vs-b8-bo3-LSPtJbBXRrIsAojIoBTpvc": "2394901",
+  "iem-cologne-major-2026-furia-vs-falcons-bo5-KYwh5Z9rwDlzjmTFrwu0mb": "2395002",
+  "iem-cologne-major-2026-furia-vs-mouz-bo3-dC2xyK-KPviXDfpnjaMits": "2394971",
+  "iem-cologne-major-2026-g2-vs-spirit-bo3-47sPOFVPbC3W0qqMbD_6GI": "2394998",
+  "iem-cologne-major-2026-mouz-vs-fut-bo3-vQt8pRuSzsbHnHmzHXAXQZ": "2394987",
+  "iem-cologne-major-2026-mouz-vs-legacy-bo3--ElOVseOL1THYQayaTTDSJ": "2394905",
+  "iem-cologne-major-2026-natus-vincere-vs-falcons-bo3-Qms8NbopLcruQjaT6BcL0b": "2394991",
+  "iem-cologne-major-2026-natus-vincere-vs-spirit-bo3-kgjfQml_20SbX4SdXD-5FD": "2394900",
+  "iem-cologne-major-2026-spirit-vs-9z-bo3-45Pa-VT_LG_Y7YLMszV2ng": "2394986",
+  "iem-cologne-major-2026-spirit-vs-falcons-bo3-wEPPcZigNVs8eZdF9kjqcz": "2395001",
+  "iem-cologne-major-2026-stage-2-spirit-vs-9z-bo3-9Jsb2c3P-770y3kHwW6S1L": "2394888",
+  "iem-cologne-major-2026-vitality-vs-9z-bo3-g80npa9dndYlfdx7MCyRLz": "2394978",
+  "iem-cologne-major-2026-vitality-vs-fut-bo3-rNsUTmTOO26ftPbfiPVp79": "2394898",
+  "iem-cologne-major-2026-vitality-vs-mouz-bo3-E9khg_TX6BxGaIZNKJ3X1O": "2394983",
+  "iem-krakw-2026-3dmax-vs-vitality-bo3-wRh04OCAJb0TLZWmLhz1tg": "2389649",
+  "iem-krakw-2026-astralis-vs-furia-bo3-xudgaKgYU0Ln3aG94b9Zq9": "2389657",
+  "iem-krakw-2026-falcons-vs-mouz-bo3-0NmDSYe_8UmJAHamjCMBo8": "2389660",
+  "iem-krakw-2026-furia-vs-aurora-bo3-0SHtb-SP2eItuD9F4xOrf3": "2389661",
+  "iem-krakw-2026-furia-vs-fut-bo3-2YAkzpe_twYrzQp5b7_6q_": "2389637",
+  "iem-krakw-2026-furia-vs-natus-vincere-bo3-Yy4UTf844IsWQBAQgG5QLr": "2389653",
+  "iem-krakw-2026-furia-vs-vitality-bo5-mm8dtsK9binWQO0i_PtQVF": "2389666",
+  "iem-krakw-2026-g2-vs-mouz-bo3-UF-ur5s86qDKU2ldf4aDm5": "2389662",
+  "iem-krakw-2026-g2-vs-spirit-bo3-lvH8ANpVzTw8QdVl0TEJzT": "2389659",
+  "iem-krakw-2026-mouz-vs-aurora-bo3-QZePMng7xycADr_e1iC2pu": "2389651",
+  "iem-krakw-2026-mouz-vs-faze-bo3-777zRHG-4_gkPdPO3SCIHr": "2389655",
+  "iem-krakw-2026-mouz-vs-nrg-bo3-0ctVRKXMrinTWci6ybknvL": "2389643",
+  "iem-krakw-2026-natus-vincere-vs-spirit-bo3-nWhIOX_dYygcuq3B3ZOrsF": "2389647",
+  "iem-krakw-2026-spirit-vs-astralis-bo3-qoyf4tbtOCZaGnut4o9qFv": "2389640",
+  "iem-krakw-2026-spirit-vs-furia-bo3-xg2IF7BkV4uvqIFjZDhn6_": "2389663",
+  "iem-krakw-2026-spirit-vs-mouz-bo3-CEc0ZCsgWfgqi6LSlIvIKf": "2389665",
+  "iem-krakw-2026-the-mongolz-vs-furia-bo3-osQQ2qb5QmTGPogNefNFS2": "2389646",
+  "iem-krakw-2026-vitality-vs-aurora-bo3--mY74mcLmUrEjY-ofCuhG0": "2389658",
+  "iem-krakw-2026-vitality-vs-bcgame-bo3-1bS_vkLXGu0uvf773So7g-": "2389641",
+  "iem-krakw-2026-vitality-vs-mouz-bo3-UD0TEnJpRupm9E_EHc4hZG": "2389664",
+  "iem-rio-2026-falcons-vs-furia-bo3-QxdR81Huln7yrstVaq3fnQ": "2393244",
+  "iem-rio-2026-falcons-vs-spirit-bo3-t9iYeYNZuxit-v9wZ84Lp_": "2393242",
+  "iem-rio-2026-furia-vs-mouz-bo3-Z2rTAoiITmGibqgyRsRqWD": "2393238",
+  "iem-rio-2026-furia-vs-passion-ua-bo3-gWfKT6v0cD51rasOuCYqs4": "2393085",
+  "iem-rio-2026-furia-vs-vitality-bo3--OutGDctKNBZKy28qkTgMB": "2393243",
+  "iem-rio-2026-g2-vs-spirit-bo3-3yEsHKCo6x0q-NMccrjUtt": "2393237",
+  "iem-rio-2026-legacy-vs-mouz-bo3-WLoUZF6r4vRd6oQTBDXyY4": "2393088",
+  "iem-rio-2026-mouz-vs-aurora-bo3-zxoPbQXwcJ85j6kfPHgr_s": "2393230",
+  "iem-rio-2026-natus-vincere-vs-furia-bo3-qLZX6MdaBCbmtkWux805qr": "2393228",
+  "iem-rio-2026-red-canids-vs-spirit-bo3-8R5J8BuQk8V3vSkqD1TKqz": "2393232",
+  "iem-rio-2026-spirit-vs-falcons-bo3-j0UWf3UXc8M1a3aXHV-7Eh": "2393226",
+  "iem-rio-2026-spirit-vs-liquid-bo3-hqiOEyrzam4W4LtTob5Zrs": "2393083",
+  "iem-rio-2026-spirit-vs-mouz-bo3-LLeNrfxqmFATTTqxsNE47B": "2393240",
+  "iem-rio-2026-spirit-vs-vitality-bo5-UR_LUBGmeXrZWQNI8kFJNV": "2393245",
+  "iem-rio-2026-vitality-vs-falcons-bo3-O2Ctrym3k5WQt8XytMQySq": "2393236",
+  "iem-rio-2026-vitality-vs-g2-bo3-yhOR34cA9Po02UrfKIOtO9": "2393224",
+  "iem-rio-2026-vitality-vs-natus-vincere-bo3-uFptDDHw379gQSG-jLrk6r": "2393241",
+  "iem-rio-2026-vitality-vs-red-canids-bo3-59DoPvf6WpvmGfDT24G_S2": "2393081",
+  "pgl-astana-2026-falcons-vs-9z-bo3-rfKW-lhZVBaATgrOee5-qf": "2394130",
+  "pgl-astana-2026-falcons-vs-k27-bo3-w5fV6yO9kdoW8ytMlQ_Dtk": "2394120",
+  "pgl-astana-2026-falcons-vs-monte-bo3-TBTCGDNdasVoYHDX3YyywQ": "2394134",
+  "pgl-astana-2026-furia-vs-falcons-bo3-8IztXknpPEEl1NsCKq6LgX": "2394152",
+  "pgl-astana-2026-furia-vs-gentle-mates-bo3-bavtBEBkvCguSvfitdFrWq": "2394144",
+  "pgl-astana-2026-furia-vs-heroic-bo3-ftj_X_pYP8io6no--aXw-x": "2394128",
+  "pgl-astana-2026-furia-vs-monte-bo3-EmBLEcPGN4n_QRIcUwYoHp": "2394122",
+  "pgl-astana-2026-furia-vs-spirit-bo3-EOF1N3EPnLVYSd7SJXSkzP": "2394138",
+  "pgl-astana-2026-magic-vs-falcons-bo3-1xbvXXXHtoil7k420SukSy": "2394154",
+  "pgl-astana-2026-mouz-vs-9z-bo3-jmXnFh-GccQVB9VXNn2W77": "2394136",
+  "pgl-astana-2026-mouz-vs-aurora-bo3-7v1mBqJ4l5KJN7j7YaEwKL": "2394140",
+  "pgl-astana-2026-mouz-vs-aurora-bo3-nSGl8QLc6t_xuBxu8U5gl4": "2394149",
+  "pgl-astana-2026-mouz-vs-g2-bo3-yJWNdKTuWPZkrwynmoK5Gu": "2394124",
+  "pgl-astana-2026-mouz-vs-gentle-mates-bo3-s0PcA1JHYgs5qnMJ8IHlqy": "2394118",
+  "pgl-astana-2026-mouz-vs-magic-bo3-5cj1DEhMI6AgOO3VchljuY": "2394155",
+  "pgl-astana-2026-mouz-vs-spirit-bo3-_ww1ZOkFS016IKZt45YjUx": "2394153",
+  "pgl-astana-2026-spirit-vs-falcons-bo5-TrXwT8oW78oW7cKgmPrDgU": "2394156",
+  "pgl-astana-2026-spirit-vs-g2-bo3-btCis9NhL78367yEMKeFBV": "2394150",
+  "pgl-astana-2026-spirit-vs-the-huns-bo3-SCqTAf-OVDFsZQZ0btfUej": "2394121",
+  "pgl-astana-2026-the-mongolz-vs-falcons-bo3-MgwX63ImZ4ZN8uPmU5tUH3": "2394142",
+  "pgl-astana-2026-the-mongolz-vs-spirit-bo3-XzNa-PUQkEyodLHmKoU2-f": "2394126",
+  "pgl-cluj-napoca-2026-furia-vs-b8-bo3-7rXlQ0z4N2waa-0Yt666Fu": "2389953",
+  "pgl-cluj-napoca-2026-furia-vs-falcons-bo3-OfIsfrpSwnaD_LueyZEScm": "2389969",
+  "pgl-cluj-napoca-2026-furia-vs-fut-bo3-HbuNe8W0g4NKkKGrtjg94O": "2389959",
+  "pgl-cluj-napoca-2026-furia-vs-parivision-bo3-Wowc5KzueGNaKKWlTthpDh": "2389975",
+  "pgl-cluj-napoca-2026-furia-vs-the-mongolz-bo3-uvTP_jPQxvkgKOfIm8feIR": "2389983",
+  "pgl-cluj-napoca-2026-mouz-vs-fut-bo3-K16bryMvg5QmoTExlDn6wj": "2389971",
+  "pgl-cluj-napoca-2026-mouz-vs-natus-vincere-bo3-df-t_0_ASkWYD7zhNGcnjC": "2389981",
+  "pgl-cluj-napoca-2026-mouz-vs-parivision-bo3-kzRdoIlvoGHu2j8Umcovc8": "2389949",
+  "pgl-cluj-napoca-2026-mouz-vs-the-mongolz-bo3-oP1nj_XCVRujdIf-_j5BE5": "2389986",
+  "pgl-cluj-napoca-2026-mouz-vs-vitality-bo3-k_w5VQbpH9bZlYTAZc8SyE": "2389967",
+  "pgl-cluj-napoca-2026-natus-vincere-vs-mouz-bo3-pF5CAlIN1EQAXuMyzVH3dm": "2389955",
+  "pgl-cluj-napoca-2026-parivision-vs-mouz-bo3-O9ErX8PSVdmQ-SDHz9KJUT": "2389984",
+  "pgl-cluj-napoca-2026-parivision-vs-vitality-bo5-AmtSttVoC1qI4LHDRIW4S-": "2389987",
+  "pgl-cluj-napoca-2026-vitality-vs-aurora-bo3-Pn_Q-PJO50-mcoIjPX1Cjf": "2389982",
+  "pgl-cluj-napoca-2026-vitality-vs-g2-bo3-qYj9k9myd7QwvfmcK2ZjT5": "2389951",
+  "pgl-cluj-napoca-2026-vitality-vs-the-mongolz-bo3-HnIEEaHEW5z1jrP1O7fbaW": "2389961",
+  "pgl-cluj-napoca-2026-vitality-vs-the-mongolz-bo3-_V1-atgVjp_HiqnMb5rNMc": "2389985",
+  "pgl-masters-bucharest-2026-furia-vs-dendele-bo3-4fiS232Z31yAz9TtPWxxXN": "2399726",
+  "starladder-starseries-fall-2026-aurora-vs-vitality-bo3-YKs8kEDNPDubjefvBPad28": "2398105",
+  "starladder-starseries-fall-2026-aurora-vs-vitality-bo5-a29hF-CpdWTocEVzwpQ_0F": "2398108",
+  "starladder-starseries-fall-2026-furia-vs-mibr-bo3-rSv3cKIpaBU3z-5k-LbjC8": "2398091",
+  "starladder-starseries-fall-2026-mibr-vs-furia-bo3-uHN5dgPTlEkFdIqOSgSoSY": "2398106",
+  "starladder-starseries-fall-2026-mouz-vs-furia-bo3-4nJ64OX1scgBdZLnojD1I2": "2398103",
+  "starladder-starseries-fall-2026-mouz-vs-natus-vincere-bo3-wTg1fxgq_wavTerF_uOtKS": "2398099",
+  "starladder-starseries-fall-2026-mouz-vs-nrg-bo3-UcUFCq1OhZJzucP9rt1ysH": "2398088",
+  "starladder-starseries-fall-2026-vitality-vs-furia-bo3-HgWry2z6SZbWx6OAju7RT-": "2398107",
+  "starladder-starseries-fall-2026-vitality-vs-furia-bo3-T02CXrqqgCdzggCxkdcv3r": "2398102",
+  "starladder-starseries-fall-2026-vitality-vs-magic-bo3-qBHOW2KPqxQBIay8cnoYpu": "2398089",
+  "thunderpick-world-championship-2026-9z-vs-falcons-bo3-89PVzaV96rjGMAZ9xQYJw0": "2399409",
+  "thunderpick-world-championship-2026-aurora-vs-falcons-bo3-LV8B-4C-lmh52HCDcAZYpn": "2399416",
+  "thunderpick-world-championship-2026-falcons-vs-betboom-bo3-mm_gEjepl9iqTc-LcnYcYf": "2399415",
+  "thunderpick-world-championship-2026-falcons-vs-ninjas-in-pyjamas-bo3-d7ow5nl8mvZ8nPGtcHtVz3": "2399385",
+  "thunderpick-world-championship-2026-furia-vs-aurora-bo3-EvTUc7zohJvV3jcFASmDIT": "2399414",
+  "thunderpick-world-championship-2026-furia-vs-betboom-bo3-UGaXtgpe7fp5k0C7EQw_AX": "2399387",
+  "thunderpick-world-championship-2026-furia-vs-betboom-bo5-WHIRt9tsXT6rseHazRIbi8": "2399417",
+  "thunderpick-world-championship-2026-legacy-vs-furia-bo3-decMt23HeUp2jsOvlynIdo": "2399411"
+ }
+}

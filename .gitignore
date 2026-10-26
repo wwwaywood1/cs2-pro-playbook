@@ -34,3 +34,6 @@ data/models/
 web/public/map-bg/
 assets/map-photos/*
 !assets/map-photos/README.md
+
+# hand-off folder between Claude sessions and the Mac (plans, download logs, assets)
+_sync/
