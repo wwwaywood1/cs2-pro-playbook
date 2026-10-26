@@ -26,6 +26,7 @@ lower_level_max_z on level 1.
 
 from __future__ import annotations
 
+from itertools import groupby
 import math
 
 import numpy as np
@@ -153,22 +154,29 @@ def events(frames: dict[str, pl.DataFrame]) -> pl.DataFrame:
     return pl.concat(parts).with_columns(w=pl.lit(1.0))
 
 
-def _pack(g: pl.DataFrame, rounds: int) -> list:
-    """Sparse cells as a flat list [cell, value, cell, value, ...], values per round."""
+def _pack(cells: list[tuple[int, float]], rounds: int) -> list:
+    """Sparse cells (ascending (cell, weight) pairs) as a flat list [cell, value, cell, value, ...],
+    values per round."""
     flat: list = []
-    for cell, w in g.sort("cell").select("cell", "w").iter_rows():
-        flat.extend((int(cell), float(f"{w / rounds:.3g}")))
+    per_round: dict[float, float] = {}  # cell weights are counts: few distinct values per grid
+    for cell, w in cells:
+        value = per_round.get(w)
+        if value is None:
+            value = per_round[w] = float(f"{w / rounds:.3g}")
+        flat.extend((int(cell), value))
     return flat
 
 
 def grids(ev: pl.DataFrame, rounds: dict[str, int]) -> dict:
     """{'per_round': {side: {phase|all: {layer: v}}}, 'data': {side: {phase: {layer: sparse}}}}."""
-    agg = ev.group_by("side", "phase", "layer", "cell").agg(w=pl.col("w").sum()).sort("side", "phase", "layer")
+    # One sort, then consecutive (side, phase, layer) runs with ascending cells.
+    agg = ev.group_by("side", "phase", "layer", "cell").agg(w=pl.col("w").sum()).sort("side", "phase", "layer", "cell")
     data: dict = {}
-    for (side, phase, layer), g in agg.group_by("side", "phase", "layer", maintain_order=True):
+    rows = zip(*(agg[c].to_list() for c in ("side", "phase", "layer", "cell", "w")))
+    for (side, phase, layer), group in groupby(rows, key=lambda row: row[:3]):
         n = rounds.get(side, 0)
         if n:
-            data.setdefault(side, {}).setdefault(phase, {})[layer] = _pack(g, n)
+            data.setdefault(side, {}).setdefault(phase, {})[layer] = _pack([row[3:] for row in group], n)
     totals: dict = {}
     for side, phase, layer, w in ev.group_by("side", "phase", "layer").agg(w=pl.col("w").sum()).sort(
             "side", "phase", "layer").iter_rows():

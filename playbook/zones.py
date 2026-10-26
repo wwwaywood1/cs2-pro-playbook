@@ -66,8 +66,16 @@ def _holds(p: pl.DataFrame, rounds: int) -> list[dict]:
                               max(4, math.ceil(HOLD_MIN_SHARE * h.height)), h["level"].to_numpy())
     h = h.with_columns(_cl=pl.Series(labels)).filter(pl.col("_cl") >= 0)
     out = []
-    for (_,), g in h.group_by("_cl", maintain_order=True):
-        per_round_held = g.group_by(KEYS).agg(s=pl.len())
+    held = max(1, int(p["holding"].sum()))
+    # Integer counts for all clusters at once: rounds with >= 2 held seconds, seconds per phase.
+    rounds_held = dict(h.group_by("_cl", *KEYS).agg(s=pl.len()).group_by("_cl").agg(
+        (pl.col("s") >= 2).sum()).iter_rows())
+    in_phase = {(cl, ph): n for cl, ph, n in h.group_by("_cl", "phase").agg(pl.len()).iter_rows()}
+    cols = h.select("_cl", "place", "lane", "x", "y", "z", "radar_x", "radar_y", "level", "t_s", "phase")
+    for (cl,), g in cols.group_by("_cl", maintain_order=True):
+        if (_r(g.height / rounds, 2) or 0) < HOLD_MIN_SECONDS_PR:
+            continue  # dropped by the filter below anyway
+        phased = g["phase"].count()  # (phase == ph).mean() counts non-null phases
         out.append({
             "place": Counter(g["place"].to_list()).most_common(1)[0][0],
             "lane": Counter(g["lane"].to_list()).most_common(1)[0][0],
@@ -75,10 +83,10 @@ def _holds(p: pl.DataFrame, rounds: int) -> list[dict]:
             "radar_x": _r(g["radar_x"].mean(), 1), "radar_y": _r(g["radar_y"].mean(), 1),
             "level": int(Counter(g["level"].to_list()).most_common(1)[0][0]),
             "seconds_per_round": _r(g.height / rounds, 2),
-            "share_of_holding": _r(g.height / max(1, int(p["holding"].sum()))),
-            "rounds_held": int((per_round_held["s"] >= 2).sum()),
+            "share_of_holding": _r(g.height / held),
+            "rounds_held": int(rounds_held[cl]),
             "median_t_s": _r(g["t_s"].median(), 0),
-            "phases": {ph: _r((g["phase"] == ph).mean()) for ph in PHASES},
+            "phases": {ph: _r(in_phase.get((cl, ph), 0) / phased) if phased else None for ph in PHASES},
         })
     out = [o for o in out if (o["seconds_per_round"] or 0) >= HOLD_MIN_SECONDS_PR]
     out.sort(key=lambda o: (-o["seconds_per_round"], o["place"] or "", o["level"], o["radar_x"], o["radar_y"]))
@@ -108,11 +116,27 @@ def make_summarizer(mm: MapMeta, spots: pl.DataFrame | None = None, spot_assign:
                     nade_lineup: pl.DataFrame | None = None):
     """Returns summarize(frames, team, steamid, side, rounds) for build_heatmaps."""
     spot_info = {r["spot_id"]: r for r in spots.iter_rows(named=True)} if spots is not None else {}
+    # Each frame is split by (team, steamid, side) once, on first use, instead of being
+    # filtered for every player and side (and the utility frame is joined to its spots and
+    # lineups once, not per player). Keyed by frame identity (the frame is held, so its id
+    # cannot be reused); slices keep row order, so they equal the old filters.
+    parts: dict[str, tuple[pl.DataFrame, dict, pl.DataFrame]] = {}
+
+    def with_spots(u: pl.DataFrame) -> pl.DataFrame:
+        """Landing spot and lineup of each grenade (left joins keep every grenade)."""
+        j = u.join(spot_assign, on=["demo_id", "nade_id"], how="left")
+        if nade_lineup is not None:
+            return j.join(nade_lineup, on=["demo_id", "nade_id"], how="left")
+        return j.with_columns(lineup_id=pl.lit(None, dtype=pl.Utf8))
 
     def summarize(frames: dict[str, pl.DataFrame], team: str, steamid: int, side: str, rounds: int) -> dict:
-        def mine(name: str) -> pl.DataFrame:
-            f = frames[name]
-            return f.filter((pl.col("team") == team) & (pl.col("steamid") == steamid) & (pl.col("side") == side))
+        def mine(name: str, prepare=None) -> pl.DataFrame:
+            f, slot = frames[name], name if prepare is None else f"{name}:{prepare.__name__}"
+            cached = parts.get(slot)
+            if cached is None or cached[0] is not f:
+                g = f if prepare is None else prepare(f)
+                cached = parts[slot] = (f, g.partition_by("team", "steamid", "side", as_dict=True), g.clear())
+            return cached[1].get((team, steamid, side), cached[2])
 
         p = mine("presence")
         zones, main_lane = _zones(p)
@@ -120,11 +144,8 @@ def make_summarizer(mm: MapMeta, spots: pl.DataFrame | None = None, spot_assign:
         util = {"per_round": {t: _r((u["layer"] == t).sum() / rounds) for t in ("smoke", "flash", "molotov", "he")},
                 "spots": []}
         if spot_assign is not None and not u.is_empty():
-            j = u.join(spot_assign, on=["demo_id", "nade_id"], how="left")
-            if nade_lineup is not None:
-                j = j.join(nade_lineup, on=["demo_id", "nade_id"], how="left")
-            else:
-                j = j.with_columns(lineup_id=pl.lit(None, dtype=pl.Utf8))
+            # Only counts, medians and fully keyed sorts below: row order does not matter.
+            j = mine("utility", with_spots)
             for (sid,), g in j.filter(pl.col("spot_id").is_not_null()).group_by("spot_id", maintain_order=True):
                 s = spot_info.get(sid, {})
                 lineups = sorted(Counter(x for x in g["lineup_id"].to_list() if x).items(), key=lambda kv: (-kv[1], kv[0]))[:2]

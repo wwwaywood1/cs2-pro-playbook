@@ -503,11 +503,11 @@ def _write_replays(mdir: Path, sub: dict[str, pl.DataFrame], mm, res: dict, wpr:
     for rec in res["recipes"]:
         wanted |= {(e["demo_id"], int(e["round_num"])) for e in rec.get("examples", [])}
     wp = replay.wp_by_round(wpr["states"], wpr["oof"], wanted) if wpr else {}
-    grid = replay.control_grid(sub["positions"])
-    place_index = replay.callout_index(sub["positions"])
+    grid, place_index = replay.map_context(sub["positions"])  # memoised: ai_lab.ensure_replays reuses it
+    tables = replay.RoundTables(sub, wanted)  # partition once instead of filtering per round
     index: dict[str, list[int]] = {}
     for demo, rnd in sorted(wanted):
-        data = replay.build_round(sub, mm, demo, rnd, wp.get((demo, rnd)), grid, place_index)
+        data = replay.build_round(sub, mm, demo, rnd, wp.get((demo, rnd)), grid, place_index, tables)
         if data:
             _write_compact(mdir / "replay" / demo / f"{rnd}.json", data)
             index.setdefault(demo, []).append(rnd)
