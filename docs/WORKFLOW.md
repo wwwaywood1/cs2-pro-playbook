@@ -67,7 +67,9 @@
 ## 5. Mac ↔ 云端同步（给 Claude）
 
 - 推到 Mac：`git archive HEAD | gzip > /mnt/user-data/outputs/<名字>.tgz` → `device_commit_files`（每次换新文件名）→ Mac 上 `tar -xzf`（只覆盖受版本管理的文件）。
-- 拉回容器：Mac 上 `tar -czf _sync/x.tgz …` → `device_stage_files`（单文件 ≤ 400 MB）→ 容器里解压。
+- 拉回容器：Mac 上 `COPYFILE_DISABLE=1 tar -czf _sync/x.tgz …`（否则 macOS 的 tar 会为每个文件夹带一个 `._` 附属文件）
+  → `device_stage_files` → 容器里解压。上传通道大约每分钟只放行 25–30 MB，单次超过就报 upload failed：
+  大文件先 `split -b 5m` 切块，分几批上传，容器里 `cat` 拼回并核对 SHA-256。
 - 长任务（解析、导出、复制）用 Codex 在 Mac 本机跑，**必须用** `.venv/bin/python scripts/run_detached.py _sync/<名字>.log bash _sync/<脚本>.sh`
   启动（新会话、stdin 接 /dev/null，命令立刻返回）。不要用 `nohup … &`：Codex 的命令一返回，就会连同后台进程一起结束，
   留下半截的解压目录和停住的日志，看起来像卡死。用 `device_bash` 看日志；`fuser 文件` 可查谁还开着某个文件。

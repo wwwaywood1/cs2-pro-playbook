@@ -49,7 +49,8 @@ def main() -> None:
         raise SystemExit(f"{src}/index.json not found; run `python -m playbook run` or use --samples")
     if dst.exists():
         shutil.rmtree(dst)
-    shutil.copytree(src, dst)
+    # macOS sidecar files (._*, .DS_Store) ride along when an export is packed with tar on a Mac
+    shutil.copytree(src, dst, ignore=shutil.ignore_patterns("._*", ".DS_Store"))
     print(f"site data: {src} -> {dst}")
 
     index = json.loads((src / "index.json").read_text(encoding="utf-8"))
