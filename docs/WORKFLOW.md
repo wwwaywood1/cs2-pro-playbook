@@ -26,7 +26,10 @@
 2. **下载**（你做，约 10–15 分钟/队）：在 Safari 打开 `_sync/<队>_queue.html`，从上往下逐个点「下载 demo」，压缩包进 `~/Downloads`。点过的会变灰；已有的比赛不会列出。
 3. **入库**（一条命令，Claude 可以替你在 Mac 上跑）：`bash scripts/refresh.sh`
    1. 把 `~/Downloads` 里的比赛压缩包移到 `data/raw/hltv/`（硬盘上）；
-   2. 解压导入（图池外地图、重复 demo 跳过；`-p1/-p2` 分段自动拼接）；
+   2. 解压导入（图池外地图、重复 demo 跳过；`-p1/-p2` 分段自动拼接）。依次尝试 bsdtar（macOS 自带）→ unar → 7z；
+      每个解压器限时（300 秒 + 每 MB 0.5 秒），超时就换下一个。macOS 自带的 bsdtar 曾在个别 HLTV RAR 上卡住几小时，
+      **建议装一个备用解压器：`brew install sevenzip`**。都只是超时的压缩包会留在原处下次重试；真正损坏的移到 `data/raw/hltv/.bad/`。
+      导入过的压缩包记在 `data/raw/hltv/.import_hltv_archives.json`（每处理完一个就写入），重跑时不再解压；同一时间只允许一个导入在跑；
    3. **精确日期**：按「赛事-队伍-队伍」把压缩包对应到计划里的比赛（同一赛事两队打两次时用地图区分），写入 `config/hltv_archives.json` 和 `config/match_dates.csv`；
    4. 原始压缩包移到硬盘 `hltv-archives`（校验后才删原件）；
    5. 解析新 demo → 导出网站数据（导出写到新目录再整体替换，不留旧文件）→ 生成战队点评的事实输入。
@@ -65,4 +68,4 @@
 
 - 推到 Mac：`git archive HEAD | gzip > /mnt/user-data/outputs/<名字>.tgz` → `device_commit_files`（每次换新文件名）→ Mac 上 `tar -xzf`（只覆盖受版本管理的文件）。
 - 拉回容器：Mac 上 `tar -czf _sync/x.tgz …` → `device_stage_files`（单文件 ≤ 400 MB）→ 容器里解压。
-- 长任务（解析、导出、复制）用 Codex 在 Mac 本机跑：调用 60 秒显示超时但任务继续，用 `device_bash` 看日志；Codex 沙箱不联网、不能用 `ps`、不接受 `rm -f`。
+- 长任务（解析、导出、复制）用 Codex 在 Mac 本机跑：`nohup bash _sync/<脚本>.sh >/dev/null 2>&1 &`，脚本自己把输出写进 `_sync/<名字>.log`，用 `device_bash` 看日志。Codex 沙箱不联网、不能用 `ps`/`pkill`（因此也停不掉卡住的进程，只能请用户在「活动监视器」里结束）、不能打开 App、不接受 `rm -f`。
