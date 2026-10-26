@@ -30,11 +30,13 @@
     "round_win_rate": "Round win rate",
     "language": "Language",
     "generated_at": "Data generated",
-    "data_source_note": "Data source: professional match demos (IEM Cologne Major 2026 and more, via the cs2povarchive dataset on Hugging Face).",
+    "data_source_note": "Match data from GOTV recordings made by the tournament organisers (via HLTV.org and the cs2povarchive dataset on Hugging Face). Not affiliated with Valve, HLTV, tournament organisers or teams.",
     "no_plant": "No plant",
     "nav_heatmaps": "Team heatmaps",
     "skip_content": "Skip to content",
-    "primary_navigation": "Primary navigation"
+    "primary_navigation": "Primary navigation",
+    "about_link": "Data sources & credits",
+    "data_through": "Data through"
   },
   "side": {
     "T": "T",
@@ -151,7 +153,8 @@
       "Balcony": "Balcony",
       "CTSpawn": "CT Spawn",
       "Pit": "Pit",
-      "Library": "Library"
+      "Library": "Library",
+      "Graveyard": "Graveyard"
     },
     "de_ancient": {
       "MainHall": "Main Hall",
@@ -257,7 +260,8 @@
       "Catwalk": "Catwalk",
       "Secret": "Secret",
       "Garage": "Garage",
-      "CTSpawn": "CT Spawn"
+      "CTSpawn": "CT Spawn",
+      "Crane": "Crane"
     },
     "de_overpass": {
       "UpperPark": "Upper Park",
@@ -471,7 +475,11 @@
     "setup_meta": "{rounds} rounds · Share {share} · Win {win}",
     "more_data": "More data",
     "spot_index": "Map spots ({n})",
-    "summary_basis": "Based on {n} facts"
+    "summary_basis": "Based on {n} facts",
+    "split_rate": "Multi-angle entry rate",
+    "split_help": "Entry points onto the site at least 400 units apart, or bearings from the site centre at least 50° apart; not limited to mid.",
+    "common_throw": "most common throw position",
+    "throw_line_help": "Thin line: most common throw position → landing; not a player route"
   },
   "hub": {
     "eyebrow": "TEAM INTELLIGENCE",
@@ -564,7 +572,10 @@
     "round_bar_tip": "Round {r} · win probability {from} → {to}",
     "round_bar_title": "每回合胜率变化",
     "best_map": "王牌图",
-    "weak_map": "短板图"
+    "weak_map": "短板图",
+    "wpa_drift_note": "Excludes the win-probability change from the game clock alone",
+    "best_map_tip": "Best map: highest lower bound of the 95% Wilson interval for map win rate (at least {n} maps), not overlapping the weakest map's interval.",
+    "weak_map_tip": "Weakest map: lowest upper bound of the 95% Wilson interval for map win rate (at least {n} maps), not overlapping the best map's interval."
   },
   "round3": {
     "round_bars_caption": "每回合胜率变化：绿色上升，红色下降",
@@ -598,7 +609,10 @@
     "throw_from": "从{place}投出",
     "thrower_example": "例：{name}（{team}）",
     "util_legend": "图标为道具类型，点击查看投掷位置",
-    "portrait_line": "T 开局常在{lane} · 每回合 {kpr} 杀"
+    "portrait_line": "T 开局常在{lane} · 每回合 {kpr} 杀",
+    "replay_rounds": "Replays",
+    "replay_rounds_label": "Rounds with a replay ({n})",
+    "replay_round_short": "Round {round}"
   },
   "round5": {
     "clock": "{clock}",
@@ -621,7 +635,11 @@
     "map_pick_hint": "先点地图上的落点，再点投掷位置，直接找到这颗道具",
     "route_name": "{via} · {p}% 的队员",
     "portrait_place": "T 开局最常在{place}",
-    "ghost_empty": "本侧本阶段暂无可显示的分布差异"
+    "ghost_empty": "本侧本阶段暂无可显示的分布差异",
+    "palette_index_error": "The search index is unavailable; only maps can be searched",
+    "palette_loading": "Loading…",
+    "palette_count": "{n} results · ↑/↓ select · Enter open · Esc close",
+    "palette_results": "Search results"
   },
   "round6": {
     "event_kill": "{clock} [{side}] {attacker} 击杀 {victim}{hs}{wpa}",
@@ -642,6 +660,85 @@
     "badge_rush": "⚡ 一波流",
     "badge_fake": "🎭 假打转点",
     "map_pick_clear": "× 清除地图选点",
-    "map_pick_active": "已按地图选点筛选：{n} 颗道具"
+    "map_pick_active": "已按地图选点筛选：{n} 颗道具",
+    "context_trailing": "Trailing",
+    "context_leading": "Leading",
+    "context_tied": "Tied",
+    "context_after_loss": "After a lost round",
+    "context_mixed": "Mixed buy"
+  },
+  "weapon": {
+    "ak47": "AK-47",
+    "awp": "AWP",
+    "m4a1_silencer": "M4A1-S",
+    "m4a1_silencer_off": "M4A1-S",
+    "m4a1": "M4A4",
+    "galilar": "Galil AR",
+    "famas": "FAMAS",
+    "aug": "AUG",
+    "sg556": "SG 553",
+    "ssg08": "SSG 08",
+    "g3sg1": "G3SG1",
+    "scar20": "SCAR-20",
+    "usp_silencer": "USP-S",
+    "usp_silencer_off": "USP-S",
+    "hkp2000": "P2000",
+    "glock": "Glock-18",
+    "deagle": "Desert Eagle",
+    "revolver": "R8 Revolver",
+    "p250": "P250",
+    "fiveseven": "Five-SeveN",
+    "tec9": "Tec-9",
+    "cz75a": "CZ75-Auto",
+    "elite": "Dual Berettas",
+    "mp9": "MP9",
+    "mac10": "MAC-10",
+    "mp7": "MP7",
+    "mp5sd": "MP5-SD",
+    "ump45": "UMP-45",
+    "p90": "P90",
+    "bizon": "PP-Bizon",
+    "nova": "Nova",
+    "xm1014": "XM1014",
+    "sawedoff": "Sawed-Off",
+    "mag7": "MAG-7",
+    "negev": "Negev",
+    "m249": "M249",
+    "taser": "Zeus x27",
+    "knife": "Knife",
+    "hegrenade": "HE grenade",
+    "inferno": "Fire",
+    "molotov": "Molotov",
+    "incgrenade": "Incendiary grenade",
+    "flashbang": "Flashbang",
+    "smokegrenade": "Smoke grenade",
+    "decoy": "Decoy",
+    "planted_c4": "C4 explosion",
+    "world": "World"
+  },
+  "error": {
+    "unknown": "Could not load the data.",
+    "missing": "This data file was not found: it may not be exported yet, or a newer export removed it.",
+    "http": "The data server returned an error (HTTP {status}). Please retry later.",
+    "network": "Network error: the data could not be loaded. Check your connection and retry.",
+    "parse": "The data file is corrupt and cannot be read.",
+    "shape": "The data does not have the shape this page expects; it may need a fresh export.",
+    "retry": "Retry",
+    "back_to_maps": "Back to maps",
+    "render_title": "This page could not be displayed",
+    "render": "Something went wrong while rendering this page, possibly because of incomplete data. Navigation and the other pages still work.",
+    "replay_render": "This round's replay data is incomplete and cannot be played.",
+    "replay_missing": "No replay data was found for this round.",
+    "replay_invalid": "Invalid replay link: the map, match or round number is missing.",
+    "app": "The site failed to load. Please reload the page.",
+    "reload": "Reload"
+  },
+  "a11y": {
+    "chart_points": "{n} data points; use ← / → to move between them",
+    "radar_axes": "Six axes; use ← / → to move between them",
+    "round_bars": "{n} rounds; use ← / → to move between them, Enter opens a replay"
+  },
+  "about": {
+    "title": "Data sources & credits"
   }
 }

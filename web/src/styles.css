@@ -1547,14 +1547,23 @@ input:focus-visible,
 .player-wpa { border-left-color: var(--positive); }
 .player-wpa[data-sign="negative"] { border-left-color: var(--negative); }
 .player-wpa[data-sign="positive"] .wpa-value { color: var(--positive); }
-.player-wpa[data-sign="negative"] .wpa-value { color: var(--negative); }
+.player-wpa[data-sign="negative"] .wpa-value { color: var(--negative-text); }
 .player-wpa .wpa-value { font-size: 1.1rem; line-height: 1.5; }
 .wpa-rank { color: var(--text); font-size: .8rem; }
+.player-wpa .wpa-note { font-size: .7rem; }
+.wpa-note-mark { margin-left: .15em; color: var(--muted); font-size: .65em; font-weight: 400; }
 .match-winprob { margin: 8px 0 0; }
 .match-winprob figcaption { color: var(--muted); font-size: .75rem; }
 .winprob-overview { overflow: visible; }
 .winprob-bar.is-positive { fill: var(--positive); }
 .winprob-bar.is-negative { fill: var(--negative); }
+.winprob-round:focus { outline: none; }
+.winprob-round:focus-visible .winprob-bar { stroke: #fff; stroke-width: 2px; }
+/* Match rows without a win-probability strip still open their replays. */
+.match-replays { grid-column: 1 / -1; min-width: 0; margin: 6px 0 0; }
+.match-replays > summary { padding-block: 4px; color: var(--accent); font-size: .8rem; cursor: pointer; }
+.match-replay-rounds { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.replay-open.is-compact { min-width: 2.6em; min-height: 28px; padding: 2px 8px; font-size: .78rem; font-variant-numeric: tabular-nums; }
 .winprob-round text { fill: var(--muted); font: 5px var(--mono); }
 .winprob-round:focus-visible { outline: none; }
 .winprob-round:focus-visible rect:first-of-type { stroke: var(--text); stroke-width: 1; }
@@ -1597,3 +1606,27 @@ input:focus-visible,
 .radar-pick-head h2 { margin: 0 auto 0 0; font-size: 1rem; }
 .radar-pick-head .radar-reset { margin: 0; font-size: .75rem; }
 .radar-pick-status { margin: 0 0 8px; font-size: .8rem; color: var(--muted); }
+
+/* Data and render failures: a localized message, the file, and a way back. */
+.notice-error { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+.notice-error > span:not(.notice-actions) { flex: 1 1 24ch; min-width: 0; }
+.notice-detail { flex: 1 1 100%; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.notice-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.notice-actions .button { min-height: 32px; padding: 4px 12px; font-size: 13px; }
+.route-error > strong { flex: 1 1 100%; }
+.app-error { display: grid; gap: 12px; justify-items: start; max-width: 640px; margin: 64px auto; }
+.replay-error { display: grid; justify-items: start; gap: 12px; padding: 24px 0; }
+
+/* Footer credit line links to the full sources page. */
+.footer-credit { flex: 1 1 520px; min-width: 0; }
+.footer-about { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.footer-about:hover, .footer-about:focus-visible { color: var(--accent); }
+
+/* About: sources, licences and trademarks (docs/CREDITS.md). */
+.about-page { max-width: 880px; }
+.about-block { margin: 0 0 40px; }
+.about-block > h2 { margin: 0 0 4px; padding-bottom: 8px; border-bottom: 1px solid var(--line); color: var(--ink-muted); font-size: .8rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.about-section h3 { margin: 20px 0 8px; font-size: 1rem; color: var(--ink); }
+.about-section ul { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; color: var(--ink-muted); line-height: 1.7; }
+.about-section a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.about-section a:hover, .about-section a:focus-visible { color: var(--accent); }

@@ -85,3 +85,25 @@ export function calloutLabel(map: string, name: string | null | undefined): stri
   const label = t(key);
   return label === key ? name : label;
 }
+
+/**
+ * Spot names: the configured community name, else the exported fallback label
+ * ("BombsiteA #3", a callout plus a #n suffix) with its callout translated.
+ */
+export function spotLabel(map: string, spot: { name?: { en?: string | null; zh?: string | null } | null; label?: string | null; place?: string | null }): string {
+  const named = spot.name?.[current];
+  if (named) return named;
+  const label = spot.label ?? spot.place ?? "";
+  const suffix = label.match(/\s*(#\d+)$/)?.[1];
+  const place = spot.place ?? label.replace(/\s*#\d+$/, "");
+  if (!place) return label || "—";
+  return suffix ? `${calloutLabel(map, place)} ${suffix}` : calloutLabel(map, place);
+}
+
+/** Readable weapon name for a demo weapon id (ak47, usp_silencer, knife_karambit, ...). */
+export function weaponLabel(id: string | null | undefined): string {
+  if (!id) return "";
+  const key = /^(knife|bayonet)/.test(id) ? "knife" : id;
+  const label = t(`weapon.${key}`);
+  return label === `weapon.${key}` ? id.replace(/_/g, " ") : label;
+}
