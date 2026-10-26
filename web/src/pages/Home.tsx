@@ -7,11 +7,17 @@ import { getIndex, useData } from "../data";
 import CountUp from "../components/CountUp";
 import { ParallaxLayer, Reveal, Spotlight, Stagger } from "../components/Motion";
 import { t, useLang } from "../i18n";
+import { ORBIT_POOL } from "./teamsHubOrbit";
+import type { SiteIndex } from "../types";
 
-const MAP_CATALOG = [
-  ["de_ancient", "Ancient"], ["de_anubis", "Anubis"], ["de_dust2", "Dust II"],
-  ["de_inferno", "Inferno"], ["de_mirage", "Mirage"], ["de_nuke", "Nuke"], ["de_cache", "Cache"],
-] as const;
+/** Exported maps, most played first; active-pool maps without data keep a disabled card. */
+function mapCatalog(index: SiteIndex) {
+  const exported = [...index.maps].sort((a, b) => b.n_matches - a.n_matches || a.map.localeCompare(b.map))
+    .map((sample) => ({ map: sample.map, display_name: sample.display_name, sample }));
+  const missing = ORBIT_POOL.filter(([id]) => !index.maps.some((sample) => sample.map === id))
+    .map(([map, display_name]) => ({ map, display_name, sample: undefined }));
+  return [...exported, ...missing];
+}
 function MapTile({ map, available, children, className = "", style }: { map: string; available: boolean; children: ReactNode; className?: string; style?: CSSProperties }) {
   const props = { className: `map-card ${available ? "" : "is-unavailable"} ${className}`, style, "data-motion-tilt": true };
   return <article {...props}>
@@ -26,10 +32,10 @@ export default function Home() {
 
   if (loading) return <Loading />;
   if (error || !data) {
-    return <ErrorNotice error={error ?? new Error("index.json is empty")} />;
+    return <ErrorNotice error={error ?? new Error(t("error.unknown"))} />;
   }
 
-  const maps = MAP_CATALOG.map(([map, display_name]) => ({ map, display_name, sample: data.maps.find((item) => item.map === map) }));
+  const maps = mapCatalog(data);
 
   return (
     <PageSurface className="home">

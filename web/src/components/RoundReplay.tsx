@@ -4,25 +4,34 @@ import Segmented from "./Segmented";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getMeta, getReplay, getTactics, useData } from "../data";
+import { DataError, getMeta, getReplay, getTactics, useData } from "../data";
 import { fmtInt, fmtNum } from "../format";
-import { calloutLabel, t, useLang } from "../i18n";
+import { calloutLabel, t, useLang, weaponLabel } from "../i18n";
 import { useReducedMotion } from "../motion";
 import type { ReplayRound } from "../types";
-import { Loading } from "./Status";
+import ErrorBoundary from "./ErrorBoundary";
+import { errorMessage, Loading } from "./Status";
 import { GrenadeGlyph } from "./GrenadeIcon";
 import "../replay.css";
 
-export function ReplayButton({ map, demoId, round }: { map: string; demoId: string; round: number }) {
+/** `/de_mirage/tactics` → `de_mirage`; routes without a map segment give "". */
+function mapFromPath(pathname: string): string {
+  const first = pathname.split("/").filter(Boolean)[0] ?? "";
+  return first.startsWith("de_") ? first : "";
+}
+
+export function ReplayButton({ map, demoId, round, compact = false }: { map: string; demoId: string; round: number; compact?: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
-  return <button type="button" className="button button-ghost replay-open" onClick={() => {
+  const label = t("round4.replay_open", { round: fmtInt(round) });
+  return <button type="button" className={`button button-ghost replay-open${compact ? " is-compact" : ""}`} aria-label={compact ? label : undefined} title={compact ? label : undefined} onClick={() => {
     const query = new URLSearchParams(location.search);
     query.set("replay", `${demoId}:${round}`);
-    // Hub already carries map; tactics carries it in the pathname.
-    if (location.pathname === "/teams-hub") query.set("map", map);
-    navigate({ pathname: location.pathname, search: `?${query}` }, { state: { ...location.state, replayOpened: `${demoId}:${round}` } });
-  }}>{t("round4.replay_open", { round: fmtInt(round) })}</button>;
+    // Always name the map: the lab (and any future route) has none in its path.
+    const addedMap = query.get("map") !== map;
+    query.set("map", map);
+    navigate({ pathname: location.pathname, search: `?${query}` }, { state: { ...location.state, replayOpened: `${demoId}:${round}`, replayAddedMap: addedMap } });
+  }}>{compact ? fmtInt(round) : label}</button>;
 }
 
 export default function RoundReplay() {
@@ -32,11 +41,13 @@ export default function RoundReplay() {
   const query = new URLSearchParams(location.search);
   const value = query.get("replay");
   const match = value?.match(/^(.+):(\d+)$/);
-  const map = query.get("map") || location.pathname.split("/")[1];
+  // The explicit parameter wins: the hub and the lab carry the map only in the query.
+  const map = query.get("map") || mapFromPath(location.pathname);
   function close() {
     if (location.state?.replayOpened === value) { navigate(-1); return; }
     const next = new URLSearchParams(location.search);
     next.delete("replay");
+    if (location.state?.replayAddedMap) next.delete("map");
     navigate({ pathname: location.pathname, search: next.toString() ? `?${next}` : "" }, { replace: true });
   }
   if (!value) return null;
@@ -76,23 +87,40 @@ function ReplayModal({ map, demoId, round, close }: { map: string; demoId: strin
       }
     }}>
     <header><h2 id="replay-title">{t("round4.replay_title")}</h2><button type="button" className="button button-ghost replay-close" onClick={close}>{t("round4.replay_close")}</button></header>
-    <ReplayContent key={`${map}:${demoId}:${round}`} map={map} demoId={demoId} round={round} />
+    {/* A broken round file stays inside the dialog: its header and Close keep working. */}
+    <ErrorBoundary resetKey={`${map}:${demoId}:${round}`} fallback={(_, retry) => <div className="replay-error" role="alert">
+      <p>{t("error.replay_render")}</p>
+      <button type="button" className="button button-ghost" onClick={retry}>{t("error.retry")}</button>
+    </div>}>
+      <ReplayContent key={`${map}:${demoId}:${round}`} map={map} demoId={demoId} round={round} />
+    </ErrorBoundary>
   </dialog>;
+}
+
+function replayError(error: Error | null, valid: boolean): string {
+  if (!valid) return t("error.replay_invalid");
+  if (error instanceof DataError && error.kind === "missing") return t("error.replay_missing");
+  if (error instanceof DataError && (error.kind === "shape" || error.kind === "parse")) return t("error.replay_render");
+  return error ? errorMessage(error) : t("error.unknown");
 }
 
 // Remount requests and playback together; useData ignores responses after cleanup.
 function ReplayContent({ map, demoId, round }: { map: string; demoId: string; round: number }) {
   const location = useLocation();
   const recipeId = new URLSearchParams(location.search).get("recipe");
-  const recipes = useData(() => recipeId ? getTactics(map) : Promise.resolve(null), [map, recipeId]);
+  const valid = !!map && !!demoId && round > 0;
+  const recipes = useData(() => recipeId && valid ? getTactics(map) : Promise.resolve(null), [map, recipeId]);
   const commit = recipes.data?.recipes.find((recipe) => recipe.id === recipeId)?.median_commit_s;
-  const { data, loading, error } = useData(() => demoId && round > 0
-    ? getReplay(map, demoId, round) : Promise.reject(new Error("回合地址无效")), [map, demoId, round]);
-  return loading ? <Loading /> : error || !data ? <p role="alert">{t("hub.load_error")}</p> : <>
+  const { data, loading, error } = useData(() => valid
+    ? getReplay(map, demoId, round) : Promise.reject(new Error(t("error.replay_invalid"))), [map, demoId, round]);
+  return loading ? <Loading /> : error || !data ? <p className="replay-error" role="alert">{replayError(error, valid)}</p> : <>
     <p className="replay-title-match">{data.teams.T}（T） · {data.teams.CT}（CT） · 第 {fmtInt(data.round_num)} 回合 · 胜方：{data.teams[data.winner]} · <MatchDate match={data} /></p>
     <ReplayViewer replay={data} commit={commit} />
   </>;
 }
+
+/** Keys that activate a focused control; the dialog's playback shortcuts must not steal them. */
+const ACTIVATES_ON_SPACE = "button, a[href], summary, select, textarea, [contenteditable='true'], input:not([type='range']), [role=button], [role=option], [role=checkbox], [role=switch], [role=tab]";
 
 function ReplayViewer({ replay, commit }: { replay: ReplayRound; commit?: number }) {
   const metadata = useData(() => getMeta(replay.map), [replay.map]);
@@ -113,7 +141,8 @@ function ReplayViewer({ replay, commit }: { replay: ReplayRound; commit?: number
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
-  const events = [...replay.events].sort((a, b) => a.t - b.t);
+  // Pre-freeze-end `world` kills (round restarts, t < 0) would hide players for the whole round.
+  const events = replay.events.filter((event) => Number.isFinite(event.t) && event.t >= 0).sort((a, b) => a.t - b.t);
   const plant = events.find((event) => event.kind === "plant");
   const firstEntryKill = events.find((event) => event.kind === "kill" && event.by != null && event.victim != null
     && replay.players[event.by]?.side === "T" && replay.players[event.victim]?.side === "CT");
@@ -130,6 +159,8 @@ function ReplayViewer({ replay, commit }: { replay: ReplayRound; commit?: number
       const target = event.target;
       if (target instanceof Element && target.closest("textarea, select, [contenteditable='true'], input:not([type='range'])")) return;
       if (event.key === " ") {
+        // Space on a focused button, link or checkbox activates that control.
+        if (target instanceof Element && target.closest(ACTIVATES_ON_SPACE)) return;
         event.preventDefault();
         if (!event.repeat) togglePlayback();
       } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
@@ -171,7 +202,7 @@ function ReplayViewer({ replay, commit }: { replay: ReplayRound; commit?: number
     if (event.kind === "kill") return t("round6.event_kill", {
       clock, side, attacker: playerName(event.by), victim: playerName(event.victim),
       hs: event.headshot ? t("round6.event_kill_hs") : "", wpa: eventWpa(event),
-    }) + [event.weapon, place].filter(Boolean).map((text) => ` · ${text}`).join("");
+    }) + [weaponLabel(event.weapon), place].filter(Boolean).map((text) => ` · ${text}`).join("");
     if (event.kind === "plant") return t("round6.event_plant", { clock, player: playerName(event.by), site: event.site });
     return place ? t("round6.event_util", { clock, side, player: playerName(event.by), place, nade: t(`round6.nade_${event.nade}`) })
       : t("round6.event_util_noplace", { clock, side, player: playerName(event.by), nade_full: t(`grenade.${event.nade === "flash" ? "flashbang" : event.nade}`) });
@@ -228,7 +259,7 @@ function ReplayViewer({ replay, commit }: { replay: ReplayRound; commit?: number
           <circle className="replay-player" cx={x} cy={y} r={4.5 * unit} fill={player.side === "T" ? "#efad55" : "#62b5ff"}
             tabIndex={0} role="button" aria-pressed={selected === index} aria-label={`${player.name} · ${player.side}`}
             onFocus={() => setHovered(index)} onBlur={() => setHovered(null)} onClick={() => setSelected((previous) => previous === index ? null : index)}
-            onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); setSelected((previous) => previous === index ? null : index); } }} />
+            onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelected((previous) => previous === index ? null : index); } }} />
           <text className="replay-player-abbr" x={Math.min(970, x + 7 * unit)} y={labelY} fontSize={10 * unit}>{player.name.slice(0, 4)}</text>
           {hovered === index || selected === index ? <text className="replay-player-name" x={Math.max(100, Math.min(924, x))} y={labelY < 40 * unit ? labelY + 20 * unit : labelY - 20 * unit} textAnchor="middle">{player.name}</text> : null}
         </g>;

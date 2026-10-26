@@ -37,6 +37,7 @@ body .hud-radar-frame :is(.radar-bg, .hm-radar-bg) { fill: transparent; }
 .palette-results small { flex: 0 0 4em; color: #93a4b8; }
 .command-palette > p { font-size: .75rem; color: #93a4b8; }
 /* Keep the corner frame on the viewport-sized tactics square, not its caption. */
-.tactics-radar-wrap > .hud-radar-frame { width: min(100%, 760px, var(--tactics-raster-limit, 760px), max(1px, calc(100vh - var(--tactics-radar-top, 320px) - 24px))); }
+/* The viewport budget never shrinks the square below 320px (the column width still caps it). */
+.tactics-radar-wrap > .hud-radar-frame { width: min(100%, 760px, var(--tactics-raster-limit, 760px), max(320px, calc(100vh - var(--tactics-radar-top, 320px) - 24px))); }
 body .tactics-radar-wrap > .hud-radar-frame .tactics-radar { width: 100%; }
 @media (max-width: 1000px) { .tactics-radar-wrap > .hud-radar-frame { width: min(100%, 760px, var(--tactics-raster-limit, 760px)); } }

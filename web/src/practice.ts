@@ -1,4 +1,4 @@
-import type { Lineup } from "./types";
+import type { Lineup, LineupRef } from "./types";
 
 export async function copyText(text: string, fallback: HTMLElement | null): Promise<boolean> {
   try {
@@ -50,9 +50,17 @@ export function practiceBind(lineup: Lineup): string | null {
   const command = practicePosition(lineup);
   return command ? `bind "KP_ENTER" "${command}"` : null;
 }
-export function recipeBind(id: string, lineups: (Lineup | undefined)[]): string | null {
-  if (!lineups.length || lineups.some((lineup) => !lineup || !practicePosition(lineup))) return null;
+/** setpos/setang from a lineup_index.json row (tactics references carry `setpos`). */
+export function refPosition(lineup: LineupRef | undefined): string | null {
+  const values = lineup?.setpos;
+  if (!values || values.length !== 5 || !values.every(Number.isFinite)) return null;
+  const [x, y, z, pitch, yaw] = values;
+  return `setpos ${x} ${y} ${z};setang ${pitch} ${yaw} 0`;
+}
+export function recipeBind(id: string, lineups: (LineupRef | undefined)[]): string | null {
+  const positions = lineups.map(refPosition);
+  if (!positions.length || positions.some((position) => !position)) return null;
   const prefix = `pp_${id.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 64)}`;
-  const steps = lineups.map((lineup, index) => `alias "${prefix}_${index}" "${practicePosition(lineup!)};alias pp_next ${prefix}_${(index + 1) % lineups.length}"`);
+  const steps = positions.map((position, index) => `alias "${prefix}_${index}" "${position};alias pp_next ${prefix}_${(index + 1) % positions.length}"`);
   return [...steps, `alias "pp_next" "${prefix}_0"`, 'bind "KP_ENTER" "pp_next"'].join(';');
 }

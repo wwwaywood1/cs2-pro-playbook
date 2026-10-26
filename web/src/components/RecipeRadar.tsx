@@ -5,7 +5,7 @@ import GrenadeIcon, { GrenadeGlyph } from "./GrenadeIcon";
 import { useMapLink } from "../mapLink";
 import { calloutLabel, t } from "../i18n";
 import { fmtPct, fmtInt, fmtNum } from "../format";
-import type { Lineup, Recipe, RecipeRoute, Spot } from "../types";
+import type { LineupRef, MapMeta, Recipe, RecipeRoute, Spot } from "../types";
 
 function routeDisplayName(map: string, route: RecipeRoute) {
   if (route.name) return route.via.includes(route.name) ? calloutLabel(map, route.name) : route.name;
@@ -21,7 +21,7 @@ export interface RecipeSpot {
   name: string;
   share: number | null;
   to: string | null;
-  lineup?: Lineup;
+  lineup?: LineupRef;
   thrower?: string | null;
   throwerTeam?: string | null;
   throwPlace?: string | null;
@@ -34,9 +34,12 @@ const FULL_VIEW: ViewBox = { x: 0, y: 0, size: 1024 };
 interface RadarPoint { x: number; y: number }
 // Mean plant positions, matching playbook/tactics.py:site_centres, transformed
 // with each map's radar metadata. Keep these frontend-only anchors in radar px.
+// A meta.json `site_centres` export takes precedence (see siteCentre below).
 const SITE_CENTRES: Record<string, Record<Recipe["site"], RadarPoint> | undefined> = {
   de_ancient: { A: { x: 324.1, y: 282.0 }, B: { x: 759.1, y: 426.0 } },
   de_anubis: { A: { x: 770.8, y: 263.4 }, B: { x: 329.4, y: 512.2 } },
+  // Observed plant medians from the calibrated Cache transform (tests/test_cache_map.py).
+  de_cache: { A: { x: 348.0, y: 246.1 }, B: { x: 339.3, y: 862.8 } },
   de_dust2: { A: { x: 800.8, y: 184.6 }, B: { x: 213.3, y: 162.2 } },
   de_inferno: { A: { x: 820.4, y: 701.6 }, B: { x: 528.8, y: 205.1 } },
   de_mirage: { A: { x: 564.1, y: 759.2 }, B: { x: 251.8, y: 267.8 } },
@@ -44,12 +47,19 @@ const SITE_CENTRES: Record<string, Record<Recipe["site"], RadarPoint> | undefine
   de_overpass: { A: { x: 454.6, y: 221.9 }, B: { x: 701.7, y: 352.5 } },
 };
 
+export function siteCentre(map: string, site: Recipe["site"] | undefined, exported?: MapMeta["site_centres"]): RadarPoint | undefined {
+  if (!site) return undefined;
+  const point = exported?.[site];
+  if (Array.isArray(point) && point.length === 2 && point.every(Number.isFinite)) return { x: point[0], y: point[1] };
+  return SITE_CENTRES[map]?.[site];
+}
+
 function fitSpots(entries: RecipeSpot[], scale: number | undefined, siteCentre?: RadarPoint, routePoints: RadarPoint[] = []): ViewBox {
   const points = entries.flatMap(({ spot, type }) => spot && Number.isFinite(spot.radar_x) && Number.isFinite(spot.radar_y)
     ? [{ x: spot.radar_x, y: spot.radar_y, radius: scale ? (type === "smoke" ? 144 : type === "molotov" ? 120 : 0) / scale : 0 }] : []);
-  for (const { lineup } of entries) if (lineup && Number.isFinite(lineup.throw.radar_x) && Number.isFinite(lineup.throw.radar_y)) {
-    points.push({ x: lineup.throw.radar_x, y: lineup.throw.radar_y, radius: 12 });
-    points.push({ x: lineup.land.radar_x, y: lineup.land.radar_y, radius: 12 });
+  for (const { lineup } of entries) if (lineup && lineup.throw.every(Number.isFinite) && lineup.land.every(Number.isFinite)) {
+    points.push({ x: lineup.throw[0], y: lineup.throw[1], radius: 12 });
+    points.push({ x: lineup.land[0], y: lineup.land[1], radius: 12 });
   }
   for (const point of routePoints) points.push({ ...point, radius: 12 });
   if (!points.length) return FULL_VIEW;
@@ -92,7 +102,7 @@ function routeLabelPoint(points: [number, number][]): [number, number] {
 }
 
 /** SVG is rendered by the browser at devicePixelRatio, including all vector overlays. */
-export default function RecipeRadar({ map, spots, scale, site, title, selectionLabel, routes, routeKey, overlay, overlayLevels = [] }: { overlay?: (level: number) => ReactNode; overlayLevels?: number[]; routes?: RecipeRoute[]; routeKey?: string; map: string; spots: RecipeSpot[]; scale: number | undefined; site?: Recipe["site"]; title: string; selectionLabel?: string }) {
+export default function RecipeRadar({ map, spots, scale, site, centres, title, selectionLabel, routes, routeKey, overlay, overlayLevels = [] }: { overlay?: (level: number) => ReactNode; overlayLevels?: number[]; routes?: RecipeRoute[]; routeKey?: string; map: string; spots: RecipeSpot[]; scale: number | undefined; site?: Recipe["site"]; centres?: MapMeta["site_centres"]; title: string; selectionLabel?: string }) {
   const { activeId, bind } = useMapLink();
   const entryRoutes = useMemo(() => (routes ?? []).filter((route) => Number.isFinite(route.share) && route.points.length >= 2
     && route.points.every((point) => point.length === 2 && point.every(Number.isFinite))), [routes]);
@@ -109,8 +119,8 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
   const linkedSpot = spots.find((entry) => activeId === `spot:${entry.id}`)?.spot;
   const level = linkedSpot?.level ?? (chosenLevel !== null && levels.includes(chosenLevel) ? chosenLevel : levels[0] ?? 0);
   const visible = useMemo(() => spots.filter(({ spot }) => spot?.level === level), [spots, level]);
-  const siteCentre = site ? SITE_CENTRES[map]?.[site] : undefined;
-  const focus = useMemo(() => overlay || (site && !siteCentre) ? FULL_VIEW : fitSpots(visible, scale, siteCentre, entryRoutes.flatMap((route) => route.points.map(([x, y]) => ({ x, y })))), [visible, scale, site, siteCentre, entryRoutes, overlay]);
+  const centre = siteCentre(map, site, centres);
+  const focus = useMemo(() => overlay || (site && !centre) ? FULL_VIEW : fitSpots(visible, scale, centre, entryRoutes.flatMap((route) => route.points.map(([x, y]) => ({ x, y })))), [visible, scale, site, centre?.x, centre?.y, entryRoutes, overlay]);
   // Leave a little context around the focus box so the dimmed perimeter remains visible.
   const target = useMemo(() => {
     if (full) return FULL_VIEW;
@@ -151,11 +161,14 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
       setPixelRatio(dpr);
       element.style.setProperty("--tactics-raster-limit", `${1024 * 1.6 / dpr}px`);
       const stickyTop = panel ? parseFloat(window.getComputedStyle(panel).top) || 0 : 0;
-      // The workspace stays in normal flow while its map panel sticks. Reserve
-      // its initial viewport offset as well as the caption/floor controls.
+      // The workspace stays in normal flow while its map panel sticks. When it starts
+      // in the first screen, reserve its initial offset so the radar fits without
+      // scrolling. A workspace further down (the CT tab, below the defence patterns)
+      // is only seen once scrolled, when the panel sticks: budget from the sticky top.
       const workspaceTop = workspace ? workspace.getBoundingClientRect().top + window.scrollY : stickyTop;
+      const top = workspaceTop < window.innerHeight * .5 ? Math.max(stickyTop, workspaceTop) : stickyTop;
       const controlsHeight = svg.getBoundingClientRect().top - element.getBoundingClientRect().top;
-      element.style.setProperty("--tactics-radar-top", `${Math.max(stickyTop, workspaceTop) + controlsHeight}px`);
+      element.style.setProperty("--tactics-radar-top", `${top + controlsHeight}px`);
       const renderedWidth = svg.getBoundingClientRect().width;
       if (renderedWidth > 0) setWidth(renderedWidth);
     };
@@ -206,9 +219,9 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
       {visible.filter((entry) => entry.lineup).map((entry) => {
         const lineup = entry.lineup!;
         return <g className="tactics-throw-route" key={`route-${entry.id}`} opacity={entry.core ? .85 : .4}>
-          <title>{`${fmtInt(entry.number)}. ${calloutLabel(map, lineup.throw_place)} → ${entry.name} · 最常用起投点`}</title>
-          <line x1={lineup.throw.radar_x} y1={lineup.throw.radar_y} x2={lineup.land.radar_x} y2={lineup.land.radar_y} vectorEffect="non-scaling-stroke" />
-          <circle cx={lineup.throw.radar_x} cy={lineup.throw.radar_y} r={4 * unit} />
+          <title>{`${fmtInt(entry.number)}. ${calloutLabel(map, lineup.throw_place)} → ${entry.name} · ${t("tactics.common_throw")}`}</title>
+          <line x1={lineup.throw[0]} y1={lineup.throw[1]} x2={lineup.land[0]} y2={lineup.land[1]} vectorEffect="non-scaling-stroke" />
+          <circle cx={lineup.throw[0]} cy={lineup.throw[1]} r={4 * unit} />
         </g>;
       })}
       {visible.map((entry) => {
@@ -244,7 +257,7 @@ export default function RecipeRadar({ map, spots, scale, site, title, selectionL
     {!overlay && !visible.length && <p className="muted">{t("tactics.no_spots")}</p>}
     {failedSource === source && <p className="muted">{t("tactics.radar_unavailable")}</p>}
     {!overlay && !scale && <p className="muted">{t("tactics.no_scale")}</p>}
-    {!overlay && <p className="tactics-help muted">{t("tactics.radar_help")} · 细线：最常用起投点 → 落点；非队员移动路线</p>}
+    {!overlay && <p className="tactics-help muted">{t("tactics.radar_help")} · {t("tactics.throw_line_help")}</p>}
     {!!visible.length && <details className="tactics-map-spots"><summary>{t("tactics.spot_index", { n: fmtInt(visible.length) })}</summary><SpotList entries={visible} /></details>}
   </figure>;
 }
