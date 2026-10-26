@@ -2,6 +2,7 @@
 
     python scripts/insight_text.py brief de_mirage            # data/site -> delegation/inputs/insights/de_mirage.json
     python scripts/insight_text.py check de_mirage reply.json # validate -> config/insight_text/de_mirage.json
+    python scripts/insight_text.py attach de_mirage ...       # put accepted paragraphs into data/site now
 
 The LLM sees only the facts of playbook/insights.py (each a template sentence with its numbers)
 and returns, per team, one short paragraph in Chinese and English plus the fact ids it used.
@@ -108,11 +109,40 @@ def check(m: str, reply_path: str) -> int:
     return 1 if problems else 0
 
 
+def attach(m: str) -> int:
+    """Write the accepted paragraphs into data/site/<map>/teams/<slug>.json the way the export
+    does (playbook.insights.attach_summaries: only while the team's facts are unchanged), so new
+    paragraphs show up without exporting again. Returns how many teams now have one."""
+    written = json.loads((OUT / f"{m}.json").read_text()) if (OUT / f"{m}.json").exists() else {}
+    n = 0
+    for path in sorted((SITE / m / "teams").glob("*.json")):
+        d = json.loads(path.read_text(encoding="utf-8"))
+        w = written.get(d.get("slug"))
+        if w and d.get("insights") and w.get("fingerprint") == fingerprint(d["insights"]):
+            summary = {"zh": w["zh"], "en": w["en"], "facts": w["facts"]}
+            n += 1
+        else:
+            summary = None
+        if d.get("summary") == summary or (summary is None and "summary" not in d):
+            continue
+        if summary is None:
+            d.pop("summary")
+        else:
+            d["summary"] = summary
+        # same encoding as playbook.export._write
+        path.write_text(json.dumps(d, ensure_ascii=False, separators=(",", ":"), allow_nan=False), encoding="utf-8")
+    print(f"{m}: {n} team(s) with a summary in {SITE / m / 'teams'}")
+    return n
+
+
 if __name__ == "__main__":
-    if len(sys.argv) < 3 or sys.argv[1] not in ("brief", "check"):
+    if len(sys.argv) < 3 or sys.argv[1] not in ("brief", "check", "attach"):
         sys.exit(__doc__)
     if sys.argv[1] == "brief":
         for m in sys.argv[2:]:
             brief(m)
+    elif sys.argv[1] == "attach":
+        for m in sys.argv[2:]:
+            attach(m)
     else:
         sys.exit(check(sys.argv[2], sys.argv[3]))

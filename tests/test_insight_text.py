@@ -46,3 +46,20 @@ def test_attach_drops_stale(tmp_path):
     stale = [{"slug": "aa", "insights": [dict(FACTS[0], text={"zh": "x", "en": "changed"})]}]
     assert attach_summaries(fresh, path) == 1 and fresh[0]["summary"]["en"] == "e"
     assert attach_summaries(stale, path) == 0 and "summary" not in stale[0]
+
+
+def test_attach_command_writes_the_site_files_like_the_export(tmp_path, monkeypatch):
+    setup(tmp_path, monkeypatch)
+    team = tmp_path / "site" / "de_x" / "teams" / "aa.json"
+    good = {"aa": {"zh": "AA 爱分兵：87% 的进攻分两路，联盟平均只有 61%。", "en": "AA love splits: 87% of hits vs 61% league-wide.",
+                   "facts": ["t_split"]}}
+    (tmp_path / "good.json").write_text(json.dumps(good))
+    assert it.check("de_x", tmp_path / "good.json") == 0
+    assert it.attach("de_x") == 1
+    d = json.loads(team.read_text())
+    assert d["summary"] == {"zh": good["aa"]["zh"], "en": good["aa"]["en"], "facts": ["t_split"]}
+    assert "\n" not in team.read_text() and "爱分兵" in team.read_text()      # compact, not ASCII-escaped
+    # facts changed since the paragraph was written: the stale paragraph comes off again
+    d["insights"] = [dict(FACTS[0], text={"zh": "x", "en": "changed"})]
+    team.write_text(json.dumps(d))
+    assert it.attach("de_x") == 0 and "summary" not in json.loads(team.read_text())
