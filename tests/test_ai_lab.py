@@ -312,6 +312,15 @@ def test_shapley_interaction_exactness_and_dummy_groups():
     np.testing.assert_allclose(base+phi.sum(axis=1), p, atol=1e-6)
 
 
+def test_shap_background_takes_one_state_per_training_match():
+    states = pl.DataFrame({'demo_id': [f'd{i // 5:02d}' for i in range(200)], 't_s': list(range(200))})
+    rows = L.background_rows(states, L.BACKGROUND_SIZE, np.random.default_rng(42))
+    assert len(rows) == L.BACKGROUND_SIZE == states[rows]['demo_id'].n_unique()
+    assert rows == L.background_rows(states, L.BACKGROUND_SIZE, np.random.default_rng(42))
+    few = states.filter(pl.col('demo_id').is_in(['d00', 'd01', 'd02']))
+    assert sorted(few[L.background_rows(few, L.BACKGROUND_SIZE, np.random.default_rng(0))]['demo_id']) == ['d00', 'd01', 'd02']
+
+
 def test_smoke_changes_computed_ownership_and_penalty_before_minimum():
     grid = np.array([[0., 0.]])
     t = np.array([[-100., 0.]])
