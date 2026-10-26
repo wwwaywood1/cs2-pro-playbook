@@ -115,13 +115,13 @@
   "fingerprint": "e71a94f93110"
  },
  "liquid": {
-  "zh": "Liquid 最常用的爆弹是 B 点 B区警家烟，8 次赢 7 次。最常摸边的人是 NAF-FLY，12 次进攻时他在另一侧或远离进攻点。",
-  "en": "Liquid's go-to execute is B with CT smoke (B), used 8 times with 7 wins. Their usual lurker is NAF-FLY, who was on the other side or far from the hit in 12 attacks.",
+  "zh": "Liquid 最常用的爆弹是 B 点 B区警家烟，8 次赢 7 次。最常摸边的人是 NAF，12 次进攻时他在另一侧或远离进攻点。",
+  "en": "Liquid's go-to execute is B with CT smoke (B), used 8 times with 7 wins. Their usual lurker is NAF, on the other side or far from the hit in 12 attacks.",
   "facts": [
    "t_signature_recipe",
    "t_main_lurker"
   ],
-  "fingerprint": "493a26013a76"
+  "fingerprint": "1377e925bad0"
  },
  "lynn-vision": {
   "zh": "Lynn Vision 最常用的爆弹是 B 点棺材烟、B区警家烟加 B包三箱火，9 次赢 6 次。CT 方开局 20 秒的默认站位为 A2 B3，占 31% 的枪局，胜率 36%。",
