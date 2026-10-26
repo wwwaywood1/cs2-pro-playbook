@@ -7,17 +7,23 @@
     python scripts/hltv_plan.py aurora --results-html results.html --match-html-dir matches/
 
 Writes ``_sync/<team>_plan.json`` (matches with exact start times, events, demo ids) and
-``_sync/<team>_download.sh`` (polite curl downloads into ~/Downloads, resumable). After the
-downloads, ``bash scripts/refresh.sh`` imports them, registers the exact dates
-(scripts/register_hltv_dates.py), archives the .rar/.zip files and rebuilds the site data.
+``_sync/<team>_queue.txt`` (most wanted first) for ``scripts/hltv_download.sh <team>``, which
+downloads them into ~/Downloads and then runs ``scripts/refresh.sh`` (import, exact dates via
+scripts/register_hltv_dates.py, archive the .rar/.zip files, parse, export).
+
+HLTV is behind Cloudflare. This tool identifies itself honestly and stops when it is refused;
+it never tries to get around a check. Save the pages from your browser instead (above).
 
 Scope (config/hltv.toml): matches since ``[download] since``, tier-1 events only, ordered by
-HLTV's popularity stars (they reflect both teams' rankings), then newest first. Archives we
-already have (data/raw/hltv folders + the archive directory in config/storage.toml) are skipped.
+HLTV's popularity stars (they reflect both teams' rankings), then newest first. Matches we
+already have are skipped: HLTV ids registered in config/hltv_archives.json or present as
+dataset folders (data/raw/<source>/<event>/<id>-...), and archives with the same
+event/teams/format (data/raw/hltv folders + the archive directory in config/storage.toml).
 """
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 import time
 import tomllib
@@ -29,8 +35,7 @@ sys.path.insert(0, str(ROOT))
 
 from playbook import hltv  # noqa: E402
 
-UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) "
-      "Chrome/130.0.0.0 Safari/537.36")
+UA = "cs2-pro-playbook/0.1 (personal non-commercial CS2 demo analysis; one request at a time)"
 
 
 class Blocked(RuntimeError):
@@ -65,6 +70,23 @@ def existing_stems() -> list[str]:
     return stems
 
 
+def known_match_ids() -> set[int]:
+    """HLTV match ids we already have: registered archives and dataset folders named <id>-..."""
+    ids: set[int] = set()
+    registry = ROOT / "config" / "hltv_archives.json"
+    if registry.exists():
+        ids |= {int(m) for m in json.loads(registry.read_text(encoding="utf-8")).get("archives", {}).values()}
+    raw = ROOT / "data" / "raw"
+    if raw.is_dir():
+        for source in raw.iterdir():
+            if source.is_dir() and source.name != "hltv":
+                for folder in source.glob("*/*"):
+                    head = folder.name.split("-", 1)[0]
+                    if folder.is_dir() and head.isdigit():
+                        ids.add(int(head))
+    return ids
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("team", help="team slug from config/hltv.toml [teams]")
@@ -73,7 +95,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--match-html-dir", type=Path)
     ap.add_argument("--since")
     ap.add_argument("--limit", type=int, default=0, help="keep only the first N planned matches")
-    ap.add_argument("--delay", type=float, default=4.0, help="seconds between page fetches")
+    ap.add_argument("--delay", type=float, default=10.0, help="seconds between page fetches (HLTV starts challenging at ~3 s)")
     ap.add_argument("--out-dir", type=Path, default=ROOT / "_sync")
     args = ap.parse_args(argv)
 
@@ -95,7 +117,8 @@ def main(argv: list[str] | None = None) -> int:
                     break
         for path in args.results_html:
             rows += hltv.parse_results(path.read_text(encoding="utf-8"))
-        want, have, skipped = hltv.plan_matches(rows, existing_stems(), since=since, cfg=cfg)
+        want, have, skipped = hltv.plan_matches(rows, existing_stems(), since=since, cfg=cfg,
+                                                known_ids=known_match_ids())
         if args.limit:
             want = want[: args.limit]
         entries = []
@@ -114,20 +137,18 @@ def main(argv: list[str] | None = None) -> int:
                             "hltv_event_id": page.event_id, "teams": page.teams or row.teams,
                             "maps_played": page.maps_played, "stars": row.stars, "slug": row.slug})
     except Blocked as exc:
-        print(f"HLTV blocked this request ({exc}). Use a browser to save the pages and pass "
+        print(f"HLTV refused this request ({exc}). Stopping. Save the pages from your browser and pass "
               "--results-html/--match-html-dir instead.")
         return 2
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
     plan_path = args.out_dir / f"{args.team}_plan.json"
     hltv.write_plan(plan_path, {"slug": args.team, "hltv_team_id": team_id, "since": since}, entries)
-    script = args.out_dir / f"{args.team}_download.sh"
-    script.write_text(hltv.download_script(args.team, entries, delay_s=int(
-        (cfg.get("download") or {}).get("delay_seconds", 20))), encoding="utf-8")
-    script.chmod(0o755)
+    queue = args.out_dir / f"{args.team}_queue.txt"
+    queue.write_text(hltv.queue_text(entries), encoding="utf-8")
     print(f"{len(entries)} to download, {len(have)} already have, {len(skipped)} not tier-1 -> {plan_path.name}, "
-          f"{script.name}")
-    print(f'Next: caffeinate -i bash "{script}"   then   bash scripts/refresh.sh')
+          f"{queue.name}")
+    print(f"Next: caffeinate -i bash scripts/hltv_download.sh {args.team}")
     return 0
 
 

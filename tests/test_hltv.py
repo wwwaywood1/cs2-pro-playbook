@@ -57,10 +57,12 @@ def test_plan_orders_by_stars_then_recency_and_skips_known():
     assert all(r.unix_ms >= 1767225600000 for r in want)       # 2025 match excluded by --since
 
 
-def test_download_script_is_valid_bash(tmp_path):
-    import subprocess
-    script = hltv.download_script("aurora", [{"demo_id": 113185, "hltv_match_id": 2399731}])
-    path = tmp_path / "dl.sh"
-    path.write_text(script)
-    assert subprocess.run(["bash", "-n", str(path)]).returncode == 0
-    assert "113185 2399731" in script and "/download/demo/$demo" in script
+def test_plan_skips_known_match_ids():
+    rows = hltv.parse_results((FIX / "results.html").read_text())
+    want, have, _ = hltv.plan_matches(rows, [], since="2026-01-01", cfg=CFG, known_ids={2399731})
+    assert 2399731 in [r.match_id for r in have] and 2399731 not in [r.match_id for r in want]
+
+
+def test_queue_text():
+    assert hltv.queue_text([{"demo_id": 113185, "hltv_match_id": 2399731},
+                            {"demo_id": 1, "hltv_match_id": 2}]) == "113185 2399731\n1 2\n"
